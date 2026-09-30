@@ -36,6 +36,14 @@ class Settings(BaseSettings):
     embed_batch_size: int = 32
     index_write_batch: int = 256
 
+    # Malware scan (master spec 6.9). `off` is for development only; the UI then shows a hint.
+    malware_scan: Literal["required", "off"] = "required"
+    clamd_host: str = "clamav"
+    clamd_port: int = 3310
+    clamd_scan_timeout_s: int = 900  # above clamd's MaxScanTime (600 s)
+    # Must match StreamMaxLength of the clamav service in compose.yaml.
+    clamd_stream_max_mb: int = 1100
+
     internal_token: SecretStr | None = None
     app_version: str = "dev"
     git_sha: str = "unknown"
@@ -65,6 +73,10 @@ class Settings(BaseSettings):
     @property
     def spool_dir(self) -> Path:
         return self.data_dir / "spool"
+
+    @property
+    def quarantine_dir(self) -> Path:
+        return self.data_dir / "quarantine"
 
 
 @lru_cache

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS documents (
                 ('scanning', 'queued', 'parsing', 'embedding', 'ready', 'failed', 'deleting')),
   progress      REAL NOT NULL DEFAULT 0,
   error_code    TEXT,
+  error_params  TEXT NOT NULL DEFAULT '{}',
   notices       TEXT NOT NULL DEFAULT '[]',
   created_at    TEXT NOT NULL,
   updated_at    TEXT NOT NULL,

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from docchat.domain.chunking import section_from_text
 from docchat.domain.errors import IngestionError
+from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk
 from docchat.domain.parsing import PageBatch, PageBatchFailed, TextSection
 
@@ -125,11 +126,32 @@ class FakeVectorStore:
         return sum(1 for chunk, _ in self.rows.values() if chunk.document_id == document_id)
 
 
-class RejectingScanner:
-    def __init__(self, error: Exception) -> None:
-        self.error = error
-        self.scanned: list[Path] = []
+class FakeScanner:
+    """Answers from a script (a verdict or an exception per call), then says clean."""
 
-    async def scan(self, path: Path) -> None:
+    def __init__(self, *script: ScanVerdict | Exception) -> None:
+        self.script = list(script)
+        self.scanned: list[Path] = []
+        self.contents: list[bytes] = []
+
+    async def scan(self, path: Path) -> ScanVerdict:
         self.scanned.append(path)
-        raise self.error
+        self.contents.append(path.read_bytes())
+        outcome = self.script.pop(0) if self.script else ScanVerdict()
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
+class FakeSleep:
+    """Records waits instead of sleeping; `on_sleep` lets a test act between retries."""
+
+    def __init__(self) -> None:
+        self.waits: list[float] = []
+        self.on_sleep: Callable[[int], None] | None = None
+
+    async def __call__(self, seconds: float) -> None:
+        self.waits.append(seconds)
+        if self.on_sleep is not None:
+            self.on_sleep(len(self.waits))
+        await asyncio.sleep(0)

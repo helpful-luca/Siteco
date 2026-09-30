@@ -73,3 +73,34 @@ def test_discard_waits_for_a_write_in_progress(tmp_path: Path) -> None:
     assert events == ["write started", "write done", "closed"]
     assert not sink.path.exists()
     sink.write(b"late")  # a write after discard is ignored, not an error on a closed file
+
+
+def test_quarantined_files_stay_outside_the_library_until_released(tmp_path: Path) -> None:
+    storage = LocalFileStorage(tmp_path / "uploads", tmp_path / "quarantine")
+    sink = storage.new_upload()
+    sink.write(b"hello")
+    storage.quarantine(sink, "doc", DocumentKind.TXT)
+    held = storage.quarantined_path("doc", DocumentKind.TXT)
+    assert held.parent == tmp_path / "quarantine"
+    assert held.read_bytes() == b"hello"
+    assert storage.is_quarantined("doc", DocumentKind.TXT)
+    assert not storage.exists("doc", DocumentKind.TXT)
+    storage.release("doc", DocumentKind.TXT)
+    assert storage.path_for("doc", DocumentKind.TXT).read_bytes() == b"hello"
+    assert not storage.is_quarantined("doc", DocumentKind.TXT)
+
+
+def test_quarantine_survives_the_temp_sweep_and_can_be_pruned(tmp_path: Path) -> None:
+    storage = LocalFileStorage(tmp_path / "uploads", tmp_path / "quarantine")
+    for doc_id in ("waiting", "orphan"):
+        sink = storage.new_upload()
+        sink.write(b"x")
+        storage.quarantine(sink, doc_id, DocumentKind.PDF)
+    storage.clear_temp()
+    assert storage.delete_except(set()) == 0
+    assert storage.discard_quarantined_except({"waiting"}) == 1
+    assert storage.is_quarantined("waiting", DocumentKind.PDF)
+    assert not storage.is_quarantined("orphan", DocumentKind.PDF)
+    storage.discard_quarantined("waiting", DocumentKind.PDF)
+    storage.discard_quarantined("waiting", DocumentKind.PDF)  # idempotent
+    assert not storage.is_quarantined("waiting", DocumentKind.PDF)

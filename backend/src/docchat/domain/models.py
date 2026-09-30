@@ -34,6 +34,7 @@ class Document:
     char_count: int | None = None
     progress: float = 0.0
     error_code: ErrorCode | None = None
+    error_params: Mapping[str, int | str] = field(default_factory=dict)
     notices: tuple[Notice, ...] = ()
     ready_at: datetime | None = None
 

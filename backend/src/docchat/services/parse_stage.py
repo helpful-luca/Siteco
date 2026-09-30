@@ -10,7 +10,14 @@ from docchat.domain.enums import DocumentKind
 from docchat.domain.errors import ErrorCode, IngestionError, NoticeCode
 from docchat.domain.models import Document, Notice
 from docchat.domain.parsing import PageBatchFailed, TextSection
-from docchat.domain.ports import ChunkSpool, PageOcr, PdfParser, SpoolWriter, TextParser
+from docchat.domain.ports import (
+    ActiveContentDetector,
+    ChunkSpool,
+    PageOcr,
+    PdfParser,
+    SpoolWriter,
+    TextParser,
+)
 from docchat.domain.text_sections import text_sections
 from docchat.services.ingestion_progress import ProgressReporter
 
@@ -63,12 +70,14 @@ class ParseStage:
         pdf_parser: PdfParser,
         text_parser: TextParser,
         ocr: PageOcr,
+        active_content: ActiveContentDetector,
         limits: ParseLimits,
     ) -> None:
         self._spool = spool
         self._pdf_parser = pdf_parser
         self._text_parser = text_parser
         self._ocr = ocr
+        self._active_content = active_content
         self._limits = limits
 
     async def run(self, document: Document, path: Path, report: ProgressReporter) -> ParseOutcome:
@@ -138,6 +147,10 @@ class ParseStage:
         if sink.chunks == 0:
             raise IngestionError(ErrorCode.PDF_NO_TEXT if without_text else ErrorCode.PDF_CORRUPT)
         notices = []
+        # Static check for scripts, launch actions and attachments (master spec 6.9). Only a
+        # hint: the text is extracted and the viewer runs nothing.
+        if await asyncio.to_thread(self._active_content.find, path):
+            notices.append(Notice(NoticeCode.PDF_ACTIVE_CONTENT))
         if without_text:
             notices.append(Notice(NoticeCode.PAGES_WITHOUT_TEXT, {"count": len(without_text)}))
         if skipped:

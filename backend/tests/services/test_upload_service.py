@@ -6,7 +6,6 @@ import pytest
 from docchat.domain.enums import DocumentKind, DocumentStatus
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.models import Document
-from tests.fakes import RejectingScanner
 from tests.pdf_factory import build_pdf, text_page
 from tests.services.conftest import Harness, build_harness
 
@@ -29,14 +28,16 @@ def _temp_files(harness: Harness) -> list[Path]:
     return list((harness.root / "uploads" / "tmp").glob("*"))
 
 
-async def test_accepts_a_pdf_and_queues_it(harness: Harness) -> None:
+async def test_accepts_a_pdf_and_holds_it_for_the_scan(harness: Harness) -> None:
     doc = await _accept(harness, "Datenblatt%20Mira.pdf", PDF)
-    assert (doc.status, doc.kind, doc.filename) == ("queued", "pdf", "Datenblatt Mira.pdf")
+    assert (doc.status, doc.kind, doc.filename) == ("scanning", "pdf", "Datenblatt Mira.pdf")
     assert doc.size_bytes == len(PDF)
-    assert harness.storage.path_for(doc.id, DocumentKind.PDF).read_bytes() == PDF
-    assert harness.worker.queue_positions() == {doc.id: 1}
+    assert harness.storage.quarantined_path(doc.id, DocumentKind.PDF).read_bytes() == PDF
+    assert not harness.storage.exists(doc.id, DocumentKind.PDF)
     assert harness.repository.get(doc.id) == doc
     assert _temp_files(harness) == []
+    await harness.scans.process(doc.id)
+    assert harness.worker.queue_positions() == {doc.id: 1}
 
 
 @pytest.mark.parametrize(
@@ -92,15 +93,23 @@ async def test_duplicate_points_to_the_existing_document(harness: Harness) -> No
     assert _temp_files(harness) == []
 
 
-async def test_duplicate_of_a_failed_document_processes_it_again(harness: Harness) -> None:
+async def _failed(harness: Harness) -> Document:
     first = await _accept(harness, "a.pdf", PDF)
+    await harness.scans.process(first.id)
     harness.worker.forget(first.id)
     harness.repository.start_parsing(first.id, harness.clock.now())
     harness.repository.mark_failed(first.id, ErrorCode.PROCESSING_TIMEOUT, harness.clock.now())
     harness.storage.delete(first.id, DocumentKind.PDF)
+    return first
+
+
+async def test_duplicate_of_a_failed_document_processes_it_again(harness: Harness) -> None:
+    first = await _failed(harness)
     again = await _accept(harness, "a.pdf", PDF)
     assert again.id == first.id
-    assert (again.status, again.error_code) == (DocumentStatus.QUEUED, None)
+    assert (again.status, again.error_code) == (DocumentStatus.SCANNING, None)
+    assert harness.storage.is_quarantined(first.id, DocumentKind.PDF)
+    await harness.scans.process(first.id)
     assert harness.storage.exists(first.id, DocumentKind.PDF)
     assert harness.worker.queue_positions() == {first.id: 1}
 
@@ -110,35 +119,21 @@ async def test_utf16_text_with_bom_is_accepted(harness: Harness) -> None:
     assert doc.kind is DocumentKind.TXT
 
 
-async def test_scanner_rejection_never_reaches_the_library(tmp_path: Path) -> None:
-    harness = build_harness(tmp_path)
-    scanner = RejectingScanner(AppError(ErrorCode.FILE_CONTENT_MISMATCH))
-    harness.uploads._scanner = scanner
-    with pytest.raises(AppError):
-        await _accept(harness, "a.pdf", PDF)
-    assert scanner.scanned and scanner.scanned[0].parent.name == "tmp"
-    assert _temp_files(harness) == []
-    assert not list((harness.root / "uploads").glob("*.pdf"))
-
-
 async def test_retry_of_a_failed_duplicate_leaves_no_file_if_deleted_meanwhile(
     harness: Harness,
 ) -> None:
-    first = await _accept(harness, "a.pdf", PDF)
-    harness.worker.forget(first.id)
-    harness.repository.start_parsing(first.id, harness.clock.now())
-    harness.repository.mark_failed(first.id, ErrorCode.PROCESSING_TIMEOUT, harness.clock.now())
-    harness.storage.delete(first.id, DocumentKind.PDF)
-    original_requeue = harness.repository.requeue
+    first = await _failed(harness)
+    original_rescan = harness.repository.rescan
 
-    def requeue_then_deleted(document_id: str, now: object) -> bool:
-        requeued = original_requeue(document_id, now)  # type: ignore[arg-type]
+    def rescan_then_deleted(document_id: str, now: object) -> bool:
+        rescanning = original_rescan(document_id, now)  # type: ignore[arg-type]
         harness.repository.delete(document_id)  # a DELETE request wins the race
-        return requeued
+        return rescanning
 
-    harness.repository.requeue = requeue_then_deleted  # type: ignore[method-assign]
+    harness.repository.rescan = rescan_then_deleted  # type: ignore[method-assign]
     with pytest.raises(AppError) as info:
         await _accept(harness, "a.pdf", PDF)
     assert info.value.code is ErrorCode.UPLOAD_INCOMPLETE
+    assert not harness.storage.is_quarantined(first.id, DocumentKind.PDF)
     assert not harness.storage.exists(first.id, DocumentKind.PDF)
     assert _temp_files(harness) == []

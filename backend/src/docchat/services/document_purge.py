@@ -1,4 +1,4 @@
-"""Removes everything a document left behind: index entries, the original file, the row."""
+"""Removes everything a document left behind: index entries, files, the row."""
 
 import asyncio
 
@@ -19,4 +19,5 @@ class DocumentPurge:
         startup finishes. Every step is idempotent."""
         await asyncio.to_thread(self._vectors.delete_document, document.id)
         await asyncio.to_thread(self._storage.delete, document.id, document.kind)
+        await asyncio.to_thread(self._storage.discard_quarantined, document.id, document.kind)
         await asyncio.to_thread(self._repository.delete, document.id)

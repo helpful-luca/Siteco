@@ -53,5 +53,8 @@ def config(container: ContainerDep) -> ConfigOut:
             max_pdf_pages=settings.max_pdf_pages,
             max_storage_mb=settings.max_storage_mb,
         ),
-        features=Features(retrieval_only=container.llm_status == LlmStatus.MISSING_KEY),
+        features=Features(
+            retrieval_only=container.llm_status == LlmStatus.MISSING_KEY,
+            malware_scan=settings.malware_scan,
+        ),
     )

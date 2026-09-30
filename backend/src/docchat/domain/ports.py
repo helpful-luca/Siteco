@@ -4,13 +4,14 @@ Blocking ports are plain methods; services call them via asyncio.to_thread. Port
 their own worker process are async.
 """
 
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
 from docchat.domain.enums import DocumentKind, DocumentStatus
 from docchat.domain.errors import ErrorCode
+from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk, Document, Notice
 from docchat.domain.parsing import PageBatch, TextContent, TextSection
 
@@ -48,6 +49,18 @@ class DocumentRepository(Protocol):
 
     def requeue(self, document_id: str, now: datetime) -> bool: ...
 
+    def rescan(self, document_id: str, now: datetime) -> bool:
+        """`failed` back to `scanning`, for the same file uploaded again."""
+        ...
+
+    def set_notices(
+        self, document_id: str, status: DocumentStatus, notices: Sequence[Notice], now: datetime
+    ) -> bool: ...
+
+    def finish_scan(self, document_id: str, now: datetime) -> bool:
+        """`scanning` to `queued`: the file passed the malware scan."""
+        ...
+
     def start_parsing(self, document_id: str, now: datetime) -> bool: ...
 
     def set_progress(
@@ -73,7 +86,13 @@ class DocumentRepository(Protocol):
 
     def mark_ready(self, document_id: str, now: datetime) -> bool: ...
 
-    def mark_failed(self, document_id: str, code: ErrorCode, now: datetime) -> bool: ...
+    def mark_failed(
+        self,
+        document_id: str,
+        code: ErrorCode,
+        now: datetime,
+        params: Mapping[str, int | str] | None = None,
+    ) -> bool: ...
 
     def mark_deleting(self, document_id: str, now: datetime) -> Document | None: ...
 
@@ -88,6 +107,12 @@ class IngestionScheduler(Protocol):
     def forget(self, document_id: str) -> None: ...
 
     def queue_positions(self) -> dict[str, int]: ...
+
+
+class ScanScheduler(Protocol):
+    """The malware scan queue as the upload use case sees it."""
+
+    def enqueue(self, document: Document) -> None: ...
 
 
 class UploadSink(Protocol):
@@ -111,6 +136,21 @@ class FileStorage(Protocol):
     def path_for(self, document_id: str, kind: DocumentKind) -> Path: ...
 
     def exists(self, document_id: str, kind: DocumentKind) -> bool: ...
+
+    # Quarantine: uploads wait here, outside the library, until the malware scan passed.
+    def quarantine(self, sink: UploadSink, document_id: str, kind: DocumentKind) -> None: ...
+
+    def quarantined_path(self, document_id: str, kind: DocumentKind) -> Path: ...
+
+    def is_quarantined(self, document_id: str, kind: DocumentKind) -> bool: ...
+
+    def release(self, document_id: str, kind: DocumentKind) -> None:
+        """Moves a scanned file from the quarantine into the library."""
+        ...
+
+    def discard_quarantined(self, document_id: str, kind: DocumentKind) -> None: ...
+
+    def discard_quarantined_except(self, keep: Collection[str]) -> int: ...
 
     def delete(self, document_id: str, kind: DocumentKind) -> None: ...
 
@@ -186,6 +226,12 @@ class PageOcr(Protocol):
 
 
 class MalwareScanner(Protocol):
-    """Checks an upload while it is still a temp file. Raises AppError to reject it."""
+    """Checks a file in the quarantine. Raises ScannerUnavailable (try later) or ScanFailed."""
 
-    async def scan(self, path: Path) -> None: ...
+    async def scan(self, path: Path) -> ScanVerdict: ...
+
+
+class ActiveContentDetector(Protocol):
+    """Names of active PDF content (JavaScript, launch actions, ...) found in a file."""
+
+    def find(self, path: Path) -> frozenset[str]: ...

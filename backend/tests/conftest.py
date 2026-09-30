@@ -16,13 +16,20 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
-    return Settings(_env_file=None, data_dir=tmp_path / "data", anthropic_api_key=None)
+    # No clamd in unit tests: tests that need a scanner pass a fake one to build_container.
+    return Settings(
+        _env_file=None, data_dir=tmp_path / "data", anthropic_api_key=None, malware_scan="off"
+    )
+
+
+_OPT_IN = {"slow": "RUN_SLOW", "docker": "RUN_DOCKER"}
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    if os.environ.get("RUN_SLOW") == "1":
-        return
-    skip = pytest.mark.skip(reason="slow test: set RUN_SLOW=1")
-    for item in items:
-        if "slow" in item.keywords:
-            item.add_marker(skip)
+    for marker, variable in _OPT_IN.items():
+        if os.environ.get(variable) == "1":
+            continue
+        skip = pytest.mark.skip(reason=f"{marker} test: set {variable}=1")
+        for item in items:
+            if marker in item.keywords:
+                item.add_marker(skip)

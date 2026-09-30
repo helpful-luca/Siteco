@@ -207,6 +207,13 @@ export interface components {
             /** @description Why the document is `failed`. */
             error_code: components["schemas"]["ErrorCode"] | null;
             /**
+             * Error Params
+             * @description Details for the error text, e.g. the signature for MALWARE_DETECTED.
+             */
+            error_params?: {
+                [key: string]: number | string;
+            };
+            /**
              * Filename
              * @description Display name only. Render as text, never as HTML.
              */
@@ -270,13 +277,18 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED";
+        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED";
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
         };
         /** Features */
         Features: {
+            /**
+             * Malware Scan
+             * @enum {string}
+             */
+            malware_scan: "required" | "off";
             /** Retrieval Only */
             retrieval_only: boolean;
         };
@@ -312,7 +324,7 @@ export interface components {
          * @description Hints that are not errors. The UI translates them via `notices.<CODE>`.
          * @enum {string}
          */
-        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_SKIPPED";
+        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_SKIPPED" | "PDF_ACTIVE_CONTENT" | "SCANNER_STARTING" | "SCANNER_UNAVAILABLE";
         /** NoticeOut */
         NoticeOut: {
             code: components["schemas"]["NoticeCode"];

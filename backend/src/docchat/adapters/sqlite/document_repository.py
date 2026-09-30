@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
 from docchat.adapters.sqlite.database import Database
@@ -11,6 +11,12 @@ from docchat.domain.errors import AppError, ErrorCode, NoticeCode
 from docchat.domain.models import Document, Notice
 
 _ACTIVE = (DocumentStatus.QUEUED, DocumentStatus.PARSING, DocumentStatus.EMBEDDING)
+_FAILABLE = (DocumentStatus.SCANNING, *_ACTIVE)
+# Resets everything a previous run produced.
+_CLEAN_SLATE = (
+    "progress = 0, error_code = NULL, error_params = '{}', notices = '[]',"
+    " chunk_count = NULL, char_count = NULL, ready_at = NULL"
+)
 
 
 def _ts(value: datetime) -> str:
@@ -46,6 +52,7 @@ def _row_to_document(row: sqlite3.Row) -> Document:
         char_count=row["char_count"],
         progress=row["progress"],
         error_code=ErrorCode(row["error_code"]) if row["error_code"] else None,
+        error_params=json.loads(row["error_params"]),
         notices=notices,
         ready_at=_parse_ts(row["ready_at"]),
     )
@@ -132,10 +139,31 @@ class SqliteDocumentRepository:
     def requeue(self, document_id: str, now: datetime) -> bool:
         expected = [s.value for s in (*_ACTIVE, DocumentStatus.FAILED)]
         return self._update(
-            "UPDATE documents SET status = ?, progress = 0, error_code = NULL, notices = '[]',"
-            " chunk_count = NULL, char_count = NULL, ready_at = NULL, updated_at = ?"
+            f"UPDATE documents SET status = ?, {_CLEAN_SLATE}, updated_at = ?"
             f" WHERE id = ? AND status IN ({_placeholders(expected)})",
             [DocumentStatus.QUEUED.value, _ts(now), document_id, *expected],
+        )
+
+    def rescan(self, document_id: str, now: datetime) -> bool:
+        return self._update(
+            f"UPDATE documents SET status = ?, {_CLEAN_SLATE}, updated_at = ?"
+            " WHERE id = ? AND status = ?",
+            (DocumentStatus.SCANNING.value, _ts(now), document_id, DocumentStatus.FAILED.value),
+        )
+
+    def set_notices(
+        self, document_id: str, status: DocumentStatus, notices: Sequence[Notice], now: datetime
+    ) -> bool:
+        return self._update(
+            "UPDATE documents SET notices = ?, updated_at = ? WHERE id = ? AND status = ?",
+            (_notices_json(notices), _ts(now), document_id, status.value),
+        )
+
+    def finish_scan(self, document_id: str, now: datetime) -> bool:
+        return self._update(
+            "UPDATE documents SET status = ?, notices = '[]', updated_at = ?"
+            " WHERE id = ? AND status = ?",
+            (DocumentStatus.QUEUED.value, _ts(now), document_id, DocumentStatus.SCANNING.value),
         )
 
     def start_parsing(self, document_id: str, now: datetime) -> bool:
@@ -198,12 +226,25 @@ class SqliteDocumentRepository:
             ),
         )
 
-    def mark_failed(self, document_id: str, code: ErrorCode, now: datetime) -> bool:
-        expected = [s.value for s in _ACTIVE]
+    def mark_failed(
+        self,
+        document_id: str,
+        code: ErrorCode,
+        now: datetime,
+        params: Mapping[str, int | str] | None = None,
+    ) -> bool:
+        expected = [s.value for s in _FAILABLE]
         return self._update(
-            "UPDATE documents SET status = ?, error_code = ?, updated_at = ?"
+            "UPDATE documents SET status = ?, error_code = ?, error_params = ?, updated_at = ?"
             f" WHERE id = ? AND status IN ({_placeholders(expected)})",
-            [DocumentStatus.FAILED.value, code.value, _ts(now), document_id, *expected],
+            [
+                DocumentStatus.FAILED.value,
+                code.value,
+                json.dumps(dict(params or {})),
+                _ts(now),
+                document_id,
+                *expected,
+            ],
         )
 
     def mark_deleting(self, document_id: str, now: datetime) -> Document | None:

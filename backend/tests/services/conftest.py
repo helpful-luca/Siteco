@@ -9,7 +9,7 @@ import pytest
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.local_file_storage import LocalFileStorage
 from docchat.adapters.no_page_ocr import NoPageOcr
-from docchat.adapters.noop_malware_scanner import NoopMalwareScanner
+from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
 from docchat.adapters.text_parser import TextFileParser
@@ -19,9 +19,17 @@ from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
 from docchat.services.ingestion_worker import IngestionWorker
+from docchat.services.malware_scan_worker import MalwareScanWorker, ScanRetry
 from docchat.services.parse_stage import ParseLimits, ParseStage
 from docchat.services.upload_service import UploadLimits, UploadService
-from tests.fakes import FakeClock, FakeEmbedder, FakePdfParser, FakeVectorStore
+from tests.fakes import (
+    FakeClock,
+    FakeEmbedder,
+    FakePdfParser,
+    FakeScanner,
+    FakeSleep,
+    FakeVectorStore,
+)
 
 MB = 1024 * 1024
 
@@ -39,6 +47,9 @@ class Harness:
     worker: IngestionWorker
     documents: DocumentService
     uploads: UploadService
+    scanner: FakeScanner
+    sleep: FakeSleep
+    scans: MalwareScanWorker
 
     def add_document(
         self,
@@ -78,7 +89,7 @@ def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits:
     database = Database(root / "app.db")
     database.migrate()
     repository = SqliteDocumentRepository(database)
-    storage = LocalFileStorage(root / "uploads")
+    storage = LocalFileStorage(root / "uploads", root / "quarantine")
     spool = JsonlChunkSpool(root / "spool")
     vectors = FakeVectorStore()
     pdf = FakePdfParser()
@@ -90,6 +101,7 @@ def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits:
         pdf,
         TextFileParser(),
         NoPageOcr(),
+        PdfActiveContentDetector(),
         ParseLimits(
             max_pdf_pages=limits.get("max_pdf_pages", 100),
             max_chars=limits.get("max_chars", 1_000_000),
@@ -102,11 +114,21 @@ def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits:
     )
     worker = IngestionWorker(repository, storage, spool, vectors, parse, embed, purge, clock)
     documents = DocumentService(repository, storage, vectors, worker, purge, clock)
+    scanner = FakeScanner()
+    sleep = FakeSleep()
+    scans = MalwareScanWorker(
+        repository,
+        storage,
+        scanner,
+        worker,
+        clock,
+        ScanRetry(first_delay_s=1, max_delay_s=4, unavailable_after_s=10),
+        sleep=sleep,
+    )
     uploads = UploadService(
         repository,
         storage,
-        NoopMalwareScanner(),
-        worker,
+        scans,
         clock,
         UploadLimits(
             max_bytes=limits.get("max_bytes", 5 * MB),
@@ -115,7 +137,20 @@ def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits:
         ),
     )
     return Harness(
-        root, repository, storage, spool, vectors, pdf, embedder, clock, worker, documents, uploads
+        root,
+        repository,
+        storage,
+        spool,
+        vectors,
+        pdf,
+        embedder,
+        clock,
+        worker,
+        documents,
+        uploads,
+        scanner,
+        sleep,
+        scans,
     )
 
 

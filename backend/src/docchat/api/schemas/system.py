@@ -24,6 +24,7 @@ class ReadyOut(BaseModel):
 
 class Features(BaseModel):
     retrieval_only: bool
+    malware_scan: Literal["required", "off"]
 
 
 class Limits(BaseModel):

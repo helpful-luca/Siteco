@@ -69,3 +69,17 @@ def test_deleting_a_chat_cascades_to_messages(db: Database) -> None:
 
 def test_ping_false_when_directory_missing(tmp_path: Path) -> None:
     assert Database(tmp_path / "missing" / "app.db").ping() is False
+
+
+def test_version_1_databases_are_migrated_in_place(tmp_path: Path) -> None:
+    path = tmp_path / "old.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(
+            "CREATE TABLE documents (id TEXT PRIMARY KEY, error_code TEXT);"
+            "INSERT INTO documents VALUES ('d1', NULL); PRAGMA user_version = 1;"
+        )
+    Database(path).migrate()
+    with sqlite3.connect(path) as conn:
+        row = conn.execute("SELECT error_params FROM documents WHERE id = 'd1'").fetchone()
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+    assert (row[0], version) == ("{}", SCHEMA_VERSION)

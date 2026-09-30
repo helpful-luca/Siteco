@@ -37,6 +37,9 @@ class ErrorCode(StrEnum):
     PROCESSING_TIMEOUT = "PROCESSING_TIMEOUT"
     PROCESSING_FAILED = "PROCESSING_FAILED"
     PROCESSING_INTERRUPTED = "PROCESSING_INTERRUPTED"
+    # Malware scan (stored like ingestion errors; params carry the signature name)
+    MALWARE_DETECTED = "MALWARE_DETECTED"
+    MALWARE_SCAN_FAILED = "MALWARE_SCAN_FAILED"
 
 
 class NoticeCode(StrEnum):
@@ -44,6 +47,9 @@ class NoticeCode(StrEnum):
 
     PAGES_WITHOUT_TEXT = "PAGES_WITHOUT_TEXT"
     PAGES_SKIPPED = "PAGES_SKIPPED"
+    PDF_ACTIVE_CONTENT = "PDF_ACTIVE_CONTENT"
+    SCANNER_STARTING = "SCANNER_STARTING"
+    SCANNER_UNAVAILABLE = "SCANNER_UNAVAILABLE"
 
 
 @dataclass(frozen=True)
@@ -81,6 +87,8 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     ErrorCode.PROCESSING_TIMEOUT: ErrorSpec(500, True),
     ErrorCode.PROCESSING_FAILED: ErrorSpec(500, True),
     ErrorCode.PROCESSING_INTERRUPTED: ErrorSpec(500, True),
+    ErrorCode.MALWARE_DETECTED: ErrorSpec(422, False),
+    ErrorCode.MALWARE_SCAN_FAILED: ErrorSpec(422, True),
 }
 
 

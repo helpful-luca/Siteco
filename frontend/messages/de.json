@@ -44,6 +44,8 @@
     "PROCESSING_TIMEOUT": "Die Verarbeitung hat zu lange gedauert. Versuch es noch einmal oder teile die Datei auf.",
     "PROCESSING_FAILED": "Beim Verarbeiten ist etwas schiefgelaufen. Versuch es noch einmal.",
     "PROCESSING_INTERRUPTED": "Die Verarbeitung wurde durch einen Neustart unterbrochen. Starte sie einfach neu.",
+    "MALWARE_DETECTED": "Die Virenprüfung hat in dieser Datei Schadsoftware gefunden. Die Datei wurde sofort gelöscht.",
+    "MALWARE_SCAN_FAILED": "Die Virenprüfung konnte diese Datei nicht prüfen. Sicherheitshalber wurde sie nicht übernommen. Versuch es noch einmal.",
     "BACKEND_UNAVAILABLE": "Der Server ist gerade nicht erreichbar.",
     "FORBIDDEN_ORIGIN": "Diese Anfrage kam nicht aus der App und wurde blockiert.",
     "NETWORK_ERROR": "Keine Verbindung. Prüf deine Verbindung und versuch es erneut.",
@@ -53,7 +55,10 @@
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne Text, vermutlich gescannt. Diese Seite wird nicht durchsucht.} other {# Seiten ohne Text, vermutlich gescannt. Diese Seiten werden nicht durchsucht.}}",
-    "PAGES_SKIPPED": "{count, plural, one {# Seite ließ sich nicht lesen und fehlt in der Suche.} other {# Seiten ließen sich nicht lesen und fehlen in der Suche.}}"
+    "PAGES_SKIPPED": "{count, plural, one {# Seite ließ sich nicht lesen und fehlt in der Suche.} other {# Seiten ließen sich nicht lesen und fehlen in der Suche.}}",
+    "PDF_ACTIVE_CONTENT": "Dieses PDF enthält aktive Inhalte wie Skripte. Die App liest nur den Text, ausgeführt wird nichts.",
+    "SCANNER_STARTING": "Die Virenprüfung startet noch. Die Datei wird gleich geprüft.",
+    "SCANNER_UNAVAILABLE": "Die Virenprüfung ist gerade nicht erreichbar. Die Datei wartet, bis sie wieder läuft."
   },
   "styleguide": {
     "title": "Design-System",

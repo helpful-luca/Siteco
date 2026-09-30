@@ -38,6 +38,7 @@ asyncio_mode = "auto"
 markers = [
   "model: needs the real embedding model files (slow, run in docker build and CI)",
   "slow: large generated inputs; skipped unless RUN_SLOW=1",
+  "docker: talks to a real container (clamd); skipped unless RUN_DOCKER=1",
 ]
 
 [tool.ruff]

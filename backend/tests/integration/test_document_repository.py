@@ -119,3 +119,41 @@ def test_list_by_status(repo: SqliteDocumentRepository) -> None:
         "a",
         "b",
     }
+
+
+def test_scan_transitions(repo: SqliteDocumentRepository) -> None:
+    repo.insert(_doc(status=DocumentStatus.SCANNING))
+    waiting = (Notice(NoticeCode.SCANNER_STARTING),)
+    assert repo.set_notices("d1", DocumentStatus.SCANNING, waiting, T0) is True
+    assert repo.get("d1").notices == waiting  # type: ignore[union-attr]
+    assert repo.set_notices("d1", DocumentStatus.QUEUED, (), T0) is False
+    assert repo.start_parsing("d1", T0) is False  # not scanned yet
+    assert repo.finish_scan("d1", T0) is True
+    scanned = repo.get("d1")
+    assert scanned is not None
+    assert (scanned.status, scanned.notices) == (DocumentStatus.QUEUED, ())
+    assert repo.finish_scan("d1", T0) is False
+
+
+def test_malware_verdict_is_stored_with_params(repo: SqliteDocumentRepository) -> None:
+    repo.insert(_doc(status=DocumentStatus.SCANNING))
+    params = {"signature": "Eicar-Test-Signature"}
+    assert repo.mark_failed("d1", ErrorCode.MALWARE_DETECTED, T0, params) is True
+    failed = repo.get("d1")
+    assert failed is not None
+    assert (failed.status, failed.error_code) == (DocumentStatus.FAILED, ErrorCode.MALWARE_DETECTED)
+    assert failed.error_params == params
+
+
+def test_rescan_takes_a_failed_document_back_to_scanning(repo: SqliteDocumentRepository) -> None:
+    repo.insert(_doc(status=DocumentStatus.SCANNING))
+    assert repo.rescan("d1", T0) is False  # only failed documents
+    repo.mark_failed("d1", ErrorCode.MALWARE_SCAN_FAILED, T0, {"x": 1})
+    assert repo.rescan("d1", T0) is True
+    again = repo.get("d1")
+    assert again is not None
+    assert (again.status, again.error_code, again.error_params) == (
+        DocumentStatus.SCANNING,
+        None,
+        {},
+    )

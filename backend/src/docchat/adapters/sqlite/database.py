@@ -6,7 +6,13 @@ from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+
+# Steps from one version to the next for databases created by an older release. A new database
+# gets schema.sql, which already has the latest shape.
+_MIGRATIONS: dict[int, str] = {
+    2: "ALTER TABLE documents ADD COLUMN error_params TEXT NOT NULL DEFAULT '{}';",
+}
 
 
 class Database:
@@ -32,9 +38,12 @@ class Database:
             current = conn.execute("PRAGMA user_version").fetchone()[0]
             if current >= SCHEMA_VERSION:
                 return
-            schema = files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")
+            if current == 0:
+                script = files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")
+            else:
+                script = "\n".join(_MIGRATIONS[v] for v in range(current + 1, SCHEMA_VERSION + 1))
             conn.executescript(
-                f"BEGIN;\n{schema}\nPRAGMA user_version = {SCHEMA_VERSION};\nCOMMIT;"
+                f"BEGIN;\n{script}\nPRAGMA user_version = {SCHEMA_VERSION};\nCOMMIT;"
             )
 
     def ping(self) -> bool:

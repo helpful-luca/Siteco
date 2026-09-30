@@ -293,3 +293,13 @@ async def test_unexpected_errors_are_still_reported(
         await harness.worker.process(doc.id)
     assert "ingestion_crashed" in [r.getMessage() for r in caplog.records]
     assert harness.reload(doc).error_code is ErrorCode.PROCESSING_FAILED  # type: ignore[union-attr]
+
+
+async def test_pdf_with_active_content_is_processed_with_a_notice(harness: Harness) -> None:
+    doc = harness.add_document(
+        pages=[TEXT], content=b"%PDF-1.7\n1 0 obj << /OpenAction << /S /JavaScript >> >> endobj"
+    )
+    await harness.worker.process(doc.id)
+    ready = harness.reload(doc)
+    assert ready is not None and ready.status is DocumentStatus.READY
+    assert ready.notices == (Notice(NoticeCode.PDF_ACTIVE_CONTENT),)

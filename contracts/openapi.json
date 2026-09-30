@@ -150,6 +150,21 @@
             ],
             "description": "Why the document is `failed`."
           },
+          "error_params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Details for the error text, e.g. the signature for MALWARE_DETECTED.",
+            "title": "Error Params",
+            "type": "object"
+          },
           "filename": {
             "description": "Display name only. Render as text, never as HTML.",
             "title": "Filename",
@@ -334,7 +349,9 @@
           "DOCUMENT_TOO_LONG",
           "PROCESSING_TIMEOUT",
           "PROCESSING_FAILED",
-          "PROCESSING_INTERRUPTED"
+          "PROCESSING_INTERRUPTED",
+          "MALWARE_DETECTED",
+          "MALWARE_SCAN_FAILED"
         ],
         "title": "ErrorCode",
         "type": "string"
@@ -353,13 +370,22 @@
       },
       "Features": {
         "properties": {
+          "malware_scan": {
+            "enum": [
+              "required",
+              "off"
+            ],
+            "title": "Malware Scan",
+            "type": "string"
+          },
           "retrieval_only": {
             "title": "Retrieval Only",
             "type": "boolean"
           }
         },
         "required": [
-          "retrieval_only"
+          "retrieval_only",
+          "malware_scan"
         ],
         "title": "Features",
         "type": "object"
@@ -421,7 +447,10 @@
         "description": "Hints that are not errors. The UI translates them via `notices.<CODE>`.",
         "enum": [
           "PAGES_WITHOUT_TEXT",
-          "PAGES_SKIPPED"
+          "PAGES_SKIPPED",
+          "PDF_ACTIVE_CONTENT",
+          "SCANNER_STARTING",
+          "SCANNER_UNAVAILABLE"
         ],
         "title": "NoticeCode",
         "type": "string"

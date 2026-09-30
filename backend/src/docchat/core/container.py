@@ -5,12 +5,14 @@ import logging
 import os
 from dataclasses import dataclass
 
+from docchat.adapters.clamd_scanner import ClamdScanner
 from docchat.adapters.fastembed_embedder import FastEmbedEmbedder
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.lancedb_vector_store import LanceVectorStore
 from docchat.adapters.local_file_storage import LocalFileStorage
 from docchat.adapters.no_page_ocr import NoPageOcr
 from docchat.adapters.noop_malware_scanner import NoopMalwareScanner
+from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
 from docchat.adapters.pdfium_parser import PdfiumParser
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
@@ -23,6 +25,7 @@ from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
 from docchat.services.ingestion_worker import IngestionWorker
+from docchat.services.malware_scan_worker import MalwareScanWorker, ScanRetry
 from docchat.services.parse_stage import ParseLimits, ParseStage
 from docchat.services.upload_service import UploadLimits, UploadService
 
@@ -39,6 +42,7 @@ class Container:
     vectors: VectorStore
     pdf_parser: PdfParser
     worker: IngestionWorker
+    scans: MalwareScanWorker
     documents: DocumentService
     uploads: UploadService
     embedder_status: ComponentStatus = ComponentStatus.LOADING
@@ -55,7 +59,9 @@ class Container:
         if self.embedder_status is ComponentStatus.OK and (
             self.vector_store_status is ComponentStatus.OK
         ):
+            await self.scans.recover()
             await self.worker.recover()
+            self.scans.start()
             self.worker.start()
 
     async def _load_embedder(self) -> None:
@@ -81,12 +87,24 @@ class Container:
 
     async def stop(self) -> None:
         """Stop background work started in start()."""
+        await self.scans.stop()
         await self.worker.stop()
         await self.pdf_parser.close()
 
 
 def _default_threads() -> int:
     return max(1, (os.cpu_count() or 2) // 2)
+
+
+def _scanner(settings: Settings) -> MalwareScanner:
+    if settings.malware_scan == "off":
+        return NoopMalwareScanner()
+    return ClamdScanner(
+        settings.clamd_host,
+        settings.clamd_port,
+        scan_timeout_s=settings.clamd_scan_timeout_s,
+        max_stream_bytes=settings.clamd_stream_max_mb * _MB,
+    )
 
 
 def build_container(
@@ -98,7 +116,7 @@ def build_container(
 ) -> Container:
     database = Database(settings.database_path)
     repository = SqliteDocumentRepository(database)
-    storage = LocalFileStorage(settings.uploads_dir)
+    storage = LocalFileStorage(settings.uploads_dir, settings.quarantine_dir)
     spool = JsonlChunkSpool(settings.spool_dir)
     vectors = LanceVectorStore(settings.lancedb_dir, fts_language=settings.fts_language)
     clock = SystemClock()
@@ -115,6 +133,7 @@ def build_container(
         pdf_parser,
         TextFileParser(),
         NoPageOcr(),
+        PdfActiveContentDetector(),
         ParseLimits(
             max_pdf_pages=settings.max_pdf_pages,
             max_chars=settings.max_chars_per_doc,
@@ -134,6 +153,9 @@ def build_container(
     worker = IngestionWorker(
         repository, storage, spool, vectors, parse_stage, embed_stage, purge, clock
     )
+    scans = MalwareScanWorker(
+        repository, storage, scanner or _scanner(settings), worker, clock, ScanRetry()
+    )
     return Container(
         settings=settings,
         database=database,
@@ -141,13 +163,12 @@ def build_container(
         vectors=vectors,
         pdf_parser=pdf_parser,
         worker=worker,
+        scans=scans,
         documents=DocumentService(repository, storage, vectors, worker, purge, clock),
         uploads=UploadService(
             repository,
             storage,
-            # Phase 3b swaps in ClamAV here; nothing else changes.
-            scanner or NoopMalwareScanner(),
-            worker,
+            scans,
             clock,
             UploadLimits(
                 max_bytes=settings.max_upload_mb * _MB,

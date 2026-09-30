@@ -1,4 +1,8 @@
-"""Original files on disk as `<document id>.<kind>`. Uploads land in `tmp/` first."""
+"""Original files on disk as `<document id>.<kind>`.
+
+Uploads land in `tmp/` first, wait in the quarantine (a directory outside the library) until the
+malware scan passed, and only then become library files.
+"""
 
 import os
 import shutil
@@ -10,6 +14,17 @@ from uuid import uuid4
 
 from docchat.domain.enums import DocumentKind
 from docchat.domain.ports import UploadSink
+
+
+def _delete_files_except(directory: Path, keep: Collection[str]) -> int:
+    removed = 0
+    if not directory.exists():
+        return removed
+    for path in directory.iterdir():
+        if path.is_file() and path.stem not in keep:
+            path.unlink(missing_ok=True)
+            removed += 1
+    return removed
 
 
 class _TempUpload:
@@ -47,9 +62,10 @@ class _TempUpload:
 
 
 class LocalFileStorage:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, quarantine: Path | None = None) -> None:
         self.root = root
         self._tmp = root / "tmp"
+        self._quarantine = quarantine or root.parent / "quarantine"
 
     def _ensure_dirs(self) -> None:
         self._tmp.mkdir(parents=True, exist_ok=True)
@@ -68,19 +84,33 @@ class LocalFileStorage:
     def exists(self, document_id: str, kind: DocumentKind) -> bool:
         return self.path_for(document_id, kind).is_file()
 
+    def quarantine(self, sink: UploadSink, document_id: str, kind: DocumentKind) -> None:
+        sink.close()
+        self._quarantine.mkdir(parents=True, exist_ok=True)
+        os.replace(sink.path, self.quarantined_path(document_id, kind))
+
+    def quarantined_path(self, document_id: str, kind: DocumentKind) -> Path:
+        return self._quarantine / f"{document_id}.{kind.value}"
+
+    def is_quarantined(self, document_id: str, kind: DocumentKind) -> bool:
+        return self.quarantined_path(document_id, kind).is_file()
+
+    def release(self, document_id: str, kind: DocumentKind) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        os.replace(self.quarantined_path(document_id, kind), self.path_for(document_id, kind))
+
+    def discard_quarantined(self, document_id: str, kind: DocumentKind) -> None:
+        self.quarantined_path(document_id, kind).unlink(missing_ok=True)
+
+    def discard_quarantined_except(self, keep: Collection[str]) -> int:
+        return _delete_files_except(self._quarantine, keep)
+
     def delete(self, document_id: str, kind: DocumentKind) -> None:
         self.path_for(document_id, kind).unlink(missing_ok=True)
 
     def delete_except(self, keep: Collection[str]) -> int:
         """Removes library files whose document no longer exists. Returns how many."""
-        removed = 0
-        if not self.root.exists():
-            return removed
-        for path in self.root.iterdir():
-            if path.is_file() and path.stem not in keep:
-                path.unlink(missing_ok=True)
-                removed += 1
-        return removed
+        return _delete_files_except(self.root, keep)
 
     def clear_temp(self) -> None:
         shutil.rmtree(self._tmp, ignore_errors=True)

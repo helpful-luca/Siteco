@@ -12,6 +12,9 @@ from fastapi.testclient import TestClient
 from httpx import Response
 
 from docchat.core.config import Settings
+from docchat.domain.malware import ScannerUnavailable, ScanVerdict
+from docchat.services.malware_scan_worker import ScanRetry
+from tests.fakes import FakeScanner
 from tests.pdf_factory import PageSpec, build_pdf, text_page
 from tests.support import make_app
 
@@ -50,7 +53,7 @@ def test_pdf_upload_is_accepted_and_ingested(client: TestClient) -> None:
     doc = r.json()["document"]
     assert doc["filename"] == "Datenblatt Größe.pdf"
     assert (doc["kind"], doc["size_bytes"], doc["error_code"]) == ("pdf", len(PDF), None)
-    assert doc["status"] in {"queued", "parsing", "embedding", "ready"}
+    assert doc["status"] in {"scanning", "queued", "parsing", "embedding", "ready"}
     ready = wait_until_settled(client, doc["id"])
     assert ready["status"] == "ready", ready
     assert (ready["page_count"], ready["chunk_count"], ready["progress"]) == (1, 1, 1.0)
@@ -220,6 +223,7 @@ def test_unknown_and_malformed_ids(client: TestClient) -> None:
 
 def test_file_download_has_safe_headers(client: TestClient) -> None:
     doc_id = upload(client, "Größe & <b>.pdf", PDF).json()["document"]["id"]
+    wait_until_settled(client, doc_id)
     r = client.get(f"/api/documents/{doc_id}/file")
     assert r.status_code == 200
     assert r.content == PDF
@@ -236,12 +240,14 @@ def test_file_download_has_safe_headers(client: TestClient) -> None:
 
 def test_markdown_is_served_as_plain_text(client: TestClient) -> None:
     doc_id = upload(client, "x.md", b"<script>alert(1)</script>").json()["document"]["id"]
+    wait_until_settled(client, doc_id)
     r = client.get(f"/api/documents/{doc_id}/file")
     assert r.headers["content-type"] == "text/plain; charset=utf-8"
 
 
 def test_range_requests(client: TestClient) -> None:
     doc_id = upload(client, "a.pdf", PDF).json()["document"]["id"]
+    wait_until_settled(client, doc_id)
     r = client.get(f"/api/documents/{doc_id}/file", headers={"Range": "bytes=0-9"})
     assert r.status_code == 206
     assert r.content == PDF[:10]
@@ -292,6 +298,7 @@ def test_chunk_endpoint_returns_sentences_with_rects(client: TestClient) -> None
 
 def test_uploaded_files_use_uuid_names_on_disk(client: TestClient, settings: Settings) -> None:
     doc_id = upload(client, "../../evil.pdf", PDF).json()["document"]["id"]
+    wait_until_settled(client, doc_id)
     assert [p.name for p in settings.uploads_dir.glob("*.pdf")] == [f"{doc_id}.pdf"]
     assert client.get(f"/api/documents/{doc_id}").json()["document"]["filename"] == "evil.pdf"
 
@@ -322,3 +329,48 @@ def test_file_deleted_between_lookup_and_stat_is_missing(client: TestClient) -> 
     documents.file = lambda document_id: ghost
     r = client.get(f"/api/documents/{doc_id}/file")
     assert (r.status_code, error(r)["code"]) == (410, "DOCUMENT_FILE_MISSING")
+
+
+def _files_under(root: Path) -> list[Path]:
+    return [p for p in root.rglob("*") if p.is_file() and p.suffix in {".txt", ".part", ".pdf"}]
+
+
+def test_infected_upload_fails_with_the_signature_and_leaves_no_file(settings: Settings) -> None:
+    scanner = FakeScanner(ScanVerdict("Eicar-Test-Signature"))
+    with TestClient(make_app(settings, scanner=scanner)) as c:
+        r = upload(c, "eicar.txt", b"harmless stand-in for the test signature")
+        assert r.status_code == 202
+        assert r.json()["document"]["status"] == "scanning"
+        failed = wait_until_settled(c, r.json()["document"]["id"])
+    assert (failed["status"], failed["error_code"]) == ("failed", "MALWARE_DETECTED")
+    assert failed["error_params"] == {"signature": "Eicar-Test-Signature"}
+    assert _files_under(settings.data_dir) == []
+
+
+def test_upload_waits_while_the_scanner_is_starting(settings: Settings) -> None:
+    scanner = FakeScanner(*[ScannerUnavailable("loading")] * 3)
+    app = make_app(settings, scanner=scanner)
+    app.state.container.scans._retry = ScanRetry(first_delay_s=0.05, max_delay_s=0.05)
+    with TestClient(app) as c:
+        doc_id = upload(c, "a.txt", b"Die Leuchte hat 5000 Lumen.").json()["document"]["id"]
+        seen: set[str] = set()
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            document = c.get(f"/api/documents/{doc_id}").json()["document"]
+            seen.update(n["code"] for n in document["notices"])
+            if document["status"] == "ready":
+                break
+            time.sleep(0.01)
+    assert "SCANNER_STARTING" in seen
+    assert document["status"] == "ready"
+    assert document["notices"] == []
+
+
+def test_file_is_not_served_before_the_scan_passed(settings: Settings) -> None:
+    scanner = FakeScanner(*[ScannerUnavailable("loading")] * 1000)
+    with TestClient(make_app(settings, scanner=scanner)) as c:
+        doc_id = upload(c, "a.pdf", PDF).json()["document"]["id"]
+        r = c.get(f"/api/documents/{doc_id}/file")
+        assert (r.status_code, error(r)["code"]) == (409, "DOCUMENT_NOT_READY")
+        assert c.delete(f"/api/documents/{doc_id}").status_code == 204
+    assert _files_under(settings.data_dir) == []

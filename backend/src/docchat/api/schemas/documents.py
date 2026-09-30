@@ -25,6 +25,10 @@ class DocumentOut(BaseModel):
     progress: Annotated[float, Field(ge=0, le=1, description="0..1 within the current status.")]
     queue_position: int | None = Field(description="1-based place in the queue while queued.")
     error_code: ErrorCode | None = Field(description="Why the document is `failed`.")
+    error_params: dict[str, int | str] = Field(
+        default_factory=dict,
+        description="Details for the error text, e.g. the signature for MALWARE_DETECTED.",
+    )
     notices: list[NoticeOut]
     created_at: datetime
     ready_at: datetime | None
@@ -43,6 +47,7 @@ class DocumentOut(BaseModel):
             progress=d.progress,
             queue_position=view.queue_position,
             error_code=d.error_code,
+            error_params=dict(d.error_params),
             notices=[NoticeOut(code=n.code, params=dict(n.params)) for n in d.notices],
             created_at=d.created_at,
             ready_at=d.ready_at,

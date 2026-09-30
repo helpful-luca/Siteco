@@ -44,6 +44,8 @@
     "PROCESSING_TIMEOUT": "Processing took too long. Try again or split the file.",
     "PROCESSING_FAILED": "Something went wrong while processing. Please try again.",
     "PROCESSING_INTERRUPTED": "Processing was interrupted by a restart. Just start it again.",
+    "MALWARE_DETECTED": "The virus check found malware in this file. The file was deleted right away.",
+    "MALWARE_SCAN_FAILED": "The virus check could not check this file, so it was not added to be safe. Try again.",
     "BACKEND_UNAVAILABLE": "The server is not reachable right now.",
     "FORBIDDEN_ORIGIN": "This request did not come from the app and was blocked.",
     "NETWORK_ERROR": "No connection. Check your connection and try again.",
@@ -53,7 +55,10 @@
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no text, probably scanned. It won't be searched.} other {# pages have no text, probably scanned. They won't be searched.}}",
-    "PAGES_SKIPPED": "{count, plural, one {# page couldn't be read and is missing from search.} other {# pages couldn't be read and are missing from search.}}"
+    "PAGES_SKIPPED": "{count, plural, one {# page couldn't be read and is missing from search.} other {# pages couldn't be read and are missing from search.}}",
+    "PDF_ACTIVE_CONTENT": "This PDF contains active content such as scripts. The app only reads the text and runs nothing.",
+    "SCANNER_STARTING": "The virus check is still starting. The file will be checked in a moment.",
+    "SCANNER_UNAVAILABLE": "The virus check is not reachable right now. The file waits until it is back."
   },
   "styleguide": {
     "title": "Design system",

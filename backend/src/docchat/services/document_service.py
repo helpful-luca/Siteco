@@ -86,8 +86,8 @@ class DocumentService:
 
     def file(self, document_id: str) -> StoredFile:
         document = self._require(document_id)
-        if document.status is DocumentStatus.DELETING:
-            raise AppError(ErrorCode.DOCUMENT_NOT_READY)
+        if document.status in (DocumentStatus.SCANNING, DocumentStatus.DELETING):
+            raise AppError(ErrorCode.DOCUMENT_NOT_READY)  # not in the library (yet or anymore)
         if not self._storage.exists(document.id, document.kind):
             raise AppError(ErrorCode.DOCUMENT_FILE_MISSING)
         return StoredFile(

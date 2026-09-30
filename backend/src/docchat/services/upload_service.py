@@ -1,8 +1,8 @@
 """Accepts one upload: cheap checks first, then the body is streamed to a temp file.
 
 Order (annex 10, C): name and extension, declared size, quota and free disk, magic bytes while
-streaming, byte count, duplicate by SHA-256, malware scan, atomic rename, row `queued`.
-Everything that opens the document happens later in the worker.
+streaming, byte count, duplicate by SHA-256, atomic rename into the quarantine, row `scanning`.
+The malware scan and everything that opens the document happen later in background workers.
 """
 
 import asyncio
@@ -19,8 +19,7 @@ from docchat.domain.ports import (
     Clock,
     DocumentRepository,
     FileStorage,
-    IngestionScheduler,
-    MalwareScanner,
+    ScanScheduler,
     UploadSink,
 )
 from docchat.domain.upload_validation import (
@@ -87,15 +86,13 @@ class UploadService:
         self,
         repository: DocumentRepository,
         storage: FileStorage,
-        scanner: MalwareScanner,
-        worker: IngestionScheduler,
+        scans: ScanScheduler,
         clock: Clock,
         limits: UploadLimits,
     ) -> None:
         self._repository = repository
         self._storage = storage
-        self._scanner = scanner
-        self._worker = worker
+        self._scans = scans
         self._clock = clock
         self._limits = limits
 
@@ -147,20 +144,19 @@ class UploadService:
             )
             if existing is not None and existing.status is not DocumentStatus.FAILED:
                 raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id})
-            await self._scanner.scan(sink.path)
             if existing is not None:
                 return await self._retry(existing, sink)
             document = self._new_document(filename, kind, receiver)
-            await asyncio.to_thread(self._storage.commit, sink, document.id, kind)
+            await asyncio.to_thread(self._storage.quarantine, sink, document.id, kind)
         except BaseException:
             await asyncio.to_thread(sink.discard)
             raise
         try:
             await asyncio.to_thread(self._repository.insert, document)
         except BaseException:
-            await asyncio.to_thread(self._storage.delete, document.id, kind)
+            await asyncio.to_thread(self._storage.discard_quarantined, document.id, kind)
             raise
-        self._worker.enqueue(document)
+        self._scans.enqueue(document)
         log.info(
             "upload_accepted",
             extra={"document_id": document.id, "kind": kind.value, "size_bytes": receiver.size},
@@ -175,23 +171,23 @@ class UploadService:
             kind=kind,
             size_bytes=receiver.size,
             sha256=receiver.sha256.hexdigest(),
-            status=DocumentStatus.QUEUED,
+            status=DocumentStatus.SCANNING,
             created_at=now,
             updated_at=now,
         )
 
     async def _retry(self, failed: Document, sink: UploadSink) -> Document:
-        """Same bytes as a failed document: process that one again (annex 10, C6).
+        """Same bytes as a failed document: scan and process that one again (annex 10, C6).
 
-        Re-queue first, so a concurrent delete either wins before (then this is a duplicate
-        of nothing: DUPLICATE_DOCUMENT) or is detected after the file was put back.
+        Reset the row first, so a concurrent delete either wins before (then this is a
+        duplicate of nothing: DUPLICATE_DOCUMENT) or is detected after the file was put back.
         """
-        if not await asyncio.to_thread(self._repository.requeue, failed.id, self._clock.now()):
+        if not await asyncio.to_thread(self._repository.rescan, failed.id, self._clock.now()):
             raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": failed.id})
-        await asyncio.to_thread(self._storage.commit, sink, failed.id, failed.kind)
-        requeued = await asyncio.to_thread(self._repository.get, failed.id)
-        if requeued is None or requeued.status is not DocumentStatus.QUEUED:
-            await asyncio.to_thread(self._storage.delete, failed.id, failed.kind)
+        await asyncio.to_thread(self._storage.quarantine, sink, failed.id, failed.kind)
+        rescanning = await asyncio.to_thread(self._repository.get, failed.id)
+        if rescanning is None or rescanning.status is not DocumentStatus.SCANNING:
+            await asyncio.to_thread(self._storage.discard_quarantined, failed.id, failed.kind)
             raise AppError(ErrorCode.UPLOAD_INCOMPLETE)
-        self._worker.enqueue(requeued)
-        return requeued
+        self._scans.enqueue(rescanning)
+        return rescanning
