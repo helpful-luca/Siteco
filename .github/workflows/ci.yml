@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - run: uv sync --locked
+      - name: Lint and format
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy
+      - name: Architecture boundaries
+        run: uv run lint-imports
+      - name: Tests
+        run: uv run pytest -m "not model"
+      - name: Contract drift
+        run: |
+          uv run python -m docchat.cli.export_openapi > /tmp/openapi.json
+          diff -u ../contracts/openapi.json /tmp/openapi.json
+
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Lint and type check
+        run: npm run lint && npx next typegen && npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Generated types drift
+        run: |
+          npx openapi-typescript ../contracts/openapi.json -o /tmp/schema.gen.ts
+          diff -u src/shared/api/schema.gen.ts /tmp/schema.gen.ts
+
+  docker:
+    name: docker (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (includes the offline embedding smoke test)
+        run: docker compose build
+      - name: Start without .env
+        run: docker compose up -d
+      - name: Wait for readiness through the proxy
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:3000/api/health/ready; then exit 0; fi
+            sleep 2
+          done
+          docker compose logs
+          exit 1
+      - name: Backend is not exposed on the host
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://127.0.0.1:8000/api/health/live)" = "000"
+      - if: always()
+        run: docker compose down -v
