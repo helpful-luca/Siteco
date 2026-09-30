@@ -35,3 +35,6 @@ backend/.models/
 .DS_Store
 .idea/
 .vscode/
+
+# Local Claude Code state and agent worktrees
+.claude/
