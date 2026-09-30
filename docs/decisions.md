@@ -54,6 +54,27 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 34 | Status polling | TanStack Query polls every second only while a document is scanning, queued, parsing or embedding | Always polling; SSE | Nothing to poll when the library is at rest (annex 11, 2.5) |
 | 35 | Desktop title bar | Inline script sets `data-desktop` on `<html>` from `window.desktop`, CSS reserves the space | Detecting Electron in React | No layout jump on first paint; Electron code stays in phase 12 |
 
+## Chat core (phase 4 backend)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 36 | Answer lifecycle | One asyncio task per answer owns retrieval, model call, retries and the final save; the SSE response only reads its queue | Doing the work inside the SSE generator | Exactly one terminal event and one save must not depend on how the web framework finalizes a cancelled generator |
+| 37 | Preconditions | Checked in an async FastAPI dependency before the generator route runs | Returning a hand-made `StreamingResponse` | Every refusal stays JSON with a status code (S1) and FastAPI keeps its 15 s keepalive |
+| 38 | Stop and disconnect | Stop cancels the task (saved as `stopped`, `done` event); a vanished listener marks it `interrupted`; a stop before the task ran ends it at its first step | Relying on the client abort alone | The stop call is the second safety net for proxy chains; nothing stays `streaming` |
+| 39 | Citation offsets | Port events are block level; a pure `AnswerAssembler` places each citation at the end of its text block and maps it by `source` (chunk id) | Offsets in the adapter; `search_result_index` | One tested place for Claude and the fake; the index counts across the whole request (annex 12, 1a) |
+| 40 | Retries | Own retry only before the first delta, up to 2 retries with `status: retrying`, backoff with jitter, `retry-after` up to 10 s; SDK `max_retries=0` | SDK retries; retrying after text was sent | Visible and cancellable; annex 11 (2 attempts) wins over annex 10 S7 (one); never doubled text |
+| 41 | Server-side fallbacks | `fallbacks: "default"` with beta `server-side-fallback-2026-07-01` for Sonnet 5.5 and Opus 5.5, off for Haiku 4.5 and comparison lanes; served model from `message_start` and `fallback` blocks, notice `MODEL_SWITCHED`, cost per `usage.iterations` entry | No fallbacks (annex 11) | Decision Luca (master spec 12.4); a refusal false positive should not end the answer |
+| 42 | SDK surface | `client.beta.messages.create(stream=True)` raw events, one path with or without fallbacks | `messages.stream()` helper | The helper accumulates blocks we ignore (thinking, fallback); raw events are what the adapter tests replay |
+| 43 | Timeouts | SDK `Timeout(connect 5, read 60, write 10, pool 5)`; service limits 60 s to the first delta per attempt and 180 s in total | SDK defaults (10 min per attempt) | A hanging call must end as `LLM_TIMEOUT`, not after half an hour |
+| 44 | Schema v3 | `messages.notices` and `messages.sources_mode` | Deriving them on read | `MODEL_SWITCHED` and the full-context mode cannot be derived later |
+| 45 | Regenerate | Reuses the assistant row and id | New row | The UI replaces the answer in place; no orphaned failed answers |
+| 46 | Refusal | Partial text and citations discarded, status `refused`, notice `LLM_REFUSED` | Keeping the partial | Mid-stream refusal output is not an answer (S9) |
+| 47 | Summary hint | `SUMMARY_PARTIAL` only when the question asks for a summary (DE/EN keywords) and the scope is too large for full context | Always in retrieval mode | Otherwise a notice on nearly every answer |
+| 48 | Fake model | `LLM_PROVIDER=fake` cites the first sentence of the first source; scenarios by script (tests) or a `#fake:<name>` marker in the question (E2E) | An environment switch per scenario | E2E needs several error paths in one run; the marker only exists with the fake provider |
+| 49 | Streaming tests | Busy lane, stop and disconnect run against a real uvicorn server in a thread | Starlette `TestClient` only | The TestClient buffers the whole response, so it cannot observe streaming or a disconnect |
+| 50 | Cost | Prices as constants with source and date; unknown fallback models priced at the requested model | Live prices | There is no pricing API; a new fallback target must never look free |
+| 51 | onnxruntime telemetry | `ORT_DISABLE_TELEMETRY=1` set in `docchat/__init__.py` (before anything imports onnxruntime) and in the Dockerfile, plus `disable_telemetry_events()` before the session | `disable_telemetry_events()` alone | onnxruntime 1.30 on macOS runs Microsoft 1DS telemetry (system details, uploads to `mobile.events.data.microsoft.com`) and aborted at exit; measured: only the variable keeps its store untouched |
+
 ## Measurements
 
 | What | Result |
