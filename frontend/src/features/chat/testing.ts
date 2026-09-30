@@ -59,6 +59,7 @@ export function message(patch: Partial<MessageOut> = {}): MessageOut {
     parent_id: 'u1',
     client_message_id: null,
     error_code: null,
+    error_request_id: null,
     model: 'claude-sonnet-5-5',
     effort: 'low',
     lane: 'a',

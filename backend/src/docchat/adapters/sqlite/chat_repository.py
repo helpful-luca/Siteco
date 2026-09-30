@@ -25,7 +25,8 @@ from docchat.domain.ports import DuplicateMessage
 from docchat.domain.usage import TokenUsage
 
 _MESSAGE_COLUMNS = (
-    "id, chat_id, role, parent_id, client_message_id, content, status, error_code, model,"
+    "id, chat_id, role, parent_id, client_message_id, content, status, error_code,"
+    " error_request_id, model,"
     " effort, lane, comparison_id, is_preferred, sources, sources_mode, citations, notices,"
     " usage, cost_usd, ttft_ms, total_ms, created_at"
 )
@@ -45,6 +46,7 @@ def _message_values(m: Message) -> tuple[object, ...]:
         m.content,
         m.status.value,
         m.error_code.value if m.error_code else None,
+        m.error_request_id,
         m.model,
         m.effort.value if m.effort else None,
         m.lane.value if m.lane else None,
@@ -75,6 +77,7 @@ def _row_to_message(row: sqlite3.Row) -> Message:
         parent_id=row["parent_id"],
         client_message_id=row["client_message_id"],
         error_code=ErrorCode(row["error_code"]) if row["error_code"] else None,
+        error_request_id=row["error_request_id"],
         model=row["model"],
         effort=Effort(row["effort"]) if row["effort"] else None,
         lane=Lane(row["lane"]) if row["lane"] else None,

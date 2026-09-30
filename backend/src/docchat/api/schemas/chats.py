@@ -160,6 +160,7 @@ class MessageOut(BaseModel):
     parent_id: str | None
     client_message_id: str | None
     error_code: ErrorCode | None
+    error_request_id: str | None = Field(description="Request of a failed answer, for the logs.")
     model: str | None = Field(description="The model that actually answered.")
     effort: Effort | None
     lane: Lane | None
@@ -184,6 +185,7 @@ class MessageOut(BaseModel):
             parent_id=m.parent_id,
             client_message_id=m.client_message_id,
             error_code=m.error_code,
+            error_request_id=m.error_request_id,
             model=m.model,
             effort=m.effort,
             lane=m.lane,

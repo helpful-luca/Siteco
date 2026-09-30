@@ -680,6 +680,11 @@ export interface components {
             created_at: string;
             effort: components["schemas"]["Effort"] | null;
             error_code: components["schemas"]["ErrorCode"] | null;
+            /**
+             * Error Request Id
+             * @description Request of a failed answer, for the logs.
+             */
+            error_request_id: string | null;
             /** Id */
             id: string;
             /** Is Preferred */

@@ -29,6 +29,7 @@ from docchat.api.schemas.chats import (
     UpdateChatIn,
 )
 from docchat.api.schemas.common import ErrorEnvelope
+from docchat.core.logging import request_id_var
 from docchat.domain.enums import Lane
 from docchat.services.answer_run import AnswerRun
 from docchat.services.answer_service import AnswerOptions, AskCommand
@@ -67,7 +68,11 @@ async def _ask(chat_id: UUID, body: AskIn, answers: AnswerServiceDep) -> AnswerR
             client_message_id=str(body.client_message_id),
             content=body.content,
             options=AnswerOptions(
-                model=body.model, locale=body.locale, effort=body.effort, style=body.style
+                model=body.model,
+                locale=body.locale,
+                effort=body.effort,
+                style=body.style,
+                request_id=request_id_var.get(),
             ),
             lane=body.comparison.lane if body.comparison else Lane.A,
             comparison_id=str(body.comparison.id) if body.comparison else None,
@@ -79,7 +84,11 @@ async def _regenerate(
     chat_id: UUID, assistant_id: UUID, body: RegenerateIn, answers: AnswerServiceDep
 ) -> AnswerRun:
     options = AnswerOptions(
-        model=body.model, locale=body.locale, effort=body.effort, style=body.style
+        model=body.model,
+        locale=body.locale,
+        effort=body.effort,
+        style=body.style,
+        request_id=request_id_var.get(),
     )
     return await answers.regenerate(str(chat_id), str(assistant_id), options)
 

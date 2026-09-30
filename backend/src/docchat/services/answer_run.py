@@ -102,6 +102,7 @@ class RunInput:
     locale: Locale
     max_tokens: int
     allow_fallbacks: bool
+    request_id: str | None = None
 
 
 def _title(document: Document, page: int | None) -> str:
@@ -408,7 +409,9 @@ class AnswerRun:
     def _failed(
         self, code: ErrorCode, stage: ErrorStage, **fields: Any
     ) -> tuple[Message, RunEvent]:
-        final = self._final(MessageStatus.ERROR, error_code=code)
+        final = self._final(
+            MessageStatus.ERROR, error_code=code, error_request_id=self._spec.request_id
+        )
         event = ErrorEvent(code=code, partial=self._got_delta, stage=stage, **fields)
         return final, event
 
@@ -459,7 +462,12 @@ class AnswerRun:
 
     async def _mark_failed_save(self, final: Message) -> None:
         """One more attempt, so the row does not stay `streaming` until the next restart."""
-        failed = replace(final, status=MessageStatus.ERROR, error_code=ErrorCode.INTERNAL_ERROR)
+        failed = replace(
+            final,
+            status=MessageStatus.ERROR,
+            error_code=ErrorCode.INTERNAL_ERROR,
+            error_request_id=self._spec.request_id,
+        )
         try:
             await asyncio.to_thread(self._deps.chats.save_message, failed)
         except Exception:

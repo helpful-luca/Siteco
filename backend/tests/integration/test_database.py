@@ -98,3 +98,18 @@ def test_version_2_databases_get_message_notices_and_sources_mode(tmp_path: Path
     with sqlite3.connect(path) as conn:
         row = conn.execute("SELECT notices, sources_mode FROM messages").fetchone()
     assert row == ("[]", None)
+
+
+def test_version_3_databases_get_the_error_request_id(tmp_path: Path) -> None:
+    path = tmp_path / "v3.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(
+            "CREATE TABLE documents (id TEXT PRIMARY KEY);"
+            "CREATE TABLE messages (id TEXT PRIMARY KEY);"
+            "INSERT INTO messages VALUES ('m1'); PRAGMA user_version = 3;"
+        )
+    Database(path).migrate()
+    with sqlite3.connect(path) as conn:
+        row = conn.execute("SELECT error_request_id FROM messages").fetchone()
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+    assert (row[0], version) == (None, SCHEMA_VERSION)

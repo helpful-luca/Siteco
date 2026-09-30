@@ -115,6 +115,8 @@ def test_every_claude_error_ends_the_stream_with_one_error_event(
             assert body["params"]["seconds"] == retry_after
         saved = messages(client, chat_id)[1]
         assert (saved["status"], saved["error_code"]) == ("error", code)
+        # The error id stays with the saved answer, so it can still be copied after a reload.
+        assert saved["error_request_id"] == r.headers["x-request-id"]
 
 
 def test_a_rejected_key_switches_the_app_to_sources_only(settings: Settings) -> None:

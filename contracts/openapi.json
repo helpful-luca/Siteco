@@ -1233,6 +1233,18 @@
               }
             ]
           },
+          "error_request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Request of a failed answer, for the logs.",
+            "title": "Error Request Id"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -1326,6 +1338,7 @@
           "parent_id",
           "client_message_id",
           "error_code",
+          "error_request_id",
           "model",
           "effort",
           "lane",

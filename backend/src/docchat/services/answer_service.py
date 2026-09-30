@@ -51,6 +51,7 @@ class AnswerOptions:
     locale: Locale
     effort: Effort | None = None
     style: AnswerStyle = AnswerStyle.CONCISE
+    request_id: str | None = None  # kept with a failed answer, for the logs
 
 
 @dataclass(frozen=True)
@@ -313,4 +314,5 @@ class AnswerService:
             locale=options.locale,
             max_tokens=self._limits.max_output_tokens,
             allow_fallbacks=answer.comparison_id is None,
+            request_id=options.request_id,
         )

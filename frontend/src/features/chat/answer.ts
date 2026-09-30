@@ -45,7 +45,13 @@ export function answerFromMessage(message: MessageOut): Answer {
     phase: null,
     startedAt: null,
     error: message.error_code
-      ? { code: message.error_code, partial: message.content.length > 0, requestId: null, retryAfter: null, params: {} }
+      ? {
+          code: message.error_code,
+          partial: message.content.length > 0,
+          requestId: message.error_request_id ?? null,
+          retryAfter: null,
+          params: {},
+        }
       : null,
     model: message.model,
     usage: message.usage,

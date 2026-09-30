@@ -66,6 +66,8 @@ class Message:
     parent_id: str | None = None
     client_message_id: str | None = None
     error_code: ErrorCode | None = None
+    # The request that failed, so its id can still be copied after a reload (annex 11, 5.5).
+    error_request_id: str | None = None
     model: str | None = None
     effort: Effort | None = None
     lane: Lane | None = None

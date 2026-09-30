@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS messages (
                     ('streaming', 'complete', 'truncated', 'stopped', 'interrupted',
                      'refused', 'error', 'sources_only')),
   error_code        TEXT,
+  error_request_id  TEXT,
   model             TEXT,
   effort            TEXT,
   lane              TEXT CHECK (lane IN ('a', 'b')),
