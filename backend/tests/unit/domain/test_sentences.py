@@ -63,3 +63,13 @@ def test_spans_are_ordered_and_inside_the_text(text: str) -> None:
     spans = split_sentences(text)
     assert spans == sorted(spans)
     assert all(0 <= s < e <= len(text) for s, e in spans)
+
+
+def test_many_sentences_in_a_large_block_split_in_linear_time() -> None:
+    import time
+
+    text = "Die Leuchte ist hell. " * 5000 + "a." + " " * 100_000 + "b"
+    started = time.perf_counter()
+    spans = split_sentences(text)
+    assert time.perf_counter() - started < 0.5
+    assert len(spans) > 5000

@@ -17,9 +17,12 @@ _BOMS = (
 _MIN_PRINTABLE_SHARE = 0.95
 _MAX_BYTES_PER_CHAR = 4
 
-_ATX = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.*?)[ \t#]*$")
-_SETEXT = re.compile(r"^ {0,3}(=+|-+)[ \t]*$")
-_FENCE = re.compile(r"^ {0,3}(```|~~~)")
+# Linear patterns only: text files are untrusted, and a backtracking heading pattern on one
+# long line of "#" or spaces would take minutes. Headings longer than this are no headings.
+_MAX_HEADING_LINE = 500
+_ATX = re.compile(r" {0,3}#{1,6}[ \t]+(\S.*)")
+_SETEXT = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+_FENCE = re.compile(r" {0,3}(?:```|~~~)")
 
 
 def decode_text(data: bytes) -> str:
@@ -43,6 +46,15 @@ def decode_text(data: bytes) -> str:
     return text
 
 
+def _atx_title(raw: str) -> str:
+    """Drops an optional closing sequence of #, which must follow a space ("C#" stays)."""
+    title = raw.rstrip(" \t")
+    without_hashes = title.rstrip("#")
+    if without_hashes != title and (not without_hashes or without_hashes[-1] in " \t"):
+        title = without_hashes.rstrip(" \t")
+    return title
+
+
 def markdown_headings(text: str) -> tuple[tuple[int, str], ...]:
     """(offset of the heading line, heading title) for ATX and setext headings outside code."""
     headings: list[tuple[int, str]] = []
@@ -53,17 +65,19 @@ def markdown_headings(text: str) -> tuple[tuple[int, str], ...]:
         if _FENCE.match(line):
             in_fence = not in_fence
             previous = None
-        elif not in_fence:
-            atx = _ATX.match(line)
-            setext = _SETEXT.match(line)
-            if atx and atx.group(2):
-                headings.append((offset, atx.group(2).strip()))
+        elif not in_fence and len(line) <= _MAX_HEADING_LINE:
+            atx = _ATX.fullmatch(line)
+            setext = _SETEXT.fullmatch(line)
+            if atx and _atx_title(atx.group(1)):
+                headings.append((offset, _atx_title(atx.group(1))))
                 previous = None
             elif setext and previous is not None:
                 headings.append(previous)
                 previous = None
             else:
                 previous = (offset, line.strip()) if line.strip() else None
+        else:
+            previous = None
         offset += len(line) + 1
     return tuple(headings)
 

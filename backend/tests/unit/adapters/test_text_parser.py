@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import pytest
@@ -72,3 +73,30 @@ def test_empty_and_too_long_files(tmp_path: Path, data: bytes, code: ErrorCode) 
     with pytest.raises(IngestionError) as info:
         TextFileParser().parse(path, DocumentKind.TXT, max_chars=100)
     assert info.value.code is code
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "# a" + " " * 200_000 + "b",
+        "# a" + "#" * 200_000 + "b",
+        "# a" + " #" * 100_000 + "b",
+    ],
+)
+def test_heading_detection_is_linear_on_hostile_lines(line: str) -> None:
+    started = time.perf_counter()
+    markdown_headings(f"Intro\n{line}\nText")
+    assert time.perf_counter() - started < 0.5
+
+
+def test_closing_hashes_are_stripped_but_not_from_words() -> None:
+    text = "# Titel ##\n## C#\n### Nur Rauten ###\n#### x #y"
+    assert [title for _, title in markdown_headings(text)] == ["Titel", "C#", "Nur Rauten", "x #y"]
+
+
+def test_hostile_text_file_parses_fast(tmp_path: Path) -> None:
+    path = tmp_path / "evil.md"
+    path.write_text("# a" + "#" * 200_000 + "b\n" + "Satz. " * 20_000, encoding="utf-8")
+    started = time.perf_counter()
+    TextFileParser().parse(path, DocumentKind.MD, max_chars=10_000_000)
+    assert time.perf_counter() - started < 1.0

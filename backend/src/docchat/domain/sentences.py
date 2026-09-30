@@ -20,16 +20,17 @@ _ABBREVIATIONS = frozenset(
 _SENTENCE_END = re.compile(r"[.!?…][\"'“”»«)\]]*(?=\s+[\"'„«»(\[]?[A-ZÀ-Þ0-9])")
 _PARAGRAPH_BREAK = re.compile(r"\n[ \t]*\n\s*")
 _LIST_ITEM = re.compile(r"\n(?=[ \t]*(?:[-*•·▪]\s|\d{1,2}[.)]\s|[a-z]\)\s))")
-_LAST_TOKEN = re.compile(r"(\S+)$")
+_TOKEN_WINDOW = 16  # longer than any abbreviation; keeps the check constant per boundary
 
 
 def _is_abbreviation(text: str, dot: int) -> bool:
     if text[dot] != ".":
         return False
-    match = _LAST_TOKEN.search(text, 0, dot)
-    if match is None:
+    # A token cut off by the window is longer than every abbreviation, so the cut is harmless.
+    before = text[max(0, dot - _TOKEN_WINDOW) : dot].split()
+    if not before:
         return False
-    token = match.group(1).lower().lstrip("(\"'")
+    token = before[-1].lower().lstrip("(\"'")
     return token in _ABBREVIATIONS or token.isdigit() or (len(token) == 1 and token.isalpha())
 
 
