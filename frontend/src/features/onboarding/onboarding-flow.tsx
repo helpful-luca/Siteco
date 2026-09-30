@@ -3,10 +3,8 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
-import type { Locale, Theme } from '@/shared/preferences/cookies';
-import { Button, cn } from '@/shared/ui';
-import { ChoiceCards } from './choice-card';
-import { ThemeThumbnail } from './theme-thumbnail';
+import { type Locale, NAME_MAX_CODE_POINTS, sanitizeName, type Theme } from '@/shared/preferences/cookies';
+import { Button, ChoiceCards, cn, ThemeThumbnail } from '@/shared/ui';
 
 export type OnboardingResult = { locale: Locale; theme: Theme; name: string };
 
@@ -15,20 +13,12 @@ type Props = {
   onLocaleChange: (locale: Locale) => void;
   onThemeChange: (theme: Theme) => void;
   onFinish: (result: OnboardingResult) => void;
-  onSkip: () => void;
+  /** Skipped (button or Escape): the choices made so far, without the name. */
+  onSkip: (current: Omit<OnboardingResult, 'name'>) => void;
 };
 
 const STEPS = ['language', 'appearance', 'name'] as const;
-const NAME_MAX = 40;
 const SPRING = { type: 'spring', duration: 0.45, bounce: 0 } as const;
-
-/** The name is only shown back to the user as React text; still keep it clean and short. */
-export function sanitizeName(raw: string): string {
-  return raw
-    .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, '')
-    .trim()
-    .slice(0, NAME_MAX);
-}
 
 /** Three-step setup in the spirit of Apple's setup assistant. Choices apply live via callbacks. */
 export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinish, onSkip }: Props) {
@@ -68,7 +58,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
             {t('progress', { current: step + 1, total: STEPS.length })}
           </p>
           {/* Pulled out by its own padding, so the label (not the pill) sits on the gutter. */}
-          <Button variant="ghost" size="sm" className="-mr-3" onClick={onSkip}>
+          <Button variant="ghost" size="sm" className="-mr-3" onClick={() => onSkip({ locale: values.locale, theme: values.theme })}>
             {t('skip')}
           </Button>
         </div>
@@ -135,7 +125,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                       id={nameId}
                       value={values.name}
                       onChange={(event) => setValues((v) => ({ ...v, name: event.target.value }))}
-                      maxLength={NAME_MAX}
+                      maxLength={NAME_MAX_CODE_POINTS}
                       autoComplete="given-name"
                       placeholder={t('name.placeholder')}
                       className="h-12 rounded-control bg-fill px-4 text-center text-title-3 ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium"

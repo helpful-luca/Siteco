@@ -3,7 +3,7 @@
 import { Radio } from '@base-ui/react/radio';
 import { RadioGroup } from '@base-ui/react/radio-group';
 import type { ReactNode } from 'react';
-import { cn } from '@/shared/ui';
+import { cn } from './cn';
 
 export type Choice<T extends string> = { value: T; title: string; visual?: ReactNode; hint?: string };
 

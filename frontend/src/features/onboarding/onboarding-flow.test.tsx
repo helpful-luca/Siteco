@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 import de from '../../../messages/de.json';
-import { OnboardingFlow, sanitizeName } from './onboarding-flow';
+import { sanitizeName } from '@/shared/preferences/cookies';
+import { OnboardingFlow } from './onboarding-flow';
 
 function setup() {
   const handlers = {
@@ -58,10 +59,11 @@ describe('OnboardingFlow', () => {
     expect(onFinish).toHaveBeenCalledWith({ locale: 'de', theme: 'system', name: 'Luca' });
   });
 
-  it('can be skipped from any step', async () => {
+  it('can be skipped from any step and reports the choices so far', async () => {
     const { onSkip } = setup();
+    await userEvent.click(screen.getByRole('radio', { name: /English/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Überspringen' }));
-    expect(onSkip).toHaveBeenCalled();
+    expect(onSkip).toHaveBeenCalledWith({ locale: 'en', theme: 'system' });
   });
 
   it('moves focus to the step heading so screen readers announce it', async () => {

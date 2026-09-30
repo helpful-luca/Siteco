@@ -55,7 +55,6 @@ function setup(source: SourceOut, responses: Record<string, () => Response>, sen
         <div style={{ height: 800 }}>
           <SourceView
             source={source}
-            citedText="Die Schlagfestigkeit liegt bei IK09."
             sentences={sentences}
             store={createPageStore({ page: 4, pages: null })}
           />
@@ -84,11 +83,11 @@ describe('SourceView', () => {
     expect(viewer.props).toMatchObject({ marks: [], passage: CHUNK.text });
   });
 
-  it('shows the stored snapshot for a deleted source', async () => {
+  it('shows no text of a deleted source, not even from an older copy of the answer', async () => {
     setup({ ...SOURCE, deleted: true }, {});
     expect(screen.getByRole('heading', { name: 'Quelle wurde gelöscht' })).toBeInTheDocument();
-    expect(screen.getByText('Die Schlagfestigkeit liegt bei IK09.')).toHaveClass('text-mark');
-    expect(screen.getByText(SOURCE.snippet)).toBeInTheDocument();
+    expect(screen.queryByText('Die Schlagfestigkeit liegt bei IK09.')).toBeNull();
+    expect(screen.queryByText(SOURCE.snippet)).toBeNull();
     expect(screen.queryByTestId('pdf-viewer')).toBeNull();
   });
 

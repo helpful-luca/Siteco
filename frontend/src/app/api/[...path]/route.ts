@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server';
+import { BACKEND_URL, internalHeaders } from '@/shared/api/backend';
 import { envelopeResponse } from '@/shared/api/errors';
 import {
   checkMutationGuard,
@@ -10,7 +11,6 @@ import {
 } from '@/shared/api/proxy-rules';
 
 // Own streaming proxy instead of next.config rewrites(): rewrites gzip and buffer SSE streams.
-const BACKEND_URL = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
 
 async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const requestId = `req_${crypto.randomUUID().replaceAll('-', '').slice(0, 8)}`;
@@ -25,7 +25,7 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
 
   const headers = pickHeaders(req.headers, FORWARD_REQUEST_HEADERS);
   headers.set('x-request-id', requestId);
-  if (process.env.INTERNAL_TOKEN) headers.set('x-internal-token', process.env.INTERNAL_TOKEN);
+  for (const [name, value] of Object.entries(internalHeaders())) headers.set(name, value);
 
   const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
   let upstream: Response;

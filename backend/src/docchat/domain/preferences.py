@@ -11,9 +11,10 @@ from docchat.domain.enums import AnswerStyle, Effort, Locale, Theme
 NAME_MAX_CHARS = 40
 DEFAULT_COMPARE_MODELS = ("claude-sonnet-5-5", "claude-haiku-4-5")
 
-# C0 and C1 controls, zero width and bidi controls, word joiners, the BOM.
+# C0 and C1 controls, zero width space, bidi marks, overrides and isolates, invisible operators,
+# the BOM. Zero width (non-)joiners stay: emoji sequences and some scripts need them.
 _INVISIBLE = re.compile(
-    r"[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]"
+    r"[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2060-\u2064\u2066-\u206f\ufeff]"
 )
 
 

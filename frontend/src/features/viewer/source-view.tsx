@@ -14,7 +14,6 @@ import { TextViewer, type TextSpan } from './text-viewer';
 
 type Props = {
   source: SourceOut;
-  citedText: string | null;
   /** Cited sentence indexes of the chunk; empty: the whole chunk is the passage. */
   sentences: number[];
   store: PageStore;
@@ -35,13 +34,13 @@ export function spanFor(chunk: ChunkOut, sentences: number[]): TextSpan | null {
  * A cited source in the right panel: the PDF on the cited page with the sentence marked, the text
  * file with the span marked, or the stored snapshot when the document is gone (annex 11, 8.5).
  */
-export function SourceView({ source, citedText, sentences, store }: Props) {
+export function SourceView({ source, sentences, store }: Props) {
   const [gone, setGone] = useState(source.deleted);
   const onMissing = useCallback(() => setGone(true), []);
   const chunk = useChunk(source.document_id, source.id, !gone);
   const chunkMissing = chunk.error instanceof ApiError && chunk.error.status === 404;
 
-  if (gone || chunkMissing) return <DeletedSource source={source} citedText={citedText} />;
+  if (gone || chunkMissing) return <DeletedSource />;
   if (source.page === null) {
     return (
       <TextViewer

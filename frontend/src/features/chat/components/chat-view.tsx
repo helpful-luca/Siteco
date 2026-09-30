@@ -110,7 +110,8 @@ export function ChatView({ chatId }: { chatId: string }) {
     setSending(true);
     clearRefusal();
     try {
-      if (await streams.ask({ chatId, question, model: settings.model, locale })) setDraft('');
+      const model = settings.model;
+      if (await streams.ask({ chatId, question, model, locale, ...settings.answerOptions(model) })) setDraft('');
     } catch (error) {
       const apiError = toApiError(error);
       if (apiError.code !== 'DUPLICATE_REQUEST') refuse(apiError);
@@ -121,23 +122,19 @@ export function ChatView({ chatId }: { chatId: string }) {
   };
 
   const model = settings.model;
+  const answerOptions = settings.answerOptions;
   const defaultModel = config?.default_model;
   const regenerate = useCallback(
     async (assistantId: string, question: string, previousModel: string | null, override?: string) => {
       clearRefusal();
       try {
-        await streams.regenerate({
-          chatId,
-          assistantId,
-          question,
-          model: override ?? model ?? previousModel ?? defaultModel ?? '',
-          locale,
-        });
+        const chosen = override ?? model ?? previousModel ?? defaultModel ?? '';
+        await streams.regenerate({ chatId, assistantId, question, model: chosen, locale, ...answerOptions(chosen) });
       } catch (error) {
         refuse(toApiError(error));
       }
     },
-    [streams, chatId, model, defaultModel, locale, clearRefusal, refuse],
+    [streams, chatId, model, answerOptions, defaultModel, locale, clearRefusal, refuse],
   );
 
   if (isNotFound(chat.error) || isNotFound(messages.error)) {

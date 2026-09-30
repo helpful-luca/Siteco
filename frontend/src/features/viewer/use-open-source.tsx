@@ -29,7 +29,7 @@ export function useOpenSource() {
   const { openPanel } = useUI();
   const t = useTranslations('viewer.source');
   return useCallback(
-    ({ messageKey, source, citedText, citations = [] }: SourceRef) => {
+    ({ messageKey, source, citations = [] }: SourceRef) => {
       const pdf = source.page !== null;
       const store = createPageStore({ page: source.page ?? 1, pages: null });
       const where = pdf ? t('page', { page: source.page ?? 1 }) : t('passage');
@@ -42,7 +42,6 @@ export function useOpenSource() {
           <SourceView
             key={`${source.document_id}:${source.id}`}
             source={source}
-            citedText={citedText}
             sentences={citedSentences(citations, source.id)}
             store={store}
           />

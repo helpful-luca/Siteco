@@ -53,6 +53,10 @@ export function useDeleteDocument() {
     onError: (_error, _id, context) => {
       if (context?.previous) client.setQueryData(DOCUMENTS_KEY, context.previous);
     },
-    onSettled: () => client.invalidateQueries({ queryKey: DOCUMENTS_KEY }),
+    onSettled: () => {
+      // Answers that cited the document now show it as deleted, without its text.
+      void client.invalidateQueries({ queryKey: ['messages'] });
+      return client.invalidateQueries({ queryKey: DOCUMENTS_KEY });
+    },
   });
 }

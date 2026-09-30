@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider, QueryObserver } from '@tanstack/react-query';
-import { act, render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { NextIntlClientProvider, useTranslations } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DONE, META } from '../testing';
 import { runKey } from './stream-reducer';
@@ -237,5 +238,78 @@ describe('StreamProvider', () => {
     await waitFor(() => expect(api().runs[runKey('c2')]?.outcome?.kind).toBe('done'));
     expect(api().runs[runKey('c1')].text).toBe('c1');
     expect(api().runs[runKey('c2')].text).toBe('c2');
+  });
+
+  it('sends answer mode and length from the settings, and nothing unset', async () => {
+    const { api, fetchMock } = setup(async () => new Response(frame('meta', META) + frame('done', DONE), { headers: SSE }));
+    await act(() => api().ask({ chatId: 'c1', question: 'x', model: 'm', locale: 'de', effort: 'high', style: 'detailed' }));
+    await act(() => api().ask({ chatId: 'c2', question: 'y', model: 'claude-haiku-4-5', locale: 'de', effort: null, style: 'concise' }));
+    const [first, second] = fetchMock.mock.calls.map(([, init]) => JSON.parse(String(init?.body)));
+    expect(first).toMatchObject({ effort: 'high', style: 'detailed' });
+    expect(second).not.toHaveProperty('effort');
+    expect(second).toMatchObject({ style: 'concise' });
+  });
+
+  it('keeps a running answer while the language switches (router.refresh re-renders the providers above)', async () => {
+    let push: ((chunk: string) => void) | null = null;
+    let end: (() => void) | null = null;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            push = (chunk) => controller.enqueue(encoder.encode(chunk));
+            end = () => controller.close();
+          },
+        });
+        return new Response(stream, { headers: SSE });
+      }),
+    );
+    const api: { current: ReturnType<typeof useStreamActions> | null } = { current: null };
+    function Probe() {
+      api.current = useStreamActions();
+      return null;
+    }
+    function Answer() {
+      const t = useTranslations('app');
+      const run = useRun('c1');
+      return (
+        <p>
+          {t('greeting')}: {run?.text ?? ''}
+        </p>
+      );
+    }
+    const client = new QueryClient();
+    new QueryObserver(client, { queryKey: ['messages', 'c1'], enabled: false }).subscribe(() => {});
+    const tree = (locale: 'de' | 'en') => (
+      <NextIntlClientProvider locale={locale} messages={{ app: { greeting: locale === 'de' ? 'Hallo' : 'Hello' } }}>
+        <QueryClientProvider client={client}>
+          <StreamProvider>
+            <Probe />
+            <Answer />
+          </StreamProvider>
+        </QueryClientProvider>
+      </NextIntlClientProvider>
+    );
+    const view = render(tree('de'));
+    const asking = (api.current as ReturnType<typeof useStreamActions>).ask({ chatId: 'c1', question: 'x', model: 'm', locale: 'de' });
+    await waitFor(() => expect(push).not.toBeNull());
+    await act(async () => {
+      push?.(frame('meta', META) + frame('delta', { text: 'Die Mira ' }));
+      await asking;
+    });
+    await waitFor(() => expect(screen.getByText('Hallo: Die Mira')).toBeInTheDocument());
+
+    view.rerender(tree('en')); // what router.refresh does after the language cookie changed
+    expect(screen.getByText('Hello: Die Mira')).toBeInTheDocument();
+
+    await act(async () => {
+      push?.(frame('delta', { text: 'hat IP66.' }) + frame('done', DONE));
+      end?.();
+    });
+    await waitFor(() => expect(api.current?.getRun('c1')?.outcome?.kind).toBe('done'));
+    expect(screen.getByText('Hello: Die Mira hat IP66.')).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(1); // the stream was never restarted
   });
 });

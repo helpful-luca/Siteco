@@ -7,7 +7,7 @@ import { accountStatus } from '@/shared/api/account-status';
 import { fetchJson } from '@/shared/api/client';
 import { CONFIG_CHANGING_CODES } from '@/shared/api/error-catalog';
 import { ApiError, clientError } from '@/shared/api/errors';
-import type { ConfigOut, Lane } from '@/shared/api/types';
+import type { AnswerStyle, ConfigOut, Effort, Lane } from '@/shared/api/types';
 import { CHATS_KEY, chatKey, messagesKey } from '../queries';
 import type { StreamEvent } from './events';
 import { readStream } from './read-stream';
@@ -16,8 +16,22 @@ import { isRunning, runKey, type RunState, type StartRun } from './stream-reduce
 
 type Locale = 'de' | 'en';
 
-export type AskInput = { chatId: string; question: string; model: string; locale: Locale };
-export type RegenerateInput = { chatId: string; assistantId: string; question: string; model: string; locale: Locale };
+/** Answer mode and length from the settings; without them the backend's defaults apply. */
+type AnswerOptions = { effort?: Effort | null; style?: AnswerStyle };
+
+export type AskInput = { chatId: string; question: string; model: string; locale: Locale } & AnswerOptions;
+export type RegenerateInput = {
+  chatId: string;
+  assistantId: string;
+  question: string;
+  model: string;
+  locale: Locale;
+} & AnswerOptions;
+
+/** Only what is set goes into the request body. */
+function answerFields({ effort, style }: AnswerOptions): AnswerOptions {
+  return { ...(effort ? { effort } : {}), ...(style ? { style } : {}) };
+}
 
 /** Stable functions: consumers never re-render because an answer streams. */
 export type StreamActions = {
@@ -150,12 +164,12 @@ export function StreamProvider({ children }: { children: ReactNode }) {
   );
 
   const ask = useCallback(
-    ({ chatId, question, model, locale }: AskInput) => {
+    ({ chatId, question, model, locale, ...options }: AskInput) => {
       const clientMessageId = crypto.randomUUID();
       return start(
         chatId,
         `/api/chats/${chatId}/messages`,
-        { client_message_id: clientMessageId, content: question, model, locale },
+        { client_message_id: clientMessageId, content: question, model, locale, ...answerFields(options) },
         { chatId, lane: LANE, question, clientMessageId, regenerateOf: null, model, startedAt: Date.now() },
       );
     },
@@ -163,11 +177,11 @@ export function StreamProvider({ children }: { children: ReactNode }) {
   );
 
   const regenerate = useCallback(
-    ({ chatId, assistantId, question, model, locale }: RegenerateInput) =>
+    ({ chatId, assistantId, question, model, locale, ...options }: RegenerateInput) =>
       start(
         chatId,
         `/api/chats/${chatId}/messages/${assistantId}/regenerate`,
-        { model, locale },
+        { model, locale, ...answerFields(options) },
         { chatId, lane: LANE, question, clientMessageId: assistantId, regenerateOf: assistantId, model, startedAt: Date.now() },
       ),
     [start],

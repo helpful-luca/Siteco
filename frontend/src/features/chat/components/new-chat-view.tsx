@@ -8,6 +8,7 @@ import { useUploads } from '@/features/library';
 import { ApiError, toApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
 import { useBackendDown } from '@/shared/api/use-connection';
+import { usePreferences } from '@/shared/preferences/preferences';
 import { useChatSettings } from '../chat-settings';
 import { useCreateChat, useDeleteChat } from '../queries';
 import { useStreamActions } from '../stream/stream-provider';
@@ -38,6 +39,8 @@ export function NewChatView() {
   const { data: config } = useConfig();
   const uploads = useUploads();
   const settings = useChatSettings();
+  // Only for this greeting; the name never goes to the model (annex 11, 5.4).
+  const { name } = usePreferences();
   const streams = useStreamActions();
   const createChat = useCreateChat();
   const deleteChat = useDeleteChat();
@@ -76,7 +79,8 @@ export function NewChatView() {
         scope.scope === 'all' ? { scope: 'all' } : { scope: 'selected', document_ids: scope.documentIds },
       );
       chatId = chat.id;
-      if (!(await streams.ask({ chatId, question, model: settings.model, locale }))) {
+      const model = settings.model;
+      if (!(await streams.ask({ chatId, question, model, locale, ...settings.answerOptions(model) }))) {
         throw new ApiError('STREAM_INTERRUPTED', 0);
       }
       setDraft('');
@@ -133,7 +137,15 @@ export function NewChatView() {
     >
       <div className="flex min-h-[calc(100dvh-var(--spacing)*72)] flex-col">
         <div aria-hidden className="min-h-6 flex-2" />
-        <h2 className="text-title-1 font-semibold">{t('greeting')}</h2>
+        <h2 className="text-title-1 font-semibold wrap-anywhere">
+          {t('greeting')}
+          {name && (
+            <>
+              {' '}
+              <bdi>{name}</bdi>
+            </>
+          )}
+        </h2>
         <p className="mt-2 text-reading text-ink-muted">{t('prompt')}</p>
 
         {hasDocuments ? (

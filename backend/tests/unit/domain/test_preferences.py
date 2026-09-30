@@ -28,6 +28,7 @@ def test_defaults_are_not_onboarded_and_use_the_default_model() -> None:
         ("\n\r", ""),
         ("<script>alert(1)</script>", "<script>alert(1)</script>"),  # rendered as text only
         ("Zoë", "Zoë"),
+        ("\U0001f468\u200d\U0001f469", "\U0001f468\u200d\U0001f469"),  # emoji sequence stays
     ],
 )
 def test_clean_name(raw: str, clean: str) -> None:

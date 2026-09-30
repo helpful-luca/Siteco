@@ -1,10 +1,7 @@
-import { Settings } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
-import { ComingSoon } from '@/features/shell';
+import { parseSection, SettingsView } from '@/features/settings';
 
-export default async function SettingsPage() {
-  const t = await getTranslations('placeholder');
-  return (
-    <ComingSoon icon={<Settings aria-hidden />} title={t('settings.title')} text={t('settings.text')} note={t('note')} />
-  );
+/** Settings with one address per section (`?section=general|appearance|models|data|privacy|about`). */
+export default async function SettingsPage({ searchParams }: PageProps<'/settings'>) {
+  const { section } = await searchParams;
+  return <SettingsView section={parseSection(section)} />;
 }

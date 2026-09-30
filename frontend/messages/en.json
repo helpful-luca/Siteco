@@ -467,7 +467,7 @@
     },
     "delete": {
       "title": "Delete document?",
-      "text": "“{name}” and all its search data will be removed from the library. This cannot be undone.",
+      "text": "“{name}” and all its search data will be removed from the library. Answers that cite it will then only show the file name. This cannot be undone.",
       "confirm": "Delete",
       "cancel": "Cancel"
     },
@@ -509,10 +509,6 @@
     "quality": {
       "title": "Quality",
       "text": "Soon you will see here how reliably the search finds the right passages, measured against a fixed set of questions."
-    },
-    "settings": {
-      "title": "Settings",
-      "text": "Language, appearance, models and your data will soon be set here."
     }
   },
   "markdown": {
@@ -525,10 +521,8 @@
       "subtitle": "Source {n}",
       "page": "Page {page}",
       "passage": "Passage",
-      "cited": "Cited passage",
-      "snippet": "Excerpt",
       "deletedTitle": "Source was deleted",
-      "deletedText": "The document is no longer in your library. The cited passage stays readable here.",
+      "deletedText": "The document is no longer in your library. The cited passage was removed from this chat along with it.",
       "textFile": "Text file"
     },
     "artifact": {
@@ -568,5 +562,139 @@
     "text": "Your documents and chats are safe. Try again, it usually works the second time.",
     "retry": "Try again",
     "home": "Go to a new chat"
+  },
+  "settings": {
+    "title": "Settings",
+    "sectionsLabel": "Sections",
+    "back": "Settings",
+    "sections": {
+      "general": "General",
+      "appearance": "Appearance",
+      "models": "Models",
+      "data": "Data",
+      "privacy": "Privacy",
+      "about": "About"
+    },
+    "general": {
+      "language": "Language",
+      "languageLabel": "App language",
+      "languageFooter": "Answers come in the language of your question. Quotes stay in the language of the document.",
+      "name": "Greeting",
+      "nameLabel": "Your name",
+      "namePlaceholder": "First name",
+      "nameFooter": "Only for the greeting. Your name stays on this computer and is never sent to Claude.",
+      "saved": "Saved"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "footer": "Automatic follows your system and switches between light and dark with it."
+    },
+    "models": {
+      "default": "Default model",
+      "defaultFooter": "Used for new questions. In a chat you can pick another model for each question.",
+      "price": "{input} input, {output} output per million tokens",
+      "unavailable": "Not available right now",
+      "noKey": "Without an API key no model answers. You get the matching passages instead.",
+      "answers": "Answers",
+      "mode": "Answer mode",
+      "modes": {
+        "low": "Fast",
+        "medium": "Balanced",
+        "high": "Thorough"
+      },
+      "modeFooter": "Thorough thinks longer, answers later and costs more.",
+      "modeFixed": "{model} always answers in fast mode. The answer length applies to every model.",
+      "length": "Answer length",
+      "lengths": {
+        "concise": "Short",
+        "detailed": "Detailed"
+      }
+    },
+    "data": {
+      "storage": "Storage",
+      "used": "Used on this computer",
+      "usedHint": "Files, search data and database",
+      "documents": "Documents",
+      "chats": "Chats",
+      "today": "Today",
+      "cost": "Cost",
+      "requests": "{count, plural, =0 {No requests yet} one {# request to Claude} other {# requests to Claude}}",
+      "budget": "Daily budget",
+      "todayFooter": "Counted from midnight (UTC), including chats deleted since.",
+      "retention": "Delete automatically",
+      "retentionLabel": "Chats and documents",
+      "retentionOff": "Never",
+      "retentionDays": "{days, plural, one {After # day} other {After # days}}",
+      "retentionFooter": "Set with RETENTION_DAYS in the .env file. The app checks every hour.",
+      "yours": "Your data",
+      "export": "Export data",
+      "exportText": "ZIP with every chat as JSON and Markdown, your settings and the document list",
+      "exportAction": "Export",
+      "exporting": "Preparing",
+      "deleteAll": "Delete all data",
+      "deleteAllText": "Remove documents, chats and search data from this computer",
+      "deleteAllAction": "Delete…",
+      "deleted": "All data was deleted.",
+      "loading": "Loading"
+    },
+    "deleteDialog": {
+      "title": "Delete all data?",
+      "text": "{documents, plural, =0 {All documents} one {# document} other {# documents}} and {chats, plural, =0 {all chats} one {# chat} other {# chats}} will be removed from this computer with all search data. Running answers are stopped. This cannot be undone.",
+      "reset": "Also reset name and settings",
+      "resetHint": "The setup starts again afterwards.",
+      "confirm": "Delete everything",
+      "cancel": "Cancel"
+    },
+    "privacy": {
+      "intro": "Short and honest: what happens to your data.",
+      "local": "Stays on this computer",
+      "localDocuments": "Your documents, their text and the search data.",
+      "localChats": "Your chats and every answer.",
+      "localProcessing": "Text recognition for scans and the virus scan. Both run here, without a cloud service.",
+      "localName": "Your name. It is only used for the greeting.",
+      "sent": "Goes to Anthropic in the USA",
+      "sentQuestion": "For an answer, your question, the latest messages of the chat and the matching passages from your documents go to Claude.",
+      "sentSmall": "If your selection is small, the whole document goes along. The answer's details then say so.",
+      "sentNever": "Your name and the files themselves are never sent.",
+      "anthropic": "At Anthropic",
+      "anthropicText": "According to its policy, Anthropic keeps API requests for up to 30 days, for example to detect abuse, and does not train models on them.",
+      "telemetry": "No telemetry",
+      "telemetryText": "The app loads no fonts, scripts or images from other servers and collects no usage data. The built-in telemetry of Next.js, Hugging Face and onnxruntime is switched off.",
+      "scan": "Virus scan",
+      "scanOn": "ClamAV checks every file on this computer before it enters the library.",
+      "scanOff": "Off. This is meant for development only: files enter the library unchecked.",
+      "rights": "Your rights",
+      "rightsText": "You can export everything and delete it at any time. A deleted document also disappears from the chats that cite it.",
+      "retentionOn": "Chats and documents are deleted automatically after {days, plural, one {# day} other {# days}}.",
+      "retentionOff": "Automatic deletion is off.",
+      "toData": "Export and delete"
+    },
+    "about": {
+      "app": "App",
+      "version": "Version",
+      "commit": "Commit",
+      "server": "Server",
+      "serverReady": "Ready",
+      "serverStarting": "Starting",
+      "claude": "Claude API",
+      "llm": {
+        "ok": "Connected",
+        "unchecked": "Key configured",
+        "missing_key": "No key, passages only",
+        "invalid_key": "Key not accepted"
+      },
+      "scan": "Virus scan",
+      "scanOn": "On",
+      "scanOff": "Off, development only",
+      "models": "Models and prices",
+      "modelsFooter": "Prices in US dollars according to Anthropic. What an answer cost is shown in its details.",
+      "more": "More",
+      "quality": "Search quality",
+      "qualityText": "How reliably the search finds the right passages",
+      "open": "Open",
+      "setup": "Setup",
+      "setupText": "Choose language, appearance and name again",
+      "setupAction": "Start again"
+    }
   }
 }

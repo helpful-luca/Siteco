@@ -1,11 +1,7 @@
-import { cookies, headers } from 'next/headers';
 import { getRequestConfig } from 'next-intl/server';
-import { COOKIE_LOCALE, resolveLocale } from '@/shared/preferences/cookies';
+import { getInitialPreferences } from '@/shared/preferences/server';
 
 export default getRequestConfig(async () => {
-  const locale = resolveLocale(
-    (await cookies()).get(COOKIE_LOCALE)?.value,
-    (await headers()).get('accept-language') ?? undefined,
-  );
+  const { locale } = await getInitialPreferences();
   return { locale, messages: (await import(`../../../messages/${locale}.json`)).default };
 });

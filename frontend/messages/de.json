@@ -467,7 +467,7 @@
     },
     "delete": {
       "title": "Dokument löschen?",
-      "text": "„{name}“ wird mit allen Suchdaten aus der Bibliothek entfernt. Das lässt sich nicht rückgängig machen.",
+      "text": "„{name}“ wird mit allen Suchdaten aus der Bibliothek entfernt. Antworten, die daraus zitieren, zeigen danach nur noch den Dateinamen. Das lässt sich nicht rückgängig machen.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
     },
@@ -509,10 +509,6 @@
     "quality": {
       "title": "Qualität",
       "text": "Hier siehst du bald, wie zuverlässig die Suche die richtigen Stellen findet, gemessen an einem festen Fragenkatalog."
-    },
-    "settings": {
-      "title": "Einstellungen",
-      "text": "Sprache, Erscheinungsbild, Modelle und deine Daten stellst du bald hier ein."
     }
   },
   "markdown": {
@@ -525,10 +521,8 @@
       "subtitle": "Quelle {n}",
       "page": "Seite {page}",
       "passage": "Textstelle",
-      "cited": "Zitierte Stelle",
-      "snippet": "Ausschnitt",
       "deletedTitle": "Quelle wurde gelöscht",
-      "deletedText": "Das Dokument ist nicht mehr in deiner Bibliothek. Die zitierte Stelle bleibt hier lesbar.",
+      "deletedText": "Das Dokument ist nicht mehr in deiner Bibliothek. Mit ihm wurde auch die zitierte Stelle aus diesem Chat entfernt.",
       "textFile": "Textdatei"
     },
     "artifact": {
@@ -568,5 +562,139 @@
     "text": "Deine Dokumente und Chats sind sicher. Versuch es noch einmal, meistens klappt es dann.",
     "retry": "Erneut versuchen",
     "home": "Zum neuen Chat"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "sectionsLabel": "Bereiche",
+    "back": "Einstellungen",
+    "sections": {
+      "general": "Allgemein",
+      "appearance": "Darstellung",
+      "models": "Modelle",
+      "data": "Daten",
+      "privacy": "Datenschutz",
+      "about": "Info"
+    },
+    "general": {
+      "language": "Sprache",
+      "languageLabel": "Sprache der App",
+      "languageFooter": "Antworten kommen in der Sprache deiner Frage. Zitate bleiben in der Sprache des Dokuments.",
+      "name": "Begrüßung",
+      "nameLabel": "Dein Name",
+      "namePlaceholder": "Vorname",
+      "nameFooter": "Nur für die Begrüßung. Dein Name bleibt auf diesem Rechner und geht nie an Claude.",
+      "saved": "Gespeichert"
+    },
+    "appearance": {
+      "title": "Erscheinungsbild",
+      "footer": "Automatisch folgt deinem System und wechselt mit ihm zwischen hell und dunkel."
+    },
+    "models": {
+      "default": "Standardmodell",
+      "defaultFooter": "Gilt für neue Fragen. Im Chat kannst du für jede Frage ein anderes Modell wählen.",
+      "price": "{input} Eingabe, {output} Ausgabe pro Million Tokens",
+      "unavailable": "Gerade nicht verfügbar",
+      "noKey": "Ohne API-Schlüssel antwortet kein Modell. Du bekommst dann die passenden Fundstellen.",
+      "answers": "Antworten",
+      "mode": "Antwortmodus",
+      "modes": {
+        "low": "Schnell",
+        "medium": "Ausgewogen",
+        "high": "Gründlich"
+      },
+      "modeFooter": "Gründlich denkt länger nach, antwortet später und kostet mehr.",
+      "modeFixed": "{model} antwortet immer im schnellen Modus. Die Antwortlänge gilt für alle Modelle.",
+      "length": "Antwortlänge",
+      "lengths": {
+        "concise": "Kurz",
+        "detailed": "Ausführlich"
+      }
+    },
+    "data": {
+      "storage": "Speicher",
+      "used": "Belegt auf diesem Rechner",
+      "usedHint": "Dateien, Suchdaten und Datenbank",
+      "documents": "Dokumente",
+      "chats": "Chats",
+      "today": "Heute",
+      "cost": "Kosten",
+      "requests": "{count, plural, =0 {Noch keine Anfrage} one {# Anfrage an Claude} other {# Anfragen an Claude}}",
+      "budget": "Tagesbudget",
+      "todayFooter": "Gezählt ab Mitternacht (UTC), auch für inzwischen gelöschte Chats.",
+      "retention": "Automatisch löschen",
+      "retentionLabel": "Chats und Dokumente",
+      "retentionOff": "Nie",
+      "retentionDays": "{days, plural, one {Nach # Tag} other {Nach # Tagen}}",
+      "retentionFooter": "Einstellbar über RETENTION_DAYS in der Datei .env. Die App prüft das jede Stunde.",
+      "yours": "Deine Daten",
+      "export": "Daten exportieren",
+      "exportText": "ZIP mit allen Chats als JSON und Markdown, deinen Einstellungen und der Dokumentliste",
+      "exportAction": "Exportieren",
+      "exporting": "Wird erstellt",
+      "deleteAll": "Alle Daten löschen",
+      "deleteAllText": "Dokumente, Chats und Suchdaten von diesem Rechner entfernen",
+      "deleteAllAction": "Löschen …",
+      "deleted": "Alle Daten wurden gelöscht.",
+      "loading": "Lädt"
+    },
+    "deleteDialog": {
+      "title": "Alle Daten löschen?",
+      "text": "{documents, plural, =0 {Alle Dokumente} one {# Dokument} other {# Dokumente}} und {chats, plural, =0 {alle Chats} one {# Chat} other {# Chats}} werden mit allen Suchdaten von diesem Rechner entfernt. Laufende Antworten werden gestoppt. Das lässt sich nicht rückgängig machen.",
+      "reset": "Auch Name und Einstellungen zurücksetzen",
+      "resetHint": "Danach startet die Einrichtung neu.",
+      "confirm": "Alles löschen",
+      "cancel": "Abbrechen"
+    },
+    "privacy": {
+      "intro": "Kurz und ehrlich: was mit deinen Daten passiert.",
+      "local": "Bleibt auf diesem Rechner",
+      "localDocuments": "Deine Dokumente, ihr Text und die Suchdaten.",
+      "localChats": "Deine Chats und alle Antworten.",
+      "localProcessing": "Texterkennung für Scans und die Virenprüfung. Beides läuft hier, ohne Cloud-Dienst.",
+      "localName": "Dein Name. Er dient nur der Begrüßung.",
+      "sent": "Geht an Anthropic in den USA",
+      "sentQuestion": "Für eine Antwort gehen deine Frage, die letzten Nachrichten des Chats und die passenden Ausschnitte aus deinen Dokumenten an Claude.",
+      "sentSmall": "Ist deine Auswahl klein, geht das ganze Dokument mit. Das steht dann im Detail der Antwort.",
+      "sentNever": "Nie gesendet werden dein Name und die Dateien selbst.",
+      "anthropic": "Bei Anthropic",
+      "anthropicText": "Anthropic speichert Anfragen über die API laut eigener Richtlinie bis zu 30 Tage, etwa um Missbrauch zu erkennen, und trainiert damit keine Modelle.",
+      "telemetry": "Keine Telemetrie",
+      "telemetryText": "Die App lädt keine Schriften, Skripte oder Bilder von fremden Servern und sammelt keine Nutzungsdaten. Die eingebaute Telemetrie von Next.js, Hugging Face und onnxruntime ist abgeschaltet.",
+      "scan": "Virenprüfung",
+      "scanOn": "ClamAV prüft jede Datei auf diesem Rechner, bevor sie in die Bibliothek kommt.",
+      "scanOff": "Aus. Das ist nur für die Entwicklung gedacht: Dateien kommen ungeprüft in die Bibliothek.",
+      "rights": "Deine Rechte",
+      "rightsText": "Du kannst alles exportieren und jederzeit löschen. Ein gelöschtes Dokument verschwindet auch aus den Chats, die daraus zitieren.",
+      "retentionOn": "Chats und Dokumente werden nach {days, plural, one {# Tag} other {# Tagen}} automatisch gelöscht.",
+      "retentionOff": "Automatisches Löschen ist aus.",
+      "toData": "Export und Löschen"
+    },
+    "about": {
+      "app": "App",
+      "version": "Version",
+      "commit": "Commit",
+      "server": "Server",
+      "serverReady": "Bereit",
+      "serverStarting": "Startet",
+      "claude": "Claude API",
+      "llm": {
+        "ok": "Verbunden",
+        "unchecked": "Schlüssel hinterlegt",
+        "missing_key": "Kein Schlüssel, nur Fundstellen",
+        "invalid_key": "Schlüssel wird nicht akzeptiert"
+      },
+      "scan": "Virenprüfung",
+      "scanOn": "Aktiv",
+      "scanOff": "Aus, nur für die Entwicklung",
+      "models": "Modelle und Preise",
+      "modelsFooter": "Preise in US-Dollar laut Anthropic. Was eine Antwort gekostet hat, steht in ihrem Detail.",
+      "more": "Mehr",
+      "quality": "Qualität der Suche",
+      "qualityText": "Wie zuverlässig die Suche die richtigen Stellen findet",
+      "open": "Öffnen",
+      "setup": "Einrichtung",
+      "setupText": "Sprache, Erscheinungsbild und Name noch einmal wählen",
+      "setupAction": "Erneut starten"
+    }
   }
 }

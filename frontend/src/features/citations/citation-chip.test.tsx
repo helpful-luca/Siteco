@@ -17,7 +17,7 @@ const SOURCE = {
 };
 
 describe('CitationChip', () => {
-  it('opens the stored snapshot of a deleted source', async () => {
+  it('opens the panel of a deleted source and shows none of its text', async () => {
     const onOpen = vi.fn();
     render(
       <NextIntlClientProvider locale="de" messages={de}>
@@ -28,6 +28,9 @@ describe('CitationChip', () => {
     );
     const chip = screen.getByRole('button', { name: 'Quelle 1: Mira.pdf, Seite 4, Quelle gelöscht' });
     expect(chip).not.toHaveAttribute('aria-disabled');
+    await userEvent.hover(chip);
+    expect(await screen.findByText('Quelle gelöscht')).toBeInTheDocument();
+    expect(screen.queryByText(/IP66/)).toBeNull();
     await userEvent.click(chip);
     expect(onOpen).toHaveBeenCalledOnce();
   });

@@ -15,8 +15,8 @@ type Props = {
 
 /**
  * Numbered source reference in the answer text. A real button: hover and keyboard focus show the
- * cited sentence, a click opens the source (annex 11, 8.4). A deleted source opens its stored
- * snapshot (master spec 6.3, which wins over "opens nothing" in annex 10, E13).
+ * cited sentence, a click opens the source (annex 11, 8.4). A deleted source keeps file and page
+ * but no text (master spec 10b, 4); a click opens the panel that says it was deleted.
  */
 export function CitationChip({ n, source, citedText, active = false, onOpen }: Props) {
   const t = useTranslations('chat.sources');
@@ -38,7 +38,7 @@ export function CitationChip({ n, source, citedText, active = false, onOpen }: P
           <p className="mt-1 text-caption text-ink-muted">
             {deleted ? t('deleted') : source.page !== null ? t('page', { page: source.page }) : t('passage')}
           </p>
-          {(citedText || source?.snippet) && (
+          {!deleted && (citedText || source?.snippet) && (
             <p className="mt-2 line-clamp-6 text-footnote">„{citedText || source?.snippet}“</p>
           )}
         </div>

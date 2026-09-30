@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { cookies } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { QueryProvider } from '@/shared/api/query-provider';
 import { DESKTOP_SCRIPT } from '@/shared/desktop/desktop-script';
-import { COOKIE_THEME, resolveTheme } from '@/shared/preferences/cookies';
+import { PreferencesProvider } from '@/shared/preferences/preferences';
+import { getInitialPreferences } from '@/shared/preferences/server';
 import { THEME_SCRIPT } from '@/shared/preferences/theme-script';
 import './globals.css';
 
@@ -19,8 +19,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale();
-  const theme = resolveTheme((await cookies()).get(COOKIE_THEME)?.value);
+  // Language, theme, name and setup state are in the first HTML: no flash (annex 11, 5.1).
+  const preferences = await getInitialPreferences();
+  const { locale, theme } = preferences;
   return (
     <html
       lang={locale}
@@ -33,7 +34,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <NextIntlClientProvider>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            <PreferencesProvider initial={preferences}>{children}</PreferencesProvider>
+          </QueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -38,6 +38,8 @@ export type ModelInfo = Schemas['ModelInfo'];
 export type Effort = Schemas['Effort'];
 export type AnswerStyle = Schemas['AnswerStyle'];
 export type Lane = Schemas['Lane'];
+export type PreferencesBody = Schemas['PreferencesBody'];
+export type WorkspaceOut = Schemas['WorkspaceOut'];
 export type SourcesMode = Schemas['SourcesMode'];
 
 /** Payloads of the answer stream (`POST /api/chats/{id}/messages`), keyed by SSE event name. */

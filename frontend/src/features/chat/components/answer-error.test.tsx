@@ -33,6 +33,7 @@ function setup(error: Partial<RunError>) {
     models: [model('claude-haiku-4-5', 'Claude Haiku 4.5'), model('claude-sonnet-5-5', 'Claude Sonnet 5.5')],
     default_model: 'claude-sonnet-5-5',
   });
+  client.setQueryData(['preferences'], { default_model: 'claude-sonnet-5-5', effort: 'low', style: 'concise' });
   const full: RunError = { code: 'LLM_OVERLOADED', partial: false, requestId: 'req_1', retryAfter: null, params: {}, ...error };
   render(
     <NextIntlClientProvider locale="de" messages={de} timeZone="Europe/Berlin">
