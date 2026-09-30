@@ -66,7 +66,7 @@ describe('Composer', () => {
     const field = setup({ onSubmit });
     await userEvent.type(field, '   {Enter}');
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Senden' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Senden' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('keeps sending off while blocked or on the way, but typing works', async () => {
@@ -86,6 +86,54 @@ describe('Composer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Antwort stoppen' }));
     await userEvent.type(field, '{Escape}');
     expect(onStop).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps keyboard focus on the one send and stop button while the answer starts and ends', async () => {
+    const onSubmit = vi.fn();
+    function Busy() {
+      const [value, setValue] = useState('Frage');
+      const [busy, setBusy] = useState(false);
+      return (
+        <Composer
+          value={value}
+          onChange={setValue}
+          onSubmit={() => {
+            onSubmit();
+            setBusy(true);
+          }}
+          onStop={() => setBusy(false)}
+          onAttach={() => {}}
+          busy={busy}
+          sending={false}
+          blocked={false}
+          maxChars={4000}
+        />
+      );
+    }
+    render(
+      <NextIntlClientProvider locale="de" messages={de}>
+        <TooltipProvider>
+          <Busy />
+        </TooltipProvider>
+      </NextIntlClientProvider>,
+    );
+    const send = screen.getByRole('button', { name: 'Senden' });
+    await userEvent.click(send);
+    expect(onSubmit).toHaveBeenCalledOnce();
+    const stop = screen.getByRole('button', { name: 'Antwort stoppen' });
+    expect(stop).toBe(send);
+    expect(stop).toHaveFocus();
+    await userEvent.click(stop);
+    expect(screen.getByRole('button', { name: 'Senden' })).toHaveFocus();
+  });
+
+  it('keeps focus on the send button while the question is on its way', async () => {
+    const field = setup({ value: 'Frage', sending: true });
+    const send = screen.getByRole('button', { name: 'Senden' });
+    send.focus();
+    expect(send).toHaveAttribute('aria-disabled', 'true');
+    expect(send).toHaveFocus();
+    expect(field).toHaveValue('Frage');
   });
 
   it('counts characters from 80 percent and blocks above the limit', async () => {

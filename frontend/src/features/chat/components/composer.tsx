@@ -113,17 +113,23 @@ export function Composer({
           })}
         </span>
       )}
-      {busy ? (
-        <Tooltip content={t('stop')}>
-          <Button icon variant="secondary" aria-label={t('stop')} onClick={onStop}>
-            <Square className="fill-current" />
-          </Button>
-        </Tooltip>
-      ) : (
-        <Button icon variant="primary" type="submit" aria-label={t('send')} disabled={!canSend}>
-          <ArrowUp />
+      {/*
+        One button that turns from send into stop and back, so keyboard focus never falls to the
+        page. Not `disabled` (that would drop focus too): `aria-disabled` plus a guard in `send`.
+      */}
+      <Tooltip content={busy ? t('stop') : t('send')}>
+        <Button
+          icon
+          variant={busy ? 'secondary' : 'primary'}
+          type={busy ? 'button' : 'submit'}
+          aria-label={busy ? t('stop') : t('send')}
+          aria-disabled={!busy && !canSend ? true : undefined}
+          onClick={busy ? onStop : undefined}
+          className="aria-disabled:opacity-40 aria-disabled:hover:brightness-100 aria-disabled:active:scale-100"
+        >
+          {busy ? <Square className="fill-current" /> : <ArrowUp />}
         </Button>
-      )}
+      </Tooltip>
     </form>
   );
 }
