@@ -7,7 +7,7 @@ from fastapi import FastAPI
 
 from docchat.api.error_handlers import register_error_handlers
 from docchat.api.middleware import InternalTokenMiddleware, RequestContextMiddleware
-from docchat.api.routes import system
+from docchat.api.routes import documents, system
 from docchat.core.config import Settings, get_settings
 from docchat.core.container import Container, build_container
 from docchat.core.logging import configure_logging
@@ -28,6 +28,7 @@ def create_app(settings: Settings | None = None, container: Container | None = N
     app.state.container = app_container
     register_error_handlers(app)
     app.include_router(system.router)
+    app.include_router(documents.router)
     token = settings.internal_token.get_secret_value() if settings.internal_token else None
     app.add_middleware(InternalTokenMiddleware, token=token)
     app.add_middleware(RequestContextMiddleware)  # added last, so it runs outermost

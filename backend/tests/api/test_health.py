@@ -17,7 +17,12 @@ def test_ready_ok_after_model_loaded(settings: Settings) -> None:
     assert r.status_code == 200
     assert r.json() == {
         "ready": True,
-        "checks": {"db": "ok", "embedding_model": "ok", "llm": "missing_key"},
+        "checks": {
+            "db": "ok",
+            "vector_store": "ok",
+            "embedding_model": "ok",
+            "llm": "missing_key",
+        },
     }
 
 
@@ -27,6 +32,7 @@ def test_ready_503_when_model_failed(settings: Settings) -> None:
     assert r.status_code == 503
     assert r.json()["ready"] is False
     assert r.json()["checks"]["embedding_model"] == "failed"
+    assert r.json()["checks"]["vector_store"] == "failed"
 
 
 def test_config_reports_retrieval_only_without_key(settings: Settings) -> None:
@@ -36,6 +42,7 @@ def test_config_reports_retrieval_only_without_key(settings: Settings) -> None:
         "version": "dev",
         "commit": "unknown",
         "llm_status": "missing_key",
+        "limits": {"max_upload_mb": 1024, "max_pdf_pages": 5000, "max_storage_mb": 20480},
         "features": {"retrieval_only": True},
     }
 

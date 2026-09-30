@@ -1,6 +1,50 @@
 {
   "components": {
     "schemas": {
+      "ChunkOut": {
+        "properties": {
+          "chunk_id": {
+            "title": "Chunk Id",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "precise_highlight": {
+            "description": "False: highlight the page, not the sentences.",
+            "title": "Precise Highlight",
+            "type": "boolean"
+          },
+          "sentences": {
+            "items": {
+              "$ref": "#/components/schemas/SentenceOut"
+            },
+            "title": "Sentences",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "chunk_id",
+          "page",
+          "precise_highlight",
+          "text",
+          "sentences"
+        ],
+        "title": "ChunkOut",
+        "type": "object"
+      },
       "ComponentStatus": {
         "enum": [
           "loading",
@@ -19,6 +63,9 @@
           "features": {
             "$ref": "#/components/schemas/Features"
           },
+          "limits": {
+            "$ref": "#/components/schemas/Limits"
+          },
           "llm_status": {
             "$ref": "#/components/schemas/LlmStatus"
           },
@@ -31,10 +78,178 @@
           "version",
           "commit",
           "llm_status",
+          "limits",
           "features"
         ],
         "title": "ConfigOut",
         "type": "object"
+      },
+      "DocumentEnvelopeOut": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DocumentOut"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "title": "DocumentEnvelopeOut",
+        "type": "object"
+      },
+      "DocumentKind": {
+        "enum": [
+          "pdf",
+          "txt",
+          "md"
+        ],
+        "title": "DocumentKind",
+        "type": "string"
+      },
+      "DocumentListOut": {
+        "properties": {
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentOut"
+            },
+            "title": "Documents",
+            "type": "array"
+          }
+        },
+        "required": [
+          "documents"
+        ],
+        "title": "DocumentListOut",
+        "type": "object"
+      },
+      "DocumentOut": {
+        "properties": {
+          "chunk_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Count"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the document is `failed`."
+          },
+          "filename": {
+            "description": "Display name only. Render as text, never as HTML.",
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DocumentKind"
+          },
+          "notices": {
+            "items": {
+              "$ref": "#/components/schemas/NoticeOut"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "page_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Count"
+          },
+          "progress": {
+            "description": "0..1 within the current status.",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "type": "number"
+          },
+          "queue_position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based place in the queue while queued.",
+            "title": "Queue Position"
+          },
+          "ready_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ready At"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "kind",
+          "size_bytes",
+          "page_count",
+          "chunk_count",
+          "status",
+          "progress",
+          "queue_position",
+          "error_code",
+          "notices",
+          "created_at",
+          "ready_at"
+        ],
+        "title": "DocumentOut",
+        "type": "object"
+      },
+      "DocumentStatus": {
+        "description": "`scanning` belongs to the malware check (WP-B). `deleting` hides a row until it is gone.",
+        "enum": [
+          "scanning",
+          "queued",
+          "parsing",
+          "embedding",
+          "ready",
+          "failed",
+          "deleting"
+        ],
+        "title": "DocumentStatus",
+        "type": "string"
       },
       "ErrorBody": {
         "additionalProperties": false,
@@ -149,6 +364,30 @@
         "title": "Features",
         "type": "object"
       },
+      "Limits": {
+        "description": "Known to the UI so it can reject files before uploading them.",
+        "properties": {
+          "max_pdf_pages": {
+            "title": "Max Pdf Pages",
+            "type": "integer"
+          },
+          "max_storage_mb": {
+            "title": "Max Storage Mb",
+            "type": "integer"
+          },
+          "max_upload_mb": {
+            "title": "Max Upload Mb",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_upload_mb",
+          "max_pdf_pages",
+          "max_storage_mb"
+        ],
+        "title": "Limits",
+        "type": "object"
+      },
       "LiveOut": {
         "properties": {
           "app": {
@@ -178,6 +417,41 @@
         "title": "LlmStatus",
         "type": "string"
       },
+      "NoticeCode": {
+        "description": "Hints that are not errors. The UI translates them via `notices.<CODE>`.",
+        "enum": [
+          "PAGES_WITHOUT_TEXT",
+          "PAGES_SKIPPED"
+        ],
+        "title": "NoticeCode",
+        "type": "string"
+      },
+      "NoticeOut": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/NoticeCode"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Params",
+            "type": "object"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "NoticeOut",
+        "type": "object"
+      },
       "ReadyChecks": {
         "properties": {
           "db": {
@@ -193,10 +467,14 @@
           },
           "llm": {
             "$ref": "#/components/schemas/LlmStatus"
+          },
+          "vector_store": {
+            "$ref": "#/components/schemas/ComponentStatus"
           }
         },
         "required": [
           "db",
+          "vector_store",
           "embedding_model",
           "llm"
         ],
@@ -218,6 +496,60 @@
           "checks"
         ],
         "title": "ReadyOut",
+        "type": "object"
+      },
+      "SentenceOut": {
+        "properties": {
+          "char_end": {
+            "title": "Char End",
+            "type": "integer"
+          },
+          "char_start": {
+            "description": "Offset in the page text (PDF) or document text (TXT/MD).",
+            "title": "Char Start",
+            "type": "integer"
+          },
+          "i": {
+            "title": "I",
+            "type": "integer"
+          },
+          "rects": {
+            "description": "One (x, y, w, h) per line, 0..1 of the displayed page, origin top left.",
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Rects",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "i",
+          "text",
+          "char_start",
+          "char_end",
+          "rects"
+        ],
+        "title": "SentenceOut",
         "type": "object"
       }
     }
@@ -246,6 +578,437 @@
         "summary": "Config",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/api/documents": {
+      "get": {
+        "description": "All documents, newest first. Poll while any is not `ready` or `failed`.",
+        "operationId": "list_documents_api_documents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Documents",
+        "tags": [
+          "documents"
+        ]
+      },
+      "post": {
+        "description": "Raw body, one file per request. Answers 202 at once; ingestion runs in the background.",
+        "operationId": "upload_document_api_documents_post",
+        "parameters": [
+          {
+            "description": "Percent-encoded UTF-8 file name.",
+            "in": "header",
+            "name": "x-file-name",
+            "required": true,
+            "schema": {
+              "description": "Percent-encoded UTF-8 file name.",
+              "title": "X-File-Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "content-length",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Content-Length"
+            }
+          },
+          {
+            "in": "header",
+            "name": "content-type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Content-Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Upload Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/documents/{document_id}": {
+      "delete": {
+        "description": "Allowed in every status; stops a running ingestion.",
+        "operationId": "delete_document_api_documents__document_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Delete Document",
+        "tags": [
+          "documents"
+        ]
+      },
+      "get": {
+        "operationId": "get_document_api_documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/documents/{document_id}/chunks/{chunk_id}": {
+      "get": {
+        "description": "One chunk with its sentences and line rectangles, for highlighting a citation.",
+        "operationId": "get_chunk_api_documents__document_id__chunks__chunk_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "chunk_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chunk Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChunkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Chunk",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/documents/{document_id}/file": {
+      "get": {
+        "description": "The original file with safe headers. Supports Range requests (PDF viewer).",
+        "operationId": "get_document_file_api_documents__document_id__file_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Range",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Range"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {},
+              "text/plain": {}
+            },
+            "description": "Successful Response"
+          },
+          "206": {
+            "description": "Partial content for a Range request."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "416": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Requested Range Not Satisfiable"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Document File",
+        "tags": [
+          "documents"
         ]
       }
     },

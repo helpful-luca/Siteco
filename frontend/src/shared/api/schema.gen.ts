@@ -21,6 +21,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Documents
+         * @description All documents, newest first. Poll while any is not `ready` or `failed`.
+         */
+        get: operations["list_documents_api_documents_get"];
+        put?: never;
+        /**
+         * Upload Document
+         * @description Raw body, one file per request. Answers 202 at once; ingestion runs in the background.
+         */
+        post: operations["upload_document_api_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Document */
+        get: operations["get_document_api_documents__document_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Document
+         * @description Allowed in every status; stops a running ingestion.
+         */
+        delete: operations["delete_document_api_documents__document_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{document_id}/chunks/{chunk_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Chunk
+         * @description One chunk with its sentences and line rectangles, for highlighting a citation.
+         */
+        get: operations["get_chunk_api_documents__document_id__chunks__chunk_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{document_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document File
+         * @description The original file with safe headers. Supports Range requests (PDF viewer).
+         */
+        get: operations["get_document_file_api_documents__document_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health/live": {
         parameters: {
             query?: never;
@@ -65,6 +150,22 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ChunkOut */
+        ChunkOut: {
+            /** Chunk Id */
+            chunk_id: string;
+            /** Page */
+            page: number | null;
+            /**
+             * Precise Highlight
+             * @description False: highlight the page, not the sentences.
+             */
+            precise_highlight: boolean;
+            /** Sentences */
+            sentences: components["schemas"]["SentenceOut"][];
+            /** Text */
+            text: string;
+        };
         /**
          * ComponentStatus
          * @enum {string}
@@ -75,10 +176,70 @@ export interface components {
             /** Commit */
             commit: string;
             features: components["schemas"]["Features"];
+            limits: components["schemas"]["Limits"];
             llm_status: components["schemas"]["LlmStatus"];
             /** Version */
             version: string;
         };
+        /** DocumentEnvelopeOut */
+        DocumentEnvelopeOut: {
+            document: components["schemas"]["DocumentOut"];
+        };
+        /**
+         * DocumentKind
+         * @enum {string}
+         */
+        DocumentKind: "pdf" | "txt" | "md";
+        /** DocumentListOut */
+        DocumentListOut: {
+            /** Documents */
+            documents: components["schemas"]["DocumentOut"][];
+        };
+        /** DocumentOut */
+        DocumentOut: {
+            /** Chunk Count */
+            chunk_count: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** @description Why the document is `failed`. */
+            error_code: components["schemas"]["ErrorCode"] | null;
+            /**
+             * Filename
+             * @description Display name only. Render as text, never as HTML.
+             */
+            filename: string;
+            /** Id */
+            id: string;
+            kind: components["schemas"]["DocumentKind"];
+            /** Notices */
+            notices: components["schemas"]["NoticeOut"][];
+            /** Page Count */
+            page_count: number | null;
+            /**
+             * Progress
+             * @description 0..1 within the current status.
+             */
+            progress: number;
+            /**
+             * Queue Position
+             * @description 1-based place in the queue while queued.
+             */
+            queue_position: number | null;
+            /** Ready At */
+            ready_at: string | null;
+            /** Size Bytes */
+            size_bytes: number;
+            status: components["schemas"]["DocumentStatus"];
+        };
+        /**
+         * DocumentStatus
+         * @description `scanning` belongs to the malware check (WP-B). `deleting` hides a row until it is gone.
+         * @enum {string}
+         */
+        DocumentStatus: "scanning" | "queued" | "parsing" | "embedding" | "ready" | "failed" | "deleting";
         /** ErrorBody */
         ErrorBody: {
             code: components["schemas"]["ErrorCode"];
@@ -119,6 +280,18 @@ export interface components {
             /** Retrieval Only */
             retrieval_only: boolean;
         };
+        /**
+         * Limits
+         * @description Known to the UI so it can reject files before uploading them.
+         */
+        Limits: {
+            /** Max Pdf Pages */
+            max_pdf_pages: number;
+            /** Max Storage Mb */
+            max_storage_mb: number;
+            /** Max Upload Mb */
+            max_upload_mb: number;
+        };
         /** LiveOut */
         LiveOut: {
             /** App */
@@ -134,6 +307,20 @@ export interface components {
          * @enum {string}
          */
         LlmStatus: "missing_key" | "unchecked" | "ok" | "invalid_key";
+        /**
+         * NoticeCode
+         * @description Hints that are not errors. The UI translates them via `notices.<CODE>`.
+         * @enum {string}
+         */
+        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_SKIPPED";
+        /** NoticeOut */
+        NoticeOut: {
+            code: components["schemas"]["NoticeCode"];
+            /** Params */
+            params?: {
+                [key: string]: number | string;
+            };
+        };
         /** ReadyChecks */
         ReadyChecks: {
             /**
@@ -143,12 +330,37 @@ export interface components {
             db: "ok" | "failed";
             embedding_model: components["schemas"]["ComponentStatus"];
             llm: components["schemas"]["LlmStatus"];
+            vector_store: components["schemas"]["ComponentStatus"];
         };
         /** ReadyOut */
         ReadyOut: {
             checks: components["schemas"]["ReadyChecks"];
             /** Ready */
             ready: boolean;
+        };
+        /** SentenceOut */
+        SentenceOut: {
+            /** Char End */
+            char_end: number;
+            /**
+             * Char Start
+             * @description Offset in the page text (PDF) or document text (TXT/MD).
+             */
+            char_start: number;
+            /** I */
+            i: number;
+            /**
+             * Rects
+             * @description One (x, y, w, h) per line, 0..1 of the displayed page, origin top left.
+             */
+            rects: [
+                number,
+                number,
+                number,
+                number
+            ][];
+            /** Text */
+            text: string;
         };
     };
     responses: never;
@@ -175,6 +387,314 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConfigOut"];
+                };
+            };
+        };
+    };
+    list_documents_api_documents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentListOut"];
+                };
+            };
+        };
+    };
+    upload_document_api_documents_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Percent-encoded UTF-8 file name. */
+                "x-file-name": string;
+                "content-length"?: number | null;
+                "content-type"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentEnvelopeOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unsupported Media Type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_document_api_documents__document_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentEnvelopeOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    delete_document_api_documents__document_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_chunk_api_documents__document_id__chunks__chunk_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                chunk_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChunkOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_document_file_api_documents__document_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                Range?: string | null;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                    "text/plain": unknown;
+                };
+            };
+            /** @description Partial content for a Range request. */
+            206: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Requested Range Not Satisfiable */
+            416: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

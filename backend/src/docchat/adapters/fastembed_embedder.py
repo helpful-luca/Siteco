@@ -8,6 +8,8 @@ from fastembed import TextEmbedding
 from fastembed.common.model_description import ModelSource, PoolingType
 
 GRANITE_97M = "ibm-granite/granite-embedding-97m-multilingual-r2"
+# Chunks are about 400 tokens; the tokenizer config would allow far more (annex 12, 1b).
+MAX_TOKENS = 512
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,9 @@ class FastEmbedEmbedder:
             local_files_only=self.local_files_only,
             threads=self.threads,
         )
+        tokenizer = getattr(self._model.model, "tokenizer", None)
+        if tokenizer is not None:
+            tokenizer.enable_truncation(max_length=MAX_TOKENS)
         self.dim = len(self.embed_query("Leuchte"))
 
     def _require_model(self) -> TextEmbedding:
