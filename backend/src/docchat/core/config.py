@@ -14,6 +14,31 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None
     llm_provider: Literal["anthropic", "fake"] = "anthropic"
 
+    # Models and answers (annex 11, 4). No sampling parameters on purpose.
+    default_model: str = "claude-sonnet-5-5"
+    enabled_models: list[str] = ["claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"]
+    sonnet_thinking: Literal["adaptive", "between_tools"] = "adaptive"
+    max_output_tokens: int = 4096
+    llm_ttft_timeout_s: float = 60
+    llm_total_timeout_s: float = 180
+    llm_max_retries: int = 2
+    llm_concurrency: int = 4
+
+    # Retrieval and conversation (eval switches)
+    retrieval_candidates: int = 20
+    top_k: int = 8
+    per_document_cap: int = 5
+    full_context_max_tokens: int = 20_000
+    history_max_turns: int = 6
+    history_max_tokens: int = 6000
+
+    # Chat limits (master spec 9). No daily budget unless DAILY_BUDGET_USD is set.
+    max_question_chars: int = 4000
+    max_chats: int = 100
+    max_messages_per_chat: int = 200
+    max_concurrent_streams: int = 3
+    daily_budget_usd: float | None = None
+
     data_dir: Path = Path("/data")
     embedding_model: str = "ibm-granite/granite-embedding-97m-multilingual-r2"
     embedding_cache_dir: Path = Path("/opt/models")
@@ -49,7 +74,7 @@ class Settings(BaseSettings):
     git_sha: str = "unknown"
     log_level: str = "INFO"
 
-    @field_validator("anthropic_api_key", "internal_token", mode="before")
+    @field_validator("anthropic_api_key", "internal_token", "daily_budget_usd", mode="before")
     @classmethod
     def _blank_is_none(cls, value: object) -> object:
         return None if isinstance(value, str) and not value.strip() else value

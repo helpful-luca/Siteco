@@ -1,0 +1,145 @@
+"""Chat use cases: list, create, rename, change scope, delete, read messages."""
+
+import asyncio
+import logging
+import re
+import uuid
+from dataclasses import dataclass, replace
+
+from docchat.domain.chat_models import Chat, ChatSummary, Message
+from docchat.domain.enums import ChatScope, DocumentStatus, Lane, TitleSource
+from docchat.domain.errors import AppError, ErrorCode
+from docchat.domain.ports import ChatRepository, Clock, DocumentRepository
+from docchat.services.run_registry import RunRegistry
+
+log = logging.getLogger("docchat.chats")
+
+TITLE_MAX_CHARS = 120
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
+
+
+@dataclass(frozen=True)
+class ChatMessages:
+    messages: list[Message]
+    # Documents that still exist; sources of other documents are shown as deleted.
+    existing_document_ids: frozenset[str]
+
+
+def _clean_title(title: str) -> str:
+    cleaned = " ".join(_CONTROL.sub(" ", title).split())
+    if not 1 <= len(cleaned) <= TITLE_MAX_CHARS:
+        raise AppError(
+            ErrorCode.VALIDATION_ERROR,
+            "Title must have 1 to 120 characters.",
+            details=[{"loc": ["body", "title"], "type": "string_length"}],
+        )
+    return cleaned
+
+
+class ChatService:
+    def __init__(
+        self,
+        chats: ChatRepository,
+        documents: DocumentRepository,
+        runs: RunRegistry,
+        clock: Clock,
+        *,
+        max_chats: int,
+    ) -> None:
+        self._chats = chats
+        self._documents = documents
+        self._runs = runs
+        self._clock = clock
+        self._max_chats = max_chats
+
+    def list_chats(self) -> list[ChatSummary]:
+        return self._chats.list_chats()
+
+    def get(self, chat_id: str) -> Chat:
+        chat = self._chats.get_chat(chat_id)
+        if chat is None:
+            raise AppError(ErrorCode.CHAT_NOT_FOUND)
+        return chat
+
+    def _selection(self, scope: ChatScope, document_ids: list[str] | None) -> tuple[str, ...]:
+        if scope is ChatScope.ALL:
+            return ()
+        ids: tuple[str, ...] = tuple(dict.fromkeys(document_ids or []))
+        if not ids:
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                "A selected scope needs at least one document.",
+                details=[{"loc": ["body", "document_ids"], "type": "too_short"}],
+            )
+        visible = {d.id for d in self._documents.list_visible()}
+        missing = [d for d in ids if d not in visible]
+        if missing:
+            raise AppError(ErrorCode.NOT_FOUND, params={"document_ids": missing})
+        return ids
+
+    def create(self, scope: ChatScope, document_ids: list[str] | None = None) -> Chat:
+        if self._chats.count_chats() >= self._max_chats:
+            raise AppError(ErrorCode.CHAT_LIMIT, params={"max": self._max_chats})
+        now = self._clock.now()
+        chat = Chat(
+            id=str(uuid.uuid4()),
+            scope=scope,
+            created_at=now,
+            updated_at=now,
+            document_ids=self._selection(scope, document_ids),
+        )
+        self._chats.insert_chat(chat)
+        log.info("chat_created", extra={"chat_id": chat.id, "scope": scope.value})
+        return chat
+
+    def update(
+        self,
+        chat_id: str,
+        *,
+        title: str | None = None,
+        scope: ChatScope | None = None,
+        document_ids: list[str] | None = None,
+    ) -> Chat:
+        """Only the given fields change. A new title is the user's and is never overwritten."""
+        chat = self.get(chat_id)
+        if title is not None:
+            chat = replace(chat, title=_clean_title(title), title_source=TitleSource.USER)
+        if scope is not None or document_ids is not None:
+            new_scope = scope or chat.scope
+            if scope is None and new_scope is ChatScope.ALL:
+                new_scope = ChatScope.SELECTED  # sending only ids means "these documents"
+            chat = replace(
+                chat, scope=new_scope, document_ids=self._selection(new_scope, document_ids)
+            )
+        chat = replace(chat, updated_at=self._clock.now())
+        if not self._chats.update_chat(chat):
+            raise AppError(ErrorCode.CHAT_NOT_FOUND)
+        return chat
+
+    def stop(self, chat_id: str, lane: Lane | None = None) -> list[Lane]:
+        """Stops running answers of the chat (one lane or all). Returns the stopped lanes."""
+        self.get(chat_id)
+        return self._runs.stop(chat_id, lane)
+
+    async def delete(self, chat_id: str) -> None:
+        """Running answers are stopped first, so none of them writes into a deleted chat."""
+        self.get(chat_id)
+        await self._runs.stop_and_wait(chat_id)
+        deleted = await asyncio.to_thread(self._chats.delete_chat, chat_id)
+        if not deleted:
+            raise AppError(ErrorCode.CHAT_NOT_FOUND)
+        log.info("chat_deleted", extra={"chat_id": chat_id})
+
+    def messages(self, chat_id: str) -> ChatMessages:
+        self.get(chat_id)
+        existing = frozenset(
+            d.id for d in self._documents.list_visible() if d.status is not DocumentStatus.DELETING
+        )
+        return ChatMessages(self._chats.list_messages(chat_id), existing)
+
+    def recover(self) -> int:
+        """Startup: answers a crash left `streaming` become `interrupted`."""
+        count = self._chats.interrupt_streaming()
+        if count:
+            log.info("answers_interrupted_by_restart", extra={"count": count})
+        return count

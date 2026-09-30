@@ -3,9 +3,12 @@
 import asyncio
 import logging
 import os
+import random
 from dataclasses import dataclass
 
+from docchat.adapters.anthropic.client import AnthropicLLMClient
 from docchat.adapters.clamd_scanner import ClamdScanner
+from docchat.adapters.fake_llm import FakeLLMClient
 from docchat.adapters.fastembed_embedder import FastEmbedEmbedder
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.lancedb_vector_store import LanceVectorStore
@@ -14,19 +17,27 @@ from docchat.adapters.no_page_ocr import NoPageOcr
 from docchat.adapters.noop_malware_scanner import NoopMalwareScanner
 from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
 from docchat.adapters.pdfium_parser import PdfiumParser
+from docchat.adapters.sqlite.chat_repository import SqliteChatRepository
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
+from docchat.adapters.sqlite.usage_ledger import SqliteUsageLedger
 from docchat.adapters.system_clock import SystemClock
 from docchat.adapters.text_parser import TextFileParser
 from docchat.core.config import Settings
 from docchat.domain.enums import ComponentStatus, LlmStatus
-from docchat.domain.ports import Embedder, MalwareScanner, PdfParser, VectorStore
+from docchat.domain.ports import Embedder, LLMClient, MalwareScanner, PdfParser, VectorStore
+from docchat.services.answer_run import RunDeps, RunTimings
+from docchat.services.answer_service import AnswerLimits, AnswerService
+from docchat.services.chat_service import ChatService
 from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
 from docchat.services.ingestion_worker import IngestionWorker
+from docchat.services.llm_health import LlmHealth
 from docchat.services.malware_scan_worker import MalwareScanWorker, ScanRetry
 from docchat.services.parse_stage import ParseLimits, ParseStage
+from docchat.services.retrieval_service import RetrievalService, RetrievalSettings
+from docchat.services.run_registry import RunRegistry
 from docchat.services.upload_service import UploadLimits, UploadService
 
 log = logging.getLogger("docchat.container")
@@ -45,15 +56,19 @@ class Container:
     scans: MalwareScanWorker
     documents: DocumentService
     uploads: UploadService
+    chats: ChatService
+    answers: AnswerService
+    llm_health: LlmHealth
     embedder_status: ComponentStatus = ComponentStatus.LOADING
     vector_store_status: ComponentStatus = ComponentStatus.LOADING
-    llm_status: LlmStatus = LlmStatus.MISSING_KEY
+
+    @property
+    def llm_status(self) -> LlmStatus:
+        return self.llm_health.status
 
     async def start(self) -> None:
         self.database.migrate()
-        self.llm_status = (
-            LlmStatus.UNCHECKED if self.settings.llm_key_configured else LlmStatus.MISSING_KEY
-        )
+        await asyncio.to_thread(self.chats.recover)
         # The malware scan needs neither the model nor the index: it runs from the start, so
         # uploads never wait in `scanning` because the embedder failed or is still loading.
         await self.scans.recover()
@@ -109,12 +124,27 @@ def _scanner(settings: Settings) -> MalwareScanner:
     )
 
 
+def _llm(settings: Settings) -> tuple[LLMClient | None, LlmStatus]:
+    """Fake for E2E and demos; Claude with a key; without a key none (retrieval-only)."""
+    if settings.llm_provider == "fake":
+        return FakeLLMClient(), LlmStatus.OK
+    if settings.anthropic_api_key is None:
+        return None, LlmStatus.MISSING_KEY
+    client = AnthropicLLMClient(
+        settings.anthropic_api_key.get_secret_value(),
+        sonnet_thinking=settings.sonnet_thinking,
+        concurrency=settings.llm_concurrency,
+    )
+    return client, LlmStatus.UNCHECKED
+
+
 def build_container(
     settings: Settings,
     *,
     embedder: Embedder | None = None,
     pdf_parser: PdfParser | None = None,
     scanner: MalwareScanner | None = None,
+    llm: LLMClient | None = None,
 ) -> Container:
     database = Database(settings.database_path)
     repository = SqliteDocumentRepository(database)
@@ -158,6 +188,36 @@ def build_container(
     scans = MalwareScanWorker(
         repository, storage, scanner or _scanner(settings), worker, clock, ScanRetry()
     )
+    chats = SqliteChatRepository(database)
+    runs = RunRegistry(settings.max_concurrent_streams)
+    llm_client, llm_status = (llm, LlmStatus.OK) if llm is not None else _llm(settings)
+    llm_health = LlmHealth(llm_status)
+    retrieval = RetrievalService(
+        repository,
+        vectors,
+        embedder,
+        RetrievalSettings(
+            candidates=settings.retrieval_candidates,
+            top_k=settings.top_k,
+            per_document_cap=settings.per_document_cap,
+            full_context_max_tokens=settings.full_context_max_tokens,
+        ),
+    )
+    run_deps = RunDeps(
+        chats=chats,
+        retrieval=retrieval,
+        llm=llm_client,
+        health=llm_health,
+        ledger=SqliteUsageLedger(database),
+        clock=clock,
+        registry=runs,
+        timings=RunTimings(
+            ttft_timeout_s=settings.llm_ttft_timeout_s,
+            total_timeout_s=settings.llm_total_timeout_s,
+            max_retries=settings.llm_max_retries,
+        ),
+        jitter=random.random,
+    )
     return Container(
         settings=settings,
         database=database,
@@ -178,4 +238,18 @@ def build_container(
                 min_free_bytes=settings.min_free_disk_mb * _MB,
             ),
         ),
+        chats=ChatService(chats, repository, runs, clock, max_chats=settings.max_chats),
+        answers=AnswerService(
+            run_deps,
+            AnswerLimits(
+                enabled_models=tuple(settings.enabled_models),
+                max_question_chars=settings.max_question_chars,
+                max_messages_per_chat=settings.max_messages_per_chat,
+                max_output_tokens=settings.max_output_tokens,
+                history_max_turns=settings.history_max_turns,
+                history_max_tokens=settings.history_max_tokens,
+                daily_budget_usd=settings.daily_budget_usd,
+            ),
+        ),
+        llm_health=llm_health,
     )
