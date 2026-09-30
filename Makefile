@@ -7,7 +7,7 @@ down:
 	docker compose down
 
 dev-api:
-	cd backend && uv run uvicorn docchat.main:create_app --factory --reload --host 127.0.0.1 --port 8000
+	cd backend && DATA_DIR=data EMBEDDING_CACHE_DIR=.models uv run uvicorn docchat.main:create_app --factory --reload --host 127.0.0.1 --port 8000
 
 dev-web:
 	cd frontend && BACKEND_URL=http://127.0.0.1:8000 npm run dev

@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Siteco Document Chat",
+    "greeting": "Hello. What would you like to know today?"
+  },
+  "startup": {
+    "starting": "The app is starting.",
+    "startingHint": "The search model is loading. This only takes a moment.",
+    "unavailable": "The server is not reachable right now.",
+    "unavailableHint": "Start the app with docker compose up, then try again.",
+    "retry": "Try again"
+  },
+  "banner": {
+    "missingKey": "No API key configured. Search and sources work, answers do not yet.",
+    "missingKeyHint": "Add ANTHROPIC_API_KEY to the .env file and restart the app."
+  },
+  "errors": {
+    "VALIDATION_ERROR": "The request was not valid.",
+    "NOT_FOUND": "We could not find that.",
+    "METHOD_NOT_ALLOWED": "This action is not possible here.",
+    "UNAUTHORIZED_CLIENT": "This request was rejected.",
+    "SERVICE_STARTING": "The app is still starting. One moment please.",
+    "INTERNAL_ERROR": "Something went wrong. Please try again in a moment.",
+    "BACKEND_UNAVAILABLE": "The server is not reachable right now.",
+    "FORBIDDEN_ORIGIN": "This request did not come from the app and was blocked.",
+    "NETWORK_ERROR": "No connection. Check your connection and try again.",
+    "UNKNOWN_ERROR": "An unknown error occurred.",
+    "retry": "Try again",
+    "goHome": "Go to start"
+  }
+}
