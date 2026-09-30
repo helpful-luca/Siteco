@@ -3,26 +3,172 @@
 /* Dark mode follows the .dark class on <html>, set by the server or the theme script. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), 'Segoe UI', sans-serif;
-}
-
-/* Neutral baseline. The design system (Phase 2) replaces these tokens. */
+/*
+ * Design tokens. Concept: the app shines light on the passage.
+ * One warm accent ("sodium", after sodium street lamps), everything else neutral.
+ * Contrast pairs are verified by src/shared/ui/tokens.test.ts.
+ */
 :root {
   color-scheme: light;
-  --bg: #fbfbfd;
-  --fg: #1d1d1f;
+  --c-canvas: #f2f2f5;
+  --c-surface: #ffffff;
+  --c-surface-raised: #ffffff;
+  --c-ink: #1d1d1f;
+  --c-ink-muted: #6e6e73;
+  --c-sodium: #f0a030;
+  --c-on-sodium: #1d1d1f;
+  --c-sodium-ink: #8a5300;
+  --c-danger: #c4331f;
+  --c-success: #1f7a45;
+  --c-hairline: rgb(0 0 0 / 0.08);
+  --c-hairline-strong: rgb(0 0 0 / 0.14);
+  --c-fill: rgb(0 0 0 / 0.045);
+  --c-fill-strong: rgb(0 0 0 / 0.08);
+  --c-highlight: rgb(240 160 48 / 0.28);
+  --c-glass: rgb(255 255 255 / 0.62);
+  --c-glass-edge: rgb(255 255 255 / 0.9);
+  --c-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.12);
+  --c-light-key: rgb(255 196 110 / 0.34);
+  --c-light-fill: rgb(170 190 220 / 0.2);
 }
 
 .dark {
   color-scheme: dark;
-  --bg: #161618;
-  --fg: #f5f5f7;
+  --c-canvas: #000000;
+  --c-surface: #1c1c1e;
+  --c-surface-raised: #2c2c2e;
+  --c-ink: #f5f5f7;
+  --c-ink-muted: #98989d;
+  --c-sodium: #ffb547;
+  --c-on-sodium: #1d1d1f;
+  --c-sodium-ink: #ffc266;
+  --c-danger: #ff6b5e;
+  --c-success: #4cd27a;
+  --c-hairline: rgb(255 255 255 / 0.09);
+  --c-hairline-strong: rgb(255 255 255 / 0.16);
+  --c-fill: rgb(255 255 255 / 0.06);
+  --c-fill-strong: rgb(255 255 255 / 0.1);
+  --c-highlight: rgb(255 181 71 / 0.3);
+  --c-glass: rgb(36 36 40 / 0.55);
+  --c-glass-edge: rgb(255 255 255 / 0.12);
+  --c-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --c-light-key: rgb(255 170 60 / 0.22);
+  --c-light-fill: rgb(90 110 150 / 0.12);
 }
 
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), 'Segoe UI', sans-serif;
+
+  --color-canvas: var(--c-canvas);
+  --color-surface: var(--c-surface);
+  --color-surface-raised: var(--c-surface-raised);
+  --color-ink: var(--c-ink);
+  --color-ink-muted: var(--c-ink-muted);
+  --color-sodium: var(--c-sodium);
+  --color-on-sodium: var(--c-on-sodium);
+  --color-sodium-ink: var(--c-sodium-ink);
+  --color-danger: var(--c-danger);
+  --color-success: var(--c-success);
+  --color-hairline: var(--c-hairline);
+  --color-hairline-strong: var(--c-hairline-strong);
+  --color-fill: var(--c-fill);
+  --color-fill-strong: var(--c-fill-strong);
+  --color-highlight: var(--c-highlight);
+
+  /* Concentric radii: panels contain cards contain controls. */
+  --radius-panel: 24px;
+  --radius-card: 16px;
+  --radius-control: 10px;
+
+  /* Type scale (Elements of Typographic Style ratios, tuned to SF Pro optical sizes). */
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-footnote: 13px;
+  --text-footnote--line-height: 18px;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-body--letter-spacing: -0.005em;
+  --text-reading: 17px;
+  --text-reading--line-height: 27px;
+  --text-reading--letter-spacing: -0.01em;
+  --text-title-3: 20px;
+  --text-title-3--line-height: 26px;
+  --text-title-3--letter-spacing: -0.015em;
+  --text-title-2: 24px;
+  --text-title-2--line-height: 30px;
+  --text-title-2--letter-spacing: -0.02em;
+  --text-title-1: 32px;
+  --text-title-1--line-height: 38px;
+  --text-title-1--letter-spacing: -0.022em;
+
+  --shadow-float: var(--c-shadow);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * Liquid Glass, only for floating layers (sidebar, composer, popovers, dialogs, panel headers).
+ * Never stack glass on glass. Solid fallback below.
+ */
+@utility glass {
+  background: var(--c-glass);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+  border: 1px solid var(--c-hairline);
+  box-shadow:
+    inset 0 1px 0 0 var(--c-glass-edge),
+    var(--c-shadow);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--c-surface-raised);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--c-surface-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@layer base {
+  html {
+    background: var(--c-canvas);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* The light pool: the one gradient in the product, a warm key light from above. */
+  body {
+    min-height: 100dvh;
+    background:
+      radial-gradient(60% 55% at 50% -12%, var(--c-light-key), transparent 70%),
+      radial-gradient(45% 40% at 0% 100%, var(--c-light-fill), transparent 70%),
+      var(--c-canvas);
+    background-attachment: fixed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-sodium);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--c-highlight);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
