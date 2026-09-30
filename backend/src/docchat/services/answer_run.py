@@ -421,7 +421,8 @@ class AnswerRun:
         self._emit_citations()
         params: dict[str, Any] = {}
         if error.code is ErrorCode.MODEL_UNAVAILABLE:
-            self._deps.models.mark_unavailable(self._requested)
+            if error.model_gone:
+                self._deps.models.mark_unavailable(self._requested)
             params["model"] = self._requested
             if fallback := self._deps.models.fallback(self._requested):
                 params["fallback"] = fallback

@@ -225,7 +225,7 @@ def build_container(
     runs = RunRegistry(settings.max_concurrent_streams)
     llm_client, llm_status = (llm, LlmStatus.OK) if llm is not None else _llm(settings)
     llm_health = LlmHealth(llm_status)
-    models = ModelAvailability(settings.enabled_models, settings.default_model)
+    models = ModelAvailability(settings.enabled_models, settings.default_model, clock)
     ledger = SqliteUsageLedger(database)
     budget = DailyBudget(ledger, clock, settings.daily_budget_usd)
     retrieval = RetrievalService(

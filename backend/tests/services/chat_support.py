@@ -156,8 +156,8 @@ def build_chat_harness(
         RetrievalSettings(full_context_max_tokens=full_context_max_tokens),
     )
     llm_port: LLMClient | None = client
-    models = ModelAvailability(MODELS, "claude-sonnet-5-5")
     ticker = FakeTicker()
+    models = ModelAvailability(MODELS, "claude-sonnet-5-5", ticker)
     deps = RunDeps(
         chats=chats_repo,
         retrieval=retrieval,

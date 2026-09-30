@@ -178,3 +178,37 @@ def test_config_reports_the_budget_when_one_is_set(settings: Settings) -> None:
         budget = client.get("/api/config").json()["budget"]
     assert budget["limit_usd"] == 0.0 and budget["exceeded"] is True
     assert budget["reset_time"].endswith("T00:00:00Z")
+
+
+async def test_a_content_length_that_is_no_number_is_refused() -> None:
+    """HTTP clients never send one, so the middleware is called directly."""
+    import json
+
+    from docchat.api.middleware import BodyLimitMiddleware
+
+    reached: list[bool] = []
+
+    async def app(scope: Any, receive: Any, send: Any) -> None:
+        reached.append(True)
+
+    sent: list[dict[str, Any]] = []
+
+    async def receive() -> dict[str, Any]:
+        return {"type": "http.request", "body": b"{}", "more_body": False}
+
+    async def send(message: dict[str, Any]) -> None:
+        sent.append(message)
+
+    middleware = BodyLimitMiddleware(app, max_bytes=1024, exempt=())
+    scope = {
+        "type": "http",
+        "method": "POST",
+        "path": "/api/chats",
+        "headers": [(b"content-length", b"12abc")],
+    }
+    await middleware(scope, receive, send)
+    assert reached == []
+    assert sent[0]["status"] == 422
+    body = json.loads(sent[1]["body"])["error"]
+    assert body["code"] == "VALIDATION_ERROR"
+    assert body["details"][0]["loc"] == ["header", "content-length"]

@@ -130,7 +130,9 @@ class FakeLLMClient:
             raise LLMError(ErrorCode.LLM_OVERLOADED, retry_after=1)
         if scenario in _ERRORS:
             code, retry_after = _ERRORS[scenario]
-            raise LLMError(code, retry_after=retry_after)
+            raise LLMError(
+                code, retry_after=retry_after, model_gone=scenario is FakeScenario.MODEL_NOT_FOUND
+            )
         if scenario is FakeScenario.HANG:
             await asyncio.sleep(3600)
         model = request.model

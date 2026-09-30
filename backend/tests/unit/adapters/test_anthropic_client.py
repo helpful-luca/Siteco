@@ -181,3 +181,15 @@ async def test_request_started_comes_after_the_slot_is_free() -> None:
     client = AnthropicLLMClient("key", sdk=FakeSdk(stream), concurrency=1)
     events = await collect(client, llm_request())
     assert events[0] == RequestStarted()
+
+
+def test_only_claude_saying_not_found_error_means_the_model_is_gone() -> None:
+    assert map_error(status_error(404, "not_found_error", "model: claude-x")).model_gone is True
+    # A bare 404 (a proxy page, a wrong path) is no statement about the model.
+    response = httpx2.Response(404, request=REQUEST, text="<html>Not Found</html>")
+    bare = anthropic.AsyncAnthropic(api_key="x")._make_status_error(
+        "Not Found", body=None, response=response
+    )
+    mapped = map_error(bare)
+    assert (mapped.code, mapped.model_gone) == (ErrorCode.MODEL_UNAVAILABLE, False)
+    assert map_error(status_error(529, "overloaded_error")).model_gone is False

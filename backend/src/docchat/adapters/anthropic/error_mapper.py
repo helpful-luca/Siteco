@@ -77,5 +77,6 @@ def map_error(exc: Exception) -> LLMError:
             code,
             retry_after=_retry_after(exc) or _DEFAULT_RETRY_AFTER.get(code),
             upstream_request_id=_request_id(exc),
+            model_gone=exc.type == "not_found_error",
         )
     return LLMError(ErrorCode.LLM_UNAVAILABLE)

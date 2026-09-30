@@ -18,6 +18,21 @@ _MIGRATIONS: dict[int, str] = {
 }
 
 
+def _statements(script: str) -> list[str]:
+    """Splits a script into complete statements. `executescript` would commit the open
+    transaction first, so the steps run one by one inside it."""
+    statements: list[str] = []
+    pending = ""
+    for line in script.splitlines(keepends=True):
+        pending += line
+        if sqlite3.complete_statement(pending):
+            statements.append(pending.strip())
+            pending = ""
+    if pending.strip():
+        statements.append(pending.strip())
+    return statements
+
+
 class Database:
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -34,20 +49,35 @@ class Database:
         finally:
             conn.close()
 
+    @staticmethod
+    def _version(conn: sqlite3.Connection) -> int:
+        return int(conn.execute("PRAGMA user_version").fetchone()[0])
+
     def migrate(self) -> None:
+        """Brings the schema to SCHEMA_VERSION. Safe when two processes start at once: the
+        steps run under a write lock, and the version is read again once the lock is held."""
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as conn:
             conn.execute("PRAGMA journal_mode = WAL")
-            current = conn.execute("PRAGMA user_version").fetchone()[0]
-            if current >= SCHEMA_VERSION:
+            if self._version(conn) >= SCHEMA_VERSION:
                 return
-            if current == 0:
-                script = files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")
-            else:
-                script = "\n".join(_MIGRATIONS[v] for v in range(current + 1, SCHEMA_VERSION + 1))
-            conn.executescript(
-                f"BEGIN;\n{script}\nPRAGMA user_version = {SCHEMA_VERSION};\nCOMMIT;"
-            )
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                current = self._version(conn)  # another process may have migrated meanwhile
+                if current < SCHEMA_VERSION:
+                    for statement in _statements(self._script(current)):
+                        conn.execute(statement)
+                    conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+                conn.execute("COMMIT")
+            except BaseException:
+                conn.execute("ROLLBACK")
+                raise
+
+    @staticmethod
+    def _script(current: int) -> str:
+        if current == 0:
+            return files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")
+        return "\n".join(_MIGRATIONS[v] for v in range(current + 1, SCHEMA_VERSION + 1))
 
     def ping(self) -> bool:
         if not self.path.parent.exists():

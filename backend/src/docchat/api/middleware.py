@@ -113,7 +113,15 @@ class BodyLimitMiddleware:
             await self.app(scope, receive, send)
             return
         declared = _header(scope, b"content-length")
-        if declared.isdigit() and int(declared) > self.max_bytes:
+        if declared and not declared.isdigit():
+            # A length we cannot read would skip the check below: refuse it.
+            await error_response(
+                ErrorCode.VALIDATION_ERROR,
+                "Content-Length must be a number.",
+                details=[{"loc": ["header", "content-length"], "type": "value_error"}],
+            )(scope, receive, send)
+            return
+        if declared and int(declared) > self.max_bytes:
             await error_response(ErrorCode.REQUEST_TOO_LARGE)(scope, receive, send)
             return
         received = 0

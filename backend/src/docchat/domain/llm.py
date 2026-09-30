@@ -100,8 +100,12 @@ class LLMError(Exception):
         *,
         retry_after: int | None = None,
         upstream_request_id: str | None = None,
+        model_gone: bool = False,
     ) -> None:
         super().__init__(code.value)
         self.code = code
         self.retry_after = retry_after
         self.upstream_request_id = upstream_request_id
+        # Claude itself said `not_found_error`: the model does not exist for this key. A bare
+        # 404 (a proxy, a wrong path) says nothing about the model.
+        self.model_gone = model_gone

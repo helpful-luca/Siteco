@@ -113,3 +113,27 @@ def test_version_3_databases_get_the_error_request_id(tmp_path: Path) -> None:
         row = conn.execute("SELECT error_request_id FROM messages").fetchone()
         version = conn.execute("PRAGMA user_version").fetchone()[0]
     assert (row[0], version) == (None, SCHEMA_VERSION)
+
+
+def test_a_migration_finished_by_another_process_meanwhile_is_not_run_again(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two processes start at once and both read version 2. The second must re-read the
+    version inside its write transaction, or its ALTER TABLEs fail with a duplicate column."""
+    path = tmp_path / "race.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(
+            "CREATE TABLE documents (id TEXT PRIMARY KEY);"
+            "CREATE TABLE messages (id TEXT PRIMARY KEY); PRAGMA user_version = 2;"
+        )
+    Database(path).migrate()  # the other process wins the race
+    reads = iter([2])  # what this process read before the other one committed
+    real = Database._version
+
+    def stale_first(conn: sqlite3.Connection) -> int:
+        return next(reads, None) or real(conn)
+
+    monkeypatch.setattr(Database, "_version", staticmethod(stale_first))
+    Database(path).migrate()
+    with sqlite3.connect(path) as conn:
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION

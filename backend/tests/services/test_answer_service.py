@@ -659,7 +659,7 @@ async def test_other_refusals_do_not_use_up_the_rate_limit(tmp_path: Path) -> No
     assert isinstance(terminal(await h.ask(chat)), DoneEvent)
 
 
-async def test_a_model_claude_does_not_know_is_unavailable_until_restart(tmp_path: Path) -> None:
+async def test_a_model_claude_does_not_know_is_unavailable_for_a_while(tmp_path: Path) -> None:
     h = build_chat_harness(tmp_path, llm=FakeLLMClient([FakeScenario.MODEL_NOT_FOUND]))
     h.add_document(MIRA)
     chat = h.new_chat()
@@ -673,3 +673,16 @@ async def test_a_model_claude_does_not_know_is_unavailable_until_restart(tmp_pat
     assert refused.value.params == {"model": "claude-sonnet-5-5", "fallback": "claude-haiku-4-5"}
     haiku = h.options.__class__(model="claude-haiku-4-5", locale=h.options.locale)
     assert isinstance(terminal(await h.ask(chat, "Und die Leistung?", options=haiku)), DoneEvent)
+
+
+async def test_a_404_without_not_found_error_does_not_mark_the_model(tmp_path: Path) -> None:
+    class BareNotFound(FakeLLMClient):
+        async def stream(self, request: Any) -> Any:  # type: ignore[override]
+            raise LLMError(ErrorCode.MODEL_UNAVAILABLE)  # model_gone stays False
+            yield  # pragma: no cover
+
+    h = build_chat_harness(tmp_path, llm=BareNotFound())
+    h.add_document(MIRA)
+    end = terminal(await h.ask(h.new_chat()))
+    assert isinstance(end, ErrorEvent) and end.code is ErrorCode.MODEL_UNAVAILABLE
+    assert h.models.is_available("claude-sonnet-5-5") is True
