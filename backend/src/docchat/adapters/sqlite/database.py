@@ -79,6 +79,13 @@ class Database:
             return files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")
         return "\n".join(_MIGRATIONS[v] for v in range(current + 1, SCHEMA_VERSION + 1))
 
+    def vacuum(self) -> None:
+        """After a mass deletion: rewrites the file so deleted content is gone from disk too
+        (master spec 10b, 4), then empties the write-ahead log."""
+        with self.connect() as conn:
+            conn.execute("VACUUM")
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
     def ping(self) -> bool:
         if not self.path.parent.exists():
             return False

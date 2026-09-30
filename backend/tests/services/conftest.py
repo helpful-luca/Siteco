@@ -9,6 +9,7 @@ import pytest
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.local_file_storage import LocalFileStorage
 from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
+from docchat.adapters.sqlite.chat_repository import SqliteChatRepository
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
 from docchat.adapters.text_parser import TextFileParser
@@ -37,6 +38,8 @@ MB = 1024 * 1024
 @dataclass
 class Harness:
     root: Path
+    database: Database
+    chats: SqliteChatRepository
     repository: SqliteDocumentRepository
     storage: LocalFileStorage
     spool: JsonlChunkSpool
@@ -103,7 +106,8 @@ def build_harness(
     embedder = embedder or FakeEmbedder(dim=4)
     clock = FakeClock()
     ocr = ocr or FakePageOcr(available=False)
-    purge = DocumentPurge(repository, storage, vectors)
+    chats = SqliteChatRepository(database)
+    purge = DocumentPurge(repository, storage, vectors, chats)
     parse = ParseStage(
         spool,
         pdf,
@@ -155,6 +159,8 @@ def build_harness(
     )
     return Harness(
         root,
+        database,
+        chats,
         repository,
         storage,
         spool,

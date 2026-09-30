@@ -33,3 +33,13 @@ def total_usage(parts: tuple[ModelUsage, ...]) -> TokenUsage:
     for part in parts:
         total += part.usage
     return total
+
+
+@dataclass(frozen=True)
+class UsageDay:
+    """Cost and tokens of one UTC day, across all chats (also deleted ones)."""
+
+    cost_usd: float
+    requests: int
+    input_tokens: int
+    output_tokens: int

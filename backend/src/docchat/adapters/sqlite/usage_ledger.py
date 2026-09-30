@@ -1,6 +1,7 @@
 """Cost and tokens per UTC day. No foreign keys: deleting chats does not reset the day."""
 
 from docchat.adapters.sqlite.database import Database
+from docchat.domain.usage import UsageDay
 
 
 class SqliteUsageLedger:
@@ -23,3 +24,14 @@ class SqliteUsageLedger:
         with self._db.connect() as conn:
             row = conn.execute("SELECT cost_usd FROM usage_ledger WHERE day = ?", (day,)).fetchone()
         return float(row[0]) if row else 0.0
+
+    def usage_on(self, day: str) -> UsageDay:
+        with self._db.connect() as conn:
+            row = conn.execute(
+                "SELECT cost_usd, requests, input_tokens, output_tokens FROM usage_ledger"
+                " WHERE day = ?",
+                (day,),
+            ).fetchone()
+        if row is None:
+            return UsageDay(0.0, 0, 0, 0)
+        return UsageDay(round(float(row[0]), 6), int(row[1]), int(row[2]), int(row[3]))

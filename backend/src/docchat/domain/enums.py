@@ -85,6 +85,12 @@ class Locale(StrEnum):
     EN = "en"
 
 
+class Theme(StrEnum):
+    LIGHT = "light"
+    DARK = "dark"
+    SYSTEM = "system"
+
+
 class SourcesMode(StrEnum):
     """How the sources of an answer were chosen."""
 

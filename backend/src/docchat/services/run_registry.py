@@ -81,6 +81,24 @@ class RunRegistry:
             c.lane for c in self._controls(chat_id, lane) if c.request_stop(StopReason.STOPPED)
         )
 
+    def is_active(self, chat_id: str) -> bool:
+        return bool(self._controls(chat_id, None))
+
+    async def stop_all_and_wait(self, timeout_s: float = 30) -> None:
+        """Before deleting everything: like stop_and_wait for every chat at once."""
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout_s
+        while True:
+            with self._lock:
+                controls = list(self._runs.values())
+            if not controls:
+                return
+            for control in controls:
+                control.request_stop(StopReason.INTERRUPTED)
+            if loop.time() > deadline:
+                return
+            await asyncio.sleep(0.01)
+
     async def stop_and_wait(self, chat_id: str, timeout_s: float = 30) -> None:
         """Before deleting a chat: stop its answers and wait until they are released, including
         answers still being prepared (reserved, no task yet), so none writes into the chat

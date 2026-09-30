@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from collections.abc import Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any
@@ -22,6 +22,7 @@ from docchat.domain.enums import (
 from docchat.domain.errors import ErrorCode, NoticeCode
 from docchat.domain.models import Notice
 from docchat.domain.ports import DuplicateMessage
+from docchat.domain.redaction import mentions_text_of, without_text_of
 from docchat.domain.usage import TokenUsage
 
 _MESSAGE_COLUMNS = (
@@ -197,6 +198,18 @@ class SqliteChatRepository:
         with self._db.connect() as conn:
             return conn.execute("DELETE FROM chats WHERE id = ?", (chat_id,)).rowcount == 1
 
+    def delete_all_chats(self) -> int:
+        """Messages and selections go with them (ON DELETE CASCADE)."""
+        with self._db.connect() as conn:
+            return int(conn.execute("DELETE FROM chats").rowcount)
+
+    def chats_idle_since(self, cutoff: datetime) -> list[str]:
+        with self._db.connect() as conn:
+            rows = conn.execute(
+                "SELECT id FROM chats WHERE updated_at < ? ORDER BY updated_at", (to_db(cutoff),)
+            ).fetchall()
+        return [r[0] for r in rows]
+
     # Messages
 
     def insert_message(self, message: Message) -> None:
@@ -274,6 +287,53 @@ class SqliteChatRepository:
                 ).rowcount
                 == 1
             )
+
+    # Redaction (master spec 10b, 4)
+
+    def _redact(
+        self, where: str, params: Sequence[object], gone: Callable[[Message], set[str]]
+    ) -> int:
+        """Blanks the cited text of the documents `gone` names in each matching message, in one
+        transaction. Returns how many messages changed."""
+        changed = 0
+        with self._db.connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            rows = conn.execute(
+                f"SELECT {_MESSAGE_COLUMNS} FROM messages WHERE {where}", params
+            ).fetchall()
+            for row in rows:
+                message = _row_to_message(row)
+                documents = gone(message)
+                if not mentions_text_of(message, documents):
+                    continue
+                redacted = without_text_of(message, documents)
+                conn.execute(
+                    "UPDATE messages SET sources = ?, citations = ? WHERE id = ?",
+                    (
+                        _json([asdict(x) for x in redacted.sources]),
+                        _json([asdict(c) for c in redacted.citations]),
+                        message.id,
+                    ),
+                )
+                changed += 1
+            conn.execute("COMMIT")
+        return changed
+
+    def redact_document(self, document_id: str) -> int:
+        return self._redact(
+            "EXISTS (SELECT 1 FROM json_each(messages.sources) AS s"
+            " WHERE json_extract(s.value, '$.document_id') = ?)",
+            (document_id,),
+            lambda _message: {document_id},
+        )
+
+    def redact_missing(self, existing_document_ids: Collection[str]) -> int:
+        existing = set(existing_document_ids)
+        return self._redact(
+            "sources != '[]'",
+            (),
+            lambda message: {s.document_id for s in message.sources} - existing,
+        )
 
     def interrupt_streaming(self) -> int:
         with self._db.connect() as conn:

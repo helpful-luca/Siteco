@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     rate_upload_per_min: int = 30
     # JSON bodies of every route except the raw upload (annex 10, P5)
     max_json_body_kb: int = 64
+
+    # Automatic deletion of chats and documents older than this many days (master spec 10b, 6).
+    # 0 is off, the default.
+    retention_days: int = Field(default=0, ge=0)
+    retention_sweep_interval_s: int = Field(default=3600, ge=60)
 
     data_dir: Path = Path("/data")
     embedding_model: str = "ibm-granite/granite-embedding-97m-multilingual-r2"

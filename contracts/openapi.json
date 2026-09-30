@@ -1489,6 +1489,61 @@
         "title": "NoticeOut",
         "type": "object"
       },
+      "PreferencesBody": {
+        "additionalProperties": false,
+        "description": "Always the whole object (annex 11, 3.2).",
+        "properties": {
+          "compare_models": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Compare Models",
+            "type": "array"
+          },
+          "default_model": {
+            "maxLength": 100,
+            "title": "Default Model",
+            "type": "string"
+          },
+          "effort": {
+            "$ref": "#/components/schemas/Effort",
+            "description": "Answer mode: fast (low), balanced, thorough (high)."
+          },
+          "locale": {
+            "$ref": "#/components/schemas/Locale"
+          },
+          "name": {
+            "description": "Only for the greeting, never sent to the model. Cleaned on save.",
+            "maxLength": 40,
+            "title": "Name",
+            "type": "string"
+          },
+          "onboarded": {
+            "title": "Onboarded",
+            "type": "boolean"
+          },
+          "style": {
+            "$ref": "#/components/schemas/AnswerStyle"
+          },
+          "theme": {
+            "$ref": "#/components/schemas/Theme"
+          }
+        },
+        "required": [
+          "locale",
+          "theme",
+          "name",
+          "default_model",
+          "effort",
+          "style",
+          "compare_models",
+          "onboarded"
+        ],
+        "title": "PreferencesBody",
+        "type": "object"
+      },
       "ReadyChecks": {
         "properties": {
           "db": {
@@ -1993,6 +2048,15 @@
         "title": "StopOut",
         "type": "object"
       },
+      "Theme": {
+        "enum": [
+          "light",
+          "dark",
+          "system"
+        ],
+        "title": "Theme",
+        "type": "string"
+      },
       "TitleSource": {
         "enum": [
           "auto",
@@ -2072,6 +2136,107 @@
           "cache_creation_input_tokens"
         ],
         "title": "UsageOut",
+        "type": "object"
+      },
+      "UsageTodayOut": {
+        "properties": {
+          "budget_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "DAILY_BUDGET_USD; null is off.",
+            "title": "Budget Usd"
+          },
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cost_usd",
+          "requests",
+          "input_tokens",
+          "output_tokens",
+          "budget_usd"
+        ],
+        "title": "UsageTodayOut",
+        "type": "object"
+      },
+      "WorkspaceOut": {
+        "properties": {
+          "retention_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "RETENTION_DAYS; null: nothing is deleted.",
+            "title": "Retention Days"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/WorkspaceStatsOut"
+          },
+          "usage_today": {
+            "$ref": "#/components/schemas/UsageTodayOut",
+            "description": "The current UTC day."
+          }
+        },
+        "required": [
+          "stats",
+          "usage_today",
+          "retention_days"
+        ],
+        "title": "WorkspaceOut",
+        "type": "object"
+      },
+      "WorkspaceStatsOut": {
+        "properties": {
+          "chats": {
+            "title": "Chats",
+            "type": "integer"
+          },
+          "documents": {
+            "title": "Documents",
+            "type": "integer"
+          },
+          "documents_bytes": {
+            "description": "Size of the original files.",
+            "title": "Documents Bytes",
+            "type": "integer"
+          },
+          "storage_bytes": {
+            "description": "Everything on disk: files, search index, database.",
+            "title": "Storage Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "documents",
+          "chats",
+          "documents_bytes",
+          "storage_bytes"
+        ],
+        "title": "WorkspaceStatsOut",
         "type": "object"
       }
     }
@@ -3258,6 +3423,154 @@
         "summary": "Ready",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/api/preferences": {
+      "get": {
+        "description": "The defaults (`onboarded` false) until the setup ran.",
+        "operationId": "get_preferences_api_preferences_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesBody"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Preferences",
+        "tags": [
+          "workspace"
+        ]
+      },
+      "put": {
+        "description": "The whole object. 422 `MODEL_NOT_ALLOWED` for a model that is not offered.",
+        "operationId": "put_preferences_api_preferences_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesBody"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Put Preferences",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace": {
+      "delete": {
+        "description": "Deletes every document, chat and message. Running answers are stopped first.",
+        "operationId": "delete_workspace_api_workspace_delete",
+        "parameters": [
+          {
+            "description": "Also forget name and settings; the setup shows again.",
+            "in": "query",
+            "name": "reset_preferences",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Also forget name and settings; the setup shows again.",
+              "title": "Reset Preferences",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Delete Workspace",
+        "tags": [
+          "workspace"
+        ]
+      },
+      "get": {
+        "operationId": "get_workspace_api_workspace_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Workspace",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/export": {
+      "get": {
+        "description": "ZIP with every chat (JSON and Markdown), the preferences and the document list.",
+        "operationId": "export_workspace_api_workspace_export_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {}
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Workspace",
+        "tags": [
+          "workspace"
         ]
       }
     }

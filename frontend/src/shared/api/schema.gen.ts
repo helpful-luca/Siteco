@@ -282,6 +282,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Preferences
+         * @description The defaults (`onboarded` false) until the setup ran.
+         */
+        get: operations["get_preferences_api_preferences_get"];
+        /**
+         * Put Preferences
+         * @description The whole object. 422 `MODEL_NOT_ALLOWED` for a model that is not offered.
+         */
+        put: operations["put_preferences_api_preferences_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workspace */
+        get: operations["get_workspace_api_workspace_get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Workspace
+         * @description Deletes every document, chat and message. Running answers are stopped first.
+         */
+        delete: operations["delete_workspace_api_workspace_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workspace/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Workspace
+         * @description ZIP with every chat (JSON and Markdown), the preferences and the document list.
+         */
+        get: operations["export_workspace_api_workspace_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -752,6 +817,28 @@ export interface components {
                 [key: string]: number | string;
             };
         };
+        /**
+         * PreferencesBody
+         * @description Always the whole object (annex 11, 3.2).
+         */
+        PreferencesBody: {
+            /** Compare Models */
+            compare_models: string[];
+            /** Default Model */
+            default_model: string;
+            /** @description Answer mode: fast (low), balanced, thorough (high). */
+            effort: components["schemas"]["Effort"];
+            locale: components["schemas"]["Locale"];
+            /**
+             * Name
+             * @description Only for the greeting, never sent to the model. Cleaned on save.
+             */
+            name: string;
+            /** Onboarded */
+            onboarded: boolean;
+            style: components["schemas"]["AnswerStyle"];
+            theme: components["schemas"]["Theme"];
+        };
         /** ReadyChecks */
         ReadyChecks: {
             /**
@@ -966,6 +1053,11 @@ export interface components {
             stopped: components["schemas"]["Lane"][];
         };
         /**
+         * Theme
+         * @enum {string}
+         */
+        Theme: "light" | "dark" | "system";
+        /**
          * TitleSource
          * @enum {string}
          */
@@ -991,6 +1083,50 @@ export interface components {
             input_tokens: number;
             /** Output Tokens */
             output_tokens: number;
+        };
+        /** UsageTodayOut */
+        UsageTodayOut: {
+            /**
+             * Budget Usd
+             * @description DAILY_BUDGET_USD; null is off.
+             */
+            budget_usd: number | null;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /** Requests */
+            requests: number;
+        };
+        /** WorkspaceOut */
+        WorkspaceOut: {
+            /**
+             * Retention Days
+             * @description RETENTION_DAYS; null: nothing is deleted.
+             */
+            retention_days: number | null;
+            stats: components["schemas"]["WorkspaceStatsOut"];
+            /** @description The current UTC day. */
+            usage_today: components["schemas"]["UsageTodayOut"];
+        };
+        /** WorkspaceStatsOut */
+        WorkspaceStatsOut: {
+            /** Chats */
+            chats: number;
+            /** Documents */
+            documents: number;
+            /**
+             * Documents Bytes
+             * @description Size of the original files.
+             */
+            documents_bytes: number;
+            /**
+             * Storage Bytes
+             * @description Everything on disk: files, search index, database.
+             */
+            storage_bytes: number;
         };
     };
     responses: never;
@@ -1852,6 +1988,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadyOut"];
+                };
+            };
+        };
+    };
+    get_preferences_api_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesBody"];
+                };
+            };
+        };
+    };
+    put_preferences_api_preferences_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesBody"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_workspace_api_workspace_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+        };
+    };
+    delete_workspace_api_workspace_delete: {
+        parameters: {
+            query?: {
+                /** @description Also forget name and settings; the setup shows again. */
+                reset_preferences?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    export_workspace_api_workspace_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": unknown;
                 };
             };
         };

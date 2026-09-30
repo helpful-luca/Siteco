@@ -16,6 +16,8 @@ from docchat.domain.llm import LLMEvent, LLMRequest
 from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk, Document, Notice
 from docchat.domain.parsing import PageBatch, TextContent, TextSection
+from docchat.domain.preferences import Preferences
+from docchat.domain.usage import UsageDay
 
 
 class Clock(Protocol):
@@ -287,6 +289,22 @@ class ChatRepository(Protocol):
 
     def delete_chat(self, chat_id: str) -> bool: ...
 
+    def delete_all_chats(self) -> int:
+        """Every chat with its messages. Returns how many chats were deleted."""
+        ...
+
+    def chats_idle_since(self, cutoff: datetime) -> list[str]:
+        """Ids of chats last changed before `cutoff` (retention)."""
+        ...
+
+    def redact_document(self, document_id: str) -> int:
+        """Blanks the cited text of this document in every answer. Returns the changed count."""
+        ...
+
+    def redact_missing(self, existing_document_ids: Collection[str]) -> int:
+        """Like redact_document for every document not in the given set."""
+        ...
+
     def insert_message(self, message: Message) -> None:
         """Raises DuplicateMessage if the chat already has this `client_message_id`."""
         ...
@@ -322,6 +340,34 @@ class UsageLedger(Protocol):
     def record(self, day: str, cost_usd: float, input_tokens: int, output_tokens: int) -> None: ...
 
     def cost_on(self, day: str) -> float: ...
+
+    def usage_on(self, day: str) -> UsageDay: ...
+
+
+class SnapshotRedactor(Protocol):
+    """Removes a deleted document's text from the answers that cited it."""
+
+    def redact_document(self, document_id: str) -> int: ...
+
+
+class PreferencesStore(Protocol):
+    def load(self) -> Preferences | None:
+        """None: nothing stored yet (or unreadable), the defaults apply."""
+        ...
+
+    def save(self, preferences: Preferences, now: datetime) -> None: ...
+
+    def clear(self) -> None: ...
+
+
+class StorageMeter(Protocol):
+    def used_bytes(self) -> int:
+        """Bytes the app keeps on disk: database, search index and files."""
+        ...
+
+
+class DatabaseMaintenance(Protocol):
+    def vacuum(self) -> None: ...
 
 
 class LLMClient(Protocol):

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from docchat.adapters.anthropic.client import AnthropicLLMClient
 from docchat.adapters.clamd_scanner import ClamdScanner
+from docchat.adapters.directory_size_meter import DirectorySizeMeter
 from docchat.adapters.fake_llm import FakeLLMClient
 from docchat.adapters.fastembed_embedder import FastEmbedEmbedder
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
@@ -23,6 +24,7 @@ from docchat.adapters.process_runner import IsolatedProcess
 from docchat.adapters.sqlite.chat_repository import SqliteChatRepository
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
+from docchat.adapters.sqlite.preferences_store import SqlitePreferencesStore
 from docchat.adapters.sqlite.usage_ledger import SqliteUsageLedger
 from docchat.adapters.system_clock import SystemClock
 from docchat.adapters.tesseract_ocr import TesseractPageOcr
@@ -49,9 +51,13 @@ from docchat.services.llm_health import LlmHealth
 from docchat.services.malware_scan_worker import MalwareScanWorker, ScanRetry
 from docchat.services.model_availability import ModelAvailability
 from docchat.services.parse_stage import ParseLimits, ParseStage
+from docchat.services.preferences_service import PreferencesService
+from docchat.services.retention_sweeper import RetentionSweeper
 from docchat.services.retrieval_service import RetrievalService, RetrievalSettings
 from docchat.services.run_registry import RunRegistry
 from docchat.services.upload_service import UploadLimits, UploadService
+from docchat.services.workspace_export import WorkspaceExport
+from docchat.services.workspace_service import WorkspaceParts, WorkspaceService
 
 log = logging.getLogger("docchat.container")
 
@@ -75,6 +81,10 @@ class Container:
     llm_health: LlmHealth
     models: ModelAvailability
     budget: DailyBudget
+    preferences: PreferencesService
+    workspace: WorkspaceService
+    export: WorkspaceExport
+    retention: RetentionSweeper
     embedder_status: ComponentStatus = ComponentStatus.LOADING
     vector_store_status: ComponentStatus = ComponentStatus.LOADING
 
@@ -85,6 +95,7 @@ class Container:
     async def start(self) -> None:
         self.database.migrate()
         await asyncio.to_thread(self.chats.recover)
+        await self.workspace.recover()
         # The malware scan needs neither the model nor the index: it runs from the start, so
         # uploads never wait in `scanning` because the embedder failed or is still loading.
         await self.scans.recover()
@@ -96,6 +107,7 @@ class Container:
         ):
             await self.worker.recover()
             self.worker.start()
+        self.retention.start()
 
     async def _load_embedder(self) -> None:
         try:
@@ -120,6 +132,7 @@ class Container:
 
     async def stop(self) -> None:
         """Stop background work started in start()."""
+        await self.retention.stop()
         await self.scans.stop()
         await self.worker.stop()
         await self.pdf_parser.close()
@@ -191,7 +204,8 @@ def build_container(
     pdf_parser = pdf_parser or PdfiumParser(
         timeout_s=settings.parse_timeout_s, process=parser_process
     )
-    purge = DocumentPurge(repository, storage, vectors)
+    chats = SqliteChatRepository(database)
+    purge = DocumentPurge(repository, storage, vectors, chats)
     text_parser = TextFileParser()
     parse_stage = ParseStage(
         spool,
@@ -221,7 +235,6 @@ def build_container(
     scans = MalwareScanWorker(
         repository, storage, scanner or _scanner(settings), worker, clock, ScanRetry()
     )
-    chats = SqliteChatRepository(database)
     runs = RunRegistry(settings.max_concurrent_streams)
     llm_client, llm_status = (llm, LlmStatus.OK) if llm is not None else _llm(settings)
     llm_health = LlmHealth(llm_status)
@@ -255,6 +268,20 @@ def build_container(
         models=models,
         jitter=random.random,
     )
+    documents = DocumentService(
+        repository,
+        storage,
+        vectors,
+        worker,
+        purge,
+        clock,
+        text_parser,
+        max_text_chars=settings.max_chars_per_doc,
+    )
+    chat_service = ChatService(chats, repository, runs, clock, max_chats=settings.max_chats)
+    preferences = PreferencesService(
+        SqlitePreferencesStore(database), clock, settings.enabled_models, settings.default_model
+    )
     return Container(
         settings=settings,
         database=database,
@@ -264,16 +291,7 @@ def build_container(
         parser_process=parser_process,
         worker=worker,
         scans=scans,
-        documents=DocumentService(
-            repository,
-            storage,
-            vectors,
-            worker,
-            purge,
-            clock,
-            text_parser,
-            max_text_chars=settings.max_chars_per_doc,
-        ),
+        documents=documents,
         uploads=UploadService(
             repository,
             storage,
@@ -286,7 +304,7 @@ def build_container(
             ),
             RateLimit(LimitScope.UPLOAD, settings.rate_upload_per_min, clock),
         ),
-        chats=ChatService(chats, repository, runs, clock, max_chats=settings.max_chats),
+        chats=chat_service,
         answers=AnswerService(
             run_deps,
             AnswerLimits(
@@ -303,4 +321,33 @@ def build_container(
         llm_health=llm_health,
         models=models,
         budget=budget,
+        preferences=preferences,
+        workspace=WorkspaceService(
+            WorkspaceParts(
+                chats=chats,
+                documents=repository,
+                library=documents,
+                storage=storage,
+                vectors=vectors,
+                runs=runs,
+                preferences=preferences,
+                meter=DirectorySizeMeter(settings.data_dir),
+                maintenance=database,
+                ledger=ledger,
+                budget=budget,
+                clock=clock,
+            ),
+            retention_days=settings.retention_days,
+        ),
+        export=WorkspaceExport(chats, repository, preferences, clock),
+        retention=RetentionSweeper(
+            chat_service,
+            chats,
+            repository,
+            documents,
+            runs,
+            clock,
+            days=settings.retention_days,
+            interval_s=settings.retention_sweep_interval_s,
+        ),
     )

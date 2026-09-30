@@ -10,6 +10,7 @@ from docchat.domain.chat_models import Chat, ChatSummary, Message
 from docchat.domain.enums import ChatScope, DocumentStatus, Lane, TitleSource
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.ports import ChatRepository, Clock, DocumentRepository
+from docchat.domain.redaction import without_text_of
 from docchat.services.run_registry import RunRegistry
 
 log = logging.getLogger("docchat.chats")
@@ -131,11 +132,17 @@ class ChatService:
         log.info("chat_deleted", extra={"chat_id": chat_id})
 
     def messages(self, chat_id: str) -> ChatMessages:
+        """Sources of deleted documents come without their text, also when an answer was saved
+        while its document was being deleted (the stored snapshot is redacted at startup)."""
         self.get(chat_id)
         existing = frozenset(
             d.id for d in self._documents.list_visible() if d.status is not DocumentStatus.DELETING
         )
-        return ChatMessages(self._chats.list_messages(chat_id), existing)
+        messages = [
+            without_text_of(m, {s.document_id for s in m.sources} - existing)
+            for m in self._chats.list_messages(chat_id)
+        ]
+        return ChatMessages(messages, existing)
 
     def recover(self) -> int:
         """Startup: answers a crash left `streaming` become `interrupted`."""
