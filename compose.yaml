@@ -13,6 +13,7 @@ services:
       DATA_DIR: /data
       # Compose fills this from the shell or from .env, whichever is set.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}   # `fake`: answers without Claude (tests, demo)
       MALWARE_SCAN: ${MALWARE_SCAN:-required}
       CLAMD_HOST: clamav
     expose: ["8000"]      # no host port: only the frontend container can reach the backend
