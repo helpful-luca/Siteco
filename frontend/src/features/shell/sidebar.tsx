@@ -3,23 +3,26 @@
 import { BookOpen, Gauge, Settings, SquarePen } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { buttonStyles, SearchField, Tooltip } from '@/shared/ui';
-import { ChatList } from './chat-list';
 import { NavItem } from './nav-item';
+import { useUI } from './ui-context';
 
-/** Glass sidebar: search, new chat, library and quality, the chats, settings at the bottom. */
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+/**
+ * Glass sidebar: search, new chat, library and quality, the chats, settings at the bottom.
+ * The chat list comes from the chat feature as a slot; it reads the search text from the UI context.
+ */
+export function Sidebar({ chatList, onNavigate }: { chatList?: ReactNode; onNavigate?: () => void }) {
   const t = useTranslations('shell');
-  const [query, setQuery] = useState('');
+  const { chatQuery, setChatQuery } = useUI();
   return (
     <div className="flex h-full flex-col p-3 pt-[calc(var(--spacing)*3+var(--titlebar-inset))]">
       <div className="drag-region flex items-center gap-1">
         <SearchField
           label={t('search')}
           clearLabel={t('clearSearch')}
-          value={query}
-          onValueChange={setQuery}
+          value={chatQuery}
+          onValueChange={setChatQuery}
           className="flex-1"
         />
         <Tooltip content={t('newChat')}>
@@ -42,7 +45,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </NavItem>
       </nav>
       <section aria-label={t('chats')} className="-mx-1 mt-6 min-h-0 flex-1 overflow-y-auto px-1">
-        <ChatList query={query} />
+        {chatList}
       </section>
       <div className="flex flex-col gap-0.5 pt-3">
         <NavItem href="/settings" icon={<Settings aria-hidden />} onNavigate={onNavigate}>

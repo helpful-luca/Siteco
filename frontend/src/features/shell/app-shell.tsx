@@ -10,17 +10,17 @@ import { Sidebar } from './sidebar';
 import { UIProvider, useUI } from './ui-context';
 
 /** Sidebar | main | right panel. Below 1024 px the sidebar becomes a drawer behind a toggle. */
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ chatList, children }: { chatList?: ReactNode; children: ReactNode }) {
   return (
     <UIProvider>
       <TooltipProvider>
-        <Frame>{children}</Frame>
+        <Frame chatList={chatList}>{children}</Frame>
       </TooltipProvider>
     </UIProvider>
   );
 }
 
-function Frame({ children }: { children: ReactNode }) {
+function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNode }) {
   const t = useTranslations('shell');
   const { sidebarOpen, setSidebarOpen } = useUI();
   return (
@@ -32,11 +32,11 @@ function Frame({ children }: { children: ReactNode }) {
         {t('skipToContent')}
       </a>
       <aside aria-label={t('sidebar')} className="glass hidden w-sidebar shrink-0 rounded-panel lg:block">
-        <Sidebar />
+        <Sidebar chatList={chatList} />
       </aside>
       <SideSheet side="left" label={t('sidebar')} open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <div className="glass-dense w-sidebar max-w-[calc(100vw-var(--spacing)*12)] rounded-panel">
-          <Sidebar onNavigate={() => setSidebarOpen(false)} />
+          <Sidebar chatList={chatList} onNavigate={() => setSidebarOpen(false)} />
         </div>
       </SideSheet>
 

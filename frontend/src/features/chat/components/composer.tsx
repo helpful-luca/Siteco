@@ -1,0 +1,129 @@
+'use client';
+
+import { ArrowUp, Paperclip, Square } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useLayoutEffect, useRef, type KeyboardEvent } from 'react';
+import { Button, cn, Tooltip } from '@/shared/ui';
+
+/** The counter appears from 80 % of the limit (annex 10, E5). */
+const COUNTER_FROM = 0.8;
+const MAX_HEIGHT_PX = 240;
+
+type Props = {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (question: string) => void;
+  onStop: () => void;
+  onAttach: () => void;
+  /** An answer is running in this chat: the button stops it, typing a draft still works. */
+  busy: boolean;
+  /** The question is on its way and not yet confirmed. */
+  sending: boolean;
+  /** Sending is not possible right now (reason shown in the notice above). */
+  blocked: boolean;
+  maxChars: number | undefined;
+  describedBy?: string;
+  autoFocus?: boolean;
+};
+
+/**
+ * Floating glass composer. Enter sends, Shift+Enter makes a new line, Escape stops a running
+ * answer; Enter while an IME is composing never sends (annex 10, O6, E24).
+ */
+export function Composer({
+  value,
+  onChange,
+  onSubmit,
+  onStop,
+  onAttach,
+  busy,
+  sending,
+  blocked,
+  maxChars,
+  describedBy,
+  autoFocus = false,
+}: Props) {
+  const t = useTranslations('chat.composer');
+  const locale = useLocale();
+  const field = useRef<HTMLTextAreaElement>(null);
+  const length = value.trim().length;
+  const tooLong = maxChars !== undefined && value.length > maxChars;
+  const canSend = length > 0 && !tooLong && !busy && !sending && !blocked;
+  const showCounter = maxChars !== undefined && value.length >= maxChars * COUNTER_FROM;
+
+  useLayoutEffect(() => {
+    const element = field.current;
+    if (!element) return;
+    element.style.height = 'auto';
+    element.style.height = `${Math.min(element.scrollHeight, MAX_HEIGHT_PX)}px`;
+  }, [value]);
+
+  const send = () => {
+    if (canSend) onSubmit(value.trim());
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Escape' && busy) {
+      event.preventDefault();
+      onStop();
+      return;
+    }
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing || event.keyCode === 229) return;
+    event.preventDefault();
+    send();
+  };
+
+  return (
+    <form
+      className="glass pointer-events-auto flex items-end gap-2 rounded-panel p-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        send();
+      }}
+    >
+      <Tooltip content={t('attach')}>
+        <Button icon variant="ghost" aria-label={t('attach')} onClick={onAttach}>
+          <Paperclip />
+        </Button>
+      </Tooltip>
+      <label className="sr-only" htmlFor="composer-field">
+        {t('label')}
+      </label>
+      <textarea
+        id="composer-field"
+        ref={field}
+        rows={1}
+        value={value}
+        autoFocus={autoFocus}
+        placeholder={t('placeholder')}
+        aria-describedby={describedBy}
+        aria-invalid={tooLong || undefined}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={onKeyDown}
+        className="min-h-8 flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-reading outline-none placeholder:truncate placeholder:text-ink-muted"
+      />
+      {showCounter && (
+        <span
+          className={cn('shrink-0 self-center text-caption tabular-nums', tooLong ? 'text-danger' : 'text-ink-muted')}
+          aria-live="polite"
+        >
+          {t('counter', {
+            count: new Intl.NumberFormat(locale).format(value.length),
+            max: new Intl.NumberFormat(locale).format(maxChars),
+          })}
+        </span>
+      )}
+      {busy ? (
+        <Tooltip content={t('stop')}>
+          <Button icon variant="secondary" aria-label={t('stop')} onClick={onStop}>
+            <Square className="fill-current" />
+          </Button>
+        </Tooltip>
+      ) : (
+        <Button icon variant="primary" type="submit" aria-label={t('send')} disabled={!canSend}>
+          <ArrowUp />
+        </Button>
+      )}
+    </form>
+  );
+}

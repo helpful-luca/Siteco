@@ -90,6 +90,27 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 55 | Control radius | 12 px | 10 px | Concentric with the 24 px sidebar and its 12 px padding |
 | 56 | Global banner | Rendered inside the page column by `Page` | Full width above `<main>` | Shares the left edge with title, toolbar and table and scrolls away on phones |
 
+## Chat UI, rich rendering and artifacts (phase 4 UI, phase 10)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 61 | Where answers stream | A `StreamProvider` above the routes with a reducer keyed by chat and lane; deltas batched per animation frame | Streams owned by the chat page; TanStack Query | Answers keep streaming while you switch chats; the reducer is pure and tested |
+| 62 | Stream reading | `fetch` POST, `eventsource-parser` on the raw bytes, a 45 s watchdog on bytes (pings included) | `EventSource` | `EventSource` cannot POST; the watchdog must see pings, which the parser swallows |
+| 63 | Question confirmation | The question stays in the composer until `meta`; the live turn appears only then | Optimistic bubble | A refusal before the stream never loses the typed text (annex 11, 8.2) |
+| 64 | Stop | Mark the run stopped, abort the fetch and call `POST stop` together | Waiting for the server's `done` | The UI reacts at once; the server saves `stopped` anyway |
+| 65 | Live and saved answers | One `Answer` view model for both; the run is dropped only when the saved answer is loaded | Swapping on `done` | No flicker between the streamed and the saved version |
+| 66 | Citation offsets | Python code points mapped to UTF-16 indices; a chip moves before trailing whitespace and into the last table cell; chips in code are dropped, chips in link text move behind the link | Raw offsets | Astral characters and block ends would shift or break chips; no buttons inside anchors or code |
+| 67 | Chip line breaks | The last word and its chips are one no-wrap group | Chips as free inline items | A chip never starts a line on its own |
+| 68 | Half written markdown | A pure helper closes open fences, holds back a table until its separator row is complete and drops a half row or link | Rendering raw deltas; Streamdown | No flicker between text and table; react-markdown stays safe by default |
+| 69 | Links in answers | Only `http`, `https`, `mailto`, opened with `noopener noreferrer nofollow`; everything else becomes text | react-markdown's default URL filter | The default keeps relative and other schemes |
+| 70 | Scope and model pickers | In the chat header toolbar, like the approved style screen | A control row inside the composer | Approved look, one-line composer, macOS toolbar pattern |
+| 71 | Sources list | Cited sources grouped by document; the other retrieved passages behind a disclosure | All retrieved sources | Less noise, nothing hidden |
+| 72 | Artifacts | The right panel in a wide size (600 px) for an answer, a table or a code block; CSV from the syntax tree with formula prefixes defused, semicolon for German | A route; model generated artifacts | The chat stays visible; spreadsheets must not run formulas from documents |
+| 73 | Source panel until WP-E | Cited sentence, snippet and "open document" to the sandboxed file endpoint in a new tab, behind `useOpenSource` | A dead button | Useful now, the PDF highlight viewer replaces only the panel body |
+| 74 | Sidebar chat list | The chat feature passes its list into the shell as a slot; the search text lives in the UI context | The shell importing the chat feature | No import cycle between shell and chat |
+| 75 | Empty first send | A chat is created on the first send and deleted again when the question is refused before the stream | Keeping it | No empty "New chat" rows after a refusal (annex 10, E20) |
+| 76 | Scrolling | A new question moves to the top and its turn fills the view; following only near the end, otherwise a jump button | Always scrolling to the end | Reading position is never stolen (annex 11, 8.3) |
+
 ## Measurements
 
 | What | Result |
