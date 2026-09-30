@@ -177,3 +177,16 @@ def test_usage_ledger_adds_up_per_day(db: Database) -> None:
     ledger.record("2026-10-01", 1.0, 1, 1)
     assert ledger.cost_on("2026-09-30") == pytest.approx(0.75)
     assert ledger.cost_on("2026-09-29") == 0.0
+
+
+def test_touch_names_only_unnamed_auto_chats(repo: SqliteChatRepository) -> None:
+    repo.insert_chat(chat("auto"))
+    repo.insert_chat(chat("user", title="Meins", title_source=TitleSource.USER))
+    later = T0 + timedelta(minutes=5)
+    for chat_id in ("auto", "user"):
+        repo.touch_chat(chat_id, later, auto_title="Erste Frage")
+    repo.touch_chat("auto", later, auto_title="Zweite Frage")
+    auto, user = repo.get_chat("auto"), repo.get_chat("user")
+    assert auto is not None and user is not None
+    assert (auto.title, auto.updated_at) == ("Erste Frage", later)
+    assert (user.title, user.updated_at) == ("Meins", later)

@@ -268,6 +268,10 @@ class ChatRepository(Protocol):
         """Replaces title, scope, selection and `updated_at`. False if the chat is gone."""
         ...
 
+    def touch_chat(self, chat_id: str, now: datetime, *, auto_title: str | None) -> None:
+        """Sets `updated_at`, and the title only while the chat has none and is not renamed."""
+        ...
+
     def delete_chat(self, chat_id: str) -> bool: ...
 
     def insert_message(self, message: Message) -> None:

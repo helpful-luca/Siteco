@@ -3,6 +3,7 @@
 import json
 import sqlite3
 from dataclasses import asdict
+from datetime import datetime
 from typing import Any
 
 from docchat.adapters.sqlite.database import Database
@@ -178,6 +179,15 @@ class SqliteChatRepository:
                 self._write_selection(conn, chat)
             conn.execute("COMMIT")
             return changed == 1
+
+    def touch_chat(self, chat_id: str, now: datetime, *, auto_title: str | None) -> None:
+        with self._db.connect() as conn:
+            conn.execute(
+                "UPDATE chats SET updated_at = ?, title = CASE"
+                " WHEN title IS NULL AND title_source = 'auto' THEN ? ELSE title END"
+                " WHERE id = ?",
+                (to_db(now), auto_title, chat_id),
+            )
 
     def delete_chat(self, chat_id: str) -> bool:
         with self._db.connect() as conn:

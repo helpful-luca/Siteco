@@ -5,9 +5,10 @@ the question saved, a `streaming` placeholder written and the run task started.
 """
 
 import asyncio
+import functools
 import logging
 import uuid
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 
@@ -20,7 +21,6 @@ from docchat.domain.enums import (
     Locale,
     MessageRole,
     MessageStatus,
-    TitleSource,
 )
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.history import build_history
@@ -29,7 +29,7 @@ from docchat.domain.ports import ChatRepository, DuplicateMessage
 from docchat.domain.retrieval import follow_up_query
 from docchat.services.answer_run import AnswerRun, RunDeps, RunInput
 from docchat.services.retrieval_service import RetrievalPlan
-from docchat.services.run_registry import RunControl
+from docchat.services.run_registry import RunControl, StopReason
 
 log = logging.getLogger("docchat.answers")
 
@@ -127,17 +127,34 @@ class AnswerService:
 
     async def ask(self, command: AskCommand) -> AnswerRun:
         """Checks, saves the question and starts the run. Raises AppError before any stream."""
-        spec, control = await asyncio.to_thread(self._prepare_ask, command)
-        return self._start(spec, control)
+        return await self._prepared(functools.partial(self._prepare_ask, command))
 
     async def regenerate(
         self, chat_id: str, assistant_id: str, options: AnswerOptions
     ) -> AnswerRun:
         """Replaces an answer to the latest question, in the same lane and row."""
-        spec, control = await asyncio.to_thread(
-            self._prepare_regenerate, chat_id, assistant_id, options
+        return await self._prepared(
+            functools.partial(self._prepare_regenerate, chat_id, assistant_id, options)
         )
+
+    async def _prepared(self, prepare: Callable[[], tuple[RunInput, RunControl]]) -> AnswerRun:
+        """Runs the checks in a worker thread. If the request is cancelled meanwhile, a run
+        that was already reserved still starts and ends at once as `interrupted`, so neither
+        the lane nor the placeholder stays taken."""
+        work = asyncio.ensure_future(asyncio.to_thread(prepare))
+        try:
+            spec, control = await asyncio.shield(work)
+        except asyncio.CancelledError:
+            work.add_done_callback(self._abandon)
+            raise
         return self._start(spec, control)
+
+    def _abandon(self, work: "asyncio.Future[tuple[RunInput, RunControl]]") -> None:
+        if work.cancelled() or work.exception() is not None:
+            return
+        spec, control = work.result()
+        self._start(spec, control)
+        control.request_stop(StopReason.INTERRUPTED)
 
     def _start(self, spec: RunInput, control: RunControl) -> AnswerRun:
         run = AnswerRun(self._deps, spec, control)
@@ -239,12 +256,10 @@ class AnswerService:
 
     def _touch(self, chat: Chat, question: str) -> Chat:
         """New activity moves the chat up; the first question names it (never a user title)."""
-        now = self._deps.clock.now()
-        if chat.title is None and chat.title_source is TitleSource.AUTO:
-            chat = replace(chat, title=title_from_question(question) or None)
-        chat = replace(chat, updated_at=now)
-        self._chats.update_chat(chat)
-        return chat
+        self._chats.touch_chat(
+            chat.id, self._deps.clock.now(), auto_title=title_from_question(question) or None
+        )
+        return self._chats.get_chat(chat.id) or chat
 
     def _placeholder(
         self, chat: Chat, question: Message, options: AnswerOptions, lane: Lane

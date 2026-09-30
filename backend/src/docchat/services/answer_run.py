@@ -186,6 +186,7 @@ class AnswerRun:
 
     async def _execute(self) -> None:
         self._control.started = True
+        self._emit(self.meta)  # always first, even for a run stopped before it began (S3)
         try:
             if self._control.stop_reason is not None:
                 final, terminal = self._stopped()  # stopped before it could begin
@@ -214,7 +215,6 @@ class AnswerRun:
 
     async def _run(self) -> tuple[Message, RunEvent]:
         spec = self._spec
-        self._emit(self.meta)
         self._emit(StatusEvent(RunPhase.RETRIEVING, 1))
         try:
             retrieved = await self._deps.retrieval.retrieve(

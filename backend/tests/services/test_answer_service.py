@@ -461,3 +461,34 @@ async def test_the_user_name_never_reaches_the_model(h: ChatHarness) -> None:
     assert h.llm is not None
     request = h.llm.requests[0]
     assert "name" not in {f for f in request.__dataclass_fields__}
+
+
+async def test_a_request_cancelled_during_preparation_leaves_nothing_taken(
+    h: ChatHarness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import time
+
+    h.add_document(MIRA)
+    chat = h.new_chat()
+    prepare = h.answers._prepare_ask
+
+    def slow_prepare(command: Any) -> Any:
+        result = prepare(command)
+        time.sleep(0.1)  # the request is cancelled while the thread still works
+        return result
+
+    monkeypatch.setattr(h.answers, "_prepare_ask", slow_prepare)
+    request = asyncio.create_task(h.answers.ask(h.command(chat)))
+    await asyncio.sleep(0.02)
+    request.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await request
+    for _ in range(100):
+        answers = [
+            m for m in h.chats_repo.list_messages(chat.id) if m.role is MessageRole.ASSISTANT
+        ]
+        if h.registry.active == 0 and answers and answers[0].status is not MessageStatus.STREAMING:
+            break
+        await asyncio.sleep(0.01)
+    assert h.registry.active == 0
+    assert answers[0].status is MessageStatus.INTERRUPTED

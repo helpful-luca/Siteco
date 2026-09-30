@@ -96,7 +96,7 @@ async def test_an_answer_stopped_before_its_task_ran_ends_cleanly(h: ChatHarness
     run = await h.answers.ask(h.command(chat))
     assert h.registry.stop(chat.id) == [Lane.A]  # the task has not had a turn yet
     events = [e async for e in run.events()]
-    assert [type(e).__name__ for e in events] == ["DoneEvent"]
+    assert [type(e).__name__ for e in events] == ["MetaEvent", "DoneEvent"]
     assert h.registry.active == 0
     assert h.llm is not None and h.llm.requests == []
     [answer] = [m for m in h.chats_repo.list_messages(chat.id) if m.role is MessageRole.ASSISTANT]
