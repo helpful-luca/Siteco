@@ -44,7 +44,7 @@ export function Sidebar({ chatList, onNavigate }: { chatList?: ReactNode; onNavi
           {t('quality')}
         </NavItem>
       </nav>
-      <section aria-label={t('chats')} className="-mx-1 mt-6 min-h-0 flex-1 overflow-y-auto px-1">
+      <section aria-label={t('chats')} className="-mx-1 mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
         {chatList}
       </section>
       <div className="flex flex-col gap-0.5 pt-3">

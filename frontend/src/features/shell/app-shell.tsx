@@ -50,7 +50,7 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
             <SquarePen aria-hidden />
           </Link>
         </div>
-        <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none">
+        <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none">
           {children}
         </main>
       </div>

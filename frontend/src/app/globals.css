@@ -205,6 +205,15 @@ html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
    * would shrink every step off the 4 px grid (15 px root = 3.75 px steps). Body text size lives
    * on <body> instead.
    */
+  /*
+   * The page itself never rubber-bands (like a native Mac window); scroll areas inside it keep
+   * their own bounce but do not hand it on to the page (see .overscroll-contain on each).
+   */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+
   html {
     background: var(--c-canvas);
     color: var(--c-ink);

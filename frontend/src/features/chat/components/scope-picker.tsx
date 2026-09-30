@@ -25,7 +25,7 @@ export function ScopePicker({ value, onChange, disabled = false }: Props) {
   return (
     <Menu
       align="end"
-      className="max-h-[min(24rem,60dvh)] w-72 overflow-y-auto"
+      className="max-h-[min(24rem,60dvh)] w-72 overflow-y-auto overscroll-contain"
       trigger={
         <ToolbarButton disabled={disabled} aria-label={t('label')}>
           <FileText aria-hidden />

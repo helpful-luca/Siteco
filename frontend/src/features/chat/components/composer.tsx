@@ -100,7 +100,7 @@ export function Composer({
         aria-invalid={tooLong || undefined}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={onKeyDown}
-        className="min-h-8 flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-reading outline-none placeholder:truncate placeholder:text-ink-muted"
+        className="min-h-8 flex-1 resize-none overflow-y-auto overscroll-contain bg-transparent py-0.5 text-reading outline-none placeholder:truncate placeholder:text-ink-muted"
       />
       {showCounter && (
         <span
