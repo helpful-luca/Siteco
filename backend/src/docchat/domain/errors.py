@@ -40,6 +40,33 @@ class ErrorCode(StrEnum):
     # Malware scan (stored like ingestion errors; params carry the signature name)
     MALWARE_DETECTED = "MALWARE_DETECTED"
     MALWARE_SCAN_FAILED = "MALWARE_SCAN_FAILED"
+    # Chats and answers (checked before the stream opens, annex 10 S1)
+    CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
+    CHAT_BUSY = "CHAT_BUSY"
+    CHAT_LIMIT = "CHAT_LIMIT"
+    MESSAGE_LIMIT = "MESSAGE_LIMIT"
+    MESSAGE_NOT_LATEST = "MESSAGE_NOT_LATEST"
+    DUPLICATE_REQUEST = "DUPLICATE_REQUEST"
+    CONCURRENCY_LIMIT = "CONCURRENCY_LIMIT"
+    NO_DOCUMENTS = "NO_DOCUMENTS"
+    DOCUMENTS_NOT_READY = "DOCUMENTS_NOT_READY"
+    QUESTION_EMPTY = "QUESTION_EMPTY"
+    QUESTION_TOO_LONG = "QUESTION_TOO_LONG"
+    MODEL_NOT_ALLOWED = "MODEL_NOT_ALLOWED"
+    TOKEN_BUDGET_EXCEEDED = "TOKEN_BUDGET_EXCEEDED"
+    # Claude API, mapped by `error.type` (mid-stream errors arrive with HTTP 200)
+    LLM_AUTH = "LLM_AUTH"
+    LLM_BILLING = "LLM_BILLING"
+    LLM_FORBIDDEN = "LLM_FORBIDDEN"
+    MODEL_UNAVAILABLE = "MODEL_UNAVAILABLE"
+    LLM_RATE_LIMITED = "LLM_RATE_LIMITED"
+    LLM_OVERLOADED = "LLM_OVERLOADED"
+    LLM_UNAVAILABLE = "LLM_UNAVAILABLE"
+    LLM_TIMEOUT = "LLM_TIMEOUT"
+    LLM_UNREACHABLE = "LLM_UNREACHABLE"
+    LLM_BAD_REQUEST = "LLM_BAD_REQUEST"
+    LLM_CONTEXT_TOO_LARGE = "LLM_CONTEXT_TOO_LARGE"
+    LLM_EMPTY_ANSWER = "LLM_EMPTY_ANSWER"
 
 
 class NoticeCode(StrEnum):
@@ -50,6 +77,14 @@ class NoticeCode(StrEnum):
     PDF_ACTIVE_CONTENT = "PDF_ACTIVE_CONTENT"
     SCANNER_STARTING = "SCANNER_STARTING"
     SCANNER_UNAVAILABLE = "SCANNER_UNAVAILABLE"
+    # Answers
+    SOURCES_PARTIAL = "SOURCES_PARTIAL"
+    SUMMARY_PARTIAL = "SUMMARY_PARTIAL"
+    NO_CITATIONS = "NO_CITATIONS"
+    ANSWER_TRUNCATED = "ANSWER_TRUNCATED"
+    LLM_REFUSED = "LLM_REFUSED"
+    LLM_NOT_CONFIGURED = "LLM_NOT_CONFIGURED"
+    MODEL_SWITCHED = "MODEL_SWITCHED"
 
 
 @dataclass(frozen=True)
@@ -89,6 +124,32 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     ErrorCode.PROCESSING_INTERRUPTED: ErrorSpec(500, True),
     ErrorCode.MALWARE_DETECTED: ErrorSpec(422, False),
     ErrorCode.MALWARE_SCAN_FAILED: ErrorSpec(422, True),
+    ErrorCode.CHAT_NOT_FOUND: ErrorSpec(404, False),
+    ErrorCode.CHAT_BUSY: ErrorSpec(409, True),
+    ErrorCode.CHAT_LIMIT: ErrorSpec(409, False),
+    ErrorCode.MESSAGE_LIMIT: ErrorSpec(409, False),
+    ErrorCode.MESSAGE_NOT_LATEST: ErrorSpec(409, False),
+    ErrorCode.DUPLICATE_REQUEST: ErrorSpec(409, False),
+    ErrorCode.CONCURRENCY_LIMIT: ErrorSpec(429, True),
+    ErrorCode.NO_DOCUMENTS: ErrorSpec(409, False),
+    ErrorCode.DOCUMENTS_NOT_READY: ErrorSpec(409, True),
+    ErrorCode.QUESTION_EMPTY: ErrorSpec(422, False),
+    ErrorCode.QUESTION_TOO_LONG: ErrorSpec(422, False),
+    ErrorCode.MODEL_NOT_ALLOWED: ErrorSpec(422, False),
+    ErrorCode.TOKEN_BUDGET_EXCEEDED: ErrorSpec(429, True),
+    # Anthropic errors are 5xx before the stream opens: our own 429 means "you", not "Claude".
+    ErrorCode.LLM_AUTH: ErrorSpec(503, False),
+    ErrorCode.LLM_BILLING: ErrorSpec(503, False),
+    ErrorCode.LLM_FORBIDDEN: ErrorSpec(503, False),
+    ErrorCode.MODEL_UNAVAILABLE: ErrorSpec(503, False),
+    ErrorCode.LLM_RATE_LIMITED: ErrorSpec(503, True),
+    ErrorCode.LLM_OVERLOADED: ErrorSpec(503, True),
+    ErrorCode.LLM_UNAVAILABLE: ErrorSpec(502, True),
+    ErrorCode.LLM_TIMEOUT: ErrorSpec(504, True),
+    ErrorCode.LLM_UNREACHABLE: ErrorSpec(502, True),
+    ErrorCode.LLM_BAD_REQUEST: ErrorSpec(500, False),
+    ErrorCode.LLM_CONTEXT_TOO_LARGE: ErrorSpec(500, False),
+    ErrorCode.LLM_EMPTY_ANSWER: ErrorSpec(502, True),
 }
 
 

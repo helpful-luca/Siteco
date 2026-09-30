@@ -4,13 +4,15 @@ Blocking ports are plain methods; services call them via asyncio.to_thread. Port
 their own worker process are async.
 """
 
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import AsyncIterator, Collection, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
-from docchat.domain.enums import DocumentKind, DocumentStatus
+from docchat.domain.chat_models import Chat, ChatSummary, Message
+from docchat.domain.enums import DocumentKind, DocumentStatus, Lane
 from docchat.domain.errors import ErrorCode
+from docchat.domain.llm import LLMEvent, LLMRequest
 from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk, Document, Notice
 from docchat.domain.parsing import PageBatch, TextContent, TextSection
@@ -204,6 +206,18 @@ class VectorStore(Protocol):
 
     def count(self, document_id: str) -> int: ...
 
+    def search(
+        self, text: str, vector: Sequence[float], document_ids: Collection[str], limit: int
+    ) -> list[Chunk]:
+        """Hybrid search (vector plus full text, fused by rank) within the given documents,
+        best first. The filter is applied before ranking, so `limit` results come back
+        whenever the documents have that many chunks."""
+        ...
+
+    def chunks_of(self, document_ids: Collection[str]) -> list[Chunk]:
+        """All chunks of the given documents, in document order (for the full-context mode)."""
+        ...
+
 
 class PdfParser(Protocol):
     """Runs pdfium in its own process. Raises IngestionError or PageBatchFailed."""
@@ -235,3 +249,61 @@ class ActiveContentDetector(Protocol):
     """Names of active PDF content (JavaScript, launch actions, ...) found in a file."""
 
     def find(self, path: Path) -> frozenset[str]: ...
+
+
+class DuplicateMessage(Exception):
+    """A user message with this `client_message_id` already exists in the chat."""
+
+
+class ChatRepository(Protocol):
+    def insert_chat(self, chat: Chat) -> None: ...
+
+    def get_chat(self, chat_id: str) -> Chat | None: ...
+
+    def list_chats(self) -> list[ChatSummary]: ...
+
+    def count_chats(self) -> int: ...
+
+    def update_chat(self, chat: Chat) -> bool:
+        """Replaces title, scope, selection and `updated_at`. False if the chat is gone."""
+        ...
+
+    def delete_chat(self, chat_id: str) -> bool: ...
+
+    def insert_message(self, message: Message) -> None:
+        """Raises DuplicateMessage if the chat already has this `client_message_id`."""
+        ...
+
+    def get_message(self, message_id: str) -> Message | None: ...
+
+    def find_user_message(self, chat_id: str, client_message_id: str) -> Message | None: ...
+
+    def list_messages(self, chat_id: str) -> list[Message]:
+        """Chronological."""
+        ...
+
+    def count_messages(self, chat_id: str) -> int: ...
+
+    def answer_in_lane(self, parent_id: str, lane: Lane) -> Message | None: ...
+
+    def save_message(self, message: Message) -> bool:
+        """Overwrites every mutable column of an existing message. False if it is gone."""
+        ...
+
+    def interrupt_streaming(self) -> int:
+        """Startup: answers left `streaming` by a crash become `interrupted`."""
+        ...
+
+
+class UsageLedger(Protocol):
+    """Cost and tokens per UTC day. Survives chat deletion on purpose."""
+
+    def record(self, day: str, cost_usd: float, input_tokens: int, output_tokens: int) -> None: ...
+
+    def cost_on(self, day: str) -> float: ...
+
+
+class LLMClient(Protocol):
+    """Streams one answer. Raises LLMError; thinking blocks never leave the adapter."""
+
+    def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]: ...
