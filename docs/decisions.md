@@ -27,6 +27,21 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 19 | OCR seam | `PageOcr` port called for pages without a text layer, no-op until phase 5b | Nothing | Tesseract plugs in without touching services |
 | 20 | Untrusted text parsing | Only linear regular expressions, headings limited to 500 characters per line | Parsing text files in the parser process | A backtracking pattern on one hostile line could stall the API; linear patterns remove the cause without shipping 50 MB of text between processes |
 
+## Malware scan (phase 3b)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 21 | Scan placement | Row `scanning`, file in `data/quarantine/`, a background scan worker moves it into the library and queues it | Scanning inside the upload request | clamd needs a few seconds (more on slow machines) after start; the request must not wait and the file must never skip the scan |
+| 22 | `MALWARE_SCAN=off` | Wires a scanner that always answers clean, so every upload still passes `scanning` | A second upload path without the scan | One code path; `off` is for development only and `/api/config` exposes it for a permanent hint |
+| 23 | clamd client | INSTREAM over TCP implemented in the adapter with asyncio streams, answer read while sending | `clamd` or `pyclamd` from PyPI | Both have had no release for years and block the event loop; the protocol is four framing rules |
+| 24 | Image | `clamav/clamav:1.5.4-debian13-slim` | `clamav/clamav:1.5` (Alpine) | Only the Debian tags are multi-arch (amd64, arm64); the non-`_base` image ships signatures, so an offline start works and `freshclam` updates when online |
+| 25 | Scanner not reachable | Retry with backoff (1 s doubling to 15 s), notice `SCANNER_STARTING`, after 10 minutes `SCANNER_UNAVAILABLE`, never bypassed | Failing the document | A starting scanner is normal; the file just waits |
+| 26 | clamd refuses a file | `failed` with `MALWARE_SCAN_FAILED`; files above clamd's `StreamMaxLength` are refused before sending | Retrying forever | The answer will not change, and a dropped connection must not look like an outage |
+| 27 | Scan limits | `StreamMaxLength`, `MaxFileSize`, `MaxScanSize` 1100 MB, `MaxScanTime` 600 s, `ConcurrentDatabaseReload no` | clamd defaults (100 MB, 120 s) | Files up to the 1 GB upload limit are scanned completely; one signature copy in memory |
+| 28 | Signature name | Stored in a new `error_params` column (schema v2), shown only in the detail | In the error message | Messages are never shown; params are the envelope's place for details |
+| 29 | PDF active content | Streaming check in the parse stage: whole name tokens with `#xx` decoding, stream data skipped, object streams inflated (capped at 64 MB) | Grep over the raw file | Compressed object streams hide dictionaries, and random stream bytes contain `/JS` or `/AA`; notices belong to the ingestion pass, so a restart recomputes them |
+| 30 | File of a document in `scanning` | `DOCUMENT_NOT_READY` | Serving the quarantined file | Nothing unscanned leaves the backend |
+
 ## Measurements
 
 | What | Result |
@@ -34,3 +49,6 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | Generated 1500-page catalog (6.2 MB, 4401 chunks), fake embedder | 9.1 s end to end on an Apple M4 |
 | Same catalog, Granite 97M on 5 of 10 cores | 281 s (about 16 chunks per second) |
 | Peak Python memory while ingesting, 150 vs 1500 pages | 6.2 MB vs 7.1 MB |
+| clamd first start (signatures in the image, freshclam update included), Apple M4 | about 5 s until PONG; amd64 image under emulation about 8 s |
+| clamd memory with all signatures loaded | about 1.0 GB |
+| clamd start without network | works with the signatures from the image; freshclam logs a warning |

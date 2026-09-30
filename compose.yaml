@@ -13,6 +13,8 @@ services:
       DATA_DIR: /data
       # Compose fills this from the shell or from .env, whichever is set.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MALWARE_SCAN: ${MALWARE_SCAN:-required}
+      CLAMD_HOST: clamav
     expose: ["8000"]      # no host port: only the frontend container can reach the backend
     volumes:
       - appdata:/data
@@ -23,6 +25,33 @@ services:
       timeout: 4s
       retries: 30
       start_period: 30s
+
+  # Malware scan (clamd). Uploads wait in `scanning` until it answers; the backend does not
+  # depend on it, so the app is usable while the signatures load (about a minute).
+  # The Debian tag is multi-arch (amd64, arm64); the Alpine tags are amd64 only.
+  clamav:
+    image: clamav/clamav:1.5.4-debian13-slim
+    environment:
+      # Signatures ship in the image, so an offline start works; freshclam updates them hourly
+      # when online (it logs a warning and carries on without internet).
+      FRESHCLAM_CHECKS: "1"
+      # Accept files up to the upload limit (1 GB) and scan them completely.
+      CLAMD_CONF_StreamMaxLength: 1100M
+      CLAMD_CONF_MaxFileSize: 1100M
+      CLAMD_CONF_MaxScanSize: 1100M
+      CLAMD_CONF_MaxScanTime: "600000"
+      # Reload new signatures in place instead of keeping two copies in memory.
+      CLAMD_CONF_ConcurrentDatabaseReload: "no"
+    expose: ["3310"]      # no host port: only the backend talks to clamd
+    volumes:
+      - clamav-db:/var/lib/clamav
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5m
 
   frontend:
     build:
@@ -44,3 +73,4 @@ services:
 
 volumes:
   appdata: {}
+  clamav-db: {}
