@@ -28,7 +28,8 @@ class _UnusedEmbedder:
 
 
 def build_openapi() -> dict[str, Any]:
-    settings = Settings(_env_file=None, app_version="contract")
+    # Ignore any local .env: the contract must not depend on the machine it is built on.
+    settings = Settings(_env_file=None, app_version="contract")  # type: ignore[call-arg]
     app = create_app(settings, build_container(settings, embedder=_UnusedEmbedder()))
     spec = app.openapi()
     # Error envelopes are returned by exception handlers, so FastAPI does not list them itself.

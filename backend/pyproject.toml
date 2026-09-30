@@ -68,8 +68,17 @@ source_modules = ["docchat.domain"]
 forbidden_modules = ["docchat.api", "docchat.services", "docchat.adapters", "docchat.core",
                      "fastapi", "starlette", "sqlite3", "fastembed"]
 
+# Direct imports only: `api` reaches concrete adapters solely through the composition root
+# (`core.container`), which is the single place allowed to know them.
 [[tool.importlinter.contracts]]
 name = "Services and API depend on ports, not adapters"
 type = "forbidden"
 source_modules = ["docchat.services", "docchat.api"]
 forbidden_modules = ["docchat.adapters"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Services do not know the composition root"
+type = "forbidden"
+source_modules = ["docchat.services"]
+forbidden_modules = ["docchat.core.container", "docchat.main"]
