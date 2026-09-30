@@ -35,3 +35,14 @@ async def test_crash_is_reported_and_recovered() -> None:
         assert await runner.run(30, process_helpers.add, 1, 1) == 2
     finally:
         await runner.close()
+
+
+async def test_a_timeout_raised_by_the_function_itself_is_not_a_hang() -> None:
+    runner = IsolatedProcess()
+    try:
+        first = await runner.run(30, process_helpers.pid)
+        with pytest.raises(TimeoutError):
+            await runner.run(30, process_helpers.raise_timeout)
+        assert await runner.run(30, process_helpers.pid) == first  # process was not killed
+    finally:
+        await runner.close()

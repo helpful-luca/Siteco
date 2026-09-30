@@ -54,11 +54,15 @@ class IsolatedProcess:
             pool = self._ensure_pool()
             loop = asyncio.get_running_loop()
             future = loop.run_in_executor(pool, functools.partial(fn, *args, **kwargs))
-            try:
-                return await asyncio.wait_for(future, timeout)
-            except TimeoutError as exc:
+            # asyncio.wait, not wait_for: a TimeoutError raised by fn itself must not look like
+            # a hang, so "not done in time" is checked separately from the task's own result.
+            done, _ = await asyncio.wait({future}, timeout=timeout)
+            if not done:
+                future.cancel()
                 self._kill()
-                raise ProcessTimeout from exc
+                raise ProcessTimeout
+            try:
+                return future.result()
             except BrokenProcessPool as exc:
                 self._kill()
                 raise ProcessCrashed from exc

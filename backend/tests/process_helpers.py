@@ -19,3 +19,7 @@ def crash() -> None:
 
 def pid() -> int:
     return os.getpid()
+
+
+def raise_timeout() -> None:
+    raise TimeoutError("socket timed out inside the task")

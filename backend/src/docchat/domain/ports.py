@@ -80,6 +80,16 @@ class DocumentRepository(Protocol):
     def delete(self, document_id: str) -> None: ...
 
 
+class IngestionScheduler(Protocol):
+    """The background ingestion queue as the upload and library use cases see it."""
+
+    def enqueue(self, document: Document) -> None: ...
+
+    def forget(self, document_id: str) -> None: ...
+
+    def queue_positions(self) -> dict[str, int]: ...
+
+
 class UploadSink(Protocol):
     """A temp file that receives an upload. It becomes a library file only via commit()."""
 

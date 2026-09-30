@@ -17,7 +17,7 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 9 | Hyphenation | Remove pdfium's U+FFFE and U+0002 markers with an offset map back to raw indices | Keeping the markers | "Schutz-art" must be searchable as "Schutzart" and still map to the right characters |
 | 10 | Pipeline shape | Two passes: parse into a JSONL chunk spool, then embed from the spool in batches | Holding all chunks in memory | Memory stays flat up to 5000 pages, and `parsing` and `embedding` stay honest statuses |
 | 11 | Index writes | Batched `add` (256 chunks), one write lock, `optimize()` after each document | One write per document | Constant memory; readers only see `ready` documents, so partial writes are invisible |
-| 12 | Queue order | Priority by page count, estimated from file size until the parser counted the pages | FIFO; counting pages during upload | A datasheet must not wait behind a catalog, and uploads never open PDFs |
+| 12 | Queue order | Priority by page count (estimated from file size until counted), a document is overtaken at most 5 times | FIFO; pure priority; counting pages during upload | A datasheet must not wait behind a catalog, a stream of datasheets must not starve it, and uploads never open PDFs |
 | 13 | Status changes | Compare-and-set updates on the status column; delete sets `deleting` and cleans up at once | Locks across stages | Delete always wins; the worker notices at its next progress update and removes what it wrote |
 | 14 | Interrupted work | Re-queued on startup, plus a sweep of orphan files, chunks, temp files and spool | `failed PROCESSING_INTERRUPTED` | Annex 11 wins over annex 10; a restart should just continue |
 | 15 | Embedding threads | Half the CPU cores for ingestion | All cores | Questions stay fast while a large upload is indexed |
@@ -25,6 +25,7 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 17 | Chunking | Page, then paragraph and sentence, about 400 tokens, never across pages or headings, context header in the embedded text | Semantic chunking | Sentences are the unit that is cited and highlighted |
 | 18 | Library list | All documents except `deleting`, newest first | Capping at 50 | The master spec removed the fixed document limit |
 | 19 | OCR seam | `PageOcr` port called for pages without a text layer, no-op until phase 5b | Nothing | Tesseract plugs in without touching services |
+| 20 | Untrusted text parsing | Only linear regular expressions, headings limited to 500 characters per line | Parsing text files in the parser process | A backtracking pattern on one hostile line could stall the API; linear patterns remove the cause without shipping 50 MB of text between processes |
 
 ## Measurements
 

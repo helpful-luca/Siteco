@@ -1,6 +1,9 @@
 import asyncio
+import logging
 import threading
 from pathlib import Path
+
+import pytest
 
 from docchat.domain.chunking import chunk_section
 from docchat.domain.enums import DocumentKind, DocumentStatus
@@ -232,3 +235,61 @@ async def test_a_failing_recovery_step_does_not_stop_the_others(harness: Harness
     await harness.worker.recover()
     assert harness.worker.queue_positions() == {queued.id: 1}
     assert harness.reload(deleting).status is DocumentStatus.DELETING  # type: ignore[union-attr]
+
+
+async def test_worker_is_busy_from_the_moment_it_takes_a_document(harness: Harness) -> None:
+    doc = harness.add_document(pages=[TEXT])
+    lookup_started = threading.Event()
+    release = threading.Event()
+    original_get = harness.repository.get
+
+    def slow_get(document_id: str):  # type: ignore[no-untyped-def]
+        lookup_started.set()
+        release.wait(timeout=10)
+        return original_get(document_id)
+
+    harness.repository.get = slow_get  # type: ignore[method-assign]
+    harness.worker.enqueue(doc)
+    harness.worker.start()
+    try:
+        await asyncio.to_thread(lookup_started.wait, 10)
+        assert not harness.worker.idle  # popped from the queue, first await still running
+        release.set()
+        await _wait_idle(harness)
+    finally:
+        release.set()
+        await harness.worker.stop()
+    assert harness.reload(doc).status is DocumentStatus.READY  # type: ignore[union-attr]
+
+
+async def test_parser_error_after_a_delete_is_not_logged_as_a_crash(
+    harness: Harness, caplog: pytest.LogCaptureFixture
+) -> None:
+    doc = harness.add_document(pages=[TEXT] * 4)
+
+    def delete_then_break(name: str, first: int) -> None:
+        harness.repository.mark_deleting(doc.id, harness.clock.now())
+        raise RuntimeError("file vanished under the parser")
+
+    harness.pdf.before_batch = delete_then_break
+    with caplog.at_level(logging.INFO, logger="docchat.ingestion"):
+        await harness.worker.process(doc.id)
+    events = [r.getMessage() for r in caplog.records]
+    assert "ingestion_crashed" not in events
+    assert "ingestion_cancelled" in events
+    assert harness.reload(doc).status is DocumentStatus.DELETING  # type: ignore[union-attr]
+
+
+async def test_unexpected_errors_are_still_reported(
+    harness: Harness, caplog: pytest.LogCaptureFixture
+) -> None:
+    doc = harness.add_document(pages=[TEXT])
+
+    def broken(name: str, first: int) -> None:
+        raise RuntimeError("bug")
+
+    harness.pdf.before_batch = broken
+    with caplog.at_level(logging.INFO, logger="docchat.ingestion"):
+        await harness.worker.process(doc.id)
+    assert "ingestion_crashed" in [r.getMessage() for r in caplog.records]
+    assert harness.reload(doc).error_code is ErrorCode.PROCESSING_FAILED  # type: ignore[union-attr]

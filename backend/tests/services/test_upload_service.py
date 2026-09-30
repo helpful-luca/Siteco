@@ -119,3 +119,26 @@ async def test_scanner_rejection_never_reaches_the_library(tmp_path: Path) -> No
     assert scanner.scanned and scanner.scanned[0].parent.name == "tmp"
     assert _temp_files(harness) == []
     assert not list((harness.root / "uploads").glob("*.pdf"))
+
+
+async def test_retry_of_a_failed_duplicate_leaves_no_file_if_deleted_meanwhile(
+    harness: Harness,
+) -> None:
+    first = await _accept(harness, "a.pdf", PDF)
+    harness.worker.forget(first.id)
+    harness.repository.start_parsing(first.id, harness.clock.now())
+    harness.repository.mark_failed(first.id, ErrorCode.PROCESSING_TIMEOUT, harness.clock.now())
+    harness.storage.delete(first.id, DocumentKind.PDF)
+    original_requeue = harness.repository.requeue
+
+    def requeue_then_deleted(document_id: str, now: object) -> bool:
+        requeued = original_requeue(document_id, now)  # type: ignore[arg-type]
+        harness.repository.delete(document_id)  # a DELETE request wins the race
+        return requeued
+
+    harness.repository.requeue = requeue_then_deleted  # type: ignore[method-assign]
+    with pytest.raises(AppError) as info:
+        await _accept(harness, "a.pdf", PDF)
+    assert info.value.code is ErrorCode.UPLOAD_INCOMPLETE
+    assert not harness.storage.exists(first.id, DocumentKind.PDF)
+    assert _temp_files(harness) == []

@@ -15,7 +15,14 @@ from uuid import uuid4
 from docchat.domain.enums import DocumentKind, DocumentStatus
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.models import Document
-from docchat.domain.ports import Clock, DocumentRepository, FileStorage, MalwareScanner, UploadSink
+from docchat.domain.ports import (
+    Clock,
+    DocumentRepository,
+    FileStorage,
+    IngestionScheduler,
+    MalwareScanner,
+    UploadSink,
+)
 from docchat.domain.upload_validation import (
     MAGIC_WINDOW,
     content_matches_kind,
@@ -24,7 +31,6 @@ from docchat.domain.upload_validation import (
     sanitize_filename,
     text_chunk_is_binary,
 )
-from docchat.services.ingestion_worker import IngestionWorker
 
 log = logging.getLogger("docchat.upload")
 
@@ -82,7 +88,7 @@ class UploadService:
         repository: DocumentRepository,
         storage: FileStorage,
         scanner: MalwareScanner,
-        worker: IngestionWorker,
+        worker: IngestionScheduler,
         clock: Clock,
         limits: UploadLimits,
     ) -> None:
@@ -143,9 +149,7 @@ class UploadService:
                 raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id})
             await self._scanner.scan(sink.path)
             if existing is not None:
-                # Same bytes as a failed document: process that one again (annex 10, C6).
-                await asyncio.to_thread(self._storage.commit, sink, existing.id, existing.kind)
-                return await self._retry(existing)
+                return await self._retry(existing, sink)
             document = self._new_document(filename, kind, receiver)
             await asyncio.to_thread(self._storage.commit, sink, document.id, kind)
         except BaseException:
@@ -176,10 +180,18 @@ class UploadService:
             updated_at=now,
         )
 
-    async def _retry(self, failed: Document) -> Document:
-        if await asyncio.to_thread(self._repository.requeue, failed.id, self._clock.now()):
-            requeued = await asyncio.to_thread(self._repository.get, failed.id)
-            if requeued is not None:
-                self._worker.enqueue(requeued)
-                return requeued
-        raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": failed.id})
+    async def _retry(self, failed: Document, sink: UploadSink) -> Document:
+        """Same bytes as a failed document: process that one again (annex 10, C6).
+
+        Re-queue first, so a concurrent delete either wins before (then this is a duplicate
+        of nothing: DUPLICATE_DOCUMENT) or is detected after the file was put back.
+        """
+        if not await asyncio.to_thread(self._repository.requeue, failed.id, self._clock.now()):
+            raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": failed.id})
+        await asyncio.to_thread(self._storage.commit, sink, failed.id, failed.kind)
+        requeued = await asyncio.to_thread(self._repository.get, failed.id)
+        if requeued is None or requeued.status is not DocumentStatus.QUEUED:
+            await asyncio.to_thread(self._storage.delete, failed.id, failed.kind)
+            raise AppError(ErrorCode.UPLOAD_INCOMPLETE)
+        self._worker.enqueue(requeued)
+        return requeued

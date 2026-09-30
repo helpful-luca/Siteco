@@ -8,9 +8,14 @@ from pathlib import Path
 from docchat.domain.enums import DocumentKind, DocumentStatus
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.models import Chunk, Document
-from docchat.domain.ports import Clock, DocumentRepository, FileStorage, VectorStore
+from docchat.domain.ports import (
+    Clock,
+    DocumentRepository,
+    FileStorage,
+    IngestionScheduler,
+    VectorStore,
+)
 from docchat.services.document_purge import DocumentPurge
-from docchat.services.ingestion_worker import IngestionWorker
 
 log = logging.getLogger("docchat.documents")
 
@@ -34,7 +39,7 @@ class DocumentService:
         repository: DocumentRepository,
         storage: FileStorage,
         vectors: VectorStore,
-        worker: IngestionWorker,
+        worker: IngestionScheduler,
         purge: DocumentPurge,
         clock: Clock,
     ) -> None:

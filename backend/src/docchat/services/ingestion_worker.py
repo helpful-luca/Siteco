@@ -71,7 +71,12 @@ class IngestionWorker:
     async def _consume(self) -> None:
         while True:
             document_id = await self._queue.get()
-            await self.process(document_id)
+            # Set before the first await, so the worker never looks idle while it holds a document.
+            self.current_id = document_id
+            try:
+                await self.process(document_id)
+            finally:
+                self.current_id = None
 
     @property
     def idle(self) -> bool:
@@ -129,18 +134,20 @@ class IngestionWorker:
             self._repository.start_parsing, document_id, self._clock.now()
         ):
             return
-        self.current_id = document_id
         started = time.perf_counter()
         try:
             await self._ingest(document)
         except DocumentGone:
-            log.info("ingestion_cancelled", extra={"document_id": document_id})
-            await self._discard_index(document_id)
+            await self._drop(document_id)
         except IngestionError as failure:
             await self._fail(document_id, failure.code)
         except Exception:
-            log.exception("ingestion_crashed", extra={"document_id": document_id})
-            await self._fail(document_id, ErrorCode.PROCESSING_FAILED)
+            # A parser that loses its file because the document was deleted is no crash.
+            if await self._was_deleted(document_id):
+                await self._drop(document_id)
+            else:
+                log.exception("ingestion_crashed", extra={"document_id": document_id})
+                await self._fail(document_id, ErrorCode.PROCESSING_FAILED)
         else:
             log.info(
                 "ingestion_ready",
@@ -151,7 +158,6 @@ class IngestionWorker:
             )
         finally:
             await asyncio.to_thread(self._spool.discard, document_id)
-            self.current_id = None
 
     async def _ingest(self, document: Document) -> None:
         doc_id = document.id
@@ -178,6 +184,14 @@ class IngestionWorker:
         await asyncio.to_thread(self._vectors.optimize)
         if not await asyncio.to_thread(self._repository.mark_ready, doc_id, self._clock.now()):
             raise DocumentGone
+
+    async def _was_deleted(self, document_id: str) -> bool:
+        current = await asyncio.to_thread(self._repository.get, document_id)
+        return current is None or current.status is DocumentStatus.DELETING
+
+    async def _drop(self, document_id: str) -> None:
+        log.info("ingestion_cancelled", extra={"document_id": document_id})
+        await self._discard_index(document_id)
 
     async def _fail(self, document_id: str, code: ErrorCode) -> None:
         log.info("ingestion_failed", extra={"document_id": document_id, "code": code.value})

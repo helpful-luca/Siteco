@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import threading
 from collections.abc import Collection
 from pathlib import Path
 from typing import BinaryIO
@@ -12,30 +13,37 @@ from docchat.domain.ports import UploadSink
 
 
 class _TempUpload:
+    """Written from a worker thread. A cancelled request may discard it while a write is still
+    running, so writing, closing and discarding take turns under one lock."""
+
     def __init__(self, path: Path) -> None:
         self._path = path
         self._file: BinaryIO | None = path.open("xb")
+        self._lock = threading.Lock()
 
     @property
     def path(self) -> Path:
         return self._path
 
     def write(self, data: bytes) -> None:
-        assert self._file is not None, "upload already closed"
-        self._file.write(data)
+        with self._lock:
+            if self._file is not None:  # discarded meanwhile: nothing left to write to
+                self._file.write(data)
 
     def close(self) -> None:
-        if self._file is not None:
-            self._file.flush()
-            os.fsync(self._file.fileno())
-            self._file.close()
-            self._file = None
+        with self._lock:
+            if self._file is not None:
+                self._file.flush()
+                os.fsync(self._file.fileno())
+                self._file.close()
+                self._file = None
 
     def discard(self) -> None:
-        if self._file is not None:
-            self._file.close()
-            self._file = None
-        self._path.unlink(missing_ok=True)
+        with self._lock:
+            if self._file is not None:
+                self._file.close()
+                self._file = None
+            self._path.unlink(missing_ok=True)
 
 
 class LocalFileStorage:

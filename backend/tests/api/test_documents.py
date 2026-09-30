@@ -310,3 +310,15 @@ def test_path_is_never_built_from_the_file_name(settings: Settings, tmp_path: Pa
     with TestClient(make_app(settings)) as c:
         upload(c, "/etc/passwd.pdf", PDF)
     assert not (tmp_path / "etc").exists()
+
+
+def test_file_deleted_between_lookup_and_stat_is_missing(client: TestClient) -> None:
+    from docchat.domain.enums import DocumentKind
+    from docchat.services.document_service import StoredFile
+
+    doc_id = upload(client, "a.pdf", PDF).json()["document"]["id"]
+    documents = client.app.state.container.documents  # type: ignore[attr-defined]
+    ghost = StoredFile(Path("/nonexistent/ghost.pdf"), DocumentKind.PDF, "a.pdf")
+    documents.file = lambda document_id: ghost
+    r = client.get(f"/api/documents/{doc_id}/file")
+    assert (r.status_code, error(r)["code"]) == (410, "DOCUMENT_FILE_MISSING")

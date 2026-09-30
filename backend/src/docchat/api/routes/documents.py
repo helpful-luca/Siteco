@@ -122,7 +122,11 @@ def get_document_file(
 ) -> FileResponse:
     """The original file with safe headers. Supports Range requests (PDF viewer)."""
     stored = documents.file(str(document_id))
-    check_range(range_header, stored.path.stat().st_size)
+    try:
+        size = stored.path.stat().st_size
+    except FileNotFoundError as exc:  # deleted between the lookup and now
+        raise AppError(ErrorCode.DOCUMENT_FILE_MISSING) from exc
+    check_range(range_header, size)
     disposition = f"inline; filename*=UTF-8''{quote(stored.filename, safe='')}"
     return FileResponse(
         stored.path,
