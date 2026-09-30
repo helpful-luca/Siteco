@@ -136,9 +136,10 @@ describe('PdfViewer', () => {
     const user = userEvent.setup();
     setup({ page: 1, marks: [[0.1, 0.2, 0.5, 0.02]] });
     const slot = await screen.findByLabelText('Seite 1');
-    expect(within(slot).getAllByTestId('pdf-mark')).toHaveLength(1);
+    // The marks follow the page a moment later (after the chunk loaded): wait, never race.
+    expect(await within(slot).findAllByTestId('pdf-mark')).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Vergrößern' }));
-    expect(within(screen.getByLabelText('Seite 1')).getAllByTestId('pdf-mark')).toHaveLength(1);
+    await waitFor(() => expect(within(screen.getByLabelText('Seite 1')).getAllByTestId('pdf-mark')).toHaveLength(1));
   });
 
   it('zooms and fits the page back to the width', async () => {
