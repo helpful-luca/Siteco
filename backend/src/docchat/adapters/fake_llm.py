@@ -29,7 +29,7 @@ from docchat.domain.usage import ModelUsage, TokenUsage
 
 
 class FakeScenario(StrEnum):
-    NORMAL = "normal"  # cites the first sentence of the first source
+    NORMAL = "normal"  # cites the first real sentence of the first source
     OVERLOADED = "overloaded"  # overloaded_error before the first token
     ERROR_MID_STREAM = "error_mid_stream"  # overloaded_error after some text
     REFUSAL = "refusal"  # stop_reason refusal after some text
@@ -40,6 +40,7 @@ class FakeScenario(StrEnum):
     NO_CITATIONS = "no_citations"  # an answer without citations
 
 
+_MIN_ANSWER_WORDS = 4
 _MARKER = re.compile(r"#fake:([a-z_]+)")
 _INTRO = {Locale.DE: "Laut deinen Dokumenten: ", Locale.EN: "According to your documents: "}
 _NOTHING = {
@@ -52,6 +53,14 @@ _FALLBACK_MODEL = {"claude-sonnet-5-5": "claude-sonnet-5"}
 def _words(text: str) -> list[str]:
     """Splits into deltas the way a stream would, keeping every character."""
     return re.findall(r"\S+\s*|\s+", text)
+
+
+def _citable(sentences: Sequence[str]) -> int:
+    """Index of the first real sentence (a heading line alone is no answer), else 0."""
+    for index, sentence in enumerate(sentences):
+        if len(sentence.split()) >= _MIN_ANSWER_WORDS:
+            return index
+    return 0
 
 
 class FakeLLMClient:
@@ -123,12 +132,13 @@ class FakeLLMClient:
             yield ModelResolved(model)
 
         first = request.search_results[0] if request.search_results else None
+        cited = _citable(first.sentences) if first is not None else 0
         if first is None or not first.sentences:
             body = _NOTHING[request.ui_language]
         else:
-            body = first.sentences[0]
+            body = first.sentences[cited]
         if first is not None and first.sentences and scenario is not FakeScenario.NO_CITATIONS:
-            yield CitationDelta(first.source, 0, 1, first.sentences[0])
+            yield CitationDelta(first.source, cited, cited + 1, first.sentences[cited])
         for word in _words(body):
             yield TextDelta(word)
         yield TextBlockEnd()
