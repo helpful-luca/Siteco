@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+*.woff2 binary
+contracts/openapi.json linguist-generated=true
+frontend/src/shared/api/schema.gen.ts linguist-generated=true

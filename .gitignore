@@ -1,0 +1,37 @@
+# AI working folder and confidential case brief (never commit)
+brain/
+siteco-case-ai-document-chat.html
+*.case.html
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Local data and models
+data/
+.fastembed_cache/
+backend/.models/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
