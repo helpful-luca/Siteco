@@ -35,7 +35,10 @@ packages = ["src/docchat"]
 testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
-markers = ["model: needs the real embedding model files (slow, run in docker build and CI)"]
+markers = [
+  "model: needs the real embedding model files (slow, run in docker build and CI)",
+  "slow: large generated inputs; skipped unless RUN_SLOW=1",
+]
 
 [tool.ruff]
 line-length = 100
