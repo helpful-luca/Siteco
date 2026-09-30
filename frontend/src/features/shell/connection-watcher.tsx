@@ -46,8 +46,9 @@ export function ConnectionWatcher() {
     let timer: ReturnType<typeof setTimeout>;
     let active = true;
     const check = () => {
-      // A suspicion is checked at once; a known outage waits a little longer each time.
-      const delay = state === 'unsure' ? 0 : RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
+      // At least a second between checks, also while only unsure and when a check changed
+      // nothing (an aborted request reports no state); a known outage waits longer each time.
+      const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
       attempt += 1;
       timer = setTimeout(() => {
         fetchJson('/api/health/live').catch(() => {

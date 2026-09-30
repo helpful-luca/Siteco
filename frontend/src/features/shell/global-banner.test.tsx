@@ -157,16 +157,38 @@ describe('ConnectionWatcher', () => {
     expect(screen.getByRole('status')).toHaveTextContent(de.banner.reconnecting);
   });
 
-  it('checks a suspicion at once without showing a banner', async () => {
+  it('checks a suspicion within a second without showing a banner', async () => {
     vi.useFakeTimers();
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ app: 'x', status: 'ok' }));
     vi.stubGlobal('fetch', fetchMock);
     const { invalidate } = setup();
     act(() => connection.suspect());
     expect(screen.queryByRole('status')).toBeNull();
-    await act(async () => vi.advanceTimersByTimeAsync(0));
+    await act(async () => vi.advanceTimersByTimeAsync(1000));
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(connection.getState()).toBe('up');
     expect(invalidate).not.toHaveBeenCalled();
+  });
+
+  it('never checks faster than once a second, even when a check changes nothing', async () => {
+    vi.useFakeTimers();
+    // An aborted check reports nothing, so the state stays `unsure`.
+    const fetchMock = vi.fn().mockRejectedValue(new DOMException('aborted', 'AbortError'));
+    vi.stubGlobal('fetch', fetchMock);
+    setup();
+    act(() => connection.suspect());
+    await act(async () => vi.advanceTimersByTimeAsync(3000));
+    expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(3);
+    expect(connection.getState()).toBe('unsure');
+  });
+});
+
+describe('GlobalBanner accessibility', () => {
+  it('names the lost backend once: the spinner is decoration', () => {
+    setup();
+    act(() => connection.reportDown());
+    const banner = screen.getByRole('status');
+    expect(banner.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(banner.querySelector('[role="img"]')).toBeNull();
   });
 });

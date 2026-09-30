@@ -20,7 +20,10 @@ type Props = {
 export function Countdown({ until, format, done, onEnd }: Props) {
   const seconds = useCountdown(until);
   const ended = seconds === 0;
-  const [start] = useState(() => format(seconds));
+  // The sentence at the start of this wait; a new deadline (a second refusal) starts a new one.
+  const [started, setStarted] = useState(() => ({ until, text: format(seconds) }));
+  if (started.until !== until) setStarted({ until, text: format(seconds) });
+  const start = started.until === until ? started.text : format(seconds);
   const [announced, setAnnounced] = useState('');
   const endRef = useRef(onEnd);
   useEffect(() => {

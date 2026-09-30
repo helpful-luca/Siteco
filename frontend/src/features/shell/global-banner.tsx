@@ -35,7 +35,7 @@ export function GlobalBanner({ className, omit = [] }: { className?: string; omi
   if (down) {
     banners.push({
       key: RECONNECTING_BANNER,
-      icon: <Spinner label={t('reconnecting')} className={ICON} />,
+      icon: <Spinner className={ICON} />, // the title says it; no second announcement
       title: t('reconnecting'),
       hint: t('reconnectingHint'),
       live: true,

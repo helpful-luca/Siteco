@@ -52,4 +52,15 @@ describe('Countdown', () => {
     expect(screen.getByText('fertig')).toBeInTheDocument();
     expect(onEnd).toHaveBeenCalledTimes(1);
   });
+
+  it('announces a second wait again when a new deadline arrives', () => {
+    const { container, rerender } = render(<Countdown until={Date.now() + 2000} format={format} done="fertig" />);
+    act(() => vi.advanceTimersByTime(2_500));
+    act(() => vi.advanceTimersByTime(100));
+    expect(live(container)).toBe('fertig');
+    rerender(<Countdown until={Date.now() + 9000} format={format} done="fertig" />);
+    act(() => vi.advanceTimersByTime(100));
+    expect(live(container)).toBe('In 9 Sekunden geht es weiter.');
+    expect(screen.getAllByText('In 9 Sekunden geht es weiter.')).toHaveLength(2); // visible and announced
+  });
 });

@@ -1,10 +1,12 @@
 import { cn } from './cn';
 
-export function Spinner({ label, className }: { label: string; className?: string }) {
+/** Without a label the spinner is decoration (the text next to it says what is happening). */
+export function Spinner({ label, className }: { label?: string; className?: string }) {
   return (
     <svg
-      role="img"
+      role={label ? 'img' : undefined}
       aria-label={label}
+      aria-hidden={label ? undefined : true}
       viewBox="0 0 16 16"
       className={cn('size-4 animate-spin text-ink-muted', className)}
     >
