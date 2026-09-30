@@ -69,7 +69,8 @@ name = "Domain is pure"
 type = "forbidden"
 source_modules = ["docchat.domain"]
 forbidden_modules = ["docchat.api", "docchat.services", "docchat.adapters", "docchat.core",
-                     "fastapi", "starlette", "sqlite3", "fastembed"]
+                     "fastapi", "starlette", "sqlite3", "fastembed", "lancedb", "pyarrow",
+                     "pypdfium2"]
 
 # Direct imports only: `api` reaches concrete adapters solely through the composition root
 # (`core.container`), which is the single place allowed to know them.

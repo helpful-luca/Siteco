@@ -1,0 +1,85 @@
+from pathlib import Path
+from uuid import uuid4
+
+import pytest
+
+from docchat.adapters.lancedb_vector_store import LanceVectorStore
+from docchat.domain.models import Chunk, Sentence
+
+DIM = 8
+
+
+def _chunk(document_id: str, ordinal: int, text: str = "Die Leuchte hat IP66.") -> Chunk:
+    return Chunk(
+        chunk_id=str(uuid4()),
+        document_id=document_id,
+        ordinal=ordinal,
+        page=ordinal + 1,
+        heading="",
+        text=text,
+        search_text=f"Dokument: a.pdf\n{text}",
+        sentences=(Sentence(0, text, 0, len(text), ((0.1, 0.1, 0.5, 0.02),)),),
+        precise_highlight=True,
+    )
+
+
+@pytest.fixture
+def store(tmp_path: Path) -> LanceVectorStore:
+    s = LanceVectorStore(tmp_path / "lancedb", fts_language="German")
+    s.open(DIM)
+    return s
+
+
+def test_add_and_read_back_one_chunk(store: LanceVectorStore) -> None:
+    doc = str(uuid4())
+    chunks = [_chunk(doc, 0), _chunk(doc, 1)]
+    store.add(chunks, [[0.1] * DIM, [0.2] * DIM])
+    assert store.count(doc) == 2
+    assert store.get_chunk(doc, chunks[1].chunk_id) == chunks[1]
+    assert store.get_chunk(doc, str(uuid4())) is None
+    assert store.get_chunk(str(uuid4()), chunks[1].chunk_id) is None
+    assert store.ping()
+
+
+def test_delete_document_and_sweep(store: LanceVectorStore) -> None:
+    keep, gone, orphan = str(uuid4()), str(uuid4()), str(uuid4())
+    for doc in (keep, gone, orphan):
+        store.add([_chunk(doc, 0)], [[0.3] * DIM])
+    store.delete_document(gone)
+    store.delete_documents_except({keep})
+    store.optimize()
+    assert store.document_ids() == {keep}
+
+
+def test_filters_only_accept_canonical_uuids(store: LanceVectorStore) -> None:
+    with pytest.raises(ValueError):
+        store.delete_document("x' OR '1' = '1")
+    with pytest.raises(ValueError):
+        store.get_chunk(str(uuid4()).upper(), str(uuid4()))
+
+
+def test_german_full_text_search_after_optimize(store: LanceVectorStore) -> None:
+    doc = str(uuid4())
+    store.add([_chunk(doc, 0, "Die Straßenleuchten haben IP66.")], [[0.1] * DIM])
+    store.optimize()
+    table = store._require()
+    hits = table.search("strassenleuchte", query_type="fts").limit(3).to_list()
+    assert [h["document_id"] for h in hits] == [doc]
+
+
+def test_reopen_keeps_data_and_rejects_another_dimension(tmp_path: Path) -> None:
+    first = LanceVectorStore(tmp_path / "lancedb", fts_language="German")
+    first.open(DIM)
+    doc = str(uuid4())
+    first.add([_chunk(doc, 0)], [[0.1] * DIM])
+    again = LanceVectorStore(tmp_path / "lancedb", fts_language="German")
+    again.open(DIM)
+    assert again.count(doc) == 1
+    with pytest.raises(RuntimeError):
+        LanceVectorStore(tmp_path / "lancedb", fts_language="German").open(DIM * 2)
+
+
+def test_add_requires_one_vector_per_chunk(store: LanceVectorStore) -> None:
+    with pytest.raises(ValueError):
+        store.add([_chunk(str(uuid4()), 0)], [])
+    store.add([], [])

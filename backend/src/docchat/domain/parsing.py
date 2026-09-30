@@ -47,3 +47,11 @@ class TextContent:
 
     text: str
     headings: tuple[tuple[int, str], ...] = ()
+
+
+class PageBatchFailed(Exception):
+    """The parser process timed out or died on a batch of pages. Only these pages are lost."""
+
+    def __init__(self, timed_out: bool) -> None:
+        super().__init__(timed_out)
+        self.timed_out = timed_out
