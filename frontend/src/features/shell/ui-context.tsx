@@ -3,9 +3,19 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-export type PanelContent = { id: string; title: string; subtitle?: string; body: ReactNode };
+export type PanelContent = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  /** `wide` for reading views such as artifacts (640 px instead of 440 px). */
+  size?: 'default' | 'wide';
+  body: ReactNode;
+};
 
 type UIState = {
+  /** Text of the chat search in the sidebar; the chat list filters by it. */
+  chatQuery: string;
+  setChatQuery: (query: string) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   panel: PanelContent | null;
@@ -19,6 +29,7 @@ const UIContext = createContext<UIState | null>(null);
 export function UIProvider({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [panel, setPanel] = useState<PanelContent | null>(null);
+  const [chatQuery, setChatQuery] = useState('');
   const closePanel = useCallback(() => setPanel(null), []);
 
   // The drawer only exists on narrow windows; widening the window closes it.
@@ -30,8 +41,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ sidebarOpen, setSidebarOpen, panel, openPanel: setPanel, closePanel }),
-    [sidebarOpen, panel, closePanel],
+    () => ({ chatQuery, setChatQuery, sidebarOpen, setSidebarOpen, panel, openPanel: setPanel, closePanel }),
+    [chatQuery, sidebarOpen, panel, closePanel],
   );
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }

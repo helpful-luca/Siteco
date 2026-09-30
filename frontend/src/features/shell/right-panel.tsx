@@ -3,7 +3,7 @@
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMediaQuery } from '@/shared/lib/use-media-query';
-import { Button, SideSheet } from '@/shared/ui';
+import { Button, cn, SideSheet } from '@/shared/ui';
 import { useUI, type PanelContent } from './ui-context';
 
 /** Slot for sources, previews and artifacts: a column on wide windows, a sheet otherwise. */
@@ -15,7 +15,10 @@ export function RightPanel() {
     return (
       <aside
         aria-label={panel.title}
-        className="flex w-panel shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline"
+        className={cn(
+          'flex shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline',
+          panel.size === 'wide' ? 'w-panel-wide' : 'w-panel',
+        )}
       >
         <PanelBody panel={panel} onClose={closePanel} />
       </aside>
@@ -23,7 +26,14 @@ export function RightPanel() {
   }
   return (
     <SideSheet side="right" label={panel.title} open onOpenChange={(open) => !open && closePanel()}>
-      <div className="flex w-[min(var(--spacing-panel),calc(100vw-var(--spacing)*4))] flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline">
+      <div
+        className={cn(
+          'flex flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline',
+          panel.size === 'wide'
+            ? 'w-[min(var(--spacing-panel-wide),calc(100vw-var(--spacing)*4))]'
+            : 'w-[min(var(--spacing-panel),calc(100vw-var(--spacing)*4))]',
+        )}
+      >
         <PanelBody panel={panel} onClose={closePanel} />
       </div>
     </SideSheet>
