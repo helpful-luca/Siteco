@@ -32,10 +32,11 @@ export function useOpenSource() {
     ({ messageKey, source, citedText, citations = [] }: SourceRef) => {
       const pdf = source.page !== null;
       const store = createPageStore({ page: source.page ?? 1, pages: null });
+      const where = pdf ? t('page', { page: source.page ?? 1 }) : t('passage');
       openPanel({
         id: sourcePanelId(messageKey, source.id),
         title: source.filename,
-        subtitle: source.deleted ? t('deletedTitle') : pdf ? <PageIndicator store={store} /> : t('passage'),
+        subtitle: pdf && !source.deleted ? <PageIndicator store={store} /> : where,
         size: pdf && !source.deleted ? 'wide' : 'default',
         body: (
           <SourceView

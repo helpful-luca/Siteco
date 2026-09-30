@@ -15,7 +15,8 @@ type Props = {
   onFit: () => void;
 };
 
-/** Floating glass pill over the pages, like Preview: page up and down, page field, zoom. */
+/** Floating glass pill over the pages, like Preview: page up and down, page field, zoom. Dense
+ * glass: it sits on white paper in both themes and must stay readable there. */
 export function ViewerToolbar({ page, pages, zoom, onPage, onZoom, onFit }: Props) {
   const t = useTranslations('viewer.pdf');
   const [draft, setDraft] = useState<string | null>(null);
@@ -31,7 +32,7 @@ export function ViewerToolbar({ page, pages, zoom, onPage, onZoom, onFit }: Prop
     <div
       role="toolbar"
       aria-label={t('toolbar')}
-      className="glass absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full px-1 py-1"
+      className="glass-dense absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full px-1 py-1"
     >
       <Tooltip content={t('previous')}>
         <Button icon variant="ghost" size="sm" aria-label={t('previous')} disabled={page <= 1} onClick={() => onPage(page - 1)}>
