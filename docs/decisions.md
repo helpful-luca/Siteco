@@ -75,6 +75,16 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 50 | Cost | Prices as constants with source and date; unknown fallback models priced at the requested model | Live prices | There is no pricing API; a new fallback target must never look free |
 | 51 | onnxruntime telemetry | `ORT_DISABLE_TELEMETRY=1` set in `docchat/__init__.py` (before anything imports onnxruntime) and in the Dockerfile, plus `disable_telemetry_events()` before the session | `disable_telemetry_events()` alone | onnxruntime 1.30 on macOS runs Microsoft 1DS telemetry (system details, uploads to `mobile.events.data.microsoft.com`) and aborted at exit; measured: only the variable keeps its store untouched |
 
+## UI polish (spacing and layout)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 52 | Root font size | Browser default 16 px, body text 15 px on `<body>` | 15 px root | Tailwind spacing is rem based; a 15 px root made every step 3.75 px and nothing sat on the 4 px grid |
+| 53 | Control height | One toolbar height of 32 px (md buttons, search, segmented), sm 28 | 36 px md buttons | Controls in one row share a height; 32 is macOS toolbar scale |
+| 54 | Touch targets | `pointer-coarse:` grows controls to 44 px | Breakpoint based sizes | The device decides, not the window width; a narrow desktop window keeps desktop density |
+| 55 | Control radius | 12 px | 10 px | Concentric with the 24 px sidebar and its 12 px padding |
+| 56 | Global banner | Rendered inside the page column by `Page` | Full width above `<main>` | Shares the left edge with title, toolbar and table and scrolls away on phones |
+
 ## Measurements
 
 | What | Result |

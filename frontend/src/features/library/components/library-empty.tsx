@@ -13,16 +13,16 @@ function uploadLimit(mb: number): string {
 export function LibraryEmpty({ maxUploadMb, onChoose }: { maxUploadMb?: number; onChoose: () => void }) {
   const t = useTranslations('library.empty');
   return (
-    <div className="flex flex-col items-center rounded-panel border border-dashed border-hairline-strong px-6 py-16 text-center sm:py-24">
+    <div className="flex flex-col items-center rounded-panel border border-dashed border-hairline-strong px-6 py-16 text-center sm:py-20">
       <div className="grid size-14 place-items-center rounded-full bg-highlight text-sodium-ink">
         <FileUp aria-hidden className="size-6" />
       </div>
-      <h2 className="mt-5 text-title-3 font-semibold">{t('title')}</h2>
+      <h2 className="mt-4 text-title-3 font-semibold">{t('title')}</h2>
       <p className="mt-2 max-w-[44ch] text-body text-ink-muted">{t('text')}</p>
       <Button variant="primary" className="mt-6" onClick={onChoose}>
         {t('choose')}
       </Button>
-      <p className="mt-5 max-w-[48ch] text-caption text-ink-muted">
+      <p className="mt-4 max-w-[48ch] text-caption text-ink-muted">
         {maxUploadMb ? t('hint', { limit: uploadLimit(maxUploadMb) }) : t('hintNoLimit')}
       </p>
     </div>

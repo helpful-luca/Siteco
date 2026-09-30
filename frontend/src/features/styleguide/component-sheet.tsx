@@ -27,7 +27,7 @@ export function ComponentSheet({ theme, startOnboarding = false }: { theme: Them
   const [language, setLanguage] = useState<'de' | 'en'>('de');
 
   return (
-    <div className="mx-auto grid max-w-[1120px] gap-x-12 gap-y-14 px-6 py-16 md:grid-cols-2">
+    <div className="mx-auto grid max-w-[calc(var(--container-page)+2*var(--gutter))] gap-x-12 gap-y-12 px-gutter pt-12 pb-24 md:grid-cols-2">
       <Section title={t('actions')}>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="primary">{t('primary')}</Button>
@@ -98,7 +98,7 @@ export function ComponentSheet({ theme, startOnboarding = false }: { theme: Them
                 ]}
               />
               <NameField label={t('nameLabel')} placeholder={t('namePlaceholder')} />
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex w-full justify-end gap-2 pt-2">
                 <DialogClose render={<Button variant="ghost">{t('skip')}</Button>} />
                 <DialogClose render={<Button variant="primary">{t('continue')}</Button>} />
               </div>
@@ -130,7 +130,7 @@ export function ComponentSheet({ theme, startOnboarding = false }: { theme: Them
 function Section({ title, wide = false, children }: { title: string; wide?: boolean; children: React.ReactNode }) {
   return (
     <section className={wide ? 'md:col-span-2' : undefined}>
-      <h2 className="mb-5 text-title-3 font-semibold">{title}</h2>
+      <h2 className="mb-4 text-title-3 font-semibold">{title}</h2>
       {children}
     </section>
   );
@@ -138,12 +138,12 @@ function Section({ title, wide = false, children }: { title: string; wide?: bool
 
 function NameField({ label, placeholder }: { label: string; placeholder: string }) {
   return (
-    <label className="flex w-full max-w-sm flex-col gap-1.5">
+    <label className="flex w-full max-w-96 flex-col gap-2">
       <span className="text-footnote font-medium text-ink-muted">{label}</span>
       <input
         placeholder={placeholder}
         maxLength={40}
-        className="h-10 rounded-control bg-fill px-3 text-body ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium"
+        className="h-10 rounded-control bg-fill px-3 text-body ring-1 pointer-coarse:h-11 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium"
       />
     </label>
   );

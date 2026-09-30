@@ -18,29 +18,35 @@ type Props = {
 /** Finder-style list: file icon and name, status with progress, pages, size, date, actions. */
 export function DocumentTable({ uploads, documents, onPreview, onDelete, onRetry, onDismiss }: Props) {
   const t = useTranslations('library.columns');
-  const head = 'py-2 pr-3 text-left text-caption font-medium text-ink-muted';
+  const head = 'h-8 px-3 text-left align-middle text-caption font-medium text-ink-muted';
   return (
     <div className="@container overflow-hidden rounded-card bg-surface ring-1 ring-hairline shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-      <table className="w-full table-fixed border-collapse">
+      {/*
+       * Every cell centers its first line on --row-line (32 px), so file name,
+       * badge, numbers and actions share one axis: a one-line row is 48 px (8 + 32 + 8). On touch
+       * the 44 px action buttons overhang the line into the 8 px row padding instead of growing it.
+       * Columns: 16 px inset from the card edge, 24 px between columns (12 + 12).
+       */}
+      <table className="w-full table-fixed border-collapse [--row-line:--spacing(8)]">
         <caption className="sr-only">{t('caption')}</caption>
         <thead className="border-b border-hairline">
           <tr>
-            <th scope="col" className={`${head} pl-3 @lg:pl-4`}>
+            <th scope="col" className={`${head} pl-4`}>
               {t('name')}
             </th>
-            <th scope="col" className={`${head} hidden w-44 @lg:table-cell`}>
+            <th scope="col" className={`${head} hidden w-52 @lg:table-cell`}>
               {t('status')}
             </th>
-            <th scope="col" className={`${head} hidden w-20 pr-4 text-right @2xl:table-cell`}>
+            <th scope="col" className={`${head} hidden w-20 text-right @3xl:table-cell`}>
               {t('pages')}
             </th>
-            <th scope="col" className={`${head} hidden w-24 pr-4 text-right @2xl:table-cell`}>
+            <th scope="col" className={`${head} hidden w-28 text-right @3xl:table-cell`}>
               {t('size')}
             </th>
             <th scope="col" className={`${head} hidden w-44 @4xl:table-cell`}>
               {t('added')}
             </th>
-            <th scope="col" className={`${head} w-[76px] @lg:w-20`}>
+            <th scope="col" className={`${head} w-17 pr-2 pl-0 pointer-coarse:w-25`}>
               <span className="sr-only">{t('actions')}</span>
             </th>
           </tr>

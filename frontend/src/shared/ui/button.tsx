@@ -15,7 +15,7 @@ export type ButtonProps =
   | (Common & { icon: true; 'aria-label': string; children?: ReactNode });
 
 const BASE =
-  'inline-flex shrink-0 select-none items-center justify-center gap-2 rounded-full font-medium ' +
+  'inline-flex shrink-0 select-none items-center justify-center gap-1.5 rounded-full font-medium ' +
   'transition-[background-color,box-shadow,transform,filter] duration-150 ease-out-soft ' +
   'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4';
 
@@ -27,9 +27,13 @@ const VARIANTS: Record<Variant, string> = {
   danger: 'text-danger ring-1 ring-inset ring-hairline hover:bg-fill',
 };
 
+/**
+ * Heights on the 4 px grid: sm 28, md 32 (the toolbar height, same as search fields and
+ * segmented controls). On touch screens every button grows to the 44 px minimum target.
+ */
 const SIZES: Record<Size, { text: string; icon: string }> = {
-  sm: { text: 'h-7 px-3 text-footnote', icon: 'size-7' },
-  md: { text: 'h-9 px-4 text-body', icon: 'size-9' },
+  sm: { text: 'h-7 px-3 text-footnote pointer-coarse:h-11', icon: 'size-7 pointer-coarse:size-11' },
+  md: { text: 'h-8 px-4 text-body pointer-coarse:h-11 pointer-coarse:px-5', icon: 'size-8 pointer-coarse:size-11' },
 };
 
 /** Classes of a button, for links that look like one (`<Link className={buttonStyles(...)}>`). */

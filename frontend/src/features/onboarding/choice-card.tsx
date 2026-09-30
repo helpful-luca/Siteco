@@ -29,15 +29,18 @@ export function ChoiceCards<T extends string>({ label, choices, value, onValueCh
           key={choice.value}
           value={choice.value}
           className={cn(
-            'group flex flex-col items-center gap-3 rounded-card p-3 pb-4 text-center',
+            'group flex flex-col items-center gap-3 rounded-card text-center',
+            choice.visual ? 'p-2 pb-3' : 'px-4 py-5',
             'bg-fill ring-1 ring-inset ring-hairline transition-[background-color,box-shadow] duration-200 ease-out-soft',
             'hover:bg-fill-strong data-checked:bg-surface data-checked:ring-2 data-checked:ring-sodium',
             'dark:data-checked:bg-surface-raised',
           )}
         >
           {choice.visual}
-          <span className="text-body font-medium">{choice.title}</span>
-          {choice.hint && <span className="-mt-2 text-caption text-ink-muted">{choice.hint}</span>}
+          <span className="flex flex-col gap-1">
+            <span className="text-body font-medium">{choice.title}</span>
+            {choice.hint && <span className="text-caption text-ink-muted">{choice.hint}</span>}
+          </span>
         </Radio.Root>
       ))}
     </RadioGroup>

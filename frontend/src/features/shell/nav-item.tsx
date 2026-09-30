@@ -17,7 +17,7 @@ export function NavItem({ href, icon, onNavigate, children }: Props) {
       onClick={onNavigate}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-2.5 rounded-control px-2 py-1.5 text-body transition-colors',
+        'flex h-8 items-center gap-2 rounded-control px-2 text-body transition-colors pointer-coarse:h-11',
         '[&_svg]:size-4 [&_svg]:shrink-0',
         active
           ? 'bg-fill-strong font-medium text-ink [&_svg]:text-sodium-ink'

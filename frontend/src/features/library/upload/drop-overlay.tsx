@@ -64,15 +64,15 @@ export function DropOverlay() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-canvas/40 p-4 backdrop-blur-[2px] lg:p-6"
+      className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-canvas/40 p-2 backdrop-blur-[2px] lg:p-3"
     >
       <div className="glass-dense flex size-full rounded-panel p-3">
-        <div className="flex flex-1 flex-col items-center justify-center rounded-[16px] border-2 border-dashed border-sodium/60">
+        <div className="flex flex-1 flex-col items-center justify-center rounded-control border-2 border-dashed border-sodium/60">
           <div className="grid size-16 place-items-center rounded-full bg-highlight text-sodium-ink">
             <FileUp className="size-7" />
           </div>
-          <p className="mt-5 text-title-3 font-semibold">{t('title')}</p>
-          <p className="mt-1.5 max-w-sm px-6 text-center text-body text-ink-muted">{t('text')}</p>
+          <p className="mt-4 text-title-3 font-semibold">{t('title')}</p>
+          <p className="mt-2 max-w-96 px-6 text-center text-body text-ink-muted">{t('text')}</p>
         </div>
       </div>
     </div>

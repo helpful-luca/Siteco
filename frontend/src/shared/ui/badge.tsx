@@ -23,7 +23,7 @@ export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: R
     <span
       data-tone={tone}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-caption font-medium',
+        'inline-flex h-5 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 text-caption font-medium',
         TONES[tone],
       )}
     >

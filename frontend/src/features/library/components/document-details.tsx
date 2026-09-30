@@ -26,18 +26,18 @@ export function DocumentDetails({ documentId }: { documentId: string }) {
     <div className="p-6">
       <div className="flex flex-col items-center rounded-card bg-fill px-6 py-10 text-center ring-1 ring-inset ring-hairline">
         <ScanEye aria-hidden className="size-7 text-ink-muted" />
-        <p className="mt-3 text-body font-medium">{t('soonTitle')}</p>
+        <p className="mt-4 text-body font-medium">{t('soonTitle')}</p>
         <p className="mt-1 max-w-[32ch] text-footnote text-ink-muted">{t('soon')}</p>
       </div>
-      <h3 className="mt-7 text-caption font-medium text-ink-muted">{t('status')}</h3>
-      <div className="mt-2">
+      <h3 className="mt-6 text-caption font-medium text-ink-muted">{t('status')}</h3>
+      <div className="mt-1 [--row-line:--spacing(7)]">
         <DocumentStatus document={document} announce={false} />
         <RowDetails document={document} />
       </div>
-      <h3 className="mt-7 text-caption font-medium text-ink-muted">{t('details')}</h3>
+      <h3 className="mt-6 text-caption font-medium text-ink-muted">{t('details')}</h3>
       <dl className="mt-2 divide-y divide-hairline text-footnote">
         {rows.map(([label, value]) => (
-          <div key={label} className="grid grid-cols-[1fr_1.4fr] gap-4 py-2.5">
+          <div key={label} className="grid grid-cols-[1fr_1.4fr] gap-4 py-2">
             <dt className="text-ink-muted">{label}</dt>
             <dd>{value}</dd>
           </div>

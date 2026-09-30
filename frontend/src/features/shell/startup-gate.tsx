@@ -23,9 +23,11 @@ export function StartupGate({ children }: { children: React.ReactNode }) {
     (error.code === 'BACKEND_UNAVAILABLE' || error.code === 'NETWORK_ERROR');
 
   return (
-    <div role="status" aria-live="polite" className="grid min-h-dvh place-items-center p-8">
-      <div className="flex max-w-sm flex-col items-center text-center">
-        {!unavailable && <Spinner label={t('starting')} className="mb-5 size-5" />}
+    <div role="status" aria-live="polite" className="flex min-h-dvh flex-col items-center px-gutter">
+      {/* Optically centered: a little above the middle (2 : 3 spacers). */}
+      <div aria-hidden className="min-h-12 flex-2" />
+      <div className="flex max-w-96 flex-col items-center text-center">
+        {!unavailable && <Spinner label={t('starting')} className="mb-4 size-5" />}
         <p className="text-title-3 font-semibold">{unavailable ? t('unavailable') : t('starting')}</p>
         <p className="mt-2 text-body text-ink-muted">
           {unavailable ? t('unavailableHint') : t('startingHint')}
@@ -36,6 +38,7 @@ export function StartupGate({ children }: { children: React.ReactNode }) {
           </Button>
         )}
       </div>
+      <div aria-hidden className="min-h-12 flex-3" />
     </div>
   );
 }

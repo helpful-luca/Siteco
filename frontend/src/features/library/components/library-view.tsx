@@ -7,7 +7,7 @@ import type { DocumentOut } from '@/shared/api/types';
 import { useCodeText } from '@/shared/i18n/use-code-text';
 import { ApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
-import { useUI } from '@/features/shell';
+import { Page, useUI } from '@/features/shell';
 import { Button, DelayedSpinner, SearchField, SegmentedControl } from '@/shared/ui';
 import { useDeleteDocument, useDocuments } from '../queries';
 import { matchesFilter, matchesQuery, statusGroup, type StatusFilter } from '../status';
@@ -57,11 +57,11 @@ export function LibraryView() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1120px] px-3 pt-4 pb-16 sm:px-6 lg:px-8 lg:pt-6">
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <div>
+    <Page>
+      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
           <h1 className="text-title-2 font-semibold">{t('title')}</h1>
-          <p className="mt-0.5 text-footnote text-ink-muted" aria-live="polite">
+          <p className="mt-1 text-footnote text-ink-muted" aria-live="polite">
             {data ? t('summary', { count: documents.length, size: formatSize(totalBytes) }) : ' '}
           </p>
         </div>
@@ -74,7 +74,7 @@ export function LibraryView() {
       </header>
 
       {remove.error && (
-        <p role="alert" className="mt-4 text-footnote text-danger">
+        <p role="alert" className="mt-3 text-footnote text-danger">
           {text.error(remove.error instanceof ApiError ? remove.error.code : 'UNKNOWN_ERROR')}
         </p>
       )}
@@ -84,19 +84,19 @@ export function LibraryView() {
           <DelayedSpinner label={t('loading')} className="size-5" />
         </div>
       ) : error && !data ? (
-        <div role="alert" className="mt-10 flex flex-col items-start gap-3">
+        <div role="alert" className="mt-6 flex flex-col items-start gap-3">
           <p className="text-body">{text.error(error instanceof ApiError ? error.code : 'UNKNOWN_ERROR')}</p>
           <Button disabled={isFetching} onClick={() => refetch()}>
             {t('retry')}
           </Button>
         </div>
       ) : empty ? (
-        <div className="mt-8">
+        <div className="mt-6">
           <LibraryEmpty maxUploadMb={config?.limits.max_upload_mb} onChoose={uploads.openPicker} />
         </div>
       ) : (
         <>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             <SearchField
               label={t('search')}
               clearLabel={t('clearSearch')}
@@ -112,7 +112,7 @@ export function LibraryView() {
               className="w-full sm:w-auto [&>*]:min-w-0 [&>*]:flex-1 sm:[&>*]:min-w-20 sm:[&>*]:flex-none"
             />
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             {shownDocuments.length + shownUploads.length > 0 ? (
               <DocumentTable
                 uploads={shownUploads}
@@ -123,7 +123,7 @@ export function LibraryView() {
                 onDismiss={uploads.dismiss}
               />
             ) : (
-              <div className="rounded-card px-6 py-14 text-center">
+              <div className="px-6 py-16 text-center">
                 <p className="text-body font-medium">{t('noResults.title')}</p>
                 <p className="mt-1 text-footnote text-ink-muted">
                   {query.trim() ? t('noResults.text', { query: query.trim() }) : t('noResults.textFilter')}
@@ -145,6 +145,6 @@ export function LibraryView() {
       )}
 
       <DeleteDialog document={deleting} onConfirm={confirmDelete} onClose={() => setDeleting(null)} />
-    </div>
+    </Page>
   );
 }

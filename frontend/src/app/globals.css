@@ -64,6 +64,20 @@
  */
 :root {
   --titlebar-inset: 0px;
+  /* Page gutter: the one left edge for banner, title, toolbar and content (`px-gutter`). */
+  --gutter: 16px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 32px;
+  }
 }
 
 html[data-desktop] {
@@ -99,10 +113,24 @@ html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
   --color-fill-strong: var(--c-fill-strong);
   --color-highlight: var(--c-highlight);
 
-  /* Concentric radii: panels contain cards contain controls. */
+  /*
+   * Concentric radii: inner radius = outer radius - padding between them.
+   * panel 24 > card 16 (8 inset) > inner 8 (8 inset); panel 24 > control 12 (12 inset, sidebar rows).
+   */
   --radius-panel: 24px;
   --radius-card: 16px;
-  --radius-control: 10px;
+  --radius-control: 12px;
+  --radius-inner: 8px;
+
+  /*
+   * Layout. Spacing itself is Tailwind's 4 px scale (`--spacing: 0.25rem` on a 16 px root):
+   * use scale steps (p-3 = 12 px), never arbitrary pixel values. See brain/plans/02-design-system.md.
+   */
+  --spacing-sidebar: 264px;
+  --spacing-panel: 440px;
+  --spacing-gutter: var(--gutter);
+  --container-page: 1120px;
+  --container-reading: 720px;
 
   /* Type scale (Elements of Typographic Style ratios, tuned to SF Pro optical sizes). */
   --text-caption: 12px;
@@ -171,18 +199,24 @@ html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
 }
 
 @layer base {
+  /*
+   * The root keeps the browser's 16 px: Tailwind's spacing scale is rem based, so a smaller root
+   * would shrink every step off the 4 px grid (15 px root = 3.75 px steps). Body text size lives
+   * on <body> instead.
+   */
   html {
     background: var(--c-canvas);
     color: var(--c-ink);
     font-family: var(--font-sans);
-    font-size: var(--text-body);
-    line-height: var(--text-body--line-height);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
   /* The light pool: the one gradient in the product, a warm key light from above. */
   body {
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    letter-spacing: var(--text-body--letter-spacing);
     min-height: 100dvh;
     background:
       radial-gradient(75% 60% at 32% -14%, var(--c-light-key), transparent 72%),

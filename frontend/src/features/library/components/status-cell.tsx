@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 import type { DocumentOut } from '@/shared/api/types';
 import { Badge, ProgressBar } from '@/shared/ui';
 import { statusView } from '../status';
@@ -19,16 +20,31 @@ function Announcement({ name, stage }: { name: string; stage: string }) {
   );
 }
 
+/**
+ * The badge sits centered on the row's first line (`--row-line`, set by the table or the panel),
+ * so it shares one axis with the file name and the numbers. The bar hangs right below that line.
+ */
+function StatusStack({ badge, progress = null, children }: { badge: ReactNode; progress?: ReactNode; children?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-start">
+      <div className="flex min-h-(--row-line) items-center">{badge}</div>
+      {progress}
+      {children}
+    </div>
+  );
+}
+
 export function DocumentStatus({ document, announce = true }: { document: DocumentOut; announce?: boolean }) {
   const t = useTranslations('library.status');
   const view = statusView(document);
   const label = t(view.key, view.values);
   return (
-    <div className="flex flex-col items-start gap-1.5">
-      <Badge tone={view.tone}>{label}</Badge>
-      {view.tone === 'working' && <ProgressBar value={view.progress} label={label} className="w-28" />}
+    <StatusStack
+      badge={<Badge tone={view.tone}>{label}</Badge>}
+      progress={view.tone === 'working' ? <ProgressBar value={view.progress} label={label} className="w-28" /> : null}
+    >
       {announce && <Announcement name={document.filename} stage={view.stage} />}
-    </div>
+    </StatusStack>
   );
 }
 
@@ -37,27 +53,26 @@ export function UploadStatus({ item }: { item: UploadItem }) {
   const name = item.file.name;
   if (item.state === 'failed') {
     return (
-      <div>
-        <Badge tone="failed">{t('uploadFailed')}</Badge>
+      <StatusStack badge={<Badge tone="failed">{t('uploadFailed')}</Badge>}>
         <Announcement name={name} stage="uploadFailed" />
-      </div>
+      </StatusStack>
     );
   }
   if (item.state === 'waiting') {
     return (
-      <div>
-        <Badge tone="neutral">{t('uploadWaiting')}</Badge>
+      <StatusStack badge={<Badge tone="neutral">{t('uploadWaiting')}</Badge>}>
         <Announcement name={name} stage="uploadWaiting" />
-      </div>
+      </StatusStack>
     );
   }
   const share = item.file.size ? item.loaded / item.file.size : 0;
   const label = t('uploading', { percent: Math.round(share * 100) });
   return (
-    <div className="flex flex-col items-start gap-1.5">
-      <Badge tone="working">{label}</Badge>
-      <ProgressBar value={share} label={label} className="w-28" />
+    <StatusStack
+      badge={<Badge tone="working">{label}</Badge>}
+      progress={<ProgressBar value={share} label={label} className="w-28" />}
+    >
       <Announcement name={name} stage="uploading" />
-    </div>
+    </StatusStack>
   );
 }
