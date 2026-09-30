@@ -137,6 +137,11 @@ smoke_malware() {
   return 1
 }
 
+# Tesseract (deu+eng) in the backend image renders and reads a generated page.
+smoke_ocr() {
+  docker compose -p "$PROJECT" exec -T backend python -m docchat.cli.ocr_selftest
+}
+
 smoke_ingestion() {
   printf '%%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj\n4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\n5 0 obj<</Length 60>>stream\nBT /F1 12 Tf 72 720 Td (Die Leuchte hat Schutzart IP66.) Tj ET\nendstream endobj\ntrailer<</Root 1 0 R>>\n%%%%EOF\n' > "$WORK/smoke.pdf"
   printf 'Die Leuchte hat 5000 Lumen.\n' > "$WORK/smoke.txt"
@@ -151,6 +156,7 @@ for _ in $(seq 1 90); do
     wait_for_clamd || { docker compose -p "$PROJECT" logs clamav; exit 1; }
     smoke_malware || { docker compose -p "$PROJECT" logs backend; exit 1; }
     smoke_ingestion || { docker compose -p "$PROJECT" logs backend; exit 1; }
+    smoke_ocr || exit 1
     chat_round_trip sources_only || { docker compose -p "$PROJECT" logs backend; exit 1; }
     smoke_fake_chat || { docker compose -p "$PROJECT" logs backend; exit 1; }
     echo "fresh clone OK"

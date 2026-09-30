@@ -1129,6 +1129,8 @@
         "description": "Hints that are not errors. The UI translates them via `notices.<CODE>`.",
         "enum": [
           "PAGES_WITHOUT_TEXT",
+          "PAGES_OCR",
+          "OCR_RUNNING",
           "PAGES_SKIPPED",
           "PDF_ACTIVE_CONTENT",
           "SCANNER_STARTING",
@@ -1139,7 +1141,8 @@
           "ANSWER_TRUNCATED",
           "LLM_REFUSED",
           "LLM_NOT_CONFIGURED",
-          "MODEL_SWITCHED"
+          "MODEL_SWITCHED",
+          "HIGHLIGHT_UNAVAILABLE"
         ],
         "title": "NoticeCode",
         "type": "string"
@@ -2808,6 +2811,80 @@
           }
         },
         "summary": "Get Document File",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/documents/{document_id}/text": {
+      "get": {
+        "description": "TXT/MD as the decoded, normalized text that sentence offsets refer to (text viewer).",
+        "operationId": "get_document_text_api_documents__document_id__text_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Document Text",
         "tags": [
           "documents"
         ]

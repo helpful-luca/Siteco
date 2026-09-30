@@ -4,6 +4,7 @@ import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { DocumentOut } from '@/shared/api/types';
 import { useCodeText } from '@/shared/i18n/use-code-text';
+import { visibleNotices } from '../status';
 
 /** Second lines under a file name: why it failed, and calm hints that are not errors. */
 export function RowDetails({ document }: { document: DocumentOut }) {
@@ -20,7 +21,7 @@ export function RowDetails({ document }: { document: DocumentOut }) {
       {document.status === 'failed' && typeof signature === 'string' && signature && (
         <p className="mt-0.5 text-caption text-ink-muted">{t('signature', { signature })}</p>
       )}
-      {document.notices.map((notice) => {
+      {visibleNotices(document).map((notice) => {
         const message = text.notice(notice.code, notice.params);
         return (
           message && (

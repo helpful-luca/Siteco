@@ -94,6 +94,25 @@ class FakePdfParser:
         return None
 
 
+class FakePageOcr:
+    """Recognizes scripted page texts (by 1-based page number); None for unknown pages."""
+
+    def __init__(self, texts: dict[int, str] | None = None, *, available: bool = True) -> None:
+        self.texts = texts or {}
+        self.available = available
+        self.calls: list[int] = []
+        self.during: Callable[[int], object] | None = None  # runs while a page is recognized
+
+    async def recognize(self, path: Path, page_number: int) -> TextSection | None:
+        self.calls.append(page_number)
+        if self.during is not None:
+            result = self.during(page_number)
+            if asyncio.iscoroutine(result):
+                await result
+        text = self.texts.get(page_number)
+        return None if text is None else page(page_number, text)
+
+
 def _words(text: str) -> set[str]:
     return set(re.findall(r"\w+", text.casefold()))
 

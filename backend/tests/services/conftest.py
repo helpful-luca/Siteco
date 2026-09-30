@@ -8,7 +8,6 @@ import pytest
 
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.local_file_storage import LocalFileStorage
-from docchat.adapters.no_page_ocr import NoPageOcr
 from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
@@ -25,6 +24,7 @@ from docchat.services.upload_service import UploadLimits, UploadService
 from tests.fakes import (
     FakeClock,
     FakeEmbedder,
+    FakePageOcr,
     FakePdfParser,
     FakeScanner,
     FakeSleep,
@@ -50,6 +50,7 @@ class Harness:
     scanner: FakeScanner
     sleep: FakeSleep
     scans: MalwareScanWorker
+    ocr: FakePageOcr
 
     def add_document(
         self,
@@ -85,7 +86,13 @@ class Harness:
         return self.repository.get(document.id)
 
 
-def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits: int) -> Harness:
+def build_harness(
+    root: Path,
+    *,
+    embedder: FakeEmbedder | None = None,
+    ocr: FakePageOcr | None = None,
+    **limits: int,
+) -> Harness:
     database = Database(root / "app.db")
     database.migrate()
     repository = SqliteDocumentRepository(database)
@@ -95,12 +102,13 @@ def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits:
     pdf = FakePdfParser()
     embedder = embedder or FakeEmbedder(dim=4)
     clock = FakeClock()
+    ocr = ocr or FakePageOcr(available=False)
     purge = DocumentPurge(repository, storage, vectors)
     parse = ParseStage(
         spool,
         pdf,
         TextFileParser(),
-        NoPageOcr(),
+        ocr,
         PdfActiveContentDetector(),
         ParseLimits(
             max_pdf_pages=limits.get("max_pdf_pages", 100),
@@ -113,7 +121,16 @@ def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits:
         spool, embedder, vectors, EmbedBatching(embed_batch_size=2, write_batch_size=3)
     )
     worker = IngestionWorker(repository, storage, spool, vectors, parse, embed, purge, clock)
-    documents = DocumentService(repository, storage, vectors, worker, purge, clock)
+    documents = DocumentService(
+        repository,
+        storage,
+        vectors,
+        worker,
+        purge,
+        clock,
+        TextFileParser(),
+        max_text_chars=limits.get("max_chars", 1_000_000),
+    )
     scanner = FakeScanner()
     sleep = FakeSleep()
     scans = MalwareScanWorker(
@@ -151,6 +168,7 @@ def build_harness(root: Path, *, embedder: FakeEmbedder | None = None, **limits:
         scanner,
         sleep,
         scans,
+        ocr,
     )
 
 

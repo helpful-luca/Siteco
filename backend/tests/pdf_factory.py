@@ -1,11 +1,12 @@
 """A tiny PDF writer for test fixtures. Fixtures are generated at test time, never committed.
 
 Supports text lines in Helvetica (WinAnsi, so German umlauts work), page rotation, a CropBox that
-differs from the MediaBox, image-only pages and the standard security handler (RC4, revision 2)
-for password protected files.
+differs from the MediaBox, image-only pages, pages that are one grayscale image (a scan) and the
+standard security handler (RC4, revision 2) for password protected files.
 """
 
 import hashlib
+import zlib
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
@@ -22,12 +23,22 @@ class TextLine:
 
 
 @dataclass(frozen=True)
+class GrayImage:
+    """8-bit grayscale pixels, row by row, drawn over the whole page."""
+
+    width: int
+    height: int
+    pixels: bytes
+
+
+@dataclass(frozen=True)
 class PageSpec:
     lines: Sequence[TextLine] = ()
     rotate: int = 0
     media_box: tuple[float, float, float, float] = (0, 0, 612, 792)
     crop_box: tuple[float, float, float, float] | None = None
     image_only: bool = False
+    scan: GrayImage | None = None
 
 
 @dataclass
@@ -67,7 +78,11 @@ def build_pdf(
         if crypt:
             stream = crypt.encrypt(content, stream)
         w.set(content, b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream")
-        w.set(page, _page_dict(spec, page_tree, content, font))
+        image = None
+        if spec.scan is not None:
+            image = w.reserve()
+            w.set(image, _image_object(spec.scan))
+        w.set(page, _page_dict(spec, page_tree, content, font, image))
     kid_refs = b" ".join(b"%d 0 R" % k for k in kids)
     w.set(page_tree, b"<< /Type /Pages /Kids [%s] /Count %d >>" % (kid_refs, len(kids)))
     w.set(catalog, b"<< /Type /Catalog /Pages %d 0 R >>" % page_tree)
@@ -78,11 +93,25 @@ def build_pdf(
     return _serialize(w.objects, catalog, encrypt_ref)
 
 
-def _page_dict(spec: PageSpec, parent: int, content: int, font: int) -> bytes:
+def _image_object(scan: GrayImage) -> bytes:
+    data = zlib.compress(scan.pixels)
+    return (
+        b"<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceGray"
+        b" /BitsPerComponent 8 /Filter /FlateDecode /Length %d >>\nstream\n"
+        % (scan.width, scan.height, len(data))
+        + data
+        + b"\nendstream"
+    )
+
+
+def _page_dict(
+    spec: PageSpec, parent: int, content: int, font: int, image: int | None = None
+) -> bytes:
+    xobject = b" /XObject << /Im1 %d 0 R >>" % image if image else b""
     parts = [
         b"<< /Type /Page /Parent %d 0 R" % parent,
         b" /MediaBox [%s]" % _numbers(spec.media_box),
-        b" /Resources << /Font << /F1 %d 0 R >> >>" % font,
+        b" /Resources << /Font << /F1 %d 0 R >>%s >>" % (font, xobject),
         b" /Contents %d 0 R" % content,
     ]
     if spec.crop_box:
@@ -94,6 +123,10 @@ def _page_dict(spec: PageSpec, parent: int, content: int, font: int) -> bytes:
 
 
 def _content_stream(spec: PageSpec) -> bytes:
+    if spec.scan is not None:
+        x0, y0, x1, y1 = spec.media_box
+        size = (_num(x1 - x0), _num(y1 - y0), _num(x0), _num(y0))
+        return b"q %s 0 0 %s %s %s cm /Im1 Do Q" % size
     if spec.image_only:
         # Vector shapes stand in for a scanned image: something is drawn, but there is no text.
         return b"0.2 g 72 400 468 300 re f 0.8 g 100 450 200 100 re f"

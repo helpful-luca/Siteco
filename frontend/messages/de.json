@@ -91,7 +91,10 @@
     "ANSWER_TRUNCATED": "Die Antwort war sehr lang und wurde gekürzt.",
     "LLM_REFUSED": "Auf diese Anfrage kann Claude nicht antworten. Formuliere sie anders, wenn du magst.",
     "LLM_NOT_CONFIGURED": "Ohne API-Schlüssel zeigen wir dir die passenden Stellen aus deinen Dokumenten, aber keine Antwort.",
-    "MODEL_SWITCHED": "Diese Antwort hat {new} geschrieben statt {old}."
+    "MODEL_SWITCHED": "Diese Antwort hat {new} geschrieben statt {old}.",
+    "PAGES_OCR": "{count, plural, one {# gescannte Seite wurde per Texterkennung gelesen. Markierungen dort können etwas ungenauer sein.} other {# gescannte Seiten wurden per Texterkennung gelesen. Markierungen dort können etwas ungenauer sein.}}",
+    "OCR_RUNNING": "Texterkennung für gescannte Seiten, gerade Seite {page} von {pages}. Das dauert etwas länger.",
+    "HIGHLIGHT_UNAVAILABLE": "Die genaue Stelle können wir hier nicht markieren. Du findest sie auf Seite {page}."
   },
   "styleguide": {
     "title": "Design-System",
@@ -404,7 +407,8 @@
       "deleting": "Wird gelöscht",
       "uploading": "Wird hochgeladen, {percent} %",
       "uploadWaiting": "Wartet auf Upload",
-      "uploadFailed": "Nicht hochgeladen"
+      "uploadFailed": "Nicht hochgeladen",
+      "recognizing": "Texterkennung, {percent} %"
     },
     "kind": {
       "pdf": "PDF-Dokument",
@@ -469,7 +473,8 @@
       "deleting": "{name}: wird gelöscht",
       "uploading": "{name}: wird hochgeladen",
       "uploadWaiting": "{name}: wartet auf Upload",
-      "uploadFailed": "{name}: nicht hochgeladen"
+      "uploadFailed": "{name}: nicht hochgeladen",
+      "recognizing": "{name}: Texterkennung läuft"
     },
     "notAddedYet": "noch nicht hinzugefügt"
   },

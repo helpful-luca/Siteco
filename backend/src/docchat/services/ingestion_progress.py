@@ -1,8 +1,10 @@
 """Progress reporting that doubles as the cancellation check of the worker."""
 
 import asyncio
+from collections.abc import Sequence
 
 from docchat.domain.enums import DocumentStatus
+from docchat.domain.models import Notice
 from docchat.domain.ports import Clock, DocumentRepository
 
 
@@ -34,6 +36,18 @@ class ProgressReporter:
             fraction,
             self._clock.now(),
             page_count=page_count,
+        )
+        if not updated:
+            raise DocumentGone
+
+    async def notices(self, notices: Sequence[Notice]) -> None:
+        """Hints shown while the stage runs (e.g. which scanned page is being recognized)."""
+        updated = await asyncio.to_thread(
+            self._repository.set_notices,
+            self._document_id,
+            self._status,
+            notices,
+            self._clock.now(),
         )
         if not updated:
             raise DocumentGone

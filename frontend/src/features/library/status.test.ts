@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { doc } from './testing';
-import { matchesFilter, matchesQuery, pollInterval, statusGroup, statusView } from './status';
+import { matchesFilter, matchesQuery, pollInterval, statusGroup, statusView, visibleNotices } from './status';
 
 describe('statusView', () => {
   it('describes each stage with a tone, a text key and progress', () => {
@@ -25,8 +25,25 @@ describe('statusView', () => {
       progress: 0.404,
     });
     expect(statusView(doc({ status: 'embedding', progress: 0.62 })).values).toEqual({ percent: 62 });
+    const ocr = doc({ status: 'parsing', progress: 0.25, notices: [{ code: 'OCR_RUNNING', params: { page: 3, pages: 12 } }] });
+    expect(statusView(ocr)).toEqual({
+      tone: 'working',
+      stage: 'recognizing',
+      key: 'recognizing',
+      values: { percent: 25 },
+      progress: 0.25,
+    });
     expect(statusView(doc()).tone).toBe('ready');
     expect(statusView(doc({ status: 'failed', error_code: 'PDF_ENCRYPTED' })).tone).toBe('failed');
+  });
+});
+
+describe('visibleNotices', () => {
+  it('shows the running OCR hint only while the document is being read', () => {
+    const running = { code: 'OCR_RUNNING' as const, params: { page: 3, pages: 12 } };
+    const done = { code: 'PAGES_OCR' as const, params: { count: 2 } };
+    expect(visibleNotices(doc({ status: 'parsing', notices: [running] }))).toEqual([running]);
+    expect(visibleNotices(doc({ status: 'failed', notices: [running, done] }))).toEqual([done]);
   });
 });
 

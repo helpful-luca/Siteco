@@ -31,6 +31,13 @@ ARG APP_VERSION=0.1.0
 ENV PATH=/app/.venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     ORT_DISABLE_TELEMETRY=1 HF_HUB_OFFLINE=1 EMBEDDING_CACHE_DIR=/opt/models DATA_DIR=/data \
     GIT_SHA=$GIT_SHA APP_VERSION=$APP_VERSION
+# OCR for scanned pages (master spec 6.8): Tesseract 5.5 with German and English models from
+# Debian trixie, built for amd64 and arm64. About 110 MB; no telemetry; it only ever reads the
+# rendered page from stdin. Versions pinned; bump them together with the base image.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       tesseract-ocr=5.5.0-1+b1 tesseract-ocr-deu=1:4.1.0-2 tesseract-ocr-eng=1:4.1.0-2 \
+    && rm -rf /var/lib/apt/lists/*
 RUN useradd --uid 10001 --create-home app && mkdir -p /data && chown app:app /data
 COPY --from=model /opt/models /opt/models
 COPY --from=app /app/.venv /app/.venv

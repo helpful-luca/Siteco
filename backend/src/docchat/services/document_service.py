@@ -6,13 +6,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from docchat.domain.enums import DocumentKind, DocumentStatus
-from docchat.domain.errors import AppError, ErrorCode
+from docchat.domain.errors import AppError, ErrorCode, IngestionError
 from docchat.domain.models import Chunk, Document
 from docchat.domain.ports import (
     Clock,
     DocumentRepository,
     FileStorage,
     IngestionScheduler,
+    TextParser,
     VectorStore,
 )
 from docchat.services.document_purge import DocumentPurge
@@ -42,7 +43,11 @@ class DocumentService:
         worker: IngestionScheduler,
         purge: DocumentPurge,
         clock: Clock,
+        text_parser: TextParser,
+        max_text_chars: int,
     ) -> None:
+        self._text_parser = text_parser
+        self._max_text_chars = max_text_chars
         self._repository = repository
         self._storage = storage
         self._vectors = vectors
@@ -93,6 +98,19 @@ class DocumentService:
         return StoredFile(
             self._storage.path_for(document.id, document.kind), document.kind, document.filename
         )
+
+    def text(self, document_id: str) -> str:
+        """The decoded, normalized text of a TXT/MD document: what `char_start` and `char_end`
+        of its sentences count in (the raw file may be cp1252, have CRLF or a BOM)."""
+        stored = self.file(document_id)
+        if stored.kind is DocumentKind.PDF:
+            raise AppError(ErrorCode.NOT_FOUND)
+        try:
+            return self._text_parser.parse(stored.path, stored.kind, self._max_text_chars).text
+        except FileNotFoundError as exc:  # deleted between the lookup and now
+            raise AppError(ErrorCode.DOCUMENT_FILE_MISSING) from exc
+        except IngestionError as exc:
+            raise AppError(exc.code) from exc
 
     def chunk(self, document_id: str, chunk_id: str) -> Chunk:
         document = self._require(document_id)

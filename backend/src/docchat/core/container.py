@@ -4,6 +4,7 @@ import asyncio
 import logging
 import os
 import random
+import shutil
 from dataclasses import dataclass
 
 from docchat.adapters.anthropic.client import AnthropicLLMClient
@@ -16,16 +17,26 @@ from docchat.adapters.local_file_storage import LocalFileStorage
 from docchat.adapters.no_page_ocr import NoPageOcr
 from docchat.adapters.noop_malware_scanner import NoopMalwareScanner
 from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
-from docchat.adapters.pdfium_parser import PdfiumParser
+from docchat.adapters.pdfium_ocr_page import OcrOptions
+from docchat.adapters.pdfium_parser import TASKS_PER_PROCESS, PdfiumParser
+from docchat.adapters.process_runner import IsolatedProcess
 from docchat.adapters.sqlite.chat_repository import SqliteChatRepository
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
 from docchat.adapters.sqlite.usage_ledger import SqliteUsageLedger
 from docchat.adapters.system_clock import SystemClock
+from docchat.adapters.tesseract_ocr import TesseractPageOcr
 from docchat.adapters.text_parser import TextFileParser
 from docchat.core.config import Settings
 from docchat.domain.enums import ComponentStatus, LlmStatus
-from docchat.domain.ports import Embedder, LLMClient, MalwareScanner, PdfParser, VectorStore
+from docchat.domain.ports import (
+    Embedder,
+    LLMClient,
+    MalwareScanner,
+    PageOcr,
+    PdfParser,
+    VectorStore,
+)
 from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerService
 from docchat.services.chat_service import ChatService
@@ -52,6 +63,7 @@ class Container:
     embedder: Embedder
     vectors: VectorStore
     pdf_parser: PdfParser
+    parser_process: IsolatedProcess
     worker: IngestionWorker
     scans: MalwareScanWorker
     documents: DocumentService
@@ -107,6 +119,7 @@ class Container:
         await self.scans.stop()
         await self.worker.stop()
         await self.pdf_parser.close()
+        await self.parser_process.close()  # shared with OCR; closing twice is harmless
 
 
 def _default_threads() -> int:
@@ -122,6 +135,17 @@ def _scanner(settings: Settings) -> MalwareScanner:
         scan_timeout_s=settings.clamd_scan_timeout_s,
         max_stream_bytes=settings.clamd_stream_max_mb * _MB,
     )
+
+
+def _ocr(settings: Settings, process: IsolatedProcess) -> PageOcr:
+    if settings.ocr == "off":
+        return NoPageOcr()
+    if shutil.which("tesseract") is None:
+        # Local development without Tesseract; the Docker image always has it.
+        log.warning("ocr_unavailable")
+        return NoPageOcr()
+    options = OcrOptions(languages=settings.ocr_languages, timeout_s=settings.ocr_page_timeout_s)
+    return TesseractPageOcr(process, options)
 
 
 def _llm(settings: Settings) -> tuple[LLMClient | None, LlmStatus]:
@@ -158,13 +182,18 @@ def build_container(
         local_files_only=settings.embedding_local_only,
         threads=settings.embedding_threads or _default_threads(),
     )
-    pdf_parser = pdf_parser or PdfiumParser(timeout_s=settings.parse_timeout_s)
+    # One isolated process for all pdfium work: page text and the rendering for OCR.
+    parser_process = IsolatedProcess(max_tasks_per_child=TASKS_PER_PROCESS)
+    pdf_parser = pdf_parser or PdfiumParser(
+        timeout_s=settings.parse_timeout_s, process=parser_process
+    )
     purge = DocumentPurge(repository, storage, vectors)
+    text_parser = TextFileParser()
     parse_stage = ParseStage(
         spool,
         pdf_parser,
-        TextFileParser(),
-        NoPageOcr(),
+        text_parser,
+        _ocr(settings, parser_process),
         PdfActiveContentDetector(),
         ParseLimits(
             max_pdf_pages=settings.max_pdf_pages,
@@ -224,9 +253,19 @@ def build_container(
         embedder=embedder,
         vectors=vectors,
         pdf_parser=pdf_parser,
+        parser_process=parser_process,
         worker=worker,
         scans=scans,
-        documents=DocumentService(repository, storage, vectors, worker, purge, clock),
+        documents=DocumentService(
+            repository,
+            storage,
+            vectors,
+            worker,
+            purge,
+            clock,
+            text_parser,
+            max_text_chars=settings.max_chars_per_doc,
+        ),
         uploads=UploadService(
             repository,
             storage,

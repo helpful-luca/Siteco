@@ -91,7 +91,10 @@
     "ANSWER_TRUNCATED": "The answer was very long and got cut off.",
     "LLM_REFUSED": "Claude can't answer this request. Feel free to rephrase it.",
     "LLM_NOT_CONFIGURED": "Without an API key we show the matching passages from your documents, but no answer.",
-    "MODEL_SWITCHED": "This answer was written by {new} instead of {old}."
+    "MODEL_SWITCHED": "This answer was written by {new} instead of {old}.",
+    "PAGES_OCR": "{count, plural, one {# scanned page was read with text recognition. Highlights there may be less exact.} other {# scanned pages were read with text recognition. Highlights there may be less exact.}}",
+    "OCR_RUNNING": "Recognizing text on scanned pages, now page {page} of {pages}. This takes a little longer.",
+    "HIGHLIGHT_UNAVAILABLE": "We can't highlight the exact spot here. It's on page {page}."
   },
   "styleguide": {
     "title": "Design system",
@@ -404,7 +407,8 @@
       "deleting": "Deleting",
       "uploading": "Uploading, {percent} %",
       "uploadWaiting": "Waiting to upload",
-      "uploadFailed": "Not uploaded"
+      "uploadFailed": "Not uploaded",
+      "recognizing": "Recognizing text, {percent} %"
     },
     "kind": {
       "pdf": "PDF document",
@@ -469,7 +473,8 @@
       "deleting": "{name}: deleting",
       "uploading": "{name}: uploading",
       "uploadWaiting": "{name}: waiting to upload",
-      "uploadFailed": "{name}: not uploaded"
+      "uploadFailed": "{name}: not uploaded",
+      "recognizing": "{name}: recognizing text"
     },
     "notAddedYet": "not added yet"
   },

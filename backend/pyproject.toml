@@ -41,6 +41,7 @@ markers = [
   "model: needs the real embedding model files (slow, run in docker build and CI)",
   "slow: large generated inputs; skipped unless RUN_SLOW=1",
   "docker: talks to a real container (clamd); skipped unless RUN_DOCKER=1",
+  "ocr: needs the tesseract binary with deu and eng (CI, Docker); skipped when it is missing",
   "live: calls the real Claude API (costs money); skipped unless RUN_LIVE=1 and a key is set",
 ]
 

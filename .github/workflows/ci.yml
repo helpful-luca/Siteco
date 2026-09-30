@@ -20,6 +20,8 @@ jobs:
         with:
           version: "0.11.28"
       - run: uv sync --locked
+      - name: Tesseract for the ocr tests
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng
       - name: Lint and format
         run: uv run ruff check . && uv run ruff format --check .
       - name: Type check
@@ -77,6 +79,8 @@ jobs:
           done
           docker compose logs
           exit 1
+      - name: OCR works in the backend image
+        run: docker compose exec -T backend python -m docchat.cli.ocr_selftest
       - name: Backend is not exposed on the host
         run: test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://127.0.0.1:8000/api/health/live)" = "000"
       - if: always()

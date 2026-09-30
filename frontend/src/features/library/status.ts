@@ -1,4 +1,4 @@
-import type { DocumentOut, DocumentStatus } from '@/shared/api/types';
+import type { DocumentOut, DocumentStatus, NoticeOut } from '@/shared/api/types';
 
 export type StatusGroup = 'ready' | 'working' | 'failed';
 export type StatusFilter = 'all' | StatusGroup;
@@ -45,14 +45,12 @@ export function statusView(document: DocumentOut): StatusView {
           }
         : { tone: 'neutral', stage: 'queued', key: 'queued', values: {}, progress: null };
     case 'parsing':
-    case 'embedding':
-      return {
-        tone: 'working',
-        stage: document.status,
-        key: document.status,
-        values: { percent },
-        progress: document.progress,
-      };
+    case 'embedding': {
+      // Scanned pages take seconds each: the OCR stage gets its own label (master spec 6.8).
+      const recognizing = document.notices.some((n) => n.code === 'OCR_RUNNING');
+      const stage = document.status === 'parsing' && recognizing ? 'recognizing' : document.status;
+      return { tone: 'working', stage, key: stage, values: { percent }, progress: document.progress };
+    }
     case 'ready':
       return { tone: 'ready', stage: 'ready', key: 'ready', values: {}, progress: null };
     case 'failed':
@@ -60,6 +58,11 @@ export function statusView(document: DocumentOut): StatusView {
     default:
       return { tone: 'neutral', stage: 'deleting', key: 'deleting', values: {}, progress: null };
   }
+}
+
+/** Notices worth showing now: the running OCR hint is stale once the document left `parsing`. */
+export function visibleNotices(document: DocumentOut): NoticeOut[] {
+  return document.notices.filter((n) => n.code !== 'OCR_RUNNING' || document.status === 'parsing');
 }
 
 export function matchesFilter(group: StatusGroup, filter: StatusFilter): boolean {

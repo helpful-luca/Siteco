@@ -218,6 +218,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/documents/{document_id}/text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document Text
+         * @description TXT/MD as the decoded, normalized text that sentence offsets refer to (text viewer).
+         */
+        get: operations["get_document_text_api_documents__document_id__text_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health/live": {
         parameters: {
             query?: never;
@@ -679,7 +699,7 @@ export interface components {
          * @description Hints that are not errors. The UI translates them via `notices.<CODE>`.
          * @enum {string}
          */
-        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_SKIPPED" | "PDF_ACTIVE_CONTENT" | "SCANNER_STARTING" | "SCANNER_UNAVAILABLE" | "SOURCES_PARTIAL" | "SUMMARY_PARTIAL" | "NO_CITATIONS" | "ANSWER_TRUNCATED" | "LLM_REFUSED" | "LLM_NOT_CONFIGURED" | "MODEL_SWITCHED";
+        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_OCR" | "OCR_RUNNING" | "PAGES_SKIPPED" | "PDF_ACTIVE_CONTENT" | "SCANNER_STARTING" | "SCANNER_UNAVAILABLE" | "SOURCES_PARTIAL" | "SUMMARY_PARTIAL" | "NO_CITATIONS" | "ANSWER_TRUNCATED" | "LLM_REFUSED" | "LLM_NOT_CONFIGURED" | "MODEL_SWITCHED" | "HIGHLIGHT_UNAVAILABLE";
         /** NoticeOut */
         NoticeOut: {
             code: components["schemas"]["NoticeCode"];
@@ -1681,6 +1701,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_document_text_api_documents__document_id__text_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

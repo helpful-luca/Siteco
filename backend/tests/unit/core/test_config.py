@@ -33,3 +33,10 @@ def test_empty_budget_means_off(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Settings(_env_file=None).daily_budget_usd is None
     monkeypatch.setenv("DAILY_BUDGET_USD", "2.5")
     assert Settings(_env_file=None).daily_budget_usd == 2.5
+
+
+def test_ocr_is_on_by_default_with_german_and_english(monkeypatch: pytest.MonkeyPatch) -> None:
+    s = Settings(_env_file=None)
+    assert (s.ocr, s.ocr_languages, s.ocr_page_timeout_s) == ("on", "deu+eng", 60)
+    monkeypatch.setenv("OCR", "off")
+    assert Settings(_env_file=None).ocr == "off"

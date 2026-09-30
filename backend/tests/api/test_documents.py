@@ -374,3 +374,32 @@ def test_file_is_not_served_before_the_scan_passed(settings: Settings) -> None:
         assert (r.status_code, error(r)["code"]) == (409, "DOCUMENT_NOT_READY")
         assert c.delete(f"/api/documents/{doc_id}").status_code == 204
     assert _files_under(settings.data_dir) == []
+
+
+def test_text_endpoint_serves_the_text_the_offsets_refer_to(client: TestClient) -> None:
+    data = "# Technik\r\nDie Leuchte hat IP66. Grüße aus München.\r\n".encode("cp1252")
+    doc_id = upload(client, "notes.md", data).json()["document"]["id"]
+    assert wait_until_settled(client, doc_id)["status"] == "ready"
+    r = client.get(f"/api/documents/{doc_id}/text")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "text/plain; charset=utf-8"
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert r.headers["content-security-policy"] == "sandbox; default-src 'none'"
+    text = r.text
+    assert text == "# Technik\nDie Leuchte hat IP66. Grüße aus München.\n"
+    sentences = [
+        s
+        for chunk_id in _chunk_ids(client, doc_id)
+        for s in client.get(f"/api/documents/{doc_id}/chunks/{chunk_id}").json()["sentences"]
+    ]
+    assert sentences
+    for sentence in sentences:
+        assert text[sentence["char_start"] : sentence["char_end"]] == sentence["text"]
+
+
+def test_text_endpoint_is_only_for_text_documents(client: TestClient) -> None:
+    doc_id = upload(client, "a.pdf", PDF).json()["document"]["id"]
+    wait_until_settled(client, doc_id)
+    r = client.get(f"/api/documents/{doc_id}/text")
+    assert (r.status_code, error(r)["code"]) == (404, "NOT_FOUND")
+    assert client.get(f"/api/documents/{uuid4()}/text").status_code == 404

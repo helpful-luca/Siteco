@@ -6,7 +6,7 @@ from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from starlette.requests import ClientDisconnect
 
 from docchat.api.dependencies import DocumentServiceDep, UploadServiceDep
@@ -132,6 +132,20 @@ def get_document_file(
         stored.path,
         media_type=_MEDIA_TYPES[stored.kind],
         headers={**_FILE_HEADERS, "Content-Disposition": disposition},
+    )
+
+
+@router.get(
+    "/{document_id}/text",
+    response_class=PlainTextResponse,
+    responses={200: {"content": {"text/plain": {}}}, **_errors(404, 409, 410)},
+)
+def get_document_text(document_id: UUID, documents: DocumentServiceDep) -> PlainTextResponse:
+    """TXT/MD as the decoded, normalized text that sentence offsets refer to (text viewer)."""
+    return PlainTextResponse(
+        documents.text(str(document_id)),
+        media_type=_MEDIA_TYPES[DocumentKind.TXT],
+        headers=_FILE_HEADERS,
     )
 
 

@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     parse_batch_pages: int = 50
     parse_timeout_s: int = 60
     parse_max_failed_batches: int = 3
+    # OCR for pages without a text layer (master spec 6.8). `off` or a missing binary: such pages
+    # stay unsearchable and get the PAGES_WITHOUT_TEXT notice.
+    ocr: Literal["on", "off"] = "on"
+    ocr_languages: str = "deu+eng"
+    ocr_page_timeout_s: int = 60
     embed_batch_size: int = 32
     index_write_batch: int = 256
 

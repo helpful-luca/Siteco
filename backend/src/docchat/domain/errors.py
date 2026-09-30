@@ -73,6 +73,8 @@ class NoticeCode(StrEnum):
     """Hints that are not errors. The UI translates them via `notices.<CODE>`."""
 
     PAGES_WITHOUT_TEXT = "PAGES_WITHOUT_TEXT"
+    PAGES_OCR = "PAGES_OCR"
+    OCR_RUNNING = "OCR_RUNNING"  # while parsing: a scanned page is being recognized
     PAGES_SKIPPED = "PAGES_SKIPPED"
     PDF_ACTIVE_CONTENT = "PDF_ACTIVE_CONTENT"
     SCANNER_STARTING = "SCANNER_STARTING"
@@ -85,6 +87,8 @@ class NoticeCode(StrEnum):
     LLM_REFUSED = "LLM_REFUSED"
     LLM_NOT_CONFIGURED = "LLM_NOT_CONFIGURED"
     MODEL_SWITCHED = "MODEL_SWITCHED"
+    # Viewer: the exact sentence cannot be marked on this page (annex 10, L4)
+    HIGHLIGHT_UNAVAILABLE = "HIGHLIGHT_UNAVAILABLE"
 
 
 @dataclass(frozen=True)

@@ -104,12 +104,29 @@ class ParseStage:
             raise IngestionError(ErrorCode.DOCUMENT_EMPTY)
         return ParseOutcome(None, sink.chunks, sink.chars, ())
 
-    async def _with_ocr(self, path: Path, sections: Sequence[TextSection]) -> list[TextSection]:
-        """Pages without a text layer go to OCR (a no-op until phase 5b)."""
+    async def _with_ocr(
+        self,
+        path: Path,
+        sections: Sequence[TextSection],
+        report: ProgressReporter,
+        batch: range,
+        pages: int,
+    ) -> tuple[list[TextSection], int]:
+        """Pages without a text layer go to OCR one by one (seconds each), with progress inside
+        the batch and a notice naming the page. Returns the sections and the recognized count."""
         blank = [s.page for s in sections if not s.has_text and s.page is not None]
-        recognized = await self._ocr.recognize(path, blank) if blank else []
-        by_page = {s.page: s for s in sections} | {s.page: s for s in recognized}
-        return [by_page[page] for page in sorted(p for p in by_page if p is not None)]
+        if not blank or not self._ocr.available:
+            return list(sections), 0
+        by_page = {s.page: s for s in sections}
+        for done, page in enumerate(blank):
+            await report.notices([Notice(NoticeCode.OCR_RUNNING, {"page": page, "pages": pages})])
+            recognized = await self._ocr.recognize(path, page)
+            if recognized is not None and recognized.has_text:
+                by_page[page] = recognized
+            await report((batch.start + (done + 1) / len(blank) * len(batch)) / pages)
+        await report.notices([])
+        ocr_pages = sum(1 for page in blank if by_page[page].has_text)
+        return [by_page[page] for page in sorted(p for p in by_page if p is not None)], ocr_pages
 
     async def _parse_pdf(
         self, path: Path, sink: _ChunkSink, report: ProgressReporter
@@ -121,6 +138,7 @@ class ParseStage:
             raise IngestionError(ErrorCode.DOCUMENT_EMPTY)
         await report(0.0, page_count=pages)
         without_text: list[int] = []
+        ocr_pages = 0
         skipped: list[int] = []
         failed_batches = 0
         step = self._limits.batch_pages
@@ -140,7 +158,10 @@ class ParseStage:
                 skipped.extend(range(first + 1, last + 1))
                 continue
             skipped.extend(batch.unreadable_pages)
-            sections = await self._with_ocr(path, batch.sections)
+            sections, recognized = await self._with_ocr(
+                path, batch.sections, report, range(first, last), pages
+            )
+            ocr_pages += recognized
             without_text.extend(s.page for s in sections if not s.has_text and s.page)
             await asyncio.to_thread(sink.add, [s for s in sections if s.has_text])
             await report(last / pages)
@@ -151,6 +172,8 @@ class ParseStage:
         # hint: the text is extracted and the viewer runs nothing.
         if await asyncio.to_thread(self._active_content.find, path):
             notices.append(Notice(NoticeCode.PDF_ACTIVE_CONTENT))
+        if ocr_pages:
+            notices.append(Notice(NoticeCode.PAGES_OCR, {"count": ocr_pages}))
         if without_text:
             notices.append(Notice(NoticeCode.PAGES_WITHOUT_TEXT, {"count": len(without_text)}))
         if skipped:

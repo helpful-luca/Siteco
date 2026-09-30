@@ -113,6 +113,17 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 77 | Forged citations | Brackets of sentinel-like text in the answer get an invisible word joiner while our sentinels are inserted between the original slices | Trusting model output | A document quoting `⟦c:1⟧` must not turn into a chip; offsets stay exact |
 | 78 | Long streaming answers | Finished blocks (up to the last blank line outside code) render once as memoised pieces, only the tail is parsed each frame; saved turns keep their identity | Parsing the whole answer each frame | Linear instead of quadratic work; a 20k answer parses about twice its length in total |
 
+## Citation highlighting and OCR (phase 5, 5b)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 79 | OCR engine | Tesseract 5.5 (deu+eng) as a CLI: pdfium renders the page (300 dpi, longest side at most 5000 px) into a grayscale PGM on stdin, `tsv` output on stdout | pytesseract with Pillow; OCRmyPDF; a vision model | No Python wrapper and no temp files; the TSV has block, paragraph and line per word, which is all the highlight needs; nothing leaves the machine |
+| 80 | Where OCR runs | Page by page in the parser's isolated process (shared with pdfium), timeout per page (`OCR_PAGE_TIMEOUT_S`, default 60) and a process timeout on top; one OpenMP thread | A second process pool; whole batches | pdfium stays in one process; a hanging page costs only that page; questions stay fast during a long OCR run |
+| 81 | OCR progress | Status stays `parsing`; notice `OCR_RUNNING {page, pages}` while a scanned page is read, the library shows "Texterkennung" with the page; `PAGES_OCR {count}` at the end, `PAGES_WITHOUT_TEXT` only for pages OCR could not read | A new status `ocr` | A new status means a table rebuild (CHECK constraint) and a state machine change for a sub-stage of parsing |
+| 82 | OCR geometry | Words joined per line, lines per paragraph; a sentence gets one rectangle per OCR line (union of its word boxes), normalized to the rendered image, which already has CropBox and rotation applied | Word boxes per sentence | Same shape as text PDFs, so the viewer needs no OCR special case |
+| 83 | OCR switch | `OCR=on` (default) or `OCR=off`; a missing binary logs `ocr_unavailable` once and acts like `off`; empty pages skip Tesseract | Failing the start | Local development works without Tesseract; the image always has it (`docchat.cli.ocr_selftest` in the fresh clone test and CI) |
+| 84 | Text for TXT/MD viewer | `GET /api/documents/{id}/text` serves the decoded, NFC, LF text the sentence offsets count in | Decoding the raw file in the browser | The raw file may be cp1252, have CRLF or a BOM; one decoder in one place |
+
 ## Measurements
 
 | What | Result |
@@ -123,3 +134,5 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | clamd first start (signatures in the image, freshclam update included), Apple M4 | about 5 s until PONG; amd64 image under emulation about 8 s |
 | clamd memory with all signatures loaded | about 1.0 GB |
 | clamd start without network | works with the signatures from the image; freshclam logs a warning |
+| OCR of a dense A4 page (300 dpi, deu+eng, one thread), Apple M4 in Docker | about 0.8 s |
+| Backend image growth from Tesseract with deu and eng | about 110 MB on disk, 42 MB compressed |

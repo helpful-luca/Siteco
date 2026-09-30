@@ -23,6 +23,7 @@ Open http://localhost:3000.
 | `INTERNAL_TOKEN` | no | empty | Optional shared secret between web app and backend |
 | `LOG_LEVEL` | no | `INFO` | Backend log level |
 | `MALWARE_SCAN` | no | `required` | `off` skips the virus scan (development only, the app shows a hint) |
+| `OCR` | no | `on` | Tesseract (German and English) reads scanned pages; `off` leaves them unsearchable |
 
 ## Development
 

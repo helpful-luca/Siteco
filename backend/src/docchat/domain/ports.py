@@ -234,9 +234,16 @@ class TextParser(Protocol):
 
 
 class PageOcr(Protocol):
-    """Text for pages without a text layer. Seam for OCR (phase 5b)."""
+    """Text for a page without a text layer (1-based `page`), with sentence rectangles.
 
-    async def recognize(self, path: Path, pages: Sequence[int]) -> list[TextSection]: ...
+    Page by page, so the parse stage can report progress: OCR takes seconds per page."""
+
+    @property
+    def available(self) -> bool:
+        """False when OCR is switched off or Tesseract is missing."""
+        ...
+
+    async def recognize(self, path: Path, page: int) -> TextSection | None: ...
 
 
 class MalwareScanner(Protocol):
