@@ -121,6 +121,7 @@
       "language": "Language",
       "continue": "Continue",
       "skip": "Skip"
-    }
+    },
+    "search": "Search chats"
   }
 }

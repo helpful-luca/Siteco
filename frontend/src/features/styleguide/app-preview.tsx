@@ -7,15 +7,15 @@ import {
   FileText,
   Gauge,
   Paperclip,
-  Plus,
+  Search,
   Settings,
+  SquarePen,
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Button, cn, Tooltip } from '@/shared/ui';
 import { CitationChip } from './citation-chip';
-import { LampMark } from './lamp-mark';
 
 const CHATS_TODAY = ['a', 'b'] as const;
 const CHATS_WEEK = ['c', 'd'] as const;
@@ -31,14 +31,26 @@ export function AppPreview() {
     <div className="flex h-full gap-3 p-3">
       {/* Sidebar: glass, floats above the light pool */}
       <aside className="glass hidden w-[264px] shrink-0 flex-col rounded-panel p-3 lg:flex">
-        <div className="flex items-center gap-2.5 px-2 pt-1 pb-4">
-          <LampMark />
-          <span className="text-body font-semibold tracking-tight">Siteco Document Chat</span>
+        <div className="flex items-center gap-1.5">
+          <label className="flex h-8 flex-1 items-center gap-2 rounded-control bg-fill px-2.5 text-ink-muted">
+            <Search aria-hidden className="size-3.5 shrink-0" />
+            <span className="sr-only">{t('search')}</span>
+            <input
+              type="search"
+              placeholder={t('search')}
+              className="w-full bg-transparent text-body text-ink outline-none placeholder:text-ink-muted"
+            />
+          </label>
+          <Tooltip content={t('newChat')}>
+            <Button icon variant="ghost" aria-label={t('newChat')}>
+              <SquarePen />
+            </Button>
+          </Tooltip>
         </div>
-        <Button variant="secondary" className="w-full justify-start">
-          <Plus aria-hidden />
-          {t('newChat')}
-        </Button>
+        <div className="mt-3 flex flex-col gap-0.5">
+          <NavItem icon={<BookOpen aria-hidden />}>{t('library')}</NavItem>
+          <NavItem icon={<Gauge aria-hidden />}>{t('quality')}</NavItem>
+        </div>
         <nav className="mt-5 flex-1 overflow-hidden" aria-label="Chats">
           <ChatGroup label={t('today')}>
             {CHATS_TODAY.map((id, i) => (
@@ -53,9 +65,7 @@ export function AppPreview() {
             ))}
           </ChatGroup>
         </nav>
-        <div className="flex flex-col gap-0.5 border-t border-hairline pt-2">
-          <NavItem icon={<BookOpen aria-hidden />}>{t('library')}</NavItem>
-          <NavItem icon={<Gauge aria-hidden />}>{t('quality')}</NavItem>
+        <div className="flex flex-col gap-0.5">
           <NavItem icon={<Settings aria-hidden />}>{t('settings')}</NavItem>
         </div>
       </aside>
@@ -65,14 +75,14 @@ export function AppPreview() {
         <header className="flex flex-col gap-2 px-4 pt-2 pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <h2 className="truncate text-title-3 font-semibold">{t('chatTitle')}</h2>
           <div className="flex shrink-0 items-center gap-2">
-            <Pill>
+            <ToolbarButton>
               <FileText aria-hidden className="size-3.5" />
               {t('scope')}
-            </Pill>
-            <Pill>
+            </ToolbarButton>
+            <ToolbarButton>
               {t('model')}
               <ChevronDown aria-hidden className="size-3.5 opacity-60" />
-            </Pill>
+            </ToolbarButton>
           </div>
         </header>
 
@@ -230,10 +240,14 @@ function NavItem({ icon, children }: { icon: React.ReactNode; children: React.Re
   );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
+/** Toolbar control in the macOS style: quiet until hovered. */
+function ToolbarButton({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-fill px-3 text-footnote font-medium text-ink ring-1 ring-inset ring-hairline">
+    <button
+      type="button"
+      className="inline-flex h-7 items-center gap-1.5 rounded-[7px] px-2 text-footnote font-medium text-ink-muted transition-colors hover:bg-fill hover:text-ink"
+    >
       {children}
-    </span>
+    </button>
   );
 }
