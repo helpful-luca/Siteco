@@ -28,14 +28,18 @@ export function SegmentedControl<T extends string>({
       aria-label={label}
       value={value}
       onValueChange={(next) => onValueChange(next as T)}
-      className={cn('inline-flex rounded-control bg-fill p-0.5 ring-1 ring-inset ring-hairline', className)}
+      className={cn(
+        'inline-flex h-8 rounded-control bg-fill p-0.5 ring-1 ring-inset ring-hairline pointer-coarse:h-11',
+        className,
+      )}
     >
       {options.map((option) => (
         <Radio.Root
           key={option.value}
           value={option.value}
           className={cn(
-            'min-w-20 whitespace-nowrap rounded-[8px] px-3 py-1 text-footnote font-medium text-ink-muted',
+            'inline-flex min-w-20 items-center justify-center whitespace-nowrap px-3 text-footnote font-medium text-ink-muted',
+            'rounded-[calc(var(--radius-control)-2px)]',
             'transition-[background-color,color,box-shadow] duration-200 ease-out-soft',
             'hover:text-ink data-checked:bg-surface data-checked:text-ink',
             'data-checked:shadow-[0_1px_2px_rgb(0_0_0/0.12),0_0_0_0.5px_rgb(0_0_0/0.04)]',

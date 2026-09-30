@@ -16,12 +16,12 @@ export function SearchField({ label, value, onValueChange, clearLabel, className
   return (
     <label
       className={cn(
-        'flex h-8 min-w-0 items-center gap-2 rounded-control bg-fill px-2.5 text-ink-muted',
+        'flex h-8 min-w-0 cursor-text items-center gap-2 rounded-control bg-fill px-2 text-ink-muted pointer-coarse:h-11',
         'focus-within:ring-2 focus-within:ring-sodium/60',
         className,
       )}
     >
-      <Search aria-hidden className="size-3.5 shrink-0" />
+      <Search aria-hidden className="size-4 shrink-0" />
       <span className="sr-only">{label}</span>
       <input
         type="search"
@@ -36,7 +36,11 @@ export function SearchField({ label, value, onValueChange, clearLabel, className
           type="button"
           aria-label={clearLabel}
           onClick={() => onValueChange('')}
-          className="grid size-4 shrink-0 place-items-center rounded-full bg-ink-muted/60 text-surface hover:bg-ink-muted"
+          className={cn(
+            'relative grid size-4 shrink-0 place-items-center rounded-full bg-ink-muted/60 text-surface hover:bg-ink-muted',
+            // Invisible hit area: 32 px with a mouse, 44 px on touch.
+            'after:absolute after:-inset-2 pointer-coarse:after:-inset-3.5',
+          )}
         >
           <X aria-hidden className="size-2.5" strokeWidth={3} />
         </button>

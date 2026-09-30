@@ -38,11 +38,11 @@ export function Dialog({ title, description, trigger, open, onOpenChange, classN
         >
           <BaseDialog.Title className="text-title-3 font-semibold">{title}</BaseDialog.Title>
           {description && (
-            <BaseDialog.Description className="mt-1 text-body text-ink-muted">
+            <BaseDialog.Description className="mt-2 text-body text-ink-muted wrap-anywhere">
               {description}
             </BaseDialog.Description>
           )}
-          <div className="mt-5">{children}</div>
+          <div className="mt-6">{children}</div>
         </BaseDialog.Popup>
       </BaseDialog.Portal>
     </BaseDialog.Root>
