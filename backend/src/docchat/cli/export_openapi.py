@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic.json_schema import models_json_schema
 
+from docchat.api.schemas.answer_events import SSE_EVENT_MODELS
 from docchat.api.schemas.common import ErrorEnvelope
 from docchat.core.config import Settings
 from docchat.core.container import build_container
@@ -32,9 +33,11 @@ def build_openapi() -> dict[str, Any]:
     settings = Settings(_env_file=None, app_version="contract")  # type: ignore[call-arg]
     app = create_app(settings, build_container(settings, embedder=_UnusedEmbedder()))
     spec = app.openapi()
-    # Error envelopes are returned by exception handlers, so FastAPI does not list them itself.
+    # Error envelopes are returned by exception handlers and answer events travel inside an
+    # event stream, so FastAPI does not list them itself.
     _, extra = models_json_schema(
-        [(ErrorEnvelope, "validation")], ref_template="#/components/schemas/{model}"
+        [(ErrorEnvelope, "validation"), *((m, "serialization") for m in SSE_EVENT_MODELS)],
+        ref_template="#/components/schemas/{model}",
     )
     spec.setdefault("components", {}).setdefault("schemas", {}).update(extra.get("$defs", {}))
     return spec

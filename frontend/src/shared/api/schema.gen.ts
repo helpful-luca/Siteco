@@ -4,6 +4,118 @@
  */
 
 export interface paths {
+    "/api/chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Chats
+         * @description All chats, most recently active first.
+         */
+        get: operations["list_chats_api_chats_get"];
+        put?: never;
+        /** Create Chat */
+        post: operations["create_chat_api_chats_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chats/{chat_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Chat */
+        get: operations["get_chat_api_chats__chat_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Chat
+         * @description Stops running answers of the chat first.
+         */
+        delete: operations["delete_chat_api_chats__chat_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Chat
+         * @description A new title is the user's and is never replaced automatically.
+         */
+        patch: operations["update_chat_api_chats__chat_id__patch"];
+        trace?: never;
+    };
+    "/api/chats/{chat_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Messages
+         * @description All messages, oldest first.
+         */
+        get: operations["list_messages_api_chats__chat_id__messages_get"];
+        put?: never;
+        /**
+         * Ask
+         * @description Asks a question and streams the answer. Without an API key the stream carries the
+         *     sources only (`done.status = sources_only`).
+         */
+        post: operations["ask_api_chats__chat_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chats/{chat_id}/messages/{assistant_id}/regenerate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Regenerate
+         * @description Replaces an answer to the latest question (same lane, same message id).
+         */
+        post: operations["regenerate_api_chats__chat_id__messages__assistant_id__regenerate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chats/{chat_id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop
+         * @description Second safety net next to aborting the request: stops the lane's answer, which is then
+         *     saved as `stopped`.
+         */
+        post: operations["stop_api_chats__chat_id__stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/config": {
         parameters: {
             query?: never;
@@ -150,6 +262,94 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AnswerStyle
+         * @enum {string}
+         */
+        AnswerStyle: "concise" | "detailed";
+        /** AskIn */
+        AskIn: {
+            /**
+             * Client Message Id
+             * Format: uuid
+             * @description Created by the client; a repeat is ignored.
+             */
+            client_message_id: string;
+            comparison?: components["schemas"]["ComparisonIn"] | null;
+            /** Content */
+            content: string;
+            effort?: components["schemas"]["Effort"] | null;
+            locale: components["schemas"]["Locale"];
+            /** Model */
+            model: string;
+            /** @default concise */
+            style: components["schemas"]["AnswerStyle"];
+        };
+        /** ChatEnvelopeOut */
+        ChatEnvelopeOut: {
+            chat: components["schemas"]["ChatOut"];
+        };
+        /** ChatListItemOut */
+        ChatListItemOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Document Ids */
+            document_ids: string[];
+            /** Id */
+            id: string;
+            /** Message Count */
+            message_count: number;
+            scope: components["schemas"]["ChatScope"];
+            /**
+             * Title
+             * @description None: show the localized 'New chat'. Render as text.
+             */
+            title: string | null;
+            title_source: components["schemas"]["TitleSource"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ChatListOut */
+        ChatListOut: {
+            /** Chats */
+            chats: components["schemas"]["ChatListItemOut"][];
+        };
+        /** ChatOut */
+        ChatOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Document Ids */
+            document_ids: string[];
+            /** Id */
+            id: string;
+            scope: components["schemas"]["ChatScope"];
+            /**
+             * Title
+             * @description None: show the localized 'New chat'. Render as text.
+             */
+            title: string | null;
+            title_source: components["schemas"]["TitleSource"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ChatScope
+         * @description `all`: every `ready` document at question time. `selected`: the chosen ones.
+         * @enum {string}
+         */
+        ChatScope: "all" | "selected";
         /** ChunkOut */
         ChunkOut: {
             /** Chunk Id */
@@ -166,6 +366,34 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** CitationOut */
+        CitationOut: {
+            /**
+             * Block End
+             * @description Exclusive.
+             */
+            block_end: number;
+            /** Block Start */
+            block_start: number;
+            /**
+             * Char Offset
+             * @description Position in the answer text where the chip goes.
+             */
+            char_offset: number;
+            /** Cited Text */
+            cited_text: string;
+            /** Source Id */
+            source_id: string;
+        };
+        /** ComparisonIn */
+        ComparisonIn: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            lane: components["schemas"]["Lane"];
+        };
         /**
          * ComponentStatus
          * @enum {string}
@@ -175,11 +403,25 @@ export interface components {
         ConfigOut: {
             /** Commit */
             commit: string;
+            /** Default Model */
+            default_model: string;
             features: components["schemas"]["Features"];
             limits: components["schemas"]["Limits"];
             llm_status: components["schemas"]["LlmStatus"];
+            /** Models */
+            models: components["schemas"]["ModelInfo"][];
             /** Version */
             version: string;
+        };
+        /** CreateChatIn */
+        CreateChatIn: {
+            /**
+             * Document Ids
+             * @description Only for `selected`.
+             */
+            document_ids?: string[];
+            /** @default all */
+            scope: components["schemas"]["ChatScope"];
         };
         /** DocumentEnvelopeOut */
         DocumentEnvelopeOut: {
@@ -247,6 +489,11 @@ export interface components {
          * @enum {string}
          */
         DocumentStatus: "scanning" | "queued" | "parsing" | "embedding" | "ready" | "failed" | "deleting";
+        /**
+         * Effort
+         * @enum {string}
+         */
+        Effort: "low" | "medium" | "high";
         /** ErrorBody */
         ErrorBody: {
             code: components["schemas"]["ErrorCode"];
@@ -277,11 +524,16 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED";
+        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
         };
+        /**
+         * ErrorStage
+         * @enum {string}
+         */
+        ErrorStage: "retrieval" | "llm" | "persist";
         /** Features */
         Features: {
             /**
@@ -293,12 +545,30 @@ export interface components {
             retrieval_only: boolean;
         };
         /**
+         * Lane
+         * @description Single answers always use `a`; the comparison mode adds `b`.
+         * @enum {string}
+         */
+        Lane: "a" | "b";
+        /** LatencyOut */
+        LatencyOut: {
+            /** Total */
+            total: number | null;
+            /**
+             * Ttft
+             * @description Milliseconds until the first text.
+             */
+            ttft: number | null;
+        };
+        /**
          * Limits
-         * @description Known to the UI so it can reject files before uploading them.
+         * @description Known to the UI so it can reject files and questions before sending them.
          */
         Limits: {
             /** Max Pdf Pages */
             max_pdf_pages: number;
+            /** Max Question Chars */
+            max_question_chars: number;
             /** Max Storage Mb */
             max_storage_mb: number;
             /** Max Upload Mb */
@@ -320,11 +590,96 @@ export interface components {
          */
         LlmStatus: "missing_key" | "unchecked" | "ok" | "invalid_key";
         /**
+         * Locale
+         * @enum {string}
+         */
+        Locale: "de" | "en";
+        /** MessageListOut */
+        MessageListOut: {
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
+        };
+        /** MessageOut */
+        MessageOut: {
+            /** Citations */
+            citations: components["schemas"]["CitationOut"][];
+            /** Client Message Id */
+            client_message_id: string | null;
+            /** Comparison Id */
+            comparison_id: string | null;
+            /**
+             * Content
+             * @description Markdown without citation markers.
+             */
+            content: string;
+            /** Cost Usd */
+            cost_usd: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            effort: components["schemas"]["Effort"] | null;
+            error_code: components["schemas"]["ErrorCode"] | null;
+            /** Id */
+            id: string;
+            /** Is Preferred */
+            is_preferred: boolean;
+            lane: components["schemas"]["Lane"] | null;
+            latency_ms: components["schemas"]["LatencyOut"];
+            /**
+             * Model
+             * @description The model that actually answered.
+             */
+            model: string | null;
+            /** Notices */
+            notices: components["schemas"]["NoticeOut"][];
+            /** Parent Id */
+            parent_id: string | null;
+            role: components["schemas"]["MessageRole"];
+            /** Sources */
+            sources: components["schemas"]["SourceOut"][];
+            sources_mode: components["schemas"]["SourcesMode"] | null;
+            status: components["schemas"]["MessageStatus"];
+            usage: components["schemas"]["UsageOut"] | null;
+        };
+        /**
+         * MessageRole
+         * @enum {string}
+         */
+        MessageRole: "user" | "assistant";
+        /**
+         * MessageStatus
+         * @description Only `complete` and `truncated` answers go into the history sent to the model.
+         * @enum {string}
+         */
+        MessageStatus: "streaming" | "complete" | "truncated" | "stopped" | "interrupted" | "refused" | "error" | "sources_only";
+        /** ModelInfo */
+        ModelInfo: {
+            /** Available */
+            available: boolean;
+            /** Cache Read Usd Per Mtok */
+            cache_read_usd_per_mtok: number;
+            default_effort: components["schemas"]["Effort"] | null;
+            /** Efforts */
+            efforts: components["schemas"]["Effort"][];
+            /** Id */
+            id: string;
+            /** Input Usd Per Mtok */
+            input_usd_per_mtok: number;
+            /** Label */
+            label: string;
+            /** Output Usd Per Mtok */
+            output_usd_per_mtok: number;
+            /** Tier */
+            tier: string;
+        };
+        /**
          * NoticeCode
          * @description Hints that are not errors. The UI translates them via `notices.<CODE>`.
          * @enum {string}
          */
-        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_SKIPPED" | "PDF_ACTIVE_CONTENT" | "SCANNER_STARTING" | "SCANNER_UNAVAILABLE";
+        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_SKIPPED" | "PDF_ACTIVE_CONTENT" | "SCANNER_STARTING" | "SCANNER_UNAVAILABLE" | "SOURCES_PARTIAL" | "SUMMARY_PARTIAL" | "NO_CITATIONS" | "ANSWER_TRUNCATED" | "LLM_REFUSED" | "LLM_NOT_CONFIGURED" | "MODEL_SWITCHED";
         /** NoticeOut */
         NoticeOut: {
             code: components["schemas"]["NoticeCode"];
@@ -350,6 +705,23 @@ export interface components {
             /** Ready */
             ready: boolean;
         };
+        /** RegenerateIn */
+        RegenerateIn: {
+            effort?: components["schemas"]["Effort"] | null;
+            locale: components["schemas"]["Locale"];
+            /**
+             * Model
+             * @description Default: the answer's model.
+             */
+            model?: string | null;
+            /** @default concise */
+            style: components["schemas"]["AnswerStyle"];
+        };
+        /**
+         * RunPhase
+         * @enum {string}
+         */
+        RunPhase: "retrieving" | "generating" | "retrying";
         /** SentenceOut */
         SentenceOut: {
             /** Char End */
@@ -374,6 +746,188 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** SourceOut */
+        SourceOut: {
+            /**
+             * Deleted
+             * @description The document is gone; show the snapshot, open nothing.
+             */
+            deleted: boolean;
+            /** Document Id */
+            document_id: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Id
+             * @description Chunk id; citations refer to it as `source_id`.
+             */
+            id: string;
+            /**
+             * Index
+             * @description 1-based number of the source chip.
+             */
+            index: number;
+            /** Page */
+            page: number | null;
+            /** Snippet */
+            snippet: string;
+        };
+        /**
+         * SourcesMode
+         * @description How the sources of an answer were chosen.
+         * @enum {string}
+         */
+        SourcesMode: "retrieval" | "full_context" | "retrieval_only";
+        /**
+         * SseCitation
+         * @description `event: citation`: sent when its text block ends; `char_offset` is final.
+         */
+        SseCitation: {
+            /**
+             * Block End
+             * @description Exclusive.
+             */
+            block_end: number;
+            /** Block Start */
+            block_start: number;
+            /**
+             * Char Offset
+             * @description Position in the answer text where the chip goes.
+             */
+            char_offset: number;
+            /** Cited Text */
+            cited_text: string;
+            /** Source Id */
+            source_id: string;
+        };
+        /**
+         * SseDelta
+         * @description `event: delta`: the next piece of answer text.
+         */
+        SseDelta: {
+            /** Text */
+            text: string;
+        };
+        /**
+         * SseDone
+         * @description `event: done`: the terminal event of a finished, stopped or sources-only answer.
+         */
+        SseDone: {
+            chat: components["schemas"]["SseDoneChat"];
+            /** Cost Usd */
+            cost_usd: number;
+            latency_ms: components["schemas"]["LatencyOut"];
+            /** Notices */
+            notices: components["schemas"]["NoticeOut"][];
+            status: components["schemas"]["MessageStatus"];
+            /** Stop Reason */
+            stop_reason: string | null;
+            usage: components["schemas"]["UsageOut"] | null;
+        };
+        /** SseDoneChat */
+        SseDoneChat: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * SseError
+         * @description `event: error`: the terminal event of a failed answer.
+         */
+        SseError: {
+            error: components["schemas"]["ErrorBody"];
+            /**
+             * Partial
+             * @description Text was streamed and stays visible as incomplete.
+             */
+            partial: boolean;
+            stage: components["schemas"]["ErrorStage"];
+        };
+        /**
+         * SseMeta
+         * @description `event: meta`, always first.
+         */
+        SseMeta: {
+            /** Assistant Message Id */
+            assistant_message_id: string;
+            /** Chat Id */
+            chat_id: string;
+            /** Comparison Id */
+            comparison_id: string | null;
+            lane: components["schemas"]["Lane"];
+            /**
+             * Model
+             * @description The requested model; a switch shows as MODEL_SWITCHED.
+             */
+            model: string;
+            /** Request Id */
+            request_id: string;
+            /** User Message Id */
+            user_message_id: string;
+        };
+        /**
+         * SseSources
+         * @description `event: sources`: what the answer is based on, numbered for the chips.
+         */
+        SseSources: {
+            mode: components["schemas"]["SourcesMode"];
+            /** Notices */
+            notices: components["schemas"]["NoticeOut"][];
+            /** Sources */
+            sources: components["schemas"]["SourceOut"][];
+        };
+        /**
+         * SseStatus
+         * @description `event: status`: retrieving, generating, retrying (before the first delta only).
+         */
+        SseStatus: {
+            /** Attempt */
+            attempt: number;
+            phase: components["schemas"]["RunPhase"];
+        };
+        /** StopIn */
+        StopIn: {
+            /** @description Without a lane every lane stops. */
+            lane?: components["schemas"]["Lane"] | null;
+        };
+        /** StopOut */
+        StopOut: {
+            /** Stopped */
+            stopped: components["schemas"]["Lane"][];
+        };
+        /**
+         * TitleSource
+         * @enum {string}
+         */
+        TitleSource: "auto" | "user";
+        /** UpdateChatIn */
+        UpdateChatIn: {
+            /** Document Ids */
+            document_ids?: string[] | null;
+            scope?: components["schemas"]["ChatScope"] | null;
+            /**
+             * Title
+             * @description 1 to 120 characters.
+             */
+            title?: string | null;
+        };
+        /** UsageOut */
+        UsageOut: {
+            /** Cache Creation Input Tokens */
+            cache_creation_input_tokens: number;
+            /** Cache Read Input Tokens */
+            cache_read_input_tokens: number;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -383,6 +937,426 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_chats_api_chats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatListOut"];
+                };
+            };
+        };
+    };
+    create_chat_api_chats_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateChatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatEnvelopeOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_chat_api_chats__chat_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatEnvelopeOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    delete_chat_api_chats__chat_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    update_chat_api_chats__chat_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatEnvelopeOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    list_messages_api_chats__chat_id__messages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageListOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ask_api_chats__chat_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskIn"];
+            };
+        };
+        responses: {
+            /** @description Events `meta`, `status`, `sources`, `delta`, `citation`, then exactly one `done` or `error` (payloads: Sse* schemas). A `: ping` comment every 15 s. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Refused before the stream opened. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    regenerate_api_chats__chat_id__messages__assistant_id__regenerate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+                assistant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegenerateIn"];
+            };
+        };
+        responses: {
+            /** @description Events `meta`, `status`, `sources`, `delta`, `citation`, then exactly one `done` or `error` (payloads: Sse* schemas). A `: ping` comment every 15 s. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Refused before the stream opened. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Refused before the stream opened. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    stop_api_chats__chat_id__stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StopIn"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StopOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     config_api_config_get: {
         parameters: {
             query?: never;

@@ -38,12 +38,19 @@ def test_ready_503_when_model_failed(settings: Settings) -> None:
 def test_config_reports_retrieval_only_without_key(settings: Settings) -> None:
     with TestClient(make_app(settings)) as c:
         body = c.get("/api/config").json()
-    assert body == {
+    assert body | {"models": None} == {
         "version": "dev",
         "commit": "unknown",
         "llm_status": "missing_key",
-        "limits": {"max_upload_mb": 1024, "max_pdf_pages": 5000, "max_storage_mb": 20480},
+        "limits": {
+            "max_upload_mb": 1024,
+            "max_pdf_pages": 5000,
+            "max_storage_mb": 20480,
+            "max_question_chars": 4000,
+        },
         "features": {"retrieval_only": True, "malware_scan": "off"},
+        "models": None,
+        "default_model": "claude-sonnet-5-5",
     }
 
 

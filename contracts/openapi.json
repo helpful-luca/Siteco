@@ -1,6 +1,219 @@
 {
   "components": {
     "schemas": {
+      "AnswerStyle": {
+        "enum": [
+          "concise",
+          "detailed"
+        ],
+        "title": "AnswerStyle",
+        "type": "string"
+      },
+      "AskIn": {
+        "additionalProperties": false,
+        "properties": {
+          "client_message_id": {
+            "description": "Created by the client; a repeat is ignored.",
+            "format": "uuid",
+            "title": "Client Message Id",
+            "type": "string"
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "content": {
+            "maxLength": 16000,
+            "title": "Content",
+            "type": "string"
+          },
+          "effort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Effort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "locale": {
+            "$ref": "#/components/schemas/Locale"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "style": {
+            "$ref": "#/components/schemas/AnswerStyle",
+            "default": "concise"
+          }
+        },
+        "required": [
+          "client_message_id",
+          "content",
+          "model",
+          "locale"
+        ],
+        "title": "AskIn",
+        "type": "object"
+      },
+      "ChatEnvelopeOut": {
+        "properties": {
+          "chat": {
+            "$ref": "#/components/schemas/ChatOut"
+          }
+        },
+        "required": [
+          "chat"
+        ],
+        "title": "ChatEnvelopeOut",
+        "type": "object"
+      },
+      "ChatListItemOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Document Ids",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "message_count": {
+            "title": "Message Count",
+            "type": "integer"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/ChatScope"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None: show the localized 'New chat'. Render as text.",
+            "title": "Title"
+          },
+          "title_source": {
+            "$ref": "#/components/schemas/TitleSource"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "title_source",
+          "scope",
+          "document_ids",
+          "created_at",
+          "updated_at",
+          "message_count"
+        ],
+        "title": "ChatListItemOut",
+        "type": "object"
+      },
+      "ChatListOut": {
+        "properties": {
+          "chats": {
+            "items": {
+              "$ref": "#/components/schemas/ChatListItemOut"
+            },
+            "title": "Chats",
+            "type": "array"
+          }
+        },
+        "required": [
+          "chats"
+        ],
+        "title": "ChatListOut",
+        "type": "object"
+      },
+      "ChatOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Document Ids",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/ChatScope"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None: show the localized 'New chat'. Render as text.",
+            "title": "Title"
+          },
+          "title_source": {
+            "$ref": "#/components/schemas/TitleSource"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "title_source",
+          "scope",
+          "document_ids",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChatOut",
+        "type": "object"
+      },
+      "ChatScope": {
+        "description": "`all`: every `ready` document at question time. `selected`: the chosen ones.",
+        "enum": [
+          "all",
+          "selected"
+        ],
+        "title": "ChatScope",
+        "type": "string"
+      },
       "ChunkOut": {
         "properties": {
           "chunk_id": {
@@ -45,6 +258,60 @@
         "title": "ChunkOut",
         "type": "object"
       },
+      "CitationOut": {
+        "properties": {
+          "block_end": {
+            "description": "Exclusive.",
+            "title": "Block End",
+            "type": "integer"
+          },
+          "block_start": {
+            "title": "Block Start",
+            "type": "integer"
+          },
+          "char_offset": {
+            "description": "Position in the answer text where the chip goes.",
+            "title": "Char Offset",
+            "type": "integer"
+          },
+          "cited_text": {
+            "title": "Cited Text",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "block_start",
+          "block_end",
+          "cited_text",
+          "char_offset"
+        ],
+        "title": "CitationOut",
+        "type": "object"
+      },
+      "ComparisonIn": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lane": {
+            "$ref": "#/components/schemas/Lane"
+          }
+        },
+        "required": [
+          "id",
+          "lane"
+        ],
+        "title": "ComparisonIn",
+        "type": "object"
+      },
       "ComponentStatus": {
         "enum": [
           "loading",
@@ -60,6 +327,10 @@
             "title": "Commit",
             "type": "string"
           },
+          "default_model": {
+            "title": "Default Model",
+            "type": "string"
+          },
           "features": {
             "$ref": "#/components/schemas/Features"
           },
@@ -68,6 +339,13 @@
           },
           "llm_status": {
             "$ref": "#/components/schemas/LlmStatus"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelInfo"
+            },
+            "title": "Models",
+            "type": "array"
           },
           "version": {
             "title": "Version",
@@ -79,9 +357,31 @@
           "commit",
           "llm_status",
           "limits",
-          "features"
+          "features",
+          "models",
+          "default_model"
         ],
         "title": "ConfigOut",
+        "type": "object"
+      },
+      "CreateChatIn": {
+        "additionalProperties": false,
+        "properties": {
+          "document_ids": {
+            "description": "Only for `selected`.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Document Ids",
+            "type": "array"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/ChatScope",
+            "default": "all"
+          }
+        },
+        "title": "CreateChatIn",
         "type": "object"
       },
       "DocumentEnvelopeOut": {
@@ -267,6 +567,15 @@
         "title": "DocumentStatus",
         "type": "string"
       },
+      "Effort": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "title": "Effort",
+        "type": "string"
+      },
       "ErrorBody": {
         "additionalProperties": false,
         "properties": {
@@ -352,7 +661,32 @@
           "PROCESSING_FAILED",
           "PROCESSING_INTERRUPTED",
           "MALWARE_DETECTED",
-          "MALWARE_SCAN_FAILED"
+          "MALWARE_SCAN_FAILED",
+          "CHAT_NOT_FOUND",
+          "CHAT_BUSY",
+          "CHAT_LIMIT",
+          "MESSAGE_LIMIT",
+          "MESSAGE_NOT_LATEST",
+          "DUPLICATE_REQUEST",
+          "CONCURRENCY_LIMIT",
+          "NO_DOCUMENTS",
+          "DOCUMENTS_NOT_READY",
+          "QUESTION_EMPTY",
+          "QUESTION_TOO_LONG",
+          "MODEL_NOT_ALLOWED",
+          "TOKEN_BUDGET_EXCEEDED",
+          "LLM_AUTH",
+          "LLM_BILLING",
+          "LLM_FORBIDDEN",
+          "MODEL_UNAVAILABLE",
+          "LLM_RATE_LIMITED",
+          "LLM_OVERLOADED",
+          "LLM_UNAVAILABLE",
+          "LLM_TIMEOUT",
+          "LLM_UNREACHABLE",
+          "LLM_BAD_REQUEST",
+          "LLM_CONTEXT_TOO_LARGE",
+          "LLM_EMPTY_ANSWER"
         ],
         "title": "ErrorCode",
         "type": "string"
@@ -368,6 +702,15 @@
         ],
         "title": "ErrorEnvelope",
         "type": "object"
+      },
+      "ErrorStage": {
+        "enum": [
+          "retrieval",
+          "llm",
+          "persist"
+        ],
+        "title": "ErrorStage",
+        "type": "string"
       },
       "Features": {
         "properties": {
@@ -391,11 +734,57 @@
         "title": "Features",
         "type": "object"
       },
+      "Lane": {
+        "description": "Single answers always use `a`; the comparison mode adds `b`.",
+        "enum": [
+          "a",
+          "b"
+        ],
+        "title": "Lane",
+        "type": "string"
+      },
+      "LatencyOut": {
+        "properties": {
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "ttft": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Milliseconds until the first text.",
+            "title": "Ttft"
+          }
+        },
+        "required": [
+          "ttft",
+          "total"
+        ],
+        "title": "LatencyOut",
+        "type": "object"
+      },
       "Limits": {
-        "description": "Known to the UI so it can reject files before uploading them.",
+        "description": "Known to the UI so it can reject files and questions before sending them.",
         "properties": {
           "max_pdf_pages": {
             "title": "Max Pdf Pages",
+            "type": "integer"
+          },
+          "max_question_chars": {
+            "title": "Max Question Chars",
             "type": "integer"
           },
           "max_storage_mb": {
@@ -410,7 +799,8 @@
         "required": [
           "max_upload_mb",
           "max_pdf_pages",
-          "max_storage_mb"
+          "max_storage_mb",
+          "max_question_chars"
         ],
         "title": "Limits",
         "type": "object"
@@ -444,6 +834,297 @@
         "title": "LlmStatus",
         "type": "string"
       },
+      "Locale": {
+        "enum": [
+          "de",
+          "en"
+        ],
+        "title": "Locale",
+        "type": "string"
+      },
+      "MessageListOut": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "title": "Messages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "messages"
+        ],
+        "title": "MessageListOut",
+        "type": "object"
+      },
+      "MessageOut": {
+        "properties": {
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/CitationOut"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "client_message_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Message Id"
+          },
+          "comparison_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Id"
+          },
+          "content": {
+            "description": "Markdown without citation markers.",
+            "title": "Content",
+            "type": "string"
+          },
+          "cost_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Usd"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "effort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Effort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_preferred": {
+            "title": "Is Preferred",
+            "type": "boolean"
+          },
+          "lane": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Lane"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latency_ms": {
+            "$ref": "#/components/schemas/LatencyOut"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The model that actually answered.",
+            "title": "Model"
+          },
+          "notices": {
+            "items": {
+              "$ref": "#/components/schemas/NoticeOut"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MessageRole"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceOut"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "sources_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourcesMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "content",
+          "status",
+          "parent_id",
+          "client_message_id",
+          "error_code",
+          "model",
+          "effort",
+          "lane",
+          "comparison_id",
+          "is_preferred",
+          "sources",
+          "sources_mode",
+          "citations",
+          "notices",
+          "usage",
+          "cost_usd",
+          "latency_ms",
+          "created_at"
+        ],
+        "title": "MessageOut",
+        "type": "object"
+      },
+      "MessageRole": {
+        "enum": [
+          "user",
+          "assistant"
+        ],
+        "title": "MessageRole",
+        "type": "string"
+      },
+      "MessageStatus": {
+        "description": "Only `complete` and `truncated` answers go into the history sent to the model.",
+        "enum": [
+          "streaming",
+          "complete",
+          "truncated",
+          "stopped",
+          "interrupted",
+          "refused",
+          "error",
+          "sources_only"
+        ],
+        "title": "MessageStatus",
+        "type": "string"
+      },
+      "ModelInfo": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "cache_read_usd_per_mtok": {
+            "title": "Cache Read Usd Per Mtok",
+            "type": "number"
+          },
+          "default_effort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Effort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "efforts": {
+            "items": {
+              "$ref": "#/components/schemas/Effort"
+            },
+            "title": "Efforts",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input_usd_per_mtok": {
+            "title": "Input Usd Per Mtok",
+            "type": "number"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "output_usd_per_mtok": {
+            "title": "Output Usd Per Mtok",
+            "type": "number"
+          },
+          "tier": {
+            "title": "Tier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "tier",
+          "input_usd_per_mtok",
+          "output_usd_per_mtok",
+          "cache_read_usd_per_mtok",
+          "efforts",
+          "default_effort",
+          "available"
+        ],
+        "title": "ModelInfo",
+        "type": "object"
+      },
       "NoticeCode": {
         "description": "Hints that are not errors. The UI translates them via `notices.<CODE>`.",
         "enum": [
@@ -451,7 +1132,14 @@
           "PAGES_SKIPPED",
           "PDF_ACTIVE_CONTENT",
           "SCANNER_STARTING",
-          "SCANNER_UNAVAILABLE"
+          "SCANNER_UNAVAILABLE",
+          "SOURCES_PARTIAL",
+          "SUMMARY_PARTIAL",
+          "NO_CITATIONS",
+          "ANSWER_TRUNCATED",
+          "LLM_REFUSED",
+          "LLM_NOT_CONFIGURED",
+          "MODEL_SWITCHED"
         ],
         "title": "NoticeCode",
         "type": "string"
@@ -528,6 +1216,54 @@
         "title": "ReadyOut",
         "type": "object"
       },
+      "RegenerateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "effort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Effort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "locale": {
+            "$ref": "#/components/schemas/Locale"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Default: the answer's model.",
+            "title": "Model"
+          },
+          "style": {
+            "$ref": "#/components/schemas/AnswerStyle",
+            "default": "concise"
+          }
+        },
+        "required": [
+          "locale"
+        ],
+        "title": "RegenerateIn",
+        "type": "object"
+      },
+      "RunPhase": {
+        "enum": [
+          "retrieving",
+          "generating",
+          "retrying"
+        ],
+        "title": "RunPhase",
+        "type": "string"
+      },
       "SentenceOut": {
         "properties": {
           "char_end": {
@@ -581,6 +1317,443 @@
         ],
         "title": "SentenceOut",
         "type": "object"
+      },
+      "SourceOut": {
+        "properties": {
+          "deleted": {
+            "description": "The document is gone; show the snapshot, open nothing.",
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "description": "Chunk id; citations refer to it as `source_id`.",
+            "title": "Id",
+            "type": "string"
+          },
+          "index": {
+            "description": "1-based number of the source chip.",
+            "title": "Index",
+            "type": "integer"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "index",
+          "document_id",
+          "filename",
+          "page",
+          "snippet",
+          "deleted"
+        ],
+        "title": "SourceOut",
+        "type": "object"
+      },
+      "SourcesMode": {
+        "description": "How the sources of an answer were chosen.",
+        "enum": [
+          "retrieval",
+          "full_context",
+          "retrieval_only"
+        ],
+        "title": "SourcesMode",
+        "type": "string"
+      },
+      "SseCitation": {
+        "description": "`event: citation`: sent when its text block ends; `char_offset` is final.",
+        "properties": {
+          "block_end": {
+            "description": "Exclusive.",
+            "title": "Block End",
+            "type": "integer"
+          },
+          "block_start": {
+            "title": "Block Start",
+            "type": "integer"
+          },
+          "char_offset": {
+            "description": "Position in the answer text where the chip goes.",
+            "title": "Char Offset",
+            "type": "integer"
+          },
+          "cited_text": {
+            "title": "Cited Text",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "block_start",
+          "block_end",
+          "cited_text",
+          "char_offset"
+        ],
+        "title": "SseCitation",
+        "type": "object"
+      },
+      "SseDelta": {
+        "description": "`event: delta`: the next piece of answer text.",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "SseDelta",
+        "type": "object"
+      },
+      "SseDone": {
+        "description": "`event: done`: the terminal event of a finished, stopped or sources-only answer.",
+        "properties": {
+          "chat": {
+            "$ref": "#/components/schemas/SseDoneChat"
+          },
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "latency_ms": {
+            "$ref": "#/components/schemas/LatencyOut"
+          },
+          "notices": {
+            "items": {
+              "$ref": "#/components/schemas/NoticeOut"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Reason"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UsageOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "stop_reason",
+          "usage",
+          "cost_usd",
+          "latency_ms",
+          "notices",
+          "chat"
+        ],
+        "title": "SseDone",
+        "type": "object"
+      },
+      "SseDoneChat": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "updated_at"
+        ],
+        "title": "SseDoneChat",
+        "type": "object"
+      },
+      "SseError": {
+        "description": "`event: error`: the terminal event of a failed answer.",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          },
+          "partial": {
+            "description": "Text was streamed and stays visible as incomplete.",
+            "title": "Partial",
+            "type": "boolean"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/ErrorStage"
+          }
+        },
+        "required": [
+          "error",
+          "partial",
+          "stage"
+        ],
+        "title": "SseError",
+        "type": "object"
+      },
+      "SseMeta": {
+        "description": "`event: meta`, always first.",
+        "properties": {
+          "assistant_message_id": {
+            "title": "Assistant Message Id",
+            "type": "string"
+          },
+          "chat_id": {
+            "title": "Chat Id",
+            "type": "string"
+          },
+          "comparison_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Id"
+          },
+          "lane": {
+            "$ref": "#/components/schemas/Lane"
+          },
+          "model": {
+            "description": "The requested model; a switch shows as MODEL_SWITCHED.",
+            "title": "Model",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "user_message_id": {
+            "title": "User Message Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "chat_id",
+          "user_message_id",
+          "assistant_message_id",
+          "model",
+          "lane",
+          "comparison_id"
+        ],
+        "title": "SseMeta",
+        "type": "object"
+      },
+      "SseSources": {
+        "description": "`event: sources`: what the answer is based on, numbered for the chips.",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/SourcesMode"
+          },
+          "notices": {
+            "items": {
+              "$ref": "#/components/schemas/NoticeOut"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceOut"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "sources",
+          "notices"
+        ],
+        "title": "SseSources",
+        "type": "object"
+      },
+      "SseStatus": {
+        "description": "`event: status`: retrieving, generating, retrying (before the first delta only).",
+        "properties": {
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/RunPhase"
+          }
+        },
+        "required": [
+          "phase",
+          "attempt"
+        ],
+        "title": "SseStatus",
+        "type": "object"
+      },
+      "StopIn": {
+        "additionalProperties": false,
+        "properties": {
+          "lane": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Lane"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Without a lane every lane stops."
+          }
+        },
+        "title": "StopIn",
+        "type": "object"
+      },
+      "StopOut": {
+        "properties": {
+          "stopped": {
+            "items": {
+              "$ref": "#/components/schemas/Lane"
+            },
+            "title": "Stopped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stopped"
+        ],
+        "title": "StopOut",
+        "type": "object"
+      },
+      "TitleSource": {
+        "enum": [
+          "auto",
+          "user"
+        ],
+        "title": "TitleSource",
+        "type": "string"
+      },
+      "UpdateChatIn": {
+        "additionalProperties": false,
+        "properties": {
+          "document_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Ids"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChatScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1 to 120 characters.",
+            "title": "Title"
+          }
+        },
+        "title": "UpdateChatIn",
+        "type": "object"
+      },
+      "UsageOut": {
+        "properties": {
+          "cache_creation_input_tokens": {
+            "title": "Cache Creation Input Tokens",
+            "type": "integer"
+          },
+          "cache_read_input_tokens": {
+            "title": "Cache Read Input Tokens",
+            "type": "integer"
+          },
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "title": "Output Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "input_tokens",
+          "output_tokens",
+          "cache_read_input_tokens",
+          "cache_creation_input_tokens"
+        ],
+        "title": "UsageOut",
+        "type": "object"
       }
     }
   },
@@ -590,6 +1763,604 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/chats": {
+      "get": {
+        "description": "All chats, most recently active first.",
+        "operationId": "list_chats_api_chats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Chats",
+        "tags": [
+          "chats"
+        ]
+      },
+      "post": {
+        "operationId": "create_chat_api_chats_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Create Chat",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/chats/{chat_id}": {
+      "delete": {
+        "description": "Stops running answers of the chat first.",
+        "operationId": "delete_chat_api_chats__chat_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Delete Chat",
+        "tags": [
+          "chats"
+        ]
+      },
+      "get": {
+        "operationId": "get_chat_api_chats__chat_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Chat",
+        "tags": [
+          "chats"
+        ]
+      },
+      "patch": {
+        "description": "A new title is the user's and is never replaced automatically.",
+        "operationId": "update_chat_api_chats__chat_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Update Chat",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/chats/{chat_id}/messages": {
+      "get": {
+        "description": "All messages, oldest first.",
+        "operationId": "list_messages_api_chats__chat_id__messages_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "List Messages",
+        "tags": [
+          "chats"
+        ]
+      },
+      "post": {
+        "description": "Asks a question and streams the answer. Without an API key the stream carries the\nsources only (`done.status = sources_only`).",
+        "operationId": "ask_api_chats__chat_id__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Events `meta`, `status`, `sources`, `delta`, `citation`, then exactly one `done` or `error` (payloads: Sse* schemas). A `: ping` comment every 15 s."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          }
+        },
+        "summary": "Ask",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/chats/{chat_id}/messages/{assistant_id}/regenerate": {
+      "post": {
+        "description": "Replaces an answer to the latest question (same lane, same message id).",
+        "operationId": "regenerate_api_chats__chat_id__messages__assistant_id__regenerate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assistant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assistant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Events `meta`, `status`, `sources`, `delta`, `citation`, then exactly one `done` or `error` (payloads: Sse* schemas). A `: ping` comment every 15 s."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Refused before the stream opened."
+          }
+        },
+        "summary": "Regenerate",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/chats/{chat_id}/stop": {
+      "post": {
+        "description": "Second safety net next to aborting the request: stops the lane's answer, which is then\nsaved as `stopped`.",
+        "operationId": "stop_api_chats__chat_id__stop_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/StopIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Stop",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
     "/api/config": {
       "get": {
         "operationId": "config_api_config_get",

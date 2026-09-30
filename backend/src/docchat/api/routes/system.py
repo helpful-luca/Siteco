@@ -7,10 +7,12 @@ from docchat.api.schemas.system import (
     Features,
     Limits,
     LiveOut,
+    ModelInfo,
     ReadyChecks,
     ReadyOut,
 )
-from docchat.domain.enums import ComponentStatus, LlmStatus
+from docchat.domain.enums import ComponentStatus
+from docchat.domain.model_profiles import MODEL_PROFILES
 
 router = APIRouter(prefix="/api", tags=["system"])
 
@@ -52,9 +54,15 @@ def config(container: ContainerDep) -> ConfigOut:
             max_upload_mb=settings.max_upload_mb,
             max_pdf_pages=settings.max_pdf_pages,
             max_storage_mb=settings.max_storage_mb,
+            max_question_chars=settings.max_question_chars,
         ),
         features=Features(
-            retrieval_only=container.llm_status == LlmStatus.MISSING_KEY,
+            retrieval_only=not container.llm_health.available,
             malware_scan=settings.malware_scan,
         ),
+        models=[
+            ModelInfo.from_profile(p, available=p.id in settings.enabled_models)
+            for p in MODEL_PROFILES.values()
+        ],
+        default_model=settings.default_model,
     )
