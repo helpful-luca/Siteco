@@ -53,5 +53,6 @@ export async function downloadExport(): Promise<void> {
   document.body.append(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  // Some browsers read the blob after click() returns; ten seconds is plenty for a local file.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

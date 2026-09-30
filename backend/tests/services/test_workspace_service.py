@@ -16,8 +16,10 @@ from docchat.adapters.sqlite.preferences_store import SqlitePreferencesStore
 from docchat.adapters.sqlite.usage_ledger import SqliteUsageLedger
 from docchat.domain.chat_models import Chat, Citation, Message, SourceSnapshot
 from docchat.domain.enums import ChatScope, DocumentKind, DocumentStatus, Lane, MessageRole
+from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.models import Chunk, Document
 from docchat.services.chat_service import ChatService
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.limits import DailyBudget
 from docchat.services.preferences_service import PreferencesService
 from docchat.services.retention_sweeper import RetentionSweeper
@@ -37,8 +39,14 @@ class World:
         self.preferences = PreferencesService(
             SqlitePreferencesStore(harness.database), harness.clock, MODELS, "claude-sonnet-5-5"
         )
+        self.erasure = DiskErasure(harness.vectors, harness.database)
         self.chat_service = ChatService(
-            harness.chats, harness.repository, self.runs, harness.clock, max_chats=100
+            harness.chats,
+            harness.repository,
+            self.runs,
+            harness.clock,
+            self.erasure,
+            max_chats=100,
         )
         self.workspace = WorkspaceService(
             WorkspaceParts(
@@ -50,7 +58,7 @@ class World:
                 runs=self.runs,
                 preferences=self.preferences,
                 meter=DirectorySizeMeter(harness.root),
-                maintenance=harness.database,
+                erasure=self.erasure,
                 ledger=self.ledger,
                 budget=DailyBudget(self.ledger, harness.clock, None),
                 clock=harness.clock,
@@ -59,10 +67,14 @@ class World:
         )
         self.sweeper = RetentionSweeper(
             self.chat_service, harness.chats, harness.repository, harness.documents,
-            self.runs, harness.clock, days=retention_days,
+            self.erasure, harness.clock, days=retention_days,
         )  # fmt: skip
         self.export = WorkspaceExport(
-            harness.chats, harness.repository, self.preferences, harness.clock
+            harness.chats,
+            harness.repository,
+            self.preferences,
+            harness.clock,
+            tmp_dir=harness.root / "tmp",
         )
 
     def document(self, status: DocumentStatus = DocumentStatus.READY) -> Document:
@@ -129,6 +141,7 @@ async def test_delete_everything_leaves_no_file_vector_or_row(world: World) -> N
         for table in ("documents", "chats", "messages", "chat_documents"):
             assert conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0, table
     assert world.preferences.get().name == "Luca"  # kept unless asked
+    assert world.h.vectors.purged == 1  # once for the whole wipe, not per document
 
 
 async def test_delete_everything_can_reset_the_preferences(world: World) -> None:
@@ -171,6 +184,7 @@ async def test_deleting_a_document_redacts_the_answers_that_cited_it(world: Worl
     [_, answer] = world.h.chats.list_messages(chat_id)
     assert answer.sources[0].snippet == "" and answer.citations[0].cited_text == ""
     assert answer.sources[0].filename == document.filename
+    assert world.h.vectors.purged == 1
 
 
 async def test_startup_redacts_snapshots_of_documents_already_gone(world: World) -> None:
@@ -203,6 +217,7 @@ async def test_retention_deletes_old_chats_and_documents_only(harness: Harness) 
     remaining = {s.chat.id for s in harness.chats.list_chats()}
     assert remaining == {busy_chat, new_chat} and old_chat not in remaining
     assert harness.repository.all_ids() == {new_document.id}
+    assert harness.vectors.purged == 1
     world.runs.release(control)
 
 
@@ -231,7 +246,9 @@ async def test_export_holds_chats_preferences_and_the_document_list(world: World
     world.chat_citing(document)
     world.preferences.update(replace(world.preferences.get(), name="Luca", onboarded=True))
 
-    archive = zipfile.ZipFile(io.BytesIO(b"".join(await world.export.build())))
+    chunks, handle = await world.export.build()
+    archive = zipfile.ZipFile(io.BytesIO(b"".join(chunks)))
+    assert handle.closed
     names = archive.namelist()
     assert "preferences.json" in names and "documents.json" in names
     chats = sorted(n for n in names if n.startswith("chats/"))
@@ -248,3 +265,47 @@ async def test_export_holds_chats_preferences_and_the_document_list(world: World
     assert record["messages"][1]["citations"][0]["cited_text"] == "Die Mira hat IP66."
     assert "Schutzart?" in archive.read(chats[1]).decode()
     assert all(not n.startswith("documents/") for n in names)  # no document files
+
+
+async def test_retention_never_deletes_a_chat_whose_answer_starts_meanwhile(world: World) -> None:
+    chat_id = world.chat_citing(world.document(), age_days=400)
+    assert world.runs.close_if_idle(chat_id)
+    with pytest.raises(AppError) as caught:
+        world.runs.reserve(chat_id, Lane.A)  # an answer arriving while it is being deleted
+    assert caught.value.code is ErrorCode.CHAT_NOT_FOUND
+    world.runs.reopen(chat_id)
+    control = world.runs.reserve(chat_id, Lane.A)
+    assert not await world.chat_service.delete_if_idle(chat_id)
+    world.runs.release(control)
+    assert await world.chat_service.delete_if_idle(chat_id)
+
+
+async def test_a_busy_log_is_emptied_later(harness: Harness) -> None:
+    class BusyOnce:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def vacuum(self) -> None: ...
+
+        def checkpoint(self) -> bool:
+            self.calls += 1
+            return self.calls > 1
+
+    database = BusyOnce()
+    erasure = DiskErasure(harness.vectors, database, retry_every_s=0.01)
+    await erasure.after_rows()
+    assert erasure.log_pending
+    for _ in range(100):
+        if not erasure.log_pending:
+            break
+        await asyncio.sleep(0.01)
+    assert not erasure.log_pending and database.calls == 2
+    await erasure.stop()
+
+
+async def test_an_aborted_export_leaves_nothing_behind(world: World) -> None:
+    world.chat_citing(world.document())
+    chunks, handle = await world.export.build()
+    next(chunks)  # the download started, then the client went away
+    handle.close()
+    assert [p for p in (world.h.root / "tmp").iterdir()] == []

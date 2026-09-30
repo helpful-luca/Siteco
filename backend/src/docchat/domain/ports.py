@@ -210,6 +210,10 @@ class VectorStore(Protocol):
 
     def optimize(self) -> None: ...
 
+    def purge_deleted(self) -> None:
+        """Removes deleted rows and old versions from disk now, not after a grace period."""
+        ...
+
     def get_chunk(self, document_id: str, chunk_id: str) -> Chunk | None: ...
 
     def count(self, document_id: str) -> int: ...
@@ -368,6 +372,11 @@ class StorageMeter(Protocol):
 
 class DatabaseMaintenance(Protocol):
     def vacuum(self) -> None: ...
+
+    def checkpoint(self) -> bool:
+        """Moves the write-ahead log into the database file and empties it. False while a
+        reader still holds old pages; then the log may still contain deleted content."""
+        ...
 
 
 class LLMClient(Protocol):

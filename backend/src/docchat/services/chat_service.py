@@ -11,6 +11,7 @@ from docchat.domain.enums import ChatScope, DocumentStatus, Lane, TitleSource
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.ports import ChatRepository, Clock, DocumentRepository
 from docchat.domain.redaction import without_text_of
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.run_registry import RunRegistry
 
 log = logging.getLogger("docchat.chats")
@@ -44,9 +45,11 @@ class ChatService:
         documents: DocumentRepository,
         runs: RunRegistry,
         clock: Clock,
+        erasure: DiskErasure,
         *,
         max_chats: int,
     ) -> None:
+        self._erasure = erasure
         self._chats = chats
         self._documents = documents
         self._runs = runs
@@ -129,7 +132,19 @@ class ChatService:
         deleted = await asyncio.to_thread(self._chats.delete_chat, chat_id)
         if not deleted:
             raise AppError(ErrorCode.CHAT_NOT_FOUND)
+        await self._erasure.after_rows()
         log.info("chat_deleted", extra={"chat_id": chat_id})
+
+    async def delete_if_idle(self, chat_id: str) -> bool:
+        """For automatic deletion: only a chat without a running answer, and no answer can
+        start while it is being deleted (the check and the delete are one step for the
+        registry). Not erased on disk here; the caller erases once for a whole sweep."""
+        if not self._runs.close_if_idle(chat_id):
+            return False
+        try:
+            return await asyncio.to_thread(self._chats.delete_chat, chat_id)
+        finally:
+            self._runs.reopen(chat_id)
 
     def messages(self, chat_id: str) -> ChatMessages:
         """Sources of deleted documents come without their text, also when an answer was saved

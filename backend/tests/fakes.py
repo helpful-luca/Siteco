@@ -134,6 +134,7 @@ class FakeVectorStore:
     def __init__(self) -> None:
         self.rows: dict[str, tuple[Chunk, list[float]]] = {}
         self.optimized = 0
+        self.purged = 0
         self.dim = 0
         self.searches: list[tuple[str, tuple[str, ...], int]] = []
 
@@ -155,6 +156,9 @@ class FakeVectorStore:
 
     def optimize(self) -> None:
         self.optimized += 1
+
+    def purge_deleted(self) -> None:
+        self.purged += 1
 
     def get_chunk(self, document_id: str, chunk_id: str) -> Chunk | None:
         row = self.rows.get(chunk_id)

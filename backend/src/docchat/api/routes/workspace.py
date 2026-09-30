@@ -4,6 +4,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Response
 from fastapi.responses import StreamingResponse
+from starlette.background import BackgroundTask
 
 from docchat.api.dependencies import ContainerDep
 from docchat.api.schemas.common import ErrorEnvelope
@@ -53,8 +54,10 @@ async def delete_workspace(
 async def export_workspace(container: ContainerDep) -> StreamingResponse:
     """ZIP with every chat (JSON and Markdown), the preferences and the document list."""
     export = container.export
+    chunks, file = await export.build()
     return StreamingResponse(
-        await export.build(),
+        chunks,
+        background=BackgroundTask(file.close),  # also after an aborted download
         media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{export.filename()}"',

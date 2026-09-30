@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from docchat.adapters.directory_size_meter import DirectorySizeMeter
 from docchat.adapters.sqlite.chat_repository import SqliteChatRepository
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.preferences_store import SqlitePreferencesStore
@@ -105,9 +104,25 @@ def test_vacuum_runs(db: Database) -> None:
     db.vacuum()
 
 
-def test_directory_size(tmp_path: Path) -> None:
-    (tmp_path / "a").mkdir()
-    (tmp_path / "a" / "x.bin").write_bytes(b"1" * 100)
-    (tmp_path / "y.bin").write_bytes(b"1" * 20)
-    assert DirectorySizeMeter(tmp_path).used_bytes() == 120
-    assert DirectorySizeMeter(tmp_path / "missing").used_bytes() == 0
+def test_connections_zero_deleted_content(db: Database) -> None:
+    with db.connect() as conn:
+        assert conn.execute("PRAGMA secure_delete").fetchone()[0] == 1
+
+
+def test_checkpoint_empties_the_log_and_reports_a_blocking_reader(db: Database) -> None:
+    wal = db.path.with_name(db.path.name + "-wal")
+    # SQLite empties the log itself when the last connection closes; the app has several open.
+    with db.connect() as other:
+        other.execute("SELECT COUNT(*) FROM preferences").fetchone()
+        SqlitePreferencesStore(db).save(default_preferences("claude-sonnet-5-5"), T0)
+        assert wal.stat().st_size > 0
+        assert db.checkpoint()
+        assert wal.stat().st_size == 0
+
+        other.execute("BEGIN")
+        other.execute("SELECT * FROM preferences").fetchall()  # holds a read snapshot
+        SqlitePreferencesStore(db).clear()
+        assert not db.checkpoint(attempts=2, pause_s=0.01)
+        other.execute("COMMIT")
+        assert db.checkpoint()
+        assert wal.stat().st_size == 0

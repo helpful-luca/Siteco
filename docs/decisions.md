@@ -148,6 +148,8 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 118 | Name | Controls, zero width space, bidi marks and overrides removed, joiners kept (emoji sequences), at most 40 code points without cutting a grapheme (client) or a combining mark (server) | 40 UTF-16 units | Annex 10 B8 to B10; client and backend agree on the limit |
 | 119 | Settings layout | One route, `?section=`; container query: section list and content side by side, below 672 px iOS style list then detail with a back link; grouped inset cards with hairlines from the text | A dialog; tabs | macOS System Settings and iOS Settings; deep links from notices |
 | 120 | Answer mode | Effort from the settings is sent only for models that have efforts; style always | Sending effort to Haiku | Haiku rejects effort (annex 12, 1a); the settings hide the mode for it |
+| 121 | Final on disk | After a deletion the index runs `optimize(cleanup_older_than=0, delete_unverified=True)` under the write lock (once per wipe or retention sweep, per single delete); SQLite connections use `secure_delete=ON`, then `wal_checkpoint(TRUNCATE)` with its busy flag checked, retried in the background while a reader holds old pages; VACUUM for a wipe. A forensic test greps every file of the data dir for a marker | The 5 minute grace period for deletions too | Deleted rows stay in LanceDB fragments and old versions, and in SQLite free pages and the log; a search in flight may fail once during a purge |
+| 122 | Retention and new answers | The registry closes an idle chat atomically with the check; an answer starting meanwhile gets `CHAT_NOT_FOUND` | Check then delete | No race between the sweep and a question |
 
 ## Measurements
 

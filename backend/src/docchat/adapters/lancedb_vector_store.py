@@ -23,6 +23,7 @@ from docchat.domain.models import Chunk, Sentence
 
 TABLE = "chunks"
 # Old table versions are removed after this delay; queries in flight may still read them.
+# Only for normal ingestion: after a deletion `purge_deleted` removes them at once.
 _KEEP_OLD_VERSIONS = timedelta(minutes=5)
 _READ_COLUMNS = [
     "chunk_id", "document_id", "ordinal", "page", "heading", "text", "search_text",
@@ -167,6 +168,14 @@ class LanceVectorStore:
     def optimize(self) -> None:
         with self._write_lock:
             self._require().optimize(cleanup_older_than=_KEEP_OLD_VERSIONS)
+
+    def purge_deleted(self) -> None:
+        """Deleted rows are only marked until compaction rewrites their fragments, and old
+        versions keep the files. After a deletion (GDPR, master spec 10b, 4): compact, then
+        remove every old version and leftover file now. Safe under the write lock, because this
+        process is the only writer; a search in flight on an old version may fail once."""
+        with self._write_lock:
+            self._require().optimize(cleanup_older_than=timedelta(0), delete_unverified=True)
 
     def get_chunk(self, document_id: str, chunk_id: str) -> Chunk | None:
         rows = (

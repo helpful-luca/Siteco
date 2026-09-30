@@ -1,6 +1,7 @@
 """SQLite connection handling and schema migration via PRAGMA user_version."""
 
 import sqlite3
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib.resources import files
@@ -43,6 +44,9 @@ class Database:
         conn = sqlite3.connect(self.path, timeout=5.0, isolation_level=None)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
+        # Freed pages and overwritten cells are zeroed, so deleted text does not linger in the
+        # file (master spec 10b, 4).
+        conn.execute("PRAGMA secure_delete = ON")
         conn.execute("PRAGMA busy_timeout = 5000")
         try:
             yield conn
@@ -81,10 +85,24 @@ class Database:
 
     def vacuum(self) -> None:
         """After a mass deletion: rewrites the file so deleted content is gone from disk too
-        (master spec 10b, 4), then empties the write-ahead log."""
+        (master spec 10b, 4). The caller empties the write-ahead log with `checkpoint`."""
         with self.connect() as conn:
             conn.execute("VACUUM")
-            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+    def checkpoint(self, attempts: int = 5, pause_s: float = 0.1) -> bool:
+        """`wal_checkpoint(TRUNCATE)` reports a busy reader in its result instead of raising;
+        retried a few times, False if the log could not be emptied."""
+        for attempt in range(attempts):
+            with self.connect() as conn:
+                conn.execute(
+                    "PRAGMA busy_timeout = 200"
+                )  # a busy reader is reported, not waited out
+                busy = conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()[0]
+            if busy == 0:
+                return True
+            if attempt < attempts - 1:
+                time.sleep(pause_s)
+        return False
 
     def ping(self) -> bool:
         if not self.path.parent.exists():

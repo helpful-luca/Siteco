@@ -15,6 +15,7 @@ from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
 from docchat.adapters.text_parser import TextFileParser
 from docchat.domain.enums import DocumentKind, DocumentStatus
 from docchat.domain.models import Document
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
@@ -133,6 +134,7 @@ def build_harness(
         purge,
         clock,
         TextFileParser(),
+        DiskErasure(vectors, database),
         max_text_chars=limits.get("max_chars", 1_000_000),
     )
     scanner = FakeScanner()

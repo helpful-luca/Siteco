@@ -18,6 +18,7 @@ from docchat.domain.sentences import split_sentences
 from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerOptions, AnswerService, AskCommand
 from docchat.services.chat_service import ChatService
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.limits import DailyBudget, LimitScope, RateLimit
 from docchat.services.llm_health import LlmHealth
 from docchat.services.model_availability import ModelAvailability
@@ -179,7 +180,9 @@ def build_chat_harness(
         rate=RateLimit(LimitScope.CHAT, chat_per_minute, ticker),
         budget=DailyBudget(ledger, clock, daily_budget_usd),
     )
-    chats = ChatService(chats_repo, documents, registry, clock, max_chats=5)
+    chats = ChatService(
+        chats_repo, documents, registry, clock, DiskErasure(vectors, database), max_chats=5
+    )
     return ChatHarness(
         documents, chats_repo, ledger, vectors, client, health, clock, sleep, registry, chats,
         answers, models, ticker,

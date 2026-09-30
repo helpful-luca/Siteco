@@ -12,8 +12,8 @@ from docchat.domain.enums import DocumentStatus
 from docchat.domain.errors import AppError
 from docchat.domain.ports import ChatRepository, Clock, DocumentRepository
 from docchat.services.chat_service import ChatService
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_service import DocumentService
-from docchat.services.run_registry import RunRegistry
 
 log = logging.getLogger("docchat.retention")
 
@@ -31,7 +31,7 @@ class RetentionSweeper:
         chats: ChatRepository,
         documents: DocumentRepository,
         library: DocumentService,
-        runs: RunRegistry,
+        erasure: DiskErasure,
         clock: Clock,
         *,
         days: int,
@@ -41,7 +41,7 @@ class RetentionSweeper:
         self._chats = chats
         self._documents = documents
         self._library = library
-        self._runs = runs
+        self._erasure = erasure
         self._clock = clock
         self._days = days
         self._interval_s = interval_s
@@ -57,22 +57,22 @@ class RetentionSweeper:
         cutoff = self._clock.now() - timedelta(days=self._days)
         chats = 0
         for chat_id in await asyncio.to_thread(self._chats.chats_idle_since, cutoff):
-            if self._runs.is_active(chat_id):
-                continue
-            try:
-                await self._chat_service.delete(chat_id)
+            # A chat with a running answer waits for the next sweep.
+            if await self._chat_service.delete_if_idle(chat_id):
                 chats += 1
-            except AppError:
-                continue  # deleted meanwhile
         documents = 0
         for document in await asyncio.to_thread(self._documents.list_visible):
             if document.created_at >= cutoff or document.status is DocumentStatus.DELETING:
                 continue
             try:
-                await self._library.delete(document.id)
+                await self._library.delete(document.id, erase=False)
                 documents += 1
             except AppError:
                 continue  # deleted meanwhile, or the next sweep tries again
+        if documents:
+            await self._erasure.after_documents()
+        elif chats:
+            await self._erasure.after_rows()
         if chats or documents:
             log.info("retention_swept", extra={"chats": chats, "documents": documents})
         return SweepResult(chats, documents)

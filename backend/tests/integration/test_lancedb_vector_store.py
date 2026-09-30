@@ -128,3 +128,28 @@ def test_chunks_of_returns_all_chunks_in_document_order(store: LanceVectorStore)
 def test_search_filters_only_accept_canonical_uuids(store: LanceVectorStore) -> None:
     with pytest.raises(ValueError):
         store.search("x", [0.1] * DIM, ["x') OR ('1' = '1"], limit=5)
+
+
+def _files_with(root: Path, needle: bytes) -> list[Path]:
+    return [p for p in root.rglob("*") if p.is_file() and needle in p.read_bytes()]
+
+
+def test_purge_removes_deleted_text_from_disk_at_once(
+    tmp_path: Path, store: LanceVectorStore
+) -> None:
+    keep, gone = str(uuid4()), str(uuid4())
+    for doc, text in (
+        (keep, "Die Leuchte hat IP66."),
+        (gone, "Kennung QX-PURGE-4411 bleibt nicht."),
+    ):
+        chunks = [_chunk(doc, i, text) for i in range(3)]
+        store.add(chunks, [[0.1] * DIM] * 3)
+        store.optimize()
+    store.delete_document(gone)
+    store.optimize()  # normal path: old versions stay for a few minutes
+    assert _files_with(tmp_path / "lancedb", b"QX-PURGE-4411")
+
+    store.purge_deleted()
+    assert _files_with(tmp_path / "lancedb", b"QX-PURGE-4411") == []
+    assert store.count(keep) == 3
+    assert store.search("IP66", [0.1] * DIM, [keep], 5)

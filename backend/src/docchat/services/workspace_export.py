@@ -9,6 +9,7 @@ import zipfile
 from collections.abc import Iterator
 from dataclasses import asdict
 from datetime import UTC
+from pathlib import Path
 from typing import IO, Any
 
 from docchat.domain.export_format import chat_markdown, chat_record, entry_stem
@@ -32,7 +33,9 @@ class WorkspaceExport:
         documents: DocumentRepository,
         preferences: PreferencesService,
         clock: Clock,
+        tmp_dir: Path,
     ) -> None:
+        self._tmp_dir = tmp_dir
         self._chats = chats
         self._documents = documents
         self._preferences = preferences
@@ -85,12 +88,18 @@ class WorkspaceExport:
         finally:
             spooled.close()
 
-    async def build(self) -> Iterator[bytes]:
-        """Packs the archive in a worker thread, then hands it out in chunks."""
-        spooled = tempfile.SpooledTemporaryFile(max_size=_SPOOL_BYTES)  # noqa: SIM115 closed by _chunks
+    async def build(self) -> tuple[Iterator[bytes], IO[bytes]]:
+        """Packs the archive in a worker thread, then hands it out in chunks. Above 8 MB it
+        spills into the app's own data directory (never the system temp dir), as an unnamed
+        file that disappears when closed: after the last chunk, or by the caller when the
+        download is aborted (the returned handle; closing twice is harmless)."""
+        self._tmp_dir.mkdir(parents=True, exist_ok=True)
+        spooled = tempfile.SpooledTemporaryFile(  # noqa: SIM115 closed by _chunks or the caller
+            max_size=_SPOOL_BYTES, dir=str(self._tmp_dir)
+        )
         try:
             await asyncio.to_thread(self._write, spooled)
         except BaseException:
             spooled.close()
             raise
-        return self._chunks(spooled)
+        return self._chunks(spooled), spooled

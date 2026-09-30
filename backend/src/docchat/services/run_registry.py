@@ -41,6 +41,8 @@ class RunRegistry:
     def __init__(self, max_concurrent: int) -> None:
         self._max = max_concurrent
         self._runs: dict[tuple[str, Lane], RunControl] = {}
+        # Chats being deleted automatically: no answer may start in them meanwhile.
+        self._closed: set[str] = set()
         # Answers are prepared in worker threads; reservations must not race.
         self._lock = threading.Lock()
 
@@ -50,6 +52,8 @@ class RunRegistry:
 
     def reserve(self, chat_id: str, lane: Lane) -> RunControl:
         with self._lock:
+            if chat_id in self._closed:
+                raise AppError(ErrorCode.CHAT_NOT_FOUND)
             if (chat_id, lane) in self._runs:
                 raise AppError(ErrorCode.CHAT_BUSY)
             if len(self._runs) >= self._max:
@@ -83,6 +87,18 @@ class RunRegistry:
 
     def is_active(self, chat_id: str) -> bool:
         return bool(self._controls(chat_id, None))
+
+    def close_if_idle(self, chat_id: str) -> bool:
+        """Blocks new answers in an idle chat, atomically with the check. False if one runs."""
+        with self._lock:
+            if any(cid == chat_id for cid, _ in self._runs):
+                return False
+            self._closed.add(chat_id)
+            return True
+
+    def reopen(self, chat_id: str) -> None:
+        with self._lock:
+            self._closed.discard(chat_id)
 
     async def stop_all_and_wait(self, timeout_s: float = 30) -> None:
         """Before deleting everything: like stop_and_wait for every chat at once."""

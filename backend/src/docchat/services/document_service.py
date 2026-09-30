@@ -16,6 +16,7 @@ from docchat.domain.ports import (
     TextParser,
     VectorStore,
 )
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_purge import DocumentPurge
 
 log = logging.getLogger("docchat.documents")
@@ -44,8 +45,10 @@ class DocumentService:
         purge: DocumentPurge,
         clock: Clock,
         text_parser: TextParser,
+        erasure: DiskErasure,
         max_text_chars: int,
     ) -> None:
+        self._erasure = erasure
         self._text_parser = text_parser
         self._max_text_chars = max_text_chars
         self._repository = repository
@@ -74,8 +77,9 @@ class DocumentService:
     def get(self, document_id: str) -> DocumentView:
         return self._view(self._require(document_id), self._worker.queue_positions())
 
-    async def delete(self, document_id: str) -> None:
-        """Allowed in every status. The worker notices at its next step and stops."""
+    async def delete(self, document_id: str, *, erase: bool = True) -> None:
+        """Allowed in every status. The worker notices at its next step and stops. `erase`
+        makes it final on disk at once; bulk deletions pass False and erase once at the end."""
         document = await asyncio.to_thread(
             self._repository.mark_deleting, document_id, self._clock.now()
         )
@@ -87,6 +91,8 @@ class DocumentService:
         except Exception as exc:
             log.exception("delete_failed", extra={"document_id": document_id})
             raise AppError(ErrorCode.DELETE_FAILED) from exc
+        if erase:
+            await self._erasure.after_documents()
         log.info("document_deleted", extra={"document_id": document_id})
 
     def file(self, document_id: str) -> StoredFile:

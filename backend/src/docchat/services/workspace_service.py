@@ -12,7 +12,6 @@ from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.ports import (
     ChatRepository,
     Clock,
-    DatabaseMaintenance,
     DocumentRepository,
     FileStorage,
     StorageMeter,
@@ -20,6 +19,7 @@ from docchat.domain.ports import (
     VectorStore,
 )
 from docchat.domain.usage import UsageDay
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_service import DocumentService
 from docchat.services.limits import DailyBudget
 from docchat.services.preferences_service import PreferencesService
@@ -40,7 +40,7 @@ class WorkspaceParts:
     runs: RunRegistry
     preferences: PreferencesService
     meter: StorageMeter
-    maintenance: DatabaseMaintenance
+    erasure: DiskErasure
     ledger: UsageLedger
     budget: DailyBudget
     clock: Clock
@@ -95,14 +95,14 @@ class WorkspaceService:
             documents = await asyncio.to_thread(p.documents.list_by_status, *_ALL_STATUSES)
             for document in documents:
                 try:
-                    await p.library.delete(document.id)
+                    await p.library.delete(document.id, erase=False)
                 except AppError as exc:
                     if exc.code is not ErrorCode.NOT_FOUND:  # deleted meanwhile
                         raise
             await self._sweep()
             if reset_preferences:
                 await asyncio.to_thread(p.preferences.reset)
-            await asyncio.to_thread(p.maintenance.vacuum)
+            await p.erasure.after_wipe()
         except AppError:
             raise
         except Exception as exc:
@@ -122,4 +122,3 @@ class WorkspaceService:
         await asyncio.to_thread(p.storage.delete_except, keep)
         await asyncio.to_thread(p.storage.discard_quarantined_except, keep)
         await asyncio.to_thread(p.vectors.delete_documents_except, keep)
-        await asyncio.to_thread(p.vectors.optimize)

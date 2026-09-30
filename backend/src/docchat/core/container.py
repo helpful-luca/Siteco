@@ -42,6 +42,7 @@ from docchat.domain.ports import (
 from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerService
 from docchat.services.chat_service import ChatService
+from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
@@ -85,6 +86,7 @@ class Container:
     workspace: WorkspaceService
     export: WorkspaceExport
     retention: RetentionSweeper
+    erasure: DiskErasure
     embedder_status: ComponentStatus = ComponentStatus.LOADING
     vector_store_status: ComponentStatus = ComponentStatus.LOADING
 
@@ -106,6 +108,8 @@ class Container:
             self.vector_store_status is ComponentStatus.OK
         ):
             await self.worker.recover()
+            # Deletions finished during recovery (or cut off by a crash) become final on disk.
+            await self.erasure.after_documents()
             self.worker.start()
         self.retention.start()
 
@@ -133,6 +137,7 @@ class Container:
     async def stop(self) -> None:
         """Stop background work started in start()."""
         await self.retention.stop()
+        await self.erasure.stop()
         await self.scans.stop()
         await self.worker.stop()
         await self.pdf_parser.close()
@@ -186,13 +191,14 @@ def build_container(
     pdf_parser: PdfParser | None = None,
     scanner: MalwareScanner | None = None,
     llm: LLMClient | None = None,
+    clock: SystemClock | None = None,
 ) -> Container:
     database = Database(settings.database_path)
     repository = SqliteDocumentRepository(database)
     storage = LocalFileStorage(settings.uploads_dir, settings.quarantine_dir)
     spool = JsonlChunkSpool(settings.spool_dir)
     vectors = LanceVectorStore(settings.lancedb_dir, fts_language=settings.fts_language)
-    clock = SystemClock()
+    clock = clock or SystemClock()  # tests pass one that can jump ahead
     embedder = embedder or FastEmbedEmbedder(
         settings.embedding_model,
         settings.embedding_cache_dir,
@@ -268,6 +274,7 @@ def build_container(
         models=models,
         jitter=random.random,
     )
+    erasure = DiskErasure(vectors, database)
     documents = DocumentService(
         repository,
         storage,
@@ -276,9 +283,12 @@ def build_container(
         purge,
         clock,
         text_parser,
+        erasure,
         max_text_chars=settings.max_chars_per_doc,
     )
-    chat_service = ChatService(chats, repository, runs, clock, max_chats=settings.max_chats)
+    chat_service = ChatService(
+        chats, repository, runs, clock, erasure, max_chats=settings.max_chats
+    )
     preferences = PreferencesService(
         SqlitePreferencesStore(database), clock, settings.enabled_models, settings.default_model
     )
@@ -332,22 +342,25 @@ def build_container(
                 runs=runs,
                 preferences=preferences,
                 meter=DirectorySizeMeter(settings.data_dir),
-                maintenance=database,
+                erasure=erasure,
                 ledger=ledger,
                 budget=budget,
                 clock=clock,
             ),
             retention_days=settings.retention_days,
         ),
-        export=WorkspaceExport(chats, repository, preferences, clock),
+        export=WorkspaceExport(
+            chats, repository, preferences, clock, tmp_dir=settings.data_dir / "tmp"
+        ),
         retention=RetentionSweeper(
             chat_service,
             chats,
             repository,
             documents,
-            runs,
+            erasure,
             clock,
             days=settings.retention_days,
             interval_s=settings.retention_sweep_interval_s,
         ),
+        erasure=erasure,
     )
