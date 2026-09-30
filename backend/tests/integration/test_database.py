@@ -76,6 +76,7 @@ def test_version_1_databases_are_migrated_in_place(tmp_path: Path) -> None:
     with sqlite3.connect(path) as conn:
         conn.executescript(
             "CREATE TABLE documents (id TEXT PRIMARY KEY, error_code TEXT);"
+            "CREATE TABLE messages (id TEXT PRIMARY KEY);"
             "INSERT INTO documents VALUES ('d1', NULL); PRAGMA user_version = 1;"
         )
     Database(path).migrate()
@@ -83,3 +84,17 @@ def test_version_1_databases_are_migrated_in_place(tmp_path: Path) -> None:
         row = conn.execute("SELECT error_params FROM documents WHERE id = 'd1'").fetchone()
         version = conn.execute("PRAGMA user_version").fetchone()[0]
     assert (row[0], version) == ("{}", SCHEMA_VERSION)
+
+
+def test_version_2_databases_get_message_notices_and_sources_mode(tmp_path: Path) -> None:
+    path = tmp_path / "v2.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(
+            "CREATE TABLE documents (id TEXT PRIMARY KEY);"
+            "CREATE TABLE messages (id TEXT PRIMARY KEY);"
+            "INSERT INTO messages VALUES ('m1'); PRAGMA user_version = 2;"
+        )
+    Database(path).migrate()
+    with sqlite3.connect(path) as conn:
+        row = conn.execute("SELECT notices, sources_mode FROM messages").fetchone()
+    assert row == ("[]", None)

@@ -17,6 +17,7 @@ from uuid import UUID
 import lancedb
 import pyarrow as pa
 from lancedb.index import FTS
+from lancedb.rerankers import RRFReranker
 
 from docchat.domain.models import Chunk, Sentence
 
@@ -51,6 +52,10 @@ def _uuid(value: str) -> str:
     if str(UUID(value)) != value:
         raise ValueError("not a canonical uuid")
     return value
+
+
+def _in_filter(document_ids: Collection[str]) -> str:
+    return "document_id IN ({})".format(", ".join(f"'{_uuid(d)}'" for d in document_ids))
 
 
 def _sentences_json(sentences: Sequence[Sentence]) -> str:
@@ -176,3 +181,38 @@ class LanceVectorStore:
 
     def count(self, document_id: str) -> int:
         return int(self._require().count_rows(f"document_id = '{_uuid(document_id)}'"))
+
+    def search(
+        self, text: str, vector: Sequence[float], document_ids: Collection[str], limit: int
+    ) -> list[Chunk]:
+        """Vector and BM25 (German stemming) fused by reciprocal rank. The filter runs before
+        ranking (`prefilter=True`), otherwise top-k could come back short or empty."""
+        if not document_ids:
+            return []
+        rows = (
+            self._require()
+            .search(query_type="hybrid")
+            .vector(list(vector))
+            .text(text)
+            .where(_in_filter(document_ids), prefilter=True)
+            .rerank(RRFReranker())
+            .limit(limit)
+            .select(_READ_COLUMNS)
+            .to_list()
+        )
+        return [_row_to_chunk(r) for r in rows]
+
+    def chunks_of(self, document_ids: Collection[str]) -> list[Chunk]:
+        if not document_ids:
+            return []
+        rows = (
+            self._require()
+            .search()
+            .where(_in_filter(document_ids))
+            .select(_READ_COLUMNS)
+            .limit(None)
+            .to_list()
+        )
+        order = {d: i for i, d in enumerate(document_ids)}
+        chunks = [_row_to_chunk(r) for r in rows]
+        return sorted(chunks, key=lambda c: (order[c.document_id], c.ordinal))

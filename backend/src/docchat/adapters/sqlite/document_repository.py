@@ -3,9 +3,11 @@
 import json
 import sqlite3
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 
 from docchat.adapters.sqlite.database import Database
+from docchat.adapters.sqlite.timestamps import from_db as _parse_ts
+from docchat.adapters.sqlite.timestamps import to_db as _ts
 from docchat.domain.enums import DocumentKind, DocumentStatus
 from docchat.domain.errors import AppError, ErrorCode, NoticeCode
 from docchat.domain.models import Document, Notice
@@ -17,14 +19,6 @@ _CLEAN_SLATE = (
     "progress = 0, error_code = NULL, error_params = '{}', notices = '[]',"
     " chunk_count = NULL, char_count = NULL, ready_at = NULL"
 )
-
-
-def _ts(value: datetime) -> str:
-    return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-
-
-def _parse_ts(value: str | None) -> datetime | None:
-    return datetime.fromisoformat(value) if value else None
 
 
 def _notices_json(notices: Sequence[Notice]) -> str:

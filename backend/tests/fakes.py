@@ -1,6 +1,7 @@
 """Test doubles for ports. Deterministic and dependency-free."""
 
 import asyncio
+import re
 import threading
 import time
 from collections.abc import Callable, Collection, Sequence
@@ -93,11 +94,16 @@ class FakePdfParser:
         return None
 
 
+def _words(text: str) -> set[str]:
+    return set(re.findall(r"\w+", text.casefold()))
+
+
 class FakeVectorStore:
     def __init__(self) -> None:
         self.rows: dict[str, tuple[Chunk, list[float]]] = {}
         self.optimized = 0
         self.dim = 0
+        self.searches: list[tuple[str, tuple[str, ...], int]] = []
 
     def open(self, dim: int) -> None:
         self.dim = dim
@@ -124,6 +130,21 @@ class FakeVectorStore:
 
     def count(self, document_id: str) -> int:
         return sum(1 for chunk, _ in self.rows.values() if chunk.document_id == document_id)
+
+    def search(
+        self, text: str, vector: Sequence[float], document_ids: Collection[str], limit: int
+    ) -> list[Chunk]:
+        """Ranks by shared words, then document order: enough to test what surrounds it."""
+        self.searches.append((text, tuple(document_ids), limit))
+        words = _words(text)
+        candidates = [c for c, _ in self.rows.values() if c.document_id in document_ids]
+        ranked = sorted(candidates, key=lambda c: (-len(words & _words(c.text)), c.ordinal))
+        return ranked[:limit]
+
+    def chunks_of(self, document_ids: Collection[str]) -> list[Chunk]:
+        order = {d: i for i, d in enumerate(document_ids)}
+        chunks = [c for c, _ in self.rows.values() if c.document_id in order]
+        return sorted(chunks, key=lambda c: (order[c.document_id], c.ordinal))
 
 
 class FakeScanner:

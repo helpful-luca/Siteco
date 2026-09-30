@@ -6,12 +6,14 @@ from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Steps from one version to the next for databases created by an older release. A new database
 # gets schema.sql, which already has the latest shape.
 _MIGRATIONS: dict[int, str] = {
     2: "ALTER TABLE documents ADD COLUMN error_params TEXT NOT NULL DEFAULT '{}';",
+    3: "ALTER TABLE messages ADD COLUMN sources_mode TEXT;\n"
+    "ALTER TABLE messages ADD COLUMN notices TEXT NOT NULL DEFAULT '[]';",
 }
 
 

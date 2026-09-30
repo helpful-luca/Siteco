@@ -83,3 +83,48 @@ def test_add_requires_one_vector_per_chunk(store: LanceVectorStore) -> None:
     with pytest.raises(ValueError):
         store.add([_chunk(str(uuid4()), 0)], [])
     store.add([], [])
+
+
+def test_hybrid_search_finds_exact_codes_within_the_given_documents(
+    store: LanceVectorStore,
+) -> None:
+    mira, luna, other = str(uuid4()), str(uuid4()), str(uuid4())
+    store.add(
+        [
+            _chunk(mira, 0, "Die Mira hat die Schutzart IP66."),
+            _chunk(mira, 1, "Die Mira leistet 40 W."),
+            _chunk(luna, 0, "Straßenleuchten der Serie Luna sind robust."),
+            _chunk(other, 0, "Schutzart IP66 auch hier, aber außerhalb des Scopes."),
+        ],
+        [[0.1] * DIM, [0.9] * DIM, [0.5] * DIM, [0.1] * DIM],
+    )
+    hits = store.search("Welche Schutzart, IP66?", [0.1] * DIM, [mira, luna], limit=20)
+    assert hits[0].text == "Die Mira hat die Schutzart IP66."
+    assert {h.document_id for h in hits} <= {mira, luna}
+    assert len(hits) == 3  # prefiltered: the limit is filled from the scope only
+    assert store.search("egal", [0.1] * DIM, [], limit=5) == []
+
+
+def test_german_stemming_and_folding_in_the_text_search(store: LanceVectorStore) -> None:
+    doc = str(uuid4())
+    store.add([_chunk(doc, 0, "Straßenleuchten für Wohngebiete.")], [[0.5] * DIM])
+    hits = store.search("strassenleuchte", [0.0] * DIM, [doc], limit=1)
+    assert hits and "Straßenleuchten" in hits[0].text
+
+
+def test_chunks_of_returns_all_chunks_in_document_order(store: LanceVectorStore) -> None:
+    first, second = str(uuid4()), str(uuid4())
+    store.add(
+        [_chunk(second, 1), _chunk(first, 1), _chunk(second, 0), _chunk(first, 0)],
+        [[0.1] * DIM] * 4,
+    )
+    ordered = store.chunks_of([first, second])
+    assert [(c.document_id, c.ordinal) for c in ordered] == [
+        (first, 0), (first, 1), (second, 0), (second, 1)
+    ]  # fmt: skip
+    assert store.chunks_of([]) == []
+
+
+def test_search_filters_only_accept_canonical_uuids(store: LanceVectorStore) -> None:
+    with pytest.raises(ValueError):
+        store.search("x", [0.1] * DIM, ["x') OR ('1' = '1"], limit=5)
