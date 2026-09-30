@@ -3,15 +3,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { ApiError, fetchJson } from '@/shared/api/client';
-
-type Ready = { ready: boolean };
+import type { ReadyOut } from '@/shared/api/types';
 
 /** Holds the app back until search works, and explains calmly why it is waiting. */
 export function StartupGate({ children }: { children: React.ReactNode }) {
   const t = useTranslations('startup');
   const { data, error, refetch, isFetching } = useQuery({
     queryKey: ['health', 'ready'],
-    queryFn: () => fetchJson<Ready>('/api/health/ready'),
+    queryFn: () => fetchJson<ReadyOut>('/api/health/ready'),
     retry: false,
     refetchInterval: (query) => (query.state.data?.ready ? false : 1500),
   });
