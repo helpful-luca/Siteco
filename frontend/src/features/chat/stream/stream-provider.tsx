@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import { fetchJson } from '@/shared/api/client';
 import { clientError } from '@/shared/api/errors';
@@ -9,15 +9,16 @@ import type { Lane } from '@/shared/api/types';
 import { CHATS_KEY, chatKey, messagesKey } from '../queries';
 import type { StreamEvent } from './events';
 import { readStream } from './read-stream';
-import { isRunning, runKey, streamReducer, type RunState, type RunsState, type StartRun } from './stream-reducer';
+import { createRunStore, type RunStore } from './run-store';
+import { isRunning, runKey, type RunState, type StartRun } from './stream-reducer';
 
 type Locale = 'de' | 'en';
 
 export type AskInput = { chatId: string; question: string; model: string; locale: Locale };
 export type RegenerateInput = { chatId: string; assistantId: string; question: string; model: string; locale: Locale };
 
-type StreamApi = {
-  runs: RunsState;
+/** Stable functions: consumers never re-render because an answer streams. */
+export type StreamActions = {
   /**
    * Resolves `true` once the server confirmed the question (`meta`), `false` when it was stopped
    * before that; rejects with an ApiError when refused or cut off before `meta`.
@@ -26,9 +27,12 @@ type StreamApi = {
   regenerate: (input: RegenerateInput) => Promise<boolean>;
   stop: (chatId: string) => Promise<void>;
   clear: (chatId: string) => void;
+  /** The current run of a chat, read at call time (for event handlers). */
+  getRun: (chatId: string) => RunState | undefined;
+  store: RunStore;
 };
 
-const StreamContext = createContext<StreamApi | null>(null);
+const StreamContext = createContext<StreamActions | null>(null);
 const LANE: Lane = 'a';
 
 /**
@@ -37,21 +41,20 @@ const LANE: Lane = 'a';
  */
 export function StreamProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient();
-  const [runs, dispatch] = useReducer(streamReducer, {});
-  const runsRef = useRef(runs);
-  useEffect(() => {
-    runsRef.current = runs;
-  }, [runs]);
+  const [store] = useState(createRunStore);
   const controllers = useRef(new Map<string, AbortController>());
   const pending = useRef(new Map<string, string>());
   const frame = useRef<number | null>(null);
 
-  const flush = useCallback((key: string) => {
-    const text = pending.current.get(key);
-    if (!text) return;
-    pending.current.delete(key);
-    dispatch({ type: 'delta', key, data: { text } });
-  }, []);
+  const flush = useCallback(
+    (key: string) => {
+      const text = pending.current.get(key);
+      if (!text) return;
+      pending.current.delete(key);
+      store.dispatch({ type: 'delta', key, data: { text } });
+    },
+    [store],
+  );
 
   const flushAll = useCallback(() => {
     frame.current = null;
@@ -59,12 +62,16 @@ export function StreamProvider({ children }: { children: ReactNode }) {
   }, [flush]);
 
   const refresh = useCallback(
-    (chatId: string) => {
-      void client.invalidateQueries({ queryKey: messagesKey(chatId) });
+    async (chatId: string) => {
       void client.invalidateQueries({ queryKey: chatKey(chatId) });
       void client.invalidateQueries({ queryKey: CHATS_KEY });
+      await client.invalidateQueries({ queryKey: messagesKey(chatId) });
+      // Nobody shows this chat: the saved answer loads on the next visit, the run can go.
+      const watched = client.getQueryCache().find({ queryKey: messagesKey(chatId) })?.getObserversCount() ?? 0;
+      const run = store.getState()[runKey(chatId, LANE)];
+      if (watched === 0 && run?.outcome) store.dispatch({ type: 'local/clear', key: runKey(chatId, LANE) });
     },
-    [client],
+    [client, store],
   );
 
   const start = useCallback(
@@ -73,50 +80,55 @@ export function StreamProvider({ children }: { children: ReactNode }) {
       const controller = new AbortController();
       controllers.current.get(key)?.abort();
       controllers.current.set(key, controller);
-      dispatch({ type: 'local/start', key, run });
+      pending.current.delete(key);
+      store.dispatch({ type: 'local/start', key, run });
+      // A superseded request (a newer one for this chat started) must not touch the new run.
+      const current = () => controllers.current.get(key) === controller;
 
       return new Promise<boolean>((resolve, reject) => {
         let confirmed = false;
         const onEvent = (event: StreamEvent) => {
+          if (!current()) return;
           if (event.type === 'delta') {
             pending.current.set(key, (pending.current.get(key) ?? '') + event.data.text);
             frame.current ??= requestAnimationFrame(flushAll);
             return;
           }
           flush(key);
-          dispatch({ ...event, key });
+          store.dispatch({ ...event, key });
           if (event.type === 'meta') {
             confirmed = true;
             resolve(true);
             void client.invalidateQueries({ queryKey: CHATS_KEY });
           }
-          if (event.type === 'done' || event.type === 'error') refresh(chatId);
+          if (event.type === 'done' || event.type === 'error') void refresh(chatId);
         };
         readStream({ url, body, signal: controller.signal, onEvent })
           .then((end) => {
+            if (!current()) return resolve(confirmed);
             flush(key);
             if (!confirmed) {
               // Nothing was saved yet: the question goes back to the composer with a note.
-              dispatch({ type: 'local/clear', key });
+              store.dispatch({ type: 'local/clear', key });
               if (end !== 'aborted') reject(clientError('STREAM_INTERRUPTED'));
               else resolve(false);
               return;
             }
             if (end === 'interrupted') {
-              dispatch({ type: 'local/interrupted', key });
-              refresh(chatId);
+              store.dispatch({ type: 'local/interrupted', key });
+              void refresh(chatId);
             }
           })
           .catch((error: unknown) => {
-            dispatch({ type: 'local/clear', key });
+            if (current()) store.dispatch({ type: 'local/clear', key });
             reject(error);
           })
           .finally(() => {
-            if (controllers.current.get(key) === controller) controllers.current.delete(key);
+            if (current()) controllers.current.delete(key);
           });
       });
     },
-    [client, flush, flushAll, refresh],
+    [client, flush, flushAll, refresh, store],
   );
 
   const ask = useCallback(
@@ -147,10 +159,10 @@ export function StreamProvider({ children }: { children: ReactNode }) {
   const stop = useCallback(
     async (chatId: string) => {
       const key = runKey(chatId, LANE);
-      const run = runsRef.current[key];
+      const run = store.getState()[key];
       flush(key);
-      if (run && !run.meta) dispatch({ type: 'local/clear', key });
-      else if (isRunning(run)) dispatch({ type: 'local/stopped', key });
+      if (run && !run.meta) store.dispatch({ type: 'local/clear', key });
+      else if (isRunning(run)) store.dispatch({ type: 'local/stopped', key });
       controllers.current.get(key)?.abort();
       try {
         await fetchJson(`/api/chats/${chatId}/stop`, {
@@ -161,12 +173,13 @@ export function StreamProvider({ children }: { children: ReactNode }) {
       } catch {
         // The abort already ended the answer; a failed stop call changes nothing for the user.
       }
-      refresh(chatId);
+      void refresh(chatId);
     },
-    [flush, refresh],
+    [flush, refresh, store],
   );
 
-  const clear = useCallback((chatId: string) => dispatch({ type: 'local/clear', key: runKey(chatId, LANE) }), []);
+  const clear = useCallback((chatId: string) => store.dispatch({ type: 'local/clear', key: runKey(chatId, LANE) }), [store]);
+  const getRun = useCallback((chatId: string) => store.getState()[runKey(chatId, LANE)], [store]);
 
   useEffect(() => {
     const open = controllers.current;
@@ -176,18 +189,29 @@ export function StreamProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value = useMemo(() => ({ runs, ask, regenerate, stop, clear }), [runs, ask, regenerate, stop, clear]);
+  const value = useMemo(
+    () => ({ ask, regenerate, stop, clear, getRun, store }),
+    [ask, regenerate, stop, clear, getRun, store],
+  );
   return <StreamContext.Provider value={value}>{children}</StreamContext.Provider>;
 }
 
-export function useStreams(): StreamApi {
-  const api = useContext(StreamContext);
-  if (!api) throw new Error('useStreams needs the StreamProvider (ChatProvider)');
-  return api;
+export function useStreamActions(): StreamActions {
+  const actions = useContext(StreamContext);
+  if (!actions) throw new Error('useStreamActions needs the StreamProvider (ChatProvider)');
+  return actions;
 }
 
-/** The answer of this chat that is streaming or has just finished, if any. */
+/** The answer of this chat that is streaming or has just finished; re-renders only for this chat. */
 export function useRun(chatId: string | null): RunState | undefined {
-  const { runs } = useStreams();
-  return chatId ? runs[runKey(chatId, LANE)] : undefined;
+  const { store } = useStreamActions();
+  const read = () => (chatId ? store.getState()[runKey(chatId, LANE)] : undefined);
+  return useSyncExternalStore(store.subscribe, read, read);
+}
+
+/** Whether an answer is being written in this chat; changes only when that flips. */
+export function useIsAnswering(chatId: string): boolean {
+  const { store } = useStreamActions();
+  const read = () => isRunning(store.getState()[runKey(chatId, LANE)]);
+  return useSyncExternalStore(store.subscribe, read, read);
 }

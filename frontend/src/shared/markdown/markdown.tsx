@@ -2,13 +2,35 @@
 
 import type { Element, ElementContent } from 'hast';
 import { useTranslations } from 'next-intl';
-import type { ReactNode } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { PluggableList } from 'unified';
 import { cn, CopyButton } from '@/shared/ui';
 import { closeOpenBlocks } from './close-open-blocks';
 import { safeUrl } from './safe-url';
+import { splitSettled } from './split-blocks';
+
+const GFM = [remarkGfm];
+const NO_IMAGES = ['img'];
+const toSafeUrl = (url: string) => safeUrl(url) ?? '';
+
+type ChunkProps = { text: string; plugins: PluggableList; components: Components };
+
+/** One parse of one piece of markdown. Memoised, so finished blocks of a stream parse once. */
+const Chunk = memo(function Chunk({ text, plugins, components }: ChunkProps) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={plugins}
+      skipHtml
+      disallowedElements={NO_IMAGES}
+      urlTransform={toSafeUrl}
+      components={components}
+    >
+      {text}
+    </ReactMarkdown>
+  );
+});
 
 /** A table or code block, with its markdown source, for actions like "open in panel". */
 export type MarkdownBlock = { kind: 'table' | 'code'; source: string; language: string | null };
@@ -47,15 +69,13 @@ function languageOf(node: Element | undefined): string | null {
   return match ? match.slice('language-'.length) : null;
 }
 
-/**
- * Markdown for answers: GFM tables, lists and code, but no HTML, no images and only http(s) and
- * mailto links (annex 11, 8.4). Safe by default: raw HTML is skipped, never rendered.
- */
-export function Markdown({ text, streaming = false, remarkPlugins = [], components, blockAction, className }: Props) {
-  const t = useTranslations('markdown');
-  const source = streaming ? closeOpenBlocks(text) : text;
+const NONE: PluggableList = [];
 
-  const defaults: Components = {
+type Translate = (key: 'code' | 'copyCode' | 'copied') => string;
+
+/** Safe renderers: links only to web and mail, code with copy, scrollable tables. */
+function defaultsFor(t: Translate, source: string, blockAction: Props['blockAction']): Components {
+  return {
     a: ({ href, children }) => {
       const url = href ? safeUrl(href) : null;
       if (!url) return <span>{children}</span>;
@@ -102,18 +122,38 @@ export function Markdown({ text, streaming = false, remarkPlugins = [], componen
     input: ({ checked, type }) =>
       type === 'checkbox' ? <input type="checkbox" checked={Boolean(checked)} disabled readOnly /> : null,
   };
+}
 
+/**
+ * Markdown for answers: GFM tables, lists and code, but no HTML, no images and only http(s) and
+ * mailto links (annex 11, 8.4). Safe by default: raw HTML is skipped, never rendered.
+ */
+export function Markdown({ text, streaming = false, remarkPlugins = NONE, components, blockAction, className }: Props) {
+  const t = useTranslations('markdown');
+  // The source text only matters for block actions (settled answers); while streaming the
+  // renderers stay identical from frame to frame, so memoised blocks do not render again.
+  const source = blockAction ? text : '';
+  const merged = useMemo<Components>(
+    () => ({ ...defaultsFor(t, source, blockAction), ...components }),
+    [t, source, blockAction, components],
+  );
+  const plugins = useMemo(() => [...GFM, ...remarkPlugins], [remarkPlugins]);
+
+  if (!streaming) {
+    return (
+      <div className={cn('markdown', className)}>
+        <Chunk text={text} plugins={plugins} components={merged} />
+      </div>
+    );
+  }
+  // Streaming: finished blocks render once, only the growing tail is parsed on every frame.
+  const { settled, tail } = splitSettled(text);
   return (
     <div className={cn('markdown', className)}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, ...remarkPlugins]}
-        skipHtml
-        disallowedElements={['img']}
-        urlTransform={(url) => safeUrl(url) ?? ''}
-        components={{ ...defaults, ...components }}
-      >
-        {source}
-      </ReactMarkdown>
+      {settled.map((block, index) => (
+        <Chunk key={index} text={block} plugins={plugins} components={merged} />
+      ))}
+      <Chunk text={closeOpenBlocks(tail)} plugins={plugins} components={merged} />
     </div>
   );
 }

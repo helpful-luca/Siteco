@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useUploads } from '@/features/library';
 import { Page } from '@/features/shell';
 import { ApiError } from '@/shared/api/errors';
@@ -12,8 +12,8 @@ import { Button, buttonStyles, cn, DelayedSpinner } from '@/shared/ui';
 import { useChatSettings } from '../chat-settings';
 import { isNotFound, useChat, useMessages, useUpdateChat } from '../queries';
 import { isRunning } from '../stream/stream-reducer';
-import { useRun, useStreams } from '../stream/stream-provider';
-import { buildTurns, runIsPersisted } from '../turns';
+import { useRun, useStreamActions } from '../stream/stream-provider';
+import { buildTurns, runIsPersisted, type Turn } from '../turns';
 import { useComposerBlock } from '../use-composer-state';
 import { useFollowScroll } from '../use-follow-scroll';
 import { AssistantMessage } from './assistant-message';
@@ -37,18 +37,19 @@ export function ChatView({ chatId }: { chatId: string }) {
   const run = useRun(chatId);
   const running = isRunning(run);
   const messages = useMessages(chatId, { poll: !running });
-  const streams = useStreams();
+  const streams = useStreamActions();
   const settings = useChatSettings();
   const updateChat = useUpdateChat();
   const uploads = useUploads();
   const { block } = useComposerBlock();
 
-  const { scrollRef, contentRef, atEnd, scrollToEnd, scrollToTop } = useFollowScroll();
+  const { scrollRef, contentRef, atEnd, scrolled, scrollToEnd, scrollToTop } = useFollowScroll();
   const [viewHeight, setViewHeight] = useState(0);
   const [pinned, setPinned] = useState<string | null>(null);
   const [draft, setDraftState] = useState(() => settings.draft(chatId));
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
 
   const setDraft = (value: string) => {
     setDraftState(value);
@@ -62,6 +63,14 @@ export function ChatView({ chatId }: { chatId: string }) {
   useEffect(() => {
     if (run && list && runIsPersisted(list, run)) streams.clear(chatId);
   }, [run, list, streams, chatId]);
+
+  // Leaving the chat drops a finished run; the saved answer loads on the next visit.
+  useEffect(
+    () => () => {
+      if (streams.getRun(chatId)?.outcome) streams.clear(chatId);
+    },
+    [streams, chatId],
+  );
 
   // A new question (or regenerated answer) moves to the top and its turn fills the view.
   const liveTurn = run?.meta?.user_message_id ?? null;
@@ -80,11 +89,11 @@ export function ChatView({ chatId }: { chatId: string }) {
     if (loaded) requestAnimationFrame(() => scrollToEnd(false));
   }, [loaded, scrollToEnd]);
 
-  // One polite announcement when an answer ends, instead of every token (annex 10, O7).
+  // One short, polite announcement when an answer ends, instead of every token (annex 10, O7).
   const outcome = run?.outcome?.kind;
   const announcement =
     outcome === 'done'
-      ? `${t('announce.ready')} ${run?.text ?? ''}`
+      ? t('announce.ready')
       : outcome === 'stopped'
         ? t('announce.stopped')
         : outcome === 'error'
@@ -92,7 +101,9 @@ export function ChatView({ chatId }: { chatId: string }) {
           : '';
 
   const submit = async (question: string) => {
-    if (!settings.model) return;
+    // A ref, not state: a second Enter in the same frame must not send twice.
+    if (!settings.model || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     setRefusal(null);
     try {
@@ -101,24 +112,30 @@ export function ChatView({ chatId }: { chatId: string }) {
       const apiError = error instanceof ApiError ? error : null;
       if (apiError?.code !== 'DUPLICATE_REQUEST') setRefusal(apiError ?? new ApiError('UNKNOWN_ERROR', 0));
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
 
-  const regenerate = async (assistantId: string, question: string, previousModel: string | null) => {
-    setRefusal(null);
-    try {
-      await streams.regenerate({
-        chatId,
-        assistantId,
-        question,
-        model: settings.model ?? previousModel ?? config?.default_model ?? '',
-        locale,
-      });
-    } catch (error) {
-      setRefusal(error instanceof ApiError ? error : new ApiError('UNKNOWN_ERROR', 0));
-    }
-  };
+  const model = settings.model;
+  const defaultModel = config?.default_model;
+  const regenerate = useCallback(
+    async (assistantId: string, question: string, previousModel: string | null) => {
+      setRefusal(null);
+      try {
+        await streams.regenerate({
+          chatId,
+          assistantId,
+          question,
+          model: model ?? previousModel ?? defaultModel ?? '',
+          locale,
+        });
+      } catch (error) {
+        setRefusal(error instanceof ApiError ? error : new ApiError('UNKNOWN_ERROR', 0));
+      }
+    },
+    [streams, chatId, model, defaultModel, locale],
+  );
 
   if (isNotFound(chat.error) || isNotFound(messages.error)) {
     return (
@@ -167,6 +184,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       scrollRef={scrollRef}
       contentRef={contentRef}
       showJump={!atEnd}
+      scrolled={scrolled}
       onJump={() => scrollToEnd()}
       onViewHeight={setViewHeight}
       header={
@@ -210,28 +228,18 @@ export function ChatView({ chatId }: { chatId: string }) {
           {turns.map((turn) => {
             const isLast = turn === lastTurn;
             const answer = turn.answer;
-            const canRegenerate =
-              isLast && answer?.messageId && !running && answer.status !== 'streaming' && answer.status !== 'sources_only';
+            const canRegenerate = Boolean(
+              isLast && answer?.messageId && !running && answer.status !== 'streaming' && answer.status !== 'sources_only',
+            );
             return (
-              <li
+              <TurnRow
                 key={turn.key}
-                data-turn={turn.key}
-                className="flex flex-col gap-8"
-                style={isLast && turn.key === pinned && viewHeight > 0 ? { minHeight: viewHeight } : undefined}
-              >
-                <UserMessage text={turn.question} />
-                {answer && (
-                  <AssistantMessage
-                    answer={answer}
-                    chatTitle={current?.title ?? null}
-                    onRegenerate={
-                      canRegenerate && answer.messageId
-                        ? () => void regenerate(answer.messageId as string, turn.question, answer.model)
-                        : undefined
-                    }
-                  />
-                )}
-              </li>
+                turn={turn}
+                minHeight={isLast && turn.key === pinned && viewHeight > 0 ? viewHeight : undefined}
+                chatTitle={current?.title ?? null}
+                canRegenerate={canRegenerate}
+                onRegenerate={regenerate}
+              />
             );
           })}
         </ol>
@@ -242,3 +250,31 @@ export function ChatView({ chatId }: { chatId: string }) {
     </ChatFrame>
   );
 }
+
+type TurnRowProps = {
+  turn: Turn;
+  minHeight: number | undefined;
+  chatTitle: string | null;
+  canRegenerate: boolean;
+  onRegenerate: (assistantId: string, question: string, previousModel: string | null) => void;
+};
+
+/** One question and its answer. Memoised: while an answer streams, only its own row renders. */
+const TurnRow = memo(function TurnRow({ turn, minHeight, chatTitle, canRegenerate, onRegenerate }: TurnRowProps) {
+  const answer = turn.answer;
+  const messageId = answer?.messageId;
+  return (
+    <li data-turn={turn.key} className="flex flex-col gap-8" style={minHeight ? { minHeight } : undefined}>
+      <UserMessage text={turn.question} />
+      {answer && (
+        <AssistantMessage
+          answer={answer}
+          chatTitle={chatTitle}
+          onRegenerate={
+            canRegenerate && messageId ? () => onRegenerate(messageId, turn.question, answer.model) : undefined
+          }
+        />
+      )}
+    </li>
+  );
+});

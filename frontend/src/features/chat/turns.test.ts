@@ -59,3 +59,18 @@ describe('runIsPersisted', () => {
     expect(runIsPersisted([message({ id: 'a2', status: 'complete' })], liveRun())).toBe(false);
   });
 });
+
+describe('buildTurns identity', () => {
+  it('keeps unchanged turns and answers identical between renders', () => {
+    const rows = [...persisted, user('u2', 'Neu?'), message({ id: 'a2', parent_id: 'u2', status: 'streaming', content: '' })];
+    const run = liveRun();
+    const first = buildTurns(rows, run);
+    const second = buildTurns(rows, run);
+    expect(second[0]).toBe(first[0]);
+    expect(second[1].answer).toBe(first[1].answer);
+    const next = { ...run, text: `${run.text} mehr` };
+    const third = buildTurns(rows, next);
+    expect(third[0]).toBe(first[0]);
+    expect(third[1].answer).not.toBe(first[1].answer);
+  });
+});

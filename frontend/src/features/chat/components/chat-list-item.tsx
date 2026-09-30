@@ -6,21 +6,22 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { ChatListItemOut } from '@/shared/api/types';
 import { Button, cn, Menu, MenuItem, MenuSeparator } from '@/shared/ui';
+import { useIsAnswering } from '../stream/stream-provider';
 
 const MAX_TITLE = 120;
 
 type Props = {
   chat: ChatListItemOut;
   active: boolean;
-  answering: boolean;
   onNavigate: () => void;
   onRename: (title: string) => void;
   onDelete: () => void;
 };
 
 /** One chat row: 32 px, the title truncated, a quiet actions button on hover or focus. */
-export function ChatListItem({ chat, active, answering, onNavigate, onRename, onDelete }: Props) {
+export function ChatListItem({ chat, active, onNavigate, onRename, onDelete }: Props) {
   const t = useTranslations('chat');
+  const answering = useIsAnswering(chat.id);
   const [editing, setEditing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const title = chat.title ?? t('untitled');
@@ -71,7 +72,7 @@ export function ChatListItem({ chat, active, answering, onNavigate, onRename, on
           open={menuOpen}
           onOpenChange={setMenuOpen}
           trigger={
-            <Button icon variant="ghost" size="sm" aria-label={t('list.more', { title })} className="size-7">
+            <Button icon variant="ghost" size="sm" aria-label={t('list.more', { title })}>
               <MoreHorizontal />
             </Button>
           }

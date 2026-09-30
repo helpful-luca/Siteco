@@ -9,19 +9,22 @@ import type { ChatListItemOut } from '@/shared/api/types';
 import { Button } from '@/shared/ui';
 import { groupChats } from '../group-chats';
 import { useChats, useDeleteChat, useUpdateChat } from '../queries';
-import { isRunning, runKey } from '../stream/stream-reducer';
-import { useStreams } from '../stream/stream-provider';
+import { isRunning } from '../stream/stream-reducer';
+import { useStreamActions } from '../stream/stream-provider';
 import { ChatListItem } from './chat-list-item';
 import { DeleteChatDialog } from './delete-chat-dialog';
 
-/** The chats in the sidebar, grouped by date like Notes, filtered by the sidebar search. */
+/**
+ * The chats in the sidebar, grouped by date like Notes, filtered by the sidebar search. It reads no
+ * stream state itself, so streaming answers never re-render the list; each row watches its own chat.
+ */
 export function ChatList() {
   const t = useTranslations('chat.list');
   const { chatQuery, setSidebarOpen } = useUI();
   const pathname = usePathname();
   const router = useRouter();
   const { data, error, refetch, isFetching } = useChats();
-  const { runs, stop, clear } = useStreams();
+  const { getRun, stop, clear } = useStreamActions();
   const rename = useUpdateChat();
   const remove = useDeleteChat();
   const [deleting, setDeleting] = useState<ChatListItemOut | null>(null);
@@ -32,7 +35,7 @@ export function ChatList() {
 
   const confirmDelete = async (chat: ChatListItemOut) => {
     // A running answer is stopped first (annex 10, E9); the backend would cancel it too.
-    if (isRunning(runs[runKey(chat.id)])) await stop(chat.id);
+    if (isRunning(getRun(chat.id))) await stop(chat.id);
     clear(chat.id);
     remove.mutate(chat.id);
     if (chat.id === activeId) router.push('/chat');
@@ -76,7 +79,6 @@ export function ChatList() {
                   key={chat.id}
                   chat={chat}
                   active={chat.id === activeId}
-                  answering={isRunning(runs[runKey(chat.id)])}
                   onNavigate={() => setSidebarOpen(false)}
                   onRename={(title) => rename.mutate({ chatId: chat.id, patch: { title } })}
                   onDelete={() => setDeleting(chat)}
@@ -88,7 +90,7 @@ export function ChatList() {
       </div>
       <DeleteChatDialog
         chat={deleting}
-        running={deleting ? isRunning(runs[runKey(deleting.id)]) : false}
+        running={deleting ? isRunning(getRun(deleting.id)) : false}
         onConfirm={(chat) => void confirmDelete(chat)}
         onClose={() => setDeleting(null)}
       />
