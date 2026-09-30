@@ -1,16 +1,35 @@
 """Test doubles for ports. Deterministic and dependency-free."""
 
+import asyncio
+import threading
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Collection, Sequence
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+from docchat.domain.chunking import section_from_text
+from docchat.domain.errors import IngestionError
+from docchat.domain.models import Chunk
+from docchat.domain.parsing import PageBatch, PageBatchFailed, TextSection
 
 
 class FakeEmbedder:
     """Vector depends only on text length, so tests are deterministic."""
 
-    def __init__(self, dim: int = 384, *, fail: bool = False, delay_s: float = 0.0) -> None:
+    def __init__(
+        self,
+        dim: int = 384,
+        *,
+        fail: bool = False,
+        delay_s: float = 0.0,
+        fail_on_call: int | None = None,
+    ) -> None:
         self.dim = dim
         self.fail = fail
         self.delay_s = delay_s
+        self.fail_on_call = fail_on_call
+        self.calls = 0
+        self.gate: threading.Event | None = None  # set by tests to pause embedding
 
     def load(self) -> None:
         time.sleep(self.delay_s)
@@ -18,7 +37,99 @@ class FakeEmbedder:
             raise RuntimeError("model files missing")
 
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        self.calls += 1
+        if self.gate is not None:
+            self.gate.wait(timeout=10)
+        if self.fail_on_call is not None and self.calls >= self.fail_on_call:
+            raise RuntimeError("embedding failed")
         return [self.embed_query(t) for t in texts]
 
     def embed_query(self, text: str) -> list[float]:
         return [float(len(text) % 7)] * self.dim
+
+
+class FakeClock:
+    def __init__(self) -> None:
+        self.current = datetime(2026, 9, 30, 12, 0, tzinfo=UTC)
+
+    def now(self) -> datetime:
+        self.current += timedelta(milliseconds=1)
+        return self.current
+
+
+def page(number: int, text: str) -> TextSection:
+    return section_from_text(text, page=number)
+
+
+class FakePdfParser:
+    """Serves scripted pages. `pages` maps a file name to its page texts ("" = scanned page)."""
+
+    def __init__(self) -> None:
+        self.pages: dict[str, list[str]] = {}
+        self.open_error: dict[str, IngestionError] = {}
+        self.failing_batches: dict[str, dict[int, bool]] = {}  # first page index -> timed out
+        self.calls: list[tuple[str, int, int]] = []
+        self.before_batch: Callable[[str, int], object] | None = None
+
+    async def count_pages(self, path: Path) -> int:
+        if path.name in self.open_error:
+            raise self.open_error[path.name]
+        return len(self.pages[path.name])
+
+    async def parse_pages(self, path: Path, first: int, count: int) -> PageBatch:
+        self.calls.append((path.name, first, count))
+        if self.before_batch is not None:
+            result = self.before_batch(path.name, first)
+            if asyncio.iscoroutine(result):
+                await result
+        failing = self.failing_batches.get(path.name, {})
+        if first in failing:
+            raise PageBatchFailed(timed_out=failing[first])
+        texts = self.pages[path.name][first : first + count]
+        return PageBatch(sections=tuple(page(first + i + 1, t) for i, t in enumerate(texts)))
+
+    async def close(self) -> None:
+        return None
+
+
+class FakeVectorStore:
+    def __init__(self) -> None:
+        self.rows: dict[str, tuple[Chunk, list[float]]] = {}
+        self.optimized = 0
+        self.dim = 0
+
+    def open(self, dim: int) -> None:
+        self.dim = dim
+
+    def ping(self) -> bool:
+        return True
+
+    def add(self, chunks: Sequence[Chunk], vectors: Sequence[Sequence[float]]) -> None:
+        for chunk, vector in zip(chunks, vectors, strict=True):
+            self.rows[chunk.chunk_id] = (chunk, list(vector))
+
+    def delete_document(self, document_id: str) -> None:
+        self.rows = {k: v for k, v in self.rows.items() if v[0].document_id != document_id}
+
+    def delete_documents_except(self, keep: Collection[str]) -> None:
+        self.rows = {k: v for k, v in self.rows.items() if v[0].document_id in keep}
+
+    def optimize(self) -> None:
+        self.optimized += 1
+
+    def get_chunk(self, document_id: str, chunk_id: str) -> Chunk | None:
+        row = self.rows.get(chunk_id)
+        return row[0] if row and row[0].document_id == document_id else None
+
+    def count(self, document_id: str) -> int:
+        return sum(1 for chunk, _ in self.rows.values() if chunk.document_id == document_id)
+
+
+class RejectingScanner:
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+        self.scanned: list[Path] = []
+
+    async def scan(self, path: Path) -> None:
+        self.scanned.append(path)
+        raise self.error

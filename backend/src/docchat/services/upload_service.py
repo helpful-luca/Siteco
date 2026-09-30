@@ -1,0 +1,185 @@
+"""Accepts one upload: cheap checks first, then the body is streamed to a temp file.
+
+Order (annex 10, C): name and extension, declared size, quota and free disk, magic bytes while
+streaming, byte count, duplicate by SHA-256, malware scan, atomic rename, row `queued`.
+Everything that opens the document happens later in the worker.
+"""
+
+import asyncio
+import hashlib
+import logging
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
+from uuid import uuid4
+
+from docchat.domain.enums import DocumentKind, DocumentStatus
+from docchat.domain.errors import AppError, ErrorCode
+from docchat.domain.models import Document
+from docchat.domain.ports import Clock, DocumentRepository, FileStorage, MalwareScanner, UploadSink
+from docchat.domain.upload_validation import (
+    MAGIC_WINDOW,
+    content_matches_kind,
+    decode_file_name_header,
+    kind_for_filename,
+    sanitize_filename,
+    text_chunk_is_binary,
+)
+from docchat.services.ingestion_worker import IngestionWorker
+
+log = logging.getLogger("docchat.upload")
+
+_MB = 1024 * 1024
+
+
+@dataclass(frozen=True)
+class UploadLimits:
+    max_bytes: int
+    max_storage_bytes: int
+    min_free_bytes: int  # always leave this much disk space for SQLite, LanceDB and logs
+
+
+class _Receiver:
+    """Writes the body to the sink, hashing and checking the content on the way."""
+
+    def __init__(self, sink: UploadSink, kind: DocumentKind, max_bytes: int) -> None:
+        self.sink = sink
+        self.kind = kind
+        self.max_bytes = max_bytes
+        self.size = 0
+        self.head = b""
+        self.head_checked = False
+        self.sha256 = hashlib.sha256()
+
+    def _check_head(self) -> None:
+        if not content_matches_kind(self.kind, self.head):
+            raise AppError(ErrorCode.FILE_CONTENT_MISMATCH)
+        self.head_checked = True
+
+    def write(self, data: bytes) -> None:
+        self.size += len(data)
+        if self.size > self.max_bytes:
+            raise AppError(ErrorCode.UPLOAD_TOO_LARGE, params={"max_mb": self.max_bytes // _MB})
+        if not self.head_checked:
+            self.head += data[: MAGIC_WINDOW + 8 - len(self.head)]
+            if len(self.head) >= MAGIC_WINDOW + 8:
+                self._check_head()
+        if self.kind is not DocumentKind.PDF and text_chunk_is_binary(self.head, data):
+            raise AppError(ErrorCode.FILE_CONTENT_MISMATCH)
+        self.sha256.update(data)
+        try:
+            self.sink.write(data)
+        except OSError as exc:
+            raise AppError(ErrorCode.STORAGE_FULL) from exc
+
+    def finish(self) -> None:
+        if not self.head_checked:
+            self._check_head()
+
+
+class UploadService:
+    def __init__(
+        self,
+        repository: DocumentRepository,
+        storage: FileStorage,
+        scanner: MalwareScanner,
+        worker: IngestionWorker,
+        clock: Clock,
+        limits: UploadLimits,
+    ) -> None:
+        self._repository = repository
+        self._storage = storage
+        self._scanner = scanner
+        self._worker = worker
+        self._clock = clock
+        self._limits = limits
+
+    def _check_name(self, header: str) -> tuple[str, DocumentKind]:
+        decoded = decode_file_name_header(header)
+        if decoded is None:
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                "X-File-Name must be percent-encoded UTF-8.",
+                details=[{"loc": ["header", "x-file-name"], "type": "value_error"}],
+            )
+        filename = sanitize_filename(decoded)
+        kind = kind_for_filename(filename)
+        if kind is None:
+            raise AppError(ErrorCode.UNSUPPORTED_TYPE)
+        return filename, kind
+
+    async def _check_space(self, declared: int) -> None:
+        limits = self._limits
+        if declared == 0:
+            raise AppError(ErrorCode.EMPTY_FILE)
+        if declared > limits.max_bytes:
+            raise AppError(ErrorCode.UPLOAD_TOO_LARGE, params={"max_mb": limits.max_bytes // _MB})
+        used = await asyncio.to_thread(self._repository.total_size_bytes)
+        if used + declared > limits.max_storage_bytes:
+            raise AppError(
+                ErrorCode.STORAGE_QUOTA, params={"max_mb": limits.max_storage_bytes // _MB}
+            )
+        free = await asyncio.to_thread(self._storage.free_bytes)
+        if free - declared < limits.min_free_bytes:
+            raise AppError(ErrorCode.STORAGE_FULL)
+
+    async def accept(
+        self, file_name: str, declared_size: int, body: AsyncIterator[bytes]
+    ) -> Document:
+        filename, kind = self._check_name(file_name)
+        await self._check_space(declared_size)
+        sink = await asyncio.to_thread(self._storage.new_upload)
+        try:
+            receiver = _Receiver(sink, kind, self._limits.max_bytes)
+            async for data in body:
+                if data:
+                    await asyncio.to_thread(receiver.write, data)
+            if receiver.size != declared_size:
+                raise AppError(ErrorCode.UPLOAD_INCOMPLETE)
+            receiver.finish()
+            existing = await asyncio.to_thread(
+                self._repository.find_by_sha256, receiver.sha256.hexdigest()
+            )
+            if existing is not None and existing.status is not DocumentStatus.FAILED:
+                raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id})
+            await self._scanner.scan(sink.path)
+            if existing is not None:
+                # Same bytes as a failed document: process that one again (annex 10, C6).
+                await asyncio.to_thread(self._storage.commit, sink, existing.id, existing.kind)
+                return await self._retry(existing)
+            document = self._new_document(filename, kind, receiver)
+            await asyncio.to_thread(self._storage.commit, sink, document.id, kind)
+        except BaseException:
+            await asyncio.to_thread(sink.discard)
+            raise
+        try:
+            await asyncio.to_thread(self._repository.insert, document)
+        except BaseException:
+            await asyncio.to_thread(self._storage.delete, document.id, kind)
+            raise
+        self._worker.enqueue(document)
+        log.info(
+            "upload_accepted",
+            extra={"document_id": document.id, "kind": kind.value, "size_bytes": receiver.size},
+        )
+        return document
+
+    def _new_document(self, filename: str, kind: DocumentKind, receiver: _Receiver) -> Document:
+        now = self._clock.now()
+        return Document(
+            id=str(uuid4()),
+            filename=filename,
+            kind=kind,
+            size_bytes=receiver.size,
+            sha256=receiver.sha256.hexdigest(),
+            status=DocumentStatus.QUEUED,
+            created_at=now,
+            updated_at=now,
+        )
+
+    async def _retry(self, failed: Document) -> Document:
+        if await asyncio.to_thread(self._repository.requeue, failed.id, self._clock.now()):
+            requeued = await asyncio.to_thread(self._repository.get, failed.id)
+            if requeued is not None:
+                self._worker.enqueue(requeued)
+                return requeued
+        raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": failed.id})

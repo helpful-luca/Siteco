@@ -7,6 +7,7 @@ from docchat.domain.upload_validation import (
     decode_file_name_header,
     kind_for_filename,
     sanitize_filename,
+    text_chunk_is_binary,
 )
 
 
@@ -46,6 +47,12 @@ def test_text_must_not_contain_nul_bytes() -> None:
 
 def test_utf16_with_bom_may_contain_nul_bytes() -> None:
     assert content_matches_kind(DocumentKind.TXT, "Hallo".encode("utf-16"))
+
+
+def test_streamed_text_chunks_with_nul_bytes_are_binary() -> None:
+    assert text_chunk_is_binary(b"plain text", b"more\x00")
+    assert not text_chunk_is_binary(b"plain text", b"more text")
+    assert not text_chunk_is_binary(b"\xff\xfeH\x00", b"\x00a\x00")
 
 
 def test_file_name_header_is_percent_decoded() -> None:

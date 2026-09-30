@@ -37,13 +37,10 @@ def content_matches_kind(kind: DocumentKind, head: bytes) -> bool:
     return head.startswith(_UTF16_BOMS) or b"\x00" not in head
 
 
-def chunk_is_textual(chunk: bytes) -> bool:
-    """Text files are checked as they stream: any NUL byte means binary content."""
-    return b"\x00" not in chunk
-
-
-def allows_nul_bytes(head: bytes) -> bool:
-    return head.startswith(_UTF16_BOMS)
+def text_chunk_is_binary(head: bytes, chunk: bytes) -> bool:
+    """Text files are checked as they stream: a NUL byte means binary content, unless the
+    file announced UTF-16 with a byte order mark."""
+    return not head.startswith(_UTF16_BOMS) and b"\x00" in chunk
 
 
 def decode_file_name_header(raw: str) -> str | None:
