@@ -1,0 +1,285 @@
+{
+  "components": {
+    "schemas": {
+      "ComponentStatus": {
+        "enum": [
+          "loading",
+          "ok",
+          "failed"
+        ],
+        "title": "ComponentStatus",
+        "type": "string"
+      },
+      "ConfigOut": {
+        "properties": {
+          "commit": {
+            "title": "Commit",
+            "type": "string"
+          },
+          "features": {
+            "$ref": "#/components/schemas/Features"
+          },
+          "llm_status": {
+            "$ref": "#/components/schemas/LlmStatus"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "commit",
+          "llm_status",
+          "features"
+        ],
+        "title": "ConfigOut",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "details": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Details",
+            "type": "array"
+          },
+          "message": {
+            "description": "Developer-facing text for logs. The UI translates `code`.",
+            "title": "Message",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "retry_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Retry After"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "request_id"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorCode": {
+        "enum": [
+          "VALIDATION_ERROR",
+          "NOT_FOUND",
+          "METHOD_NOT_ALLOWED",
+          "UNAUTHORIZED_CLIENT",
+          "SERVICE_STARTING",
+          "INTERNAL_ERROR"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorEnvelope",
+        "type": "object"
+      },
+      "Features": {
+        "properties": {
+          "retrieval_only": {
+            "title": "Retrieval Only",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "retrieval_only"
+        ],
+        "title": "Features",
+        "type": "object"
+      },
+      "LiveOut": {
+        "properties": {
+          "app": {
+            "title": "App",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "app",
+          "status"
+        ],
+        "title": "LiveOut",
+        "type": "object"
+      },
+      "LlmStatus": {
+        "enum": [
+          "missing_key",
+          "unchecked",
+          "ok",
+          "invalid_key"
+        ],
+        "title": "LlmStatus",
+        "type": "string"
+      },
+      "ReadyChecks": {
+        "properties": {
+          "db": {
+            "enum": [
+              "ok",
+              "failed"
+            ],
+            "title": "Db",
+            "type": "string"
+          },
+          "embedding_model": {
+            "$ref": "#/components/schemas/ComponentStatus"
+          },
+          "llm": {
+            "$ref": "#/components/schemas/LlmStatus"
+          }
+        },
+        "required": [
+          "db",
+          "embedding_model",
+          "llm"
+        ],
+        "title": "ReadyChecks",
+        "type": "object"
+      },
+      "ReadyOut": {
+        "properties": {
+          "checks": {
+            "$ref": "#/components/schemas/ReadyChecks"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ready",
+          "checks"
+        ],
+        "title": "ReadyOut",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Siteco Document Chat API",
+    "version": "contract"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/config": {
+      "get": {
+        "operationId": "config_api_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Config",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/health/live": {
+      "get": {
+        "description": "No dependencies. Electron uses `app` to verify it talks to this application.",
+        "operationId": "live_api_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Live",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/health/ready": {
+      "get": {
+        "description": "Ready means search works. A missing API key does not block readiness.",
+        "operationId": "ready_api_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyOut"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Ready",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  }
+}
