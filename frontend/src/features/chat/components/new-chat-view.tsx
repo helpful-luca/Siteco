@@ -3,14 +3,14 @@
 import { FileUp } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useUploads } from '@/features/library';
 import { ApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
 import { useCodeText } from '@/shared/i18n/use-code-text';
 import { useChatSettings } from '../chat-settings';
 import { useCreateChat, useDeleteChat } from '../queries';
-import { useStreams } from '../stream/stream-provider';
+import { useStreamActions } from '../stream/stream-provider';
 import { useComposerBlock } from '../use-composer-state';
 import { ChatFrame } from './chat-frame';
 import { ChatHeader } from './chat-header';
@@ -36,7 +36,7 @@ export function NewChatView() {
   const { data: config } = useConfig();
   const uploads = useUploads();
   const settings = useChatSettings();
-  const streams = useStreams();
+  const streams = useStreamActions();
   const createChat = useCreateChat();
   const deleteChat = useDeleteChat();
   const { block, readyCount } = useComposerBlock();
@@ -46,6 +46,16 @@ export function NewChatView() {
   const [draft, setDraftState] = useState(() => settings.draft(NEW));
   const [sending, setSending] = useState(false);
   const [refusal, setRefusal] = useState<ApiError | null>(null);
+  // Refs, not state: a second Enter in the same frame must not create a second chat, and a
+  // confirmation that arrives after the user went elsewhere must not pull them back.
+  const sendingRef = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const setDraft = (value: string) => {
     setDraftState(value);
@@ -53,7 +63,8 @@ export function NewChatView() {
   };
 
   const submit = async (question: string) => {
-    if (!settings.model || sending) return;
+    if (!settings.model || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     setRefusal(null);
     let chatId: string | null = null;
@@ -66,12 +77,14 @@ export function NewChatView() {
         throw new ApiError('STREAM_INTERRUPTED', 0);
       }
       setDraft('');
-      router.replace(`/chat/${chatId}`);
+      if (mounted.current) router.replace(`/chat/${chatId}`);
     } catch (error) {
       // Refused before the stream: no empty chat stays behind, the question stays in the composer.
       if (chatId) deleteChat.mutate(chatId);
-      setRefusal(error instanceof ApiError ? error : new ApiError('UNKNOWN_ERROR', 0));
-      setSending(false);
+      if (mounted.current) setRefusal(error instanceof ApiError ? error : new ApiError('UNKNOWN_ERROR', 0));
+    } finally {
+      sendingRef.current = false;
+      if (mounted.current) setSending(false);
     }
   };
 
