@@ -1,0 +1,75 @@
+[project]
+name = "docchat"
+version = "0.1.0"
+description = "Siteco Document Chat backend"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi==0.142.2",
+  "uvicorn[standard]==0.54.0",
+  "pydantic==2.13.5",
+  "pydantic-settings==2.15.0",
+  "fastembed==0.8.1",
+]
+
+[dependency-groups]
+dev = [
+  "pytest==9.1.1",
+  "pytest-asyncio==1.4.0",
+  "httpx2==2.13.1",
+  "ruff==0.16.9",
+  "mypy==2.3.1",
+  "import-linter==2.15",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/docchat"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+markers = ["model: needs the real embedding model files (slow, run in docker build and CI)"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["docchat"]
+mypy_path = "src"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["docchat.domain.*", "docchat.services.*"]
+strict = true
+
+[tool.importlinter]
+root_package = "docchat"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture"
+type = "layers"
+layers = ["docchat.api", "docchat.services", "docchat.domain"]
+
+[[tool.importlinter.contracts]]
+name = "Domain is pure"
+type = "forbidden"
+source_modules = ["docchat.domain"]
+forbidden_modules = ["docchat.api", "docchat.services", "docchat.adapters", "docchat.core",
+                     "fastapi", "starlette", "sqlite3", "fastembed"]
+
+[[tool.importlinter.contracts]]
+name = "Services and API depend on ports, not adapters"
+type = "forbidden"
+source_modules = ["docchat.services", "docchat.api"]
+forbidden_modules = ["docchat.adapters"]
