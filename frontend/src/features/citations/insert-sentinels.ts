@@ -4,6 +4,8 @@
  * sentinels into chips. Sentinels use characters a model does not write: ⟦c:N⟧.
  */
 
+import { utf16Index } from '@/shared/lib/code-points';
+
 export const SENTINEL_PATTERN = /⟦c:(\d+)⟧/g;
 
 /**
@@ -18,18 +20,6 @@ export type ChipMark = { offset: number; n: number };
 
 const sentinel = (n: number) => `⟦c:${n}⟧`;
 const FENCE = /^ {0,3}(`{3,}|~{3,})/;
-
-/** Python counts code points, JavaScript strings count UTF-16 units. */
-function toIndex(text: string, codePoints: number): number {
-  let index = 0;
-  let seen = 0;
-  while (index < text.length && seen < codePoints) {
-    const code = text.codePointAt(index) ?? 0;
-    index += code > 0xffff ? 2 : 1;
-    seen += 1;
-  }
-  return index;
-}
 
 /** Character ranges [start, end] of fenced code blocks, fences included. */
 function codeRanges(text: string): Array<[number, number]> {
@@ -68,7 +58,7 @@ export function insertSentinels(text: string, marks: ChipMark[]): string {
   const code = codeRanges(text);
   const byPosition = new Map<number, Set<number>>();
   for (const mark of marks) {
-    const position = settle(text, toIndex(text, Math.max(0, mark.offset)));
+    const position = settle(text, utf16Index(text, Math.max(0, mark.offset)));
     if (code.some(([start, end]) => position >= start && position <= end)) continue;
     const numbers = byPosition.get(position) ?? new Set<number>();
     numbers.add(mark.n);

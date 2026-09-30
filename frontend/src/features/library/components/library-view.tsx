@@ -8,6 +8,7 @@ import { useCodeText } from '@/shared/i18n/use-code-text';
 import { ApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
 import { Page, useUI } from '@/features/shell';
+import { useOpenDocument } from '@/features/viewer';
 import { Button, DelayedSpinner, SearchField, SegmentedControl } from '@/shared/ui';
 import { useDeleteDocument, useDocuments } from '../queries';
 import { matchesFilter, matchesQuery, statusGroup, type StatusFilter } from '../status';
@@ -43,13 +44,17 @@ export function LibraryView() {
   const empty = documents.length === 0 && uploads.items.length === 0;
   const totalBytes = documents.reduce((sum, d) => sum + d.size_bytes, 0);
 
+  const openDocument = useOpenDocument();
+  // Ready documents open in the viewer; the others show their status until they can be read.
   const preview = (document: DocumentOut) =>
-    openPanel({
-      id: document.id,
-      title: document.filename,
-      subtitle: t('preview.title'),
-      body: <DocumentDetails documentId={document.id} />,
-    });
+    document.status === 'ready'
+      ? openDocument(document)
+      : openPanel({
+          id: document.id,
+          title: document.filename,
+          subtitle: t('preview.title'),
+          body: <DocumentDetails documentId={document.id} />,
+        });
 
   const confirmDelete = (document: DocumentOut) => {
     if (panel?.id === document.id) closePanel();

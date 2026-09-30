@@ -1,6 +1,5 @@
 'use client';
 
-import { ScanEye } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useDocuments } from '../queries';
 import { useFormatSize } from '../use-format-size';
@@ -24,11 +23,7 @@ export function DocumentDetails({ documentId }: { documentId: string }) {
   ];
   return (
     <div className="p-6">
-      <div className="flex flex-col items-center rounded-card bg-fill px-6 py-10 text-center ring-1 ring-inset ring-hairline">
-        <ScanEye aria-hidden className="size-7 text-ink-muted" />
-        <p className="mt-4 text-body font-medium">{t('soonTitle')}</p>
-        <p className="mt-1 max-w-[32ch] text-footnote text-ink-muted">{t('soon')}</p>
-      </div>
+      <p className="max-w-[36ch] text-footnote text-ink-muted">{t('notReady')}</p>
       <h3 className="mt-6 text-caption font-medium text-ink-muted">{t('status')}</h3>
       <div className="mt-1 [--row-line:--spacing(7)]">
         <DocumentStatus document={document} announce={false} />

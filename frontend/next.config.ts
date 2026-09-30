@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { CONTENT_SECURITY_POLICY } from './src/shared/security/content-security-policy';
 
 const withNextIntl = createNextIntlPlugin('./src/shared/i18n/request.ts');
 
@@ -24,6 +25,11 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
         ],
       },
+      // Static policy for the app in production (`next dev` needs eval for Fast Refresh). Not on
+      // /api: document files keep the backend's own `sandbox` policy.
+      ...(process.env.NODE_ENV === 'production'
+        ? [{ source: '/((?!api/).*)', headers: [{ key: 'Content-Security-Policy', value: CONTENT_SECURITY_POLICY }] }]
+        : []),
     ];
   },
 };

@@ -51,12 +51,11 @@ export function SourcesList({ sources, citations, activeSourceId = null, onOpenS
                 <button
                   key={source.id}
                   type="button"
-                  disabled={source.deleted}
-                  aria-pressed={source.deleted ? undefined : source.id === activeSourceId}
+                  aria-pressed={source.id === activeSourceId}
                   onClick={() => onOpenSource?.(source, citedTextOf(source))}
                   className={cn(
                     'flex h-7 max-w-full min-w-0 items-center gap-2 rounded-control px-2 text-footnote text-ink-muted pointer-coarse:h-11',
-                    'transition-colors hover:bg-fill hover:text-ink disabled:hover:bg-transparent disabled:hover:text-ink-muted',
+                    'transition-colors hover:bg-fill hover:text-ink',
                     source.id === activeSourceId && 'bg-fill text-ink',
                   )}
                 >

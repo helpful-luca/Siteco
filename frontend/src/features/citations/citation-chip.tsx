@@ -15,8 +15,8 @@ type Props = {
 
 /**
  * Numbered source reference in the answer text. A real button: hover and keyboard focus show the
- * cited sentence, a click opens the source (annex 11, 8.4). Deleted sources stay readable but
- * open nothing (annex 10, E13).
+ * cited sentence, a click opens the source (annex 11, 8.4). A deleted source opens its stored
+ * snapshot (master spec 6.3, which wins over "opens nothing" in annex 10, E13).
  */
 export function CitationChip({ n, source, citedText, active = false, onOpen }: Props) {
   const t = useTranslations('chat.sources');
@@ -47,15 +47,14 @@ export function CitationChip({ n, source, citedText, active = false, onOpen }: P
       <button
         type="button"
         aria-label={deleted ? `${label}, ${t('deleted')}` : label}
-        aria-pressed={deleted ? undefined : active}
-        aria-disabled={deleted || undefined}
-        onClick={deleted ? undefined : onOpen}
+        aria-pressed={active}
+        onClick={onOpen}
         className={cn(
           'mx-0.5 inline-flex h-[18px] min-w-[18px] -translate-y-px items-center justify-center rounded-full px-1',
           'align-middle text-[11px] leading-none font-semibold tabular-nums',
           'transition-[background-color,color] duration-200 ease-out-soft',
           deleted
-            ? 'bg-fill-strong text-ink-muted line-through'
+            ? cn('text-ink-muted line-through', active ? 'bg-hairline-strong' : 'bg-fill-strong hover:bg-hairline-strong')
             : active
               ? 'bg-sodium text-on-sodium'
               : 'bg-highlight text-sodium-ink hover:bg-sodium hover:text-on-sodium',

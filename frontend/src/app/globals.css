@@ -293,6 +293,68 @@ html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
 }
 
 /*
+ * The same moment inside a PDF page: a highlighter stroke over each cited line, in the colour of
+ * the active chip. Paper stays white in both themes, and multiply keeps the ink black under the
+ * stroke. It warms up line by line (--mark-delay) without the glow: a marker, not a light source.
+ */
+@keyframes mark-warm-up {
+  from {
+    opacity: 0;
+    transform: scaleX(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lamp-on-mark {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--c-sodium) 55%, transparent);
+  mix-blend-mode: multiply;
+  transform-origin: left center;
+  animation: mark-warm-up 320ms var(--ease-out-soft) both;
+  animation-delay: var(--mark-delay, 0ms);
+}
+
+/* The cited span in a text file: the passage colour, warming up without a glow. */
+@keyframes text-mark-warm-up {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: var(--c-highlight);
+  }
+}
+
+.text-mark {
+  background-color: var(--c-highlight);
+  animation: text-mark-warm-up 320ms var(--ease-out-soft) both;
+}
+
+/* Fallback marks inside PDF.js's text layer (no sentence geometry for the page). */
+.pdf-page .textLayer {
+  mix-blend-mode: multiply;
+}
+
+.pdf-page .textLayer mark {
+  color: transparent;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--c-sodium) 55%, transparent);
+  animation: mark-warm-up 320ms var(--ease-out-soft) both;
+}
+
+.pdf-page .textLayer ::selection {
+  background: color-mix(in srgb, var(--c-sodium) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp-on-mark {
+    animation-delay: 0ms;
+  }
+}
+
+/*
  * Answer markdown (shared/markdown). Reading text at 17/27 with a 68ch measure; tables and code
  * in the UI size. Spacing on the 4 px grid; one owner per gap (the later sibling's margin).
  */

@@ -4,6 +4,7 @@ export { cn } from './cn';
 export { CopyButton } from './copy-button';
 export { DelayedSpinner } from './delayed-spinner';
 export { Dialog, DialogClose } from './dialog';
+export { ErrorBoundary } from './error-boundary';
 export { HoverCard } from './hover-card';
 export {
   Menu,

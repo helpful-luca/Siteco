@@ -2,7 +2,7 @@
 
 import { Code2, Table2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { AnswerMarkdown, markCitations, SourcesList } from '@/features/citations';
 import { useActiveSourceId, useOpenArtifact, useOpenSource } from '@/features/viewer';
 import type { NoticeOut, SourceOut } from '@/shared/api/types';
@@ -43,40 +43,35 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate }: Props) {
   const settled = answer.status !== 'streaming';
 
   const open = useCallback(
-    (source: SourceOut, citedText: string | null) => openSource({ messageKey: answer.key, source, citedText }),
-    [openSource, answer.key],
+    (source: SourceOut, citedText: string | null) =>
+      openSource({ messageKey: answer.key, source, citedText, citations: answer.citations }),
+    [openSource, answer.key, answer.citations],
   );
 
-  const blockAction = settled
-    ? (block: MarkdownBlock) => {
-        const label = block.kind === 'table' ? t('answer.openTable') : t('answer.openCode');
-        return (
-          <Tooltip content={label}>
-            <Button
-              icon
-              variant="ghost"
-              size="sm"
-              aria-label={label}
-              onClick={() =>
-                openArtifact(
-                  {
-                    kind: block.kind,
-                    markdown: block.source,
-                    citations: answer.citations,
-                    sources: answer.sources,
-                    messageKey: answer.key,
-                    chatTitle,
-                  },
-                  `${answer.key}:${hash(block.source)}`,
-                )
-              }
-            >
-              {block.kind === 'table' ? <Table2 /> : <Code2 />}
-            </Button>
-          </Tooltip>
-        );
-      }
-    : undefined;
+  // Stable while the answer is unchanged: a new function would remount every rendered block, and
+  // with it the chip that should get focus back when the source panel closes.
+  const { citations, sources, key: messageKey } = answer;
+  const blockAction = useMemo(
+    () =>
+      settled
+        ? (block: MarkdownBlock) => {
+            const label = block.kind === 'table' ? t('answer.openTable') : t('answer.openCode');
+            const open = () =>
+              openArtifact(
+                { kind: block.kind, markdown: block.source, citations, sources, messageKey, chatTitle },
+                `${messageKey}:${hash(block.source)}`,
+              );
+            return (
+              <Tooltip content={label}>
+                <Button icon variant="ghost" size="sm" aria-label={label} onClick={open}>
+                  {block.kind === 'table' ? <Table2 /> : <Code2 />}
+                </Button>
+              </Tooltip>
+            );
+          }
+        : undefined,
+    [settled, t, openArtifact, citations, sources, messageKey, chatTitle],
+  );
 
   const openWholeAnswer =
     settled && answer.text.length > ARTIFACT_MIN_CHARS

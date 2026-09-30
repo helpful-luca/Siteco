@@ -460,8 +460,7 @@
       "size": "Size",
       "added": "Added",
       "gone": "This document no longer exists.",
-      "soonTitle": "Preview follows",
-      "soon": "The document with highlighted passages will appear here soon."
+      "notReady": "The preview appears as soon as the document is ready."
     },
     "announce": {
       "scanning": "{name}: checking",
@@ -501,9 +500,9 @@
       "passage": "Passage",
       "cited": "Cited passage",
       "snippet": "Excerpt",
-      "open": "Open document",
-      "soon": "Highlighting inside the document is coming. Until then the document opens in a new tab.",
-      "deleted": "This document was deleted. The cited passage stays readable here."
+      "deletedTitle": "Source was deleted",
+      "deletedText": "The document is no longer in your library. The cited passage stays readable here.",
+      "textFile": "Text file"
     },
     "artifact": {
       "answer": "Answer",
@@ -514,6 +513,26 @@
       "saveMarkdown": "Save as Markdown",
       "saveCsv": "Save as CSV",
       "fallbackName": "Answer"
+    },
+    "pdf": {
+      "loading": "Loading document",
+      "pages": "Pages of the document",
+      "page": "Page {page}",
+      "pageOf": "Page {page} of {pages}",
+      "toolbar": "Pages and zoom",
+      "previous": "Previous page",
+      "next": "Next page",
+      "pageField": "Page number",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fitWidth": "Fit to width",
+      "fitWidthAt": "Fit to width, now {percent} %",
+      "errorTitle": "This document can't be shown here",
+      "errorText": "The file is damaged or uses something the viewer can't handle. Search and sources still work.",
+      "retry": "Try again"
+    },
+    "text": {
+      "loading": "Loading text"
     }
   }
 }

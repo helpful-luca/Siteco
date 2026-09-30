@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import type { Components } from 'react-markdown';
 import type { CitationOut, SourceOut } from '@/shared/api/types';
 import { Markdown, type MarkdownBlock } from '@/shared/markdown';
@@ -34,6 +34,43 @@ type Props = {
   className?: string;
 };
 
+type ChipContext = {
+  byIndex: Map<number, SourceOut>;
+  citations: CitationOut[];
+  activeSourceId: string | null;
+  onOpenSource?: (source: SourceOut, citedText: string | null) => void;
+};
+
+// Chips read what changes (the active source) from context, so the markdown components stay the
+// same objects: the chips are not remounted when a panel opens, and focus can return to them.
+const ChipContext = createContext<ChipContext | null>(null);
+
+function Chip({ n }: { n: number }) {
+  const context = useContext(ChipContext);
+  const source = context?.byIndex.get(n);
+  const citedText = source ? (context?.citations.find((c) => c.source_id === source.id)?.cited_text ?? null) : null;
+  const onOpenSource = context?.onOpenSource;
+  return (
+    <CitationChip
+      n={n}
+      source={source}
+      citedText={citedText}
+      active={source !== undefined && source.id === context?.activeSourceId}
+      onOpen={source && onOpenSource ? () => onOpenSource(source, citedText) : undefined}
+    />
+  );
+}
+
+const COMPONENTS: Components = {
+  span: (props) => {
+    const attributes = props as Record<string, unknown>;
+    if (attributes[GROUP_ATTRIBUTE] !== undefined) return <span className="whitespace-nowrap">{props.children}</span>;
+    const value = attributes[CITATION_ATTRIBUTE];
+    if (value === undefined) return <span>{props.children}</span>;
+    return <Chip n={Number(value)} />;
+  },
+};
+
 /** Answer markdown with citation chips at the offsets the backend reported. */
 export function AnswerMarkdown({
   text,
@@ -52,38 +89,21 @@ export function AnswerMarkdown({
     [premarked, text, citations, sources],
   );
 
-  const components = useMemo<Components>(
-    () => ({
-      span: (props) => {
-        const attributes = props as Record<string, unknown>;
-        if (attributes[GROUP_ATTRIBUTE] !== undefined) return <span className="whitespace-nowrap">{props.children}</span>;
-        const value = attributes[CITATION_ATTRIBUTE];
-        if (value === undefined) return <span>{props.children}</span>;
-        const n = Number(value);
-        const source = byIndex.get(n);
-        const citedText = source ? (citations.find((c) => c.source_id === source.id)?.cited_text ?? null) : null;
-        return (
-          <CitationChip
-            n={n}
-            source={source}
-            citedText={citedText}
-            active={source !== undefined && source.id === activeSourceId}
-            onOpen={source && onOpenSource ? () => onOpenSource(source, citedText) : undefined}
-          />
-        );
-      },
-    }),
+  const chips = useMemo<ChipContext>(
+    () => ({ byIndex, citations, activeSourceId, onOpenSource }),
     [byIndex, citations, activeSourceId, onOpenSource],
   );
 
   return (
-    <Markdown
-      text={marked}
-      streaming={streaming}
-      remarkPlugins={PLUGINS}
-      components={components}
-      blockAction={blockAction}
-      className={className}
-    />
+    <ChipContext.Provider value={chips}>
+      <Markdown
+        text={marked}
+        streaming={streaming}
+        remarkPlugins={PLUGINS}
+        components={COMPONENTS}
+        blockAction={blockAction}
+        className={className}
+      />
+    </ChipContext.Provider>
   );
 }

@@ -460,8 +460,7 @@
       "size": "Größe",
       "added": "Hinzugefügt",
       "gone": "Dieses Dokument gibt es nicht mehr.",
-      "soonTitle": "Vorschau folgt",
-      "soon": "Hier erscheint bald das Dokument mit markierten Fundstellen."
+      "notReady": "Die Vorschau erscheint, sobald das Dokument bereit ist."
     },
     "announce": {
       "scanning": "{name}: wird geprüft",
@@ -501,9 +500,9 @@
       "passage": "Textstelle",
       "cited": "Zitierte Stelle",
       "snippet": "Ausschnitt",
-      "open": "Dokument öffnen",
-      "soon": "Die Markierung direkt im Dokument folgt. Bis dahin öffnet sich das Dokument in einem neuen Tab.",
-      "deleted": "Dieses Dokument wurde gelöscht. Die zitierte Stelle bleibt hier lesbar."
+      "deletedTitle": "Quelle wurde gelöscht",
+      "deletedText": "Das Dokument ist nicht mehr in deiner Bibliothek. Die zitierte Stelle bleibt hier lesbar.",
+      "textFile": "Textdatei"
     },
     "artifact": {
       "answer": "Antwort",
@@ -514,6 +513,26 @@
       "saveMarkdown": "Als Markdown speichern",
       "saveCsv": "Als CSV speichern",
       "fallbackName": "Antwort"
+    },
+    "pdf": {
+      "loading": "Dokument wird geladen",
+      "pages": "Seiten des Dokuments",
+      "page": "Seite {page}",
+      "pageOf": "Seite {page} von {pages}",
+      "toolbar": "Seiten und Zoom",
+      "previous": "Vorherige Seite",
+      "next": "Nächste Seite",
+      "pageField": "Seitenzahl",
+      "zoomIn": "Vergrößern",
+      "zoomOut": "Verkleinern",
+      "fitWidth": "An Breite anpassen",
+      "fitWidthAt": "An Breite anpassen, jetzt {percent} %",
+      "errorTitle": "Das Dokument lässt sich hier nicht anzeigen",
+      "errorText": "Die Datei ist beschädigt oder nutzt etwas, das der Viewer nicht kann. Suche und Quellen funktionieren trotzdem.",
+      "retry": "Erneut versuchen"
+    },
+    "text": {
+      "loading": "Text wird geladen"
     }
   }
 }

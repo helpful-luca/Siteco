@@ -66,7 +66,9 @@ export function ArtifactView({ artifact }: { artifact: Artifact }) {
           citations={artifact.citations}
           sources={artifact.sources}
           activeSourceId={activeSourceId}
-          onOpenSource={(source, citedText) => openSource({ messageKey: artifact.messageKey, source, citedText })}
+          onOpenSource={(source, citedText) =>
+            openSource({ messageKey: artifact.messageKey, source, citedText, citations: artifact.citations })
+          }
           className="markdown-wide"
         />
       </div>

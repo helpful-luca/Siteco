@@ -1,41 +1,100 @@
 'use client';
 
-import { ExternalLink } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import type { SourceOut } from '@/shared/api/types';
-import { buttonStyles } from '@/shared/ui';
+import { Info } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { ApiError } from '@/shared/api/errors';
+import type { ChunkOut, SourceOut } from '@/shared/api/types';
+import { useCodeText } from '@/shared/i18n/use-code-text';
+import { DeletedSource } from './deleted-source';
+import { highlightFor } from './highlight';
+import { PdfViewer } from './pdf-viewer-client';
+import type { PageStore } from './page-store';
+import { fileUrl, useChunk } from './queries';
+import { TextViewer, type TextSpan } from './text-viewer';
+
+type Props = {
+  source: SourceOut;
+  citedText: string | null;
+  /** Cited sentence indexes of the chunk; empty: the whole chunk is the passage. */
+  sentences: number[];
+  store: PageStore;
+};
+
+/** Character span of the cited sentences (text files), in the document's code points. */
+export function spanFor(chunk: ChunkOut, sentences: number[]): TextSpan | null {
+  const wanted = new Set(sentences);
+  const selected = wanted.size ? chunk.sentences.filter((s) => wanted.has(s.i)) : chunk.sentences;
+  if (selected.length === 0) return null;
+  return {
+    start: Math.min(...selected.map((s) => s.char_start)),
+    end: Math.max(...selected.map((s) => s.char_end)),
+  };
+}
 
 /**
- * A cited source in the right panel. For now the cited sentence, lit like the passage will be in
- * the document, plus the snippet and a link to the file. WP-E replaces this body with the viewer
- * that highlights the sentence inside the page; `openSource` stays the entry point.
+ * A cited source in the right panel: the PDF on the cited page with the sentence marked, the text
+ * file with the span marked, or the stored snapshot when the document is gone (annex 11, 8.5).
  */
-export function SourceView({ source, citedText }: { source: SourceOut; citedText: string | null }) {
-  const t = useTranslations('viewer.source');
-  const fileUrl = `/api/documents/${source.document_id}/file${source.page !== null ? `#page=${source.page}` : ''}`;
+export function SourceView({ source, citedText, sentences, store }: Props) {
+  const [gone, setGone] = useState(source.deleted);
+  const onMissing = useCallback(() => setGone(true), []);
+  const chunk = useChunk(source.document_id, source.id, !gone);
+  const chunkMissing = chunk.error instanceof ApiError && chunk.error.status === 404;
+
+  if (gone || chunkMissing) return <DeletedSource source={source} citedText={citedText} />;
+  if (source.page === null) {
+    return (
+      <TextViewer
+        documentId={source.document_id}
+        span={chunk.data ? spanFor(chunk.data, sentences) : null}
+        onMissing={onMissing}
+      />
+    );
+  }
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {citedText && (
-        <section>
-          <h3 className="text-caption font-medium text-ink-muted">{t('cited')}</h3>
-          <p className="lamp-on mt-2 -mx-2 rounded-inner bg-highlight px-2 py-1 text-reading">{citedText}</p>
-        </section>
+    <PdfSource
+      source={source}
+      page={source.page}
+      chunk={chunk.data ?? null}
+      sentences={sentences}
+      store={store}
+      onMissing={onMissing}
+    />
+  );
+}
+
+type PdfSourceProps = {
+  source: SourceOut;
+  page: number;
+  chunk: ChunkOut | null;
+  sentences: number[];
+  store: PageStore;
+  onMissing: () => void;
+};
+
+function PdfSource({ source, page, chunk, sentences, store, onMissing }: PdfSourceProps) {
+  const text = useCodeText();
+  const highlight = useMemo(() => (chunk ? highlightFor(chunk, sentences) : null), [chunk, sentences]);
+  const marks = useMemo(() => highlight?.rects ?? [], [highlight]);
+  const fallback = highlight !== null && !highlight.exact;
+  return (
+    <div className="flex h-full flex-col">
+      {fallback && (
+        <p role="note" className="flex shrink-0 gap-2 border-b border-hairline px-6 py-3 text-footnote text-ink-muted">
+          <Info aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+          <span>{text.notice('HIGHLIGHT_UNAVAILABLE', { page })}</span>
+        </p>
       )}
-      <section>
-        <h3 className="text-caption font-medium text-ink-muted">{t('snippet')}</h3>
-        <p className="mt-2 text-body text-ink-muted">{source.snippet}</p>
-      </section>
-      {source.deleted ? (
-        <p className="text-footnote text-ink-muted">{t('deleted')}</p>
-      ) : (
-        <div className="flex flex-col items-start gap-4">
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={buttonStyles({ variant: 'secondary' })}>
-            <ExternalLink aria-hidden />
-            {t('open')}
-          </a>
-          <p className="max-w-[60ch] text-footnote text-ink-muted">{t('soon')}</p>
-        </div>
-      )}
+      <div className="min-h-0 flex-1">
+        <PdfViewer
+          url={fileUrl(source.document_id)}
+          store={store}
+          page={page}
+          marks={marks}
+          passage={fallback && chunk ? chunk.text : null}
+          onMissing={onMissing}
+        />
+      </div>
     </div>
   );
 }

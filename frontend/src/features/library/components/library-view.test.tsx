@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { UIProvider } from '@/features/shell';
+import { UIProvider, useUI } from '@/features/shell';
 import type { DocumentOut } from '@/shared/api/types';
 import { TooltipProvider } from '@/shared/ui';
 import de from '../../../../messages/de.json';
@@ -18,6 +18,26 @@ const CONFIG = {
   limits: { max_upload_mb: 1024, max_pdf_pages: 5000, max_storage_mb: 20480 },
   features: { retrieval_only: true, malware_scan: 'required' },
 };
+
+const viewer = vi.hoisted(() => ({ props: null as Record<string, unknown> | null }));
+vi.mock('@/features/viewer/pdf-viewer-client', () => ({
+  PdfViewer: (props: Record<string, unknown>) => {
+    viewer.props = props;
+    return <div data-testid="pdf-viewer" />;
+  },
+}));
+
+/** Stands in for the right panel: shows what the library asked it to show. */
+function PanelProbe() {
+  const { panel } = useUI();
+  return panel ? (
+    <section aria-label="Panel">
+      <h2>{panel.title}</h2>
+      <div>{panel.subtitle}</div>
+      {panel.body}
+    </section>
+  ) : null;
+}
 
 function setup(documents: DocumentOut[]) {
   let current = documents;
@@ -38,6 +58,7 @@ function setup(documents: DocumentOut[]) {
           <TooltipProvider>
             <UploadProvider>
               <LibraryView />
+              <PanelProbe />
             </UploadProvider>
           </TooltipProvider>
         </UIProvider>
@@ -73,6 +94,26 @@ const MIXED = [
 ];
 
 describe('LibraryView', () => {
+  it('previews a ready document in the viewer, from its first page and without a mark', async () => {
+    setup(MIXED);
+    await screen.findByRole('table');
+    await userEvent.click(screen.getByRole('button', { name: 'Vorschau von Mira_L_Datenblatt.pdf' }));
+    const panel = screen.getByRole('region', { name: 'Panel' });
+    expect(within(panel).getByRole('heading', { name: 'Mira_L_Datenblatt.pdf' })).toBeInTheDocument();
+    expect(panel).toHaveTextContent('Seite 1 von 12');
+    expect(within(panel).getByTestId('pdf-viewer')).toBeInTheDocument();
+    expect(viewer.props).toMatchObject({ url: '/api/documents/a/file', page: 1, marks: [], passage: null });
+  });
+
+  it('shows the status instead of a preview while a document is not ready', async () => {
+    setup(MIXED);
+    await screen.findByRole('table');
+    await userEvent.click(screen.getByRole('button', { name: 'Vorschau von Katalog_2026.pdf' }));
+    const panel = screen.getByRole('region', { name: 'Panel' });
+    expect(panel).toHaveTextContent('Die Vorschau erscheint, sobald das Dokument bereit ist.');
+    expect(within(panel).queryByTestId('pdf-viewer')).toBeNull();
+  });
+
   it('invites the first upload when the library is empty', async () => {
     setup([]);
     expect(await screen.findByRole('heading', { name: 'Deine Bibliothek ist noch leer' })).toBeInTheDocument();
