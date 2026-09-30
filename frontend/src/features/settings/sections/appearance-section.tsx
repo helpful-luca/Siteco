@@ -16,8 +16,8 @@ export function AppearanceSection() {
 
   return (
     <div className="flex flex-col">
-      <FormGroup title={t('title')} footer={t('footer')}>
-        <div className="p-4">
+      <FormGroup plain title={t('title')} footer={t('footer')}>
+        <div>
           <ChoiceCards
             label={t('title')}
             value={theme}

@@ -63,6 +63,7 @@ export function SettingsView({ section }: { section: Section | null }) {
                   <li
                     key={id}
                     className={cn(
+                      'first:[&>a]:rounded-t-card last:[&>a]:rounded-b-card',
                       'relative not-first:before:absolute not-first:before:top-0 not-first:before:right-0',
                       'not-first:before:left-14 not-first:before:h-px not-first:before:bg-hairline @2xl:before:hidden',
                     )}
@@ -73,7 +74,7 @@ export function SettingsView({ section }: { section: Section | null }) {
                       aria-current={current && section !== null ? 'page' : undefined}
                       className={cn(
                         'flex h-12 items-center gap-3 px-4 text-body transition-colors',
-                        'first:rounded-t-card hover:bg-fill',
+                        'hover:bg-fill',
                         '@2xl:h-8 @2xl:rounded-control @2xl:px-2 pointer-coarse:@2xl:h-11',
                         current && '@2xl:bg-fill-strong @2xl:font-medium',
                       )}

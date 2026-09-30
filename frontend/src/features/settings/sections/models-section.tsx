@@ -87,8 +87,9 @@ export function ModelsSection() {
           footer={hasEffort ? t('modeFooter') : t('modeFixed', { model: current?.label ?? prefs.default_model })}
         >
           {hasEffort && (
-            <FormRow label={t('mode')}>
+            <FormRow stretch label={t('mode')}>
               <SegmentedControl
+                className="w-full sm:w-auto [&>*]:min-w-0 [&>*]:flex-1 sm:[&>*]:min-w-20 sm:[&>*]:flex-none"
                 label={t('mode')}
                 value={prefs.effort}
                 onValueChange={(effort) => void answers.save({ effort })}
@@ -96,8 +97,9 @@ export function ModelsSection() {
               />
             </FormRow>
           )}
-          <FormRow label={t('length')}>
+          <FormRow stretch label={t('length')}>
             <SegmentedControl
+              className="w-full sm:w-auto [&>*]:min-w-0 [&>*]:flex-1 sm:[&>*]:min-w-20 sm:[&>*]:flex-none"
               label={t('length')}
               value={prefs.style}
               onValueChange={(style) => void answers.save({ style })}

@@ -639,7 +639,7 @@
     },
     "deleteDialog": {
       "title": "Delete all data?",
-      "text": "{documents, plural, =0 {All documents} one {# document} other {# documents}} and {chats, plural, =0 {all chats} one {# chat} other {# chats}} will be removed from this computer with all search data. Running answers are stopped. This cannot be undone.",
+      "text": "This removes {documents, plural, =0 {no documents} one {# document} other {# documents}} and {chats, plural, =0 {no chats} one {# chat} other {# chats}} with all search data from this computer. Running answers are stopped. This cannot be undone.",
       "reset": "Also reset name and settings",
       "resetHint": "The setup starts again afterwards.",
       "confirm": "Delete everything",

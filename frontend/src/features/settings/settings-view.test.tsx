@@ -159,7 +159,7 @@ describe('SettingsView', () => {
     expect(screen.getByText('4 Anfragen an Claude')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Löschen …' }));
     const dialog = await screen.findByRole('dialog', { name: 'Alle Daten löschen?' });
-    expect(dialog).toHaveTextContent('3 Dokumente und 2 Chats werden mit allen Suchdaten');
+    expect(dialog).toHaveTextContent('Das entfernt 3 Dokumente und 2 Chats samt allen Suchdaten');
     expect(dialog).toHaveTextContent('nicht rückgängig');
     expect(within(dialog).getByRole('button', { name: 'Abbrechen' })).toHaveFocus();
     await userEvent.click(within(dialog).getByRole('switch', { name: 'Auch Name und Einstellungen zurücksetzen' }));

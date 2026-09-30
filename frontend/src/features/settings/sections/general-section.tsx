@@ -34,8 +34,9 @@ export function GeneralSection() {
   return (
     <div className="flex flex-col gap-8">
       <FormGroup title={t('language')} footer={t('languageFooter')}>
-        <FormRow label={t('languageLabel')}>
+        <FormRow stretch label={t('languageLabel')}>
           <SegmentedControl
+            className="w-full sm:w-auto [&>*]:min-w-0 [&>*]:flex-1 sm:[&>*]:min-w-20 sm:[&>*]:flex-none"
             label={t('languageLabel')}
             value={locale}
             onValueChange={(value) => void language.save({ locale: value })}

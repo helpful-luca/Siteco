@@ -5,6 +5,8 @@ type GroupProps = {
   title?: ReactNode;
   /** Fine print below the group: what a setting means, where it comes from. */
   footer?: ReactNode;
+  /** No card: for content with its own surfaces (the appearance thumbnails). */
+  plain?: boolean;
   className?: string;
   children: ReactNode;
 };
@@ -13,11 +15,11 @@ type GroupProps = {
  * A group of rows on a solid inset card, as in System Settings and iOS Settings: title above,
  * fine print below, rows divided by hairlines that start at the text, not at the card edge.
  */
-export function FormGroup({ title, footer, className, children }: GroupProps) {
+export function FormGroup({ title, footer, plain = false, className, children }: GroupProps) {
   return (
     <section className={cn('flex flex-col', className)}>
       {title && <h3 className="px-4 pb-2 text-footnote font-medium text-ink-muted">{title}</h3>}
-      <div className="rounded-card bg-surface ring-1 ring-inset ring-hairline">{children}</div>
+      {plain ? children : <div className="rounded-card bg-surface ring-1 ring-inset ring-hairline">{children}</div>}
       {footer && <div className="max-w-[68ch] px-4 pt-2 text-footnote text-ink-muted">{footer}</div>}
     </section>
   );
@@ -31,11 +33,13 @@ type RowProps = {
   children?: ReactNode;
   /** Id of the control, so a click on the label focuses it. */
   htmlFor?: string;
+  /** The control takes the whole line when the row wraps (segmented controls on phones). */
+  stretch?: boolean;
   className?: string;
 };
 
 /** One line of a FormGroup: label left, control or value right, 48 px high at least. */
-export function FormRow({ label, description, children, htmlFor, className }: RowProps) {
+export function FormRow({ label, description, children, htmlFor, stretch = false, className }: RowProps) {
   const Label = htmlFor ? 'label' : 'div';
   return (
     <div
@@ -50,7 +54,11 @@ export function FormRow({ label, description, children, htmlFor, className }: Ro
         <span className="block text-body">{label}</span>
         {description && <span className="mt-0.5 block text-footnote text-ink-muted">{description}</span>}
       </Label>
-      {children !== undefined && <div className="flex max-w-full shrink-0 items-center gap-2">{children}</div>}
+      {children !== undefined && (
+        <div className={cn('flex max-w-full shrink-0 items-center justify-end gap-2', stretch && 'grow sm:grow-0')}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }

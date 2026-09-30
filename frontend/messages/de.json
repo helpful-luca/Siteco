@@ -639,7 +639,7 @@
     },
     "deleteDialog": {
       "title": "Alle Daten löschen?",
-      "text": "{documents, plural, =0 {Alle Dokumente} one {# Dokument} other {# Dokumente}} und {chats, plural, =0 {alle Chats} one {# Chat} other {# Chats}} werden mit allen Suchdaten von diesem Rechner entfernt. Laufende Antworten werden gestoppt. Das lässt sich nicht rückgängig machen.",
+      "text": "Das entfernt {documents, plural, =0 {keine Dokumente} one {# Dokument} other {# Dokumente}} und {chats, plural, =0 {keine Chats} one {# Chat} other {# Chats}} samt allen Suchdaten von diesem Rechner. Laufende Antworten werden gestoppt. Das lässt sich nicht rückgängig machen.",
       "reset": "Auch Name und Einstellungen zurücksetzen",
       "resetHint": "Danach startet die Einrichtung neu.",
       "confirm": "Alles löschen",
