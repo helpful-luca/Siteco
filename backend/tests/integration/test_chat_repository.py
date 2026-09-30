@@ -1,3 +1,4 @@
+import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -190,3 +191,19 @@ def test_touch_names_only_unnamed_auto_chats(repo: SqliteChatRepository) -> None
     assert auto is not None and user is not None
     assert (auto.title, auto.updated_at) == ("Erste Frage", later)
     assert (user.title, user.updated_at) == ("Meins", later)
+
+
+def test_question_and_placeholder_are_saved_together_or_not_at_all(
+    repo: SqliteChatRepository,
+) -> None:
+    repo.insert_chat(chat())
+    repo.insert_message(user("existing", cmid=None))
+    clash = Message("existing", "c1", MessageRole.ASSISTANT, T0)  # primary key taken
+    with pytest.raises(sqlite3.IntegrityError):
+        repo.insert_messages([user(), clash])
+    assert repo.find_user_message("c1", "cm1") is None
+    repo.insert_messages([user(), Message("a1", "c1", MessageRole.ASSISTANT, T0, parent_id="u1")])
+    assert [m.id for m in repo.list_messages("c1")] == ["existing", "u1", "a1"]
+    with pytest.raises(DuplicateMessage):
+        repo.insert_messages([user("u9"), Message("a9", "c1", MessageRole.ASSISTANT, T0)])
+    assert repo.get_message("a9") is None

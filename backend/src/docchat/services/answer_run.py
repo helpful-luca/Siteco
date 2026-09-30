@@ -32,6 +32,7 @@ from docchat.domain.llm import (
     LLMError,
     LLMRequest,
     ModelResolved,
+    RequestStarted,
     SearchResult,
     TextBlockEnd,
     TextDelta,
@@ -275,11 +276,15 @@ class AnswerRun:
         self._parts = ()
         self._served = self._requested
         stop_reason = "end_turn"
-        first_token_by = min(self._loop.time() + self._deps.timings.ttft_timeout_s, deadline)
+        ttft = self._deps.timings.ttft_timeout_s
         try:
-            async with asyncio.timeout_at(first_token_by) as limit:
+            # Until the request is sent (a free slot) only the total limit applies.
+            async with asyncio.timeout_at(deadline) as limit:
                 async for event in llm.stream(request):
-                    if isinstance(event, TextDelta):
+                    if isinstance(event, RequestStarted):
+                        if not self._got_delta:
+                            limit.reschedule(min(self._loop.time() + ttft, deadline))
+                    elif isinstance(event, TextDelta):
                         if not self._got_delta:
                             self._got_delta = True
                             self._ttft_ms = self._elapsed_ms()
@@ -421,20 +426,39 @@ class AnswerRun:
     # Saving
 
     async def _save(self, final: Message, terminal: RunEvent) -> RunEvent:
+        """Saves the answer. Only a failed save of the message itself changes the outcome;
+        the usage ledger and the chat reload are extras that are logged when they fail."""
         chats = self._deps.chats
         try:
             await asyncio.to_thread(chats.save_message, final)
-            if self._parts:
-                await asyncio.to_thread(self._record_usage)
-            chat = await asyncio.to_thread(chats.get_chat, self._spec.chat.id)
         except Exception:
             log.exception("answer_save_failed", extra=self._log_fields())
+            await self._mark_failed_save(final)
             return ErrorEvent(
                 code=ErrorCode.INTERNAL_ERROR, partial=self._got_delta, stage=ErrorStage.PERSIST
             )
-        if isinstance(terminal, DoneEvent) and chat is not None:
-            terminal = replace(terminal, chat=chat)
+        if self._parts:
+            try:
+                await asyncio.to_thread(self._record_usage)
+            except Exception:
+                log.exception("usage_record_failed", extra=self._log_fields())
+        if isinstance(terminal, DoneEvent):
+            try:
+                chat = await asyncio.to_thread(chats.get_chat, self._spec.chat.id)
+            except Exception:
+                log.exception("chat_reload_failed", extra=self._log_fields())
+                chat = None
+            if chat is not None:
+                terminal = replace(terminal, chat=chat)
         return terminal
+
+    async def _mark_failed_save(self, final: Message) -> None:
+        """One more attempt, so the row does not stay `streaming` until the next restart."""
+        failed = replace(final, status=MessageStatus.ERROR, error_code=ErrorCode.INTERNAL_ERROR)
+        try:
+            await asyncio.to_thread(self._deps.chats.save_message, failed)
+        except Exception:
+            log.exception("answer_mark_failed", extra=self._log_fields())
 
     def _record_usage(self) -> None:
         usage = total_usage(self._parts)

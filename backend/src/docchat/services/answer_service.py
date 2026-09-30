@@ -200,13 +200,15 @@ class AnswerService:
                 content=question_text,
                 client_message_id=command.client_message_id,
             )
-            if existing is None:
-                self._chats.insert_message(question)
-                chat = self._touch(chat, question_text)
             answer = self._placeholder(chat, question, options, command.lane)
-            answer = replace(answer, comparison_id=command.comparison_id)
-            answer = replace(answer, is_preferred=command.lane is Lane.A)
-            self._chats.insert_message(answer)
+            answer = replace(
+                answer, comparison_id=command.comparison_id, is_preferred=command.lane is Lane.A
+            )
+            # Question and placeholder together: a failed placeholder must not leave the
+            # question behind, or a retry with the same client_message_id is a duplicate.
+            self._chats.insert_messages([answer] if existing else [question, answer])
+            if existing is None:
+                chat = self._touch(chat, question_text)
             spec = self._spec(chat, question, answer, earlier, plan, options)
             return spec, control
         except DuplicateMessage as exc:

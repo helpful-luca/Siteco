@@ -36,6 +36,12 @@ class LLMRequest:
 
 
 @dataclass(frozen=True)
+class RequestStarted:
+    """The request really goes out now (after waiting for a free slot). The first-token
+    limit counts from here, so queueing behind other answers is not a model timeout."""
+
+
+@dataclass(frozen=True)
 class ModelResolved:
     """The model that is actually answering (differs after a server-side fallback)."""
 
@@ -74,7 +80,15 @@ class Completed:
     stop_reason: str  # end_turn, max_tokens, refusal, stop_sequence, ...
 
 
-LLMEvent = ModelResolved | TextDelta | CitationDelta | TextBlockEnd | UsageReported | Completed
+LLMEvent = (
+    RequestStarted
+    | ModelResolved
+    | TextDelta
+    | CitationDelta
+    | TextBlockEnd
+    | UsageReported
+    | Completed
+)
 
 
 class LLMError(Exception):

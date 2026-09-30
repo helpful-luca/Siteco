@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from collections.abc import Sequence
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any
@@ -196,17 +197,25 @@ class SqliteChatRepository:
     # Messages
 
     def insert_message(self, message: Message) -> None:
+        self.insert_messages([message])
+
+    def insert_messages(self, messages: Sequence[Message]) -> None:
+        """All or nothing, in one transaction."""
         placeholders = ", ".join("?" * len(_MESSAGE_COLUMNS.split(",")))
-        try:
-            with self._db.connect() as conn:
-                conn.execute(
-                    f"INSERT INTO messages ({_MESSAGE_COLUMNS}) VALUES ({placeholders})",
-                    _message_values(message),
-                )
-        except sqlite3.IntegrityError as exc:
-            if "ux_messages_client" in str(exc) or "client_message_id" in str(exc):
-                raise DuplicateMessage(message.client_message_id) from exc
-            raise
+        with self._db.connect() as conn:
+            conn.execute("BEGIN")
+            try:
+                for message in messages:
+                    conn.execute(
+                        f"INSERT INTO messages ({_MESSAGE_COLUMNS}) VALUES ({placeholders})",
+                        _message_values(message),
+                    )
+            except sqlite3.IntegrityError as exc:
+                conn.execute("ROLLBACK")
+                if "ux_messages_client" in str(exc) or "client_message_id" in str(exc):
+                    raise DuplicateMessage(str(exc)) from exc
+                raise
+            conn.execute("COMMIT")
 
     def get_message(self, message_id: str) -> Message | None:
         with self._db.connect() as conn:

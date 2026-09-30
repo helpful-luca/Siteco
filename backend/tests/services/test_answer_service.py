@@ -492,3 +492,126 @@ async def test_a_request_cancelled_during_preparation_leaves_nothing_taken(
         await asyncio.sleep(0.01)
     assert h.registry.active == 0
     assert answers[0].status is MessageStatus.INTERRUPTED
+
+
+# Review fixes: saving, deletion during preparation, stale plans, queue time, atomic inserts
+
+
+async def test_a_failing_usage_ledger_keeps_the_completed_answer(
+    h: ChatHarness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h.add_document(MIRA)
+
+    def broken(*_: Any) -> None:
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(h.ledger, "record", broken)
+    events = await h.ask(h.new_chat())
+    done = terminal(events)
+    assert isinstance(done, DoneEvent) and done.status is MessageStatus.COMPLETE
+    assert answer_of(h, events).status is MessageStatus.COMPLETE
+
+
+async def test_a_failing_chat_reload_keeps_the_done_event(
+    h: ChatHarness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h.add_document(MIRA)
+    chat = h.new_chat()
+    run = await h.answers.ask(h.command(chat))
+
+    def broken(*_: Any) -> None:
+        raise RuntimeError("locked")
+
+    monkeypatch.setattr(h.chats_repo, "get_chat", broken)
+    events = [e async for e in run.events()]
+    done = terminal(events)
+    assert isinstance(done, DoneEvent) and done.status is MessageStatus.COMPLETE
+    assert done.chat.id == chat.id
+    monkeypatch.undo()
+    assert answer_of(h, events).status is MessageStatus.COMPLETE
+
+
+async def test_a_failed_save_still_marks_the_answer_as_error(
+    h: ChatHarness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    h.add_document(MIRA)
+    save = h.chats_repo.save_message
+    calls: list[Any] = []
+
+    def flaky(message: Any) -> bool:
+        calls.append(message)
+        if len(calls) == 1:
+            raise RuntimeError("database is locked")
+        return save(message)
+
+    monkeypatch.setattr(h.chats_repo, "save_message", flaky)
+    events = await h.ask(h.new_chat())
+    error = terminal(events)
+    assert isinstance(error, ErrorEvent)
+    assert (error.code, error.stage) == (ErrorCode.INTERNAL_ERROR, ErrorStage.PERSIST)
+    saved = answer_of(h, events)
+    assert saved.status is MessageStatus.ERROR
+    assert saved.error_code is ErrorCode.INTERNAL_ERROR
+
+
+async def test_deleting_a_chat_during_preparation_waits_for_it(
+    h: ChatHarness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import time
+
+    h.add_document(MIRA)
+    chat = h.new_chat()
+    prepare = h.answers._prepare_ask
+
+    def slow_prepare(command: Any) -> Any:
+        result = prepare(command)
+        time.sleep(0.1)  # reserved and saved, but the run task does not exist yet
+        return result
+
+    monkeypatch.setattr(h.answers, "_prepare_ask", slow_prepare)
+    request = asyncio.create_task(h.answers.ask(h.command(chat)))
+    await asyncio.sleep(0.05)
+    assert h.registry.active == 1
+    await h.chats.delete(chat.id)
+    run = await request
+    events = [e async for e in run.events()]
+    assert isinstance(terminal(events), DoneEvent)
+    assert h.registry.active == 0
+    assert h.chats_repo.get_chat(chat.id) is None
+    assert h.chats_repo.list_messages(chat.id) == []
+    assert h.llm is not None and h.llm.requests == []
+
+
+async def test_a_document_deleted_after_planning_is_not_used(h: ChatHarness) -> None:
+    kept = h.add_document(MIRA)
+    gone = h.add_document(("Die Luna hat IP65.",), filename="Luna.pdf")
+    chat = h.new_chat()
+    plan = h.answers._deps.retrieval.plan(chat)
+    h.documents.mark_deleting(gone.id, h.clock.now())
+    retrieved = await h.answers._deps.retrieval.retrieve(plan, "Schutzart", "Schutzart")
+    assert {c.document_id for c in retrieved.chunks} == {kept.id}
+    assert set(retrieved.documents) == {kept.id}
+
+
+async def test_waiting_for_a_model_slot_does_not_count_as_first_token_time(
+    tmp_path: Path,
+) -> None:
+    class QueuedLLM(FakeLLMClient):
+        async def stream(self, request: Any) -> Any:  # type: ignore[override]
+            await asyncio.sleep(0.2)  # waiting for a free slot, longer than the TTFT limit
+            async for event in super().stream(request):
+                yield event
+
+    h = build_chat_harness(tmp_path, llm=QueuedLLM(), timings=RunTimings(ttft_timeout_s=0.1))
+    h.add_document(MIRA)
+    done = terminal(await h.ask(h.new_chat()))
+    assert isinstance(done, DoneEvent) and done.status is MessageStatus.COMPLETE
+
+
+async def test_the_first_token_timeout_is_not_retried(tmp_path: Path) -> None:
+    llm = FakeLLMClient(delay_s=1.0)
+    h = build_chat_harness(tmp_path, llm=llm, timings=RunTimings(ttft_timeout_s=0.05))
+    h.add_document(MIRA)
+    error = terminal(await h.ask(h.new_chat()))
+    assert isinstance(error, ErrorEvent) and error.code is ErrorCode.LLM_TIMEOUT
+    assert len(llm.requests) == 1

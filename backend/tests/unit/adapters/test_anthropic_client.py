@@ -172,3 +172,12 @@ def test_timeouts_and_connection_errors() -> None:
     assert (
         map_error(anthropic.APIConnectionError(request=REQUEST)).code is ErrorCode.LLM_UNREACHABLE
     )
+
+
+async def test_request_started_comes_after_the_slot_is_free() -> None:
+    from docchat.domain.llm import RequestStarted
+
+    stream = FakeStream([ev.message_start(), ev.message_stop()])
+    client = AnthropicLLMClient("key", sdk=FakeSdk(stream), concurrency=1)
+    events = await collect(client, llm_request())
+    assert events[0] == RequestStarted()

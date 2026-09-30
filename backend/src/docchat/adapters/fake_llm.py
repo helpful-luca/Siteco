@@ -20,6 +20,7 @@ from docchat.domain.llm import (
     LLMEvent,
     LLMRequest,
     ModelResolved,
+    RequestStarted,
     TextBlockEnd,
     TextDelta,
     UsageReported,
@@ -82,6 +83,7 @@ class FakeLLMClient:
         scenario = self._scenario(request)
         finished = False
         try:
+            yield RequestStarted()
             async for event in self._events(request, scenario):
                 await asyncio.sleep(self.slow_delay_s if scenario is FakeScenario.SLOW else 0)
                 yield event

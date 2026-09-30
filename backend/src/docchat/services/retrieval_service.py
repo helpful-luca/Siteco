@@ -85,8 +85,14 @@ class RetrievalService:
         mode = SourcesMode.FULL_CONTEXT if full else SourcesMode.RETRIEVAL
         return RetrievalPlan(ready, mode, notices)
 
+    def _still_ready(self, plan: RetrievalPlan) -> tuple[Document, ...]:
+        """The plan was made before the stream opened; a document deleted since then is out."""
+        ready = {d.id for d in self._documents.list_by_status(DocumentStatus.READY)}
+        return tuple(d for d in plan.documents if d.id in ready)
+
     async def retrieve(self, plan: RetrievalPlan, query: str, question: str) -> Retrieved:
-        ids = [d.id for d in plan.documents]
+        documents = await asyncio.to_thread(self._still_ready, plan)
+        ids = [d.id for d in documents]
         notices = list(plan.notices)
         if plan.mode is SourcesMode.FULL_CONTEXT:
             chunks = await asyncio.to_thread(self._vectors.chunks_of, ids)
@@ -103,7 +109,7 @@ class RetrievalService:
             )
             if is_summary_request(question):
                 notices.append(Notice(NoticeCode.SUMMARY_PARTIAL))
-        allowed = {d.id: d for d in plan.documents}
+        allowed = {d.id: d for d in documents}
         # The index may still hold chunks of a document deleted a moment ago: SQLite wins.
         kept = tuple(c for c in chunks if c.document_id in allowed)
         return Retrieved(plan.mode, kept, allowed, tuple(notices))

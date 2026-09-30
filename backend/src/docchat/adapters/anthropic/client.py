@@ -13,7 +13,7 @@ from docchat.adapters.anthropic.error_mapper import map_error
 from docchat.adapters.anthropic.request_builder import SonnetThinking, build_request
 from docchat.adapters.anthropic.stream_mapper import StreamMapper
 from docchat.domain.errors import ErrorCode
-from docchat.domain.llm import LLMError, LLMEvent, LLMRequest
+from docchat.domain.llm import LLMError, LLMEvent, LLMRequest, RequestStarted
 from docchat.domain.model_profiles import MODEL_PROFILES
 
 log = logging.getLogger("docchat.llm")
@@ -47,6 +47,7 @@ class AnthropicLLMClient:
         body = build_request(request, profile, sonnet_thinking=self._sonnet_thinking)
         mapper = StreamMapper(request.model)
         async with self._semaphore:
+            yield RequestStarted()
             try:
                 stream = await self._sdk.beta.messages.create(stream=True, **body)
                 # Leaving this block (end, error or cancellation) closes the HTTP connection,

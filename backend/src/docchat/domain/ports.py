@@ -278,6 +278,10 @@ class ChatRepository(Protocol):
         """Raises DuplicateMessage if the chat already has this `client_message_id`."""
         ...
 
+    def insert_messages(self, messages: Sequence[Message]) -> None:
+        """Like insert_message, for several messages in one transaction: all or nothing."""
+        ...
+
     def get_message(self, message_id: str) -> Message | None: ...
 
     def find_user_message(self, chat_id: str, client_message_id: str) -> Message | None: ...
@@ -308,6 +312,7 @@ class UsageLedger(Protocol):
 
 
 class LLMClient(Protocol):
-    """Streams one answer. Raises LLMError; thinking blocks never leave the adapter."""
+    """Streams one answer, starting with `RequestStarted` once the request is sent.
+    Raises LLMError; thinking blocks never leave the adapter."""
 
     def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]: ...

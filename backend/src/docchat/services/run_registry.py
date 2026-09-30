@@ -27,12 +27,13 @@ class RunControl:
         self.finalizing = False  # the answer is being saved; too late to stop it
 
     def request_stop(self, reason: StopReason) -> bool:
-        if self.stop_reason is not None or self.finalizing or self.task is None:
+        if self.stop_reason is not None or self.finalizing:
             return False
         self.stop_reason = reason
-        if self.started:
+        if self.started and self.task is not None:
             self.task.cancel()
-        # Not started yet: the task sees `stop_reason` as its first step and ends at once.
+        # Still being prepared or not started yet: the task sees `stop_reason` as its first
+        # step and ends at once.
         return True
 
 
@@ -80,11 +81,15 @@ class RunRegistry:
             c.lane for c in self._controls(chat_id, lane) if c.request_stop(StopReason.STOPPED)
         )
 
-    async def stop_and_wait(self, chat_id: str) -> None:
-        """Before deleting a chat: stop its answers and wait until they saved what they had."""
-        controls = self._controls(chat_id, None)
-        for control in controls:
-            control.request_stop(StopReason.INTERRUPTED)
-        tasks = [c.task for c in controls if c.task is not None]
-        if tasks:
-            await asyncio.wait(tasks)
+    async def stop_and_wait(self, chat_id: str, timeout_s: float = 30) -> None:
+        """Before deleting a chat: stop its answers and wait until they are released, including
+        answers still being prepared (reserved, no task yet), so none writes into the chat
+        after it is gone."""
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout_s
+        while controls := self._controls(chat_id, None):
+            for control in controls:
+                control.request_stop(StopReason.INTERRUPTED)
+            if loop.time() > deadline:
+                return
+            await asyncio.sleep(0.01)
