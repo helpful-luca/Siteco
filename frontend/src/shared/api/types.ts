@@ -29,6 +29,7 @@ export type MessageStatus = Schemas['MessageStatus'];
 export type SourceOut = Schemas['SourceOut'];
 export type CitationOut = Schemas['CitationOut'];
 export type UsageOut = Schemas['UsageOut'];
+export type LatencyOut = Schemas['LatencyOut'];
 export type AskIn = Schemas['AskIn'];
 export type RegenerateIn = Schemas['RegenerateIn'];
 export type StopIn = Schemas['StopIn'];

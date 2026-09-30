@@ -76,7 +76,8 @@
     "NETWORK_ERROR": "Keine Verbindung. Prüf deine Verbindung und versuch es erneut.",
     "UNKNOWN_ERROR": "Ein unbekannter Fehler ist aufgetreten.",
     "retry": "Erneut versuchen",
-    "goHome": "Zur Startseite"
+    "goHome": "Zur Startseite",
+    "STREAM_INTERRUPTED": "Die Verbindung ist abgerissen, die Antwort ist unvollständig. Versuch es noch einmal."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne Text, vermutlich gescannt. Diese Seite wird nicht durchsucht.} other {# Seiten ohne Text, vermutlich gescannt. Diese Seiten werden nicht durchsucht.}}",
@@ -225,9 +226,6 @@
     "quality": "Qualität",
     "settings": "Einstellungen",
     "chats": "Chats",
-    "noChats": "Noch keine Chats",
-    "noChatsFound": "Keine passenden Chats",
-    "noChatsHint": "Deine Unterhaltungen erscheinen hier.",
     "openSidebar": "Seitenleiste einblenden",
     "closePanel": "Bereich schließen",
     "skipToContent": "Zum Inhalt springen"
@@ -237,7 +235,136 @@
     "prompt": "Was möchtest du heute wissen?",
     "dropTitle": "Dokumente hinzufügen",
     "dropText": "Zieh Dateien hierher oder wähle sie aus. Alles landet in deiner Bibliothek.",
-    "hint": "Sobald ein Dokument bereit ist, kannst du hier Fragen dazu stellen. Jede Antwort zeigt, wo sie im Dokument steht."
+    "hint": "Sobald ein Dokument bereit ist, kannst du hier Fragen dazu stellen. Jede Antwort zeigt, wo sie im Dokument steht.",
+    "untitled": "Neuer Chat",
+    "suggestionsLabel": "Vorschläge",
+    "suggestions": {
+      "summary": "Fasse die wichtigsten Punkte zusammen",
+      "specs": "Welche technischen Daten werden genannt?",
+      "norms": "Welche Normen und Vorschriften kommen vor?"
+    },
+    "list": {
+      "today": "Heute",
+      "week": "Diese Woche",
+      "older": "Älter",
+      "empty": "Noch keine Chats",
+      "emptyHint": "Deine Unterhaltungen erscheinen hier.",
+      "noMatch": "Keine passenden Chats",
+      "loadError": "Die Chats ließen sich nicht laden.",
+      "retry": "Erneut versuchen",
+      "answering": "antwortet",
+      "more": "Aktionen für {title}",
+      "rename": "Umbenennen",
+      "renameLabel": "Titel des Chats",
+      "delete": "Löschen"
+    },
+    "delete": {
+      "title": "Chat löschen?",
+      "text": "„{title}“ wird mit allen Nachrichten gelöscht. Das lässt sich nicht rückgängig machen.",
+      "running": "Die Antwort, die gerade entsteht, wird dabei gestoppt.",
+      "confirm": "Löschen",
+      "cancel": "Abbrechen"
+    },
+    "notFound": {
+      "title": "Diesen Chat gibt es nicht mehr",
+      "text": "Vielleicht wurde er in einem anderen Fenster gelöscht.",
+      "action": "Neuen Chat beginnen"
+    },
+    "loading": "Chat wird geladen",
+    "loadError": "Der Chat ließ sich nicht laden.",
+    "retry": "Erneut versuchen",
+    "you": "Du",
+    "jumpToLatest": "Zum Ende springen",
+    "status": {
+      "retrieving": "Durchsuche Dokumente",
+      "generating": "Formuliere Antwort",
+      "retrying": "Neuer Versuch",
+      "slow": "Dauert länger als üblich"
+    },
+    "announce": {
+      "ready": "Antwort fertig.",
+      "stopped": "Antwort gestoppt.",
+      "failed": "Antwort fehlgeschlagen."
+    },
+    "answer": {
+      "label": "Antwort",
+      "stopped": "Gestoppt",
+      "incomplete": "Unvollständig",
+      "interrupted": "Unterbrochen",
+      "otherWindow": "Diese Antwort entsteht gerade in einem anderen Fenster.",
+      "copy": "Antwort kopieren",
+      "copied": "Kopiert",
+      "regenerate": "Neu erzeugen",
+      "retry": "Erneut versuchen",
+      "openArtifact": "Im Seitenbereich öffnen",
+      "openTable": "Tabelle im Seitenbereich öffnen",
+      "openCode": "Code im Seitenbereich öffnen",
+      "errorId": "Fehler-ID {id}",
+      "copyErrorId": "Fehler-ID kopieren"
+    },
+    "detail": {
+      "toggle": "Details zur Antwort",
+      "summary": "{model}, {seconds} s, {cost}",
+      "summaryNoCost": "{model}, {seconds} s",
+      "model": "Modell",
+      "basis": "Grundlage",
+      "basisValue": {
+        "retrieval": "Passendste Stellen",
+        "full_context": "Ganze Dokumente",
+        "retrieval_only": "Nur Fundstellen"
+      },
+      "input": "Eingabe",
+      "output": "Ausgabe",
+      "cacheRead": "Aus dem Cache",
+      "tokens": "{count} Tokens",
+      "cost": "Kosten",
+      "ttft": "Erster Text nach",
+      "total": "Gesamtdauer",
+      "seconds": "{seconds} s"
+    },
+    "sources": {
+      "label": "Quellen",
+      "more": "{count, plural, one {# weitere Fundstelle} other {# weitere Fundstellen}}",
+      "less": "Weniger anzeigen",
+      "page": "Seite {page}",
+      "passage": "Textstelle",
+      "chip": "Quelle {n}: {file}, Seite {page}",
+      "chipNoPage": "Quelle {n}: {file}",
+      "deleted": "Quelle gelöscht",
+      "onlyTitle": "Fundstellen",
+      "onlyText": "{count, plural, one {Diese Stelle passt zu deiner Frage.} other {Diese # Stellen passen zu deiner Frage.}}",
+      "open": "Öffnen",
+      "openOf": "{file} öffnen"
+    },
+    "composer": {
+      "label": "Deine Frage",
+      "placeholder": "Frag deine Dokumente",
+      "send": "Senden",
+      "stop": "Antwort stoppen",
+      "counter": "{count} von {max} Zeichen",
+      "noDocuments": "Lade zuerst ein Dokument hoch, dann kannst du Fragen dazu stellen.",
+      "processing": "Deine Dokumente werden noch verarbeitet. Sobald eins bereit ist, kannst du fragen.",
+      "addDocuments": "Dokumente hinzufügen",
+      "dismiss": "Hinweis schließen",
+      "attach": "Dokumente hinzufügen"
+    },
+    "scope": {
+      "label": "Dokumente für diesen Chat",
+      "all": "Alle Dokumente",
+      "count": "{count, plural, one {# Dokument} other {# Dokumente}}",
+      "none": "Noch keine bereiten Dokumente",
+      "hint": "Ohne Auswahl fragst du alle Dokumente."
+    },
+    "model": {
+      "label": "Modell",
+      "tier": {
+        "fast": "Schnell und günstig",
+        "balanced": "Ausgewogen",
+        "strongest": "Am gründlichsten, teurer"
+      },
+      "price": "{input} $ Eingabe, {output} $ Ausgabe pro Million Tokens",
+      "noKey": "Ohne API-Schlüssel antwortet kein Modell, du bekommst die Fundstellen."
+    }
   },
   "library": {
     "title": "Bibliothek",
@@ -355,6 +482,33 @@
     "settings": {
       "title": "Einstellungen",
       "text": "Sprache, Erscheinungsbild, Modelle und deine Daten stellst du bald hier ein."
+    }
+  },
+  "markdown": {
+    "code": "Code",
+    "copyCode": "Code kopieren",
+    "copied": "Kopiert"
+  },
+  "viewer": {
+    "source": {
+      "subtitle": "Quelle {n}",
+      "page": "Seite {page}",
+      "passage": "Textstelle",
+      "cited": "Zitierte Stelle",
+      "snippet": "Ausschnitt",
+      "open": "Dokument öffnen",
+      "soon": "Die Markierung direkt im Dokument folgt. Bis dahin öffnet sich das Dokument in einem neuen Tab.",
+      "deleted": "Dieses Dokument wurde gelöscht. Die zitierte Stelle bleibt hier lesbar."
+    },
+    "artifact": {
+      "answer": "Antwort",
+      "table": "Tabelle",
+      "code": "Code",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "saveMarkdown": "Als Markdown speichern",
+      "saveCsv": "Als CSV speichern",
+      "fallbackName": "Antwort"
     }
   }
 }

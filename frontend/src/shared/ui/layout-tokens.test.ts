@@ -25,7 +25,7 @@ describe('spacing and layout rules', () => {
     expect(html).not.toMatch(/font-size/);
   });
 
-  it.each(['radius-panel', 'radius-card', 'radius-control', 'radius-inner', 'spacing-sidebar', 'spacing-panel'])(
+  it.each(['radius-panel', 'radius-card', 'radius-control', 'radius-inner', 'spacing-sidebar', 'spacing-panel', 'spacing-panel-wide'])(
     '%s sits on the 4 px grid',
     (token) => {
       expect(px(token) % 4).toBe(0);

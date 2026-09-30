@@ -10,6 +10,7 @@ export type ClientErrorCode =
   | 'BACKEND_UNAVAILABLE'
   | 'FORBIDDEN_ORIGIN'
   | 'NETWORK_ERROR'
+  | 'STREAM_INTERRUPTED'
   | 'UNKNOWN_ERROR';
 
 type Envelope = {

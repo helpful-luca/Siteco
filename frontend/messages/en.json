@@ -76,7 +76,8 @@
     "NETWORK_ERROR": "No connection. Check your connection and try again.",
     "UNKNOWN_ERROR": "An unknown error occurred.",
     "retry": "Try again",
-    "goHome": "Go to start"
+    "goHome": "Go to start",
+    "STREAM_INTERRUPTED": "The connection dropped and the answer is incomplete. Please try again."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no text, probably scanned. It won't be searched.} other {# pages have no text, probably scanned. They won't be searched.}}",
@@ -225,9 +226,6 @@
     "quality": "Quality",
     "settings": "Settings",
     "chats": "Chats",
-    "noChats": "No chats yet",
-    "noChatsFound": "No matching chats",
-    "noChatsHint": "Your conversations appear here.",
     "openSidebar": "Show sidebar",
     "closePanel": "Close panel",
     "skipToContent": "Skip to content"
@@ -237,7 +235,136 @@
     "prompt": "What would you like to know today?",
     "dropTitle": "Add documents",
     "dropText": "Drag files here or choose them. They go into your library.",
-    "hint": "As soon as a document is ready, you can ask questions about it here. Every answer shows where it is in the document."
+    "hint": "As soon as a document is ready, you can ask questions about it here. Every answer shows where it is in the document.",
+    "untitled": "New chat",
+    "suggestionsLabel": "Suggestions",
+    "suggestions": {
+      "summary": "Summarize the key points",
+      "specs": "Which technical data are mentioned?",
+      "norms": "Which standards and regulations come up?"
+    },
+    "list": {
+      "today": "Today",
+      "week": "This week",
+      "older": "Older",
+      "empty": "No chats yet",
+      "emptyHint": "Your conversations appear here.",
+      "noMatch": "No matching chats",
+      "loadError": "The chats could not be loaded.",
+      "retry": "Try again",
+      "answering": "answering",
+      "more": "Actions for {title}",
+      "rename": "Rename",
+      "renameLabel": "Chat title",
+      "delete": "Delete"
+    },
+    "delete": {
+      "title": "Delete chat?",
+      "text": "“{title}” and all its messages will be deleted. This cannot be undone.",
+      "running": "The answer being written right now will be stopped.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "notFound": {
+      "title": "This chat no longer exists",
+      "text": "It may have been deleted in another window.",
+      "action": "Start a new chat"
+    },
+    "loading": "Loading chat",
+    "loadError": "The chat could not be loaded.",
+    "retry": "Try again",
+    "you": "You",
+    "jumpToLatest": "Jump to latest",
+    "status": {
+      "retrieving": "Searching documents",
+      "generating": "Writing answer",
+      "retrying": "Trying again",
+      "slow": "Taking longer than usual"
+    },
+    "announce": {
+      "ready": "Answer ready.",
+      "stopped": "Answer stopped.",
+      "failed": "Answer failed."
+    },
+    "answer": {
+      "label": "Answer",
+      "stopped": "Stopped",
+      "incomplete": "Incomplete",
+      "interrupted": "Interrupted",
+      "otherWindow": "This answer is being written in another window.",
+      "copy": "Copy answer",
+      "copied": "Copied",
+      "regenerate": "Regenerate",
+      "retry": "Try again",
+      "openArtifact": "Open in side panel",
+      "openTable": "Open table in side panel",
+      "openCode": "Open code in side panel",
+      "errorId": "Error ID {id}",
+      "copyErrorId": "Copy error ID"
+    },
+    "detail": {
+      "toggle": "Answer details",
+      "summary": "{model}, {seconds} s, {cost}",
+      "summaryNoCost": "{model}, {seconds} s",
+      "model": "Model",
+      "basis": "Based on",
+      "basisValue": {
+        "retrieval": "Most relevant passages",
+        "full_context": "Whole documents",
+        "retrieval_only": "Passages only"
+      },
+      "input": "Input",
+      "output": "Output",
+      "cacheRead": "From cache",
+      "tokens": "{count} tokens",
+      "cost": "Cost",
+      "ttft": "First text after",
+      "total": "Total time",
+      "seconds": "{seconds} s"
+    },
+    "sources": {
+      "label": "Sources",
+      "more": "{count, plural, one {# more passage} other {# more passages}}",
+      "less": "Show less",
+      "page": "Page {page}",
+      "passage": "Passage",
+      "chip": "Source {n}: {file}, page {page}",
+      "chipNoPage": "Source {n}: {file}",
+      "deleted": "Source deleted",
+      "onlyTitle": "Passages",
+      "onlyText": "{count, plural, one {This passage matches your question.} other {These # passages match your question.}}",
+      "open": "Open",
+      "openOf": "Open {file}"
+    },
+    "composer": {
+      "label": "Your question",
+      "placeholder": "Ask your documents",
+      "send": "Send",
+      "stop": "Stop answer",
+      "counter": "{count} of {max} characters",
+      "noDocuments": "Upload a document first, then you can ask about it.",
+      "processing": "Your documents are still being processed. As soon as one is ready, you can ask.",
+      "addDocuments": "Add documents",
+      "dismiss": "Dismiss note",
+      "attach": "Add documents"
+    },
+    "scope": {
+      "label": "Documents for this chat",
+      "all": "All documents",
+      "count": "{count, plural, one {# document} other {# documents}}",
+      "none": "No ready documents yet",
+      "hint": "Without a selection you ask all documents."
+    },
+    "model": {
+      "label": "Model",
+      "tier": {
+        "fast": "Fast and affordable",
+        "balanced": "Balanced",
+        "strongest": "Most thorough, pricier"
+      },
+      "price": "${input} input, ${output} output per million tokens",
+      "noKey": "Without an API key no model answers, you get the passages."
+    }
   },
   "library": {
     "title": "Library",
@@ -355,6 +482,33 @@
     "settings": {
       "title": "Settings",
       "text": "Language, appearance, models and your data will soon be set here."
+    }
+  },
+  "markdown": {
+    "code": "Code",
+    "copyCode": "Copy code",
+    "copied": "Copied"
+  },
+  "viewer": {
+    "source": {
+      "subtitle": "Source {n}",
+      "page": "Page {page}",
+      "passage": "Passage",
+      "cited": "Cited passage",
+      "snippet": "Excerpt",
+      "open": "Open document",
+      "soon": "Highlighting inside the document is coming. Until then the document opens in a new tab.",
+      "deleted": "This document was deleted. The cited passage stays readable here."
+    },
+    "artifact": {
+      "answer": "Answer",
+      "table": "Table",
+      "code": "Code",
+      "copy": "Copy",
+      "copied": "Copied",
+      "saveMarkdown": "Save as Markdown",
+      "saveCsv": "Save as CSV",
+      "fallbackName": "Answer"
     }
   }
 }
