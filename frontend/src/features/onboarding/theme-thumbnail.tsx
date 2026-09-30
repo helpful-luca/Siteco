@@ -27,7 +27,7 @@ function Window({ mode }: { mode: 'light' | 'dark' }) {
 /** Miniature app window so the choice is seen, not only named. */
 export function ThemeThumbnail({ theme }: { theme: Theme }) {
   return (
-    <div aria-hidden className="h-[76px] w-full overflow-hidden rounded-[10px] ring-1 ring-hairline">
+    <div aria-hidden className="h-19 w-full overflow-hidden rounded-inner ring-1 ring-hairline">
       {theme === 'system' ? (
         <div className="flex h-full">
           <div className="w-1/2 overflow-hidden">

@@ -61,18 +61,19 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
     <MotionConfig reducedMotion="user">
       <form
         onSubmit={submit}
-        className="glass-dense relative flex w-[min(640px,calc(100vw-32px))] flex-col overflow-hidden rounded-[28px]"
+        className="glass-dense relative flex w-[min(640px,calc(100vw-var(--spacing)*8))] flex-col overflow-hidden rounded-panel"
       >
-        <div className="flex items-center justify-between px-6 pt-5">
+        <div className="flex items-center justify-between px-6 pt-4 sm:px-8">
           <p className="text-caption text-ink-muted" aria-live="polite">
             {t('progress', { current: step + 1, total: STEPS.length })}
           </p>
-          <Button variant="ghost" size="sm" onClick={onSkip}>
+          {/* Pulled out by its own padding, so the label (not the pill) sits on the gutter. */}
+          <Button variant="ghost" size="sm" className="-mr-3" onClick={onSkip}>
             {t('skip')}
           </Button>
         </div>
 
-        <div className="relative min-h-[300px] overflow-hidden px-10 pt-6 pb-4">
+        <div className="relative min-h-75 overflow-hidden px-6 pt-6 pb-4 sm:px-8">
           <AnimatePresence mode="popLayout" initial={false} custom={direction}>
             <motion.div
               key={current}
@@ -137,7 +138,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                       maxLength={NAME_MAX}
                       autoComplete="given-name"
                       placeholder={t('name.placeholder')}
-                      className="h-12 rounded-card bg-fill px-4 text-center text-title-3 ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium"
+                      className="h-12 rounded-control bg-fill px-4 text-center text-title-3 ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium"
                     />
                     <p className="text-caption text-ink-muted">{t('name.privacy')}</p>
                   </div>
@@ -147,7 +148,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
           </AnimatePresence>
         </div>
 
-        <div className="flex items-center justify-between gap-4 px-6 pt-2 pb-6">
+        <div className="flex items-center justify-between gap-4 px-6 pt-4 pb-6 sm:px-8">
           <div className="flex gap-1.5" aria-hidden>
             {STEPS.map((name, index) => (
               <span

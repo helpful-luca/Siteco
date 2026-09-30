@@ -15,7 +15,7 @@ export function StyleguideView({ theme, startOnboarding }: { theme: Theme; start
         <AppPreview />
       </div>
       <div className="border-t border-hairline">
-        <div className="mx-auto flex max-w-[1120px] flex-wrap items-end justify-between gap-6 px-6 pt-16">
+        <div className="mx-auto flex max-w-[calc(var(--container-page)+2*var(--gutter))] flex-wrap items-end justify-between gap-6 px-gutter pt-16">
           <div>
             <h1 className="text-title-1 font-semibold">{t('title')}</h1>
             <p className="mt-2 max-w-[60ch] text-ink-muted">{t('intro')}</p>

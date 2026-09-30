@@ -28,12 +28,12 @@ export function AppPreview() {
   const highlightedRow = activeSource === 1 ? 'ip' : activeSource === 2 ? 'ik' : null;
 
   return (
-    <div className="flex h-full gap-3 p-3">
+    <div className="flex h-full gap-3 lg:p-3">
       {/* Sidebar: glass, floats above the light pool */}
-      <aside className="glass hidden w-[264px] shrink-0 flex-col rounded-panel p-3 lg:flex">
-        <div className="flex items-center gap-1.5">
-          <label className="flex h-8 flex-1 items-center gap-2 rounded-control bg-fill px-2.5 text-ink-muted">
-            <Search aria-hidden className="size-3.5 shrink-0" />
+      <aside className="glass hidden w-sidebar shrink-0 flex-col rounded-panel p-3 lg:flex">
+        <div className="flex items-center gap-1">
+          <label className="flex h-8 flex-1 cursor-text items-center gap-2 rounded-control bg-fill px-2 text-ink-muted">
+            <Search aria-hidden className="size-4 shrink-0" />
             <span className="sr-only">{t('search')}</span>
             <input
               type="search"
@@ -51,7 +51,7 @@ export function AppPreview() {
           <NavItem icon={<BookOpen aria-hidden />}>{t('library')}</NavItem>
           <NavItem icon={<Gauge aria-hidden />}>{t('quality')}</NavItem>
         </div>
-        <nav className="mt-5 flex-1 overflow-hidden" aria-label="Chats">
+        <nav className="mt-6 flex-1 overflow-hidden" aria-label="Chats">
           <ChatGroup label={t('today')}>
             {CHATS_TODAY.map((id, i) => (
               <ChatItem key={id} active={i === 0}>
@@ -72,23 +72,26 @@ export function AppPreview() {
 
       {/* Chat column */}
       <main className="relative flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-col gap-2 px-4 pt-2 pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <h2 className="truncate text-title-3 font-semibold">{t('chatTitle')}</h2>
-          <div className="flex shrink-0 items-center gap-2">
-            <ToolbarButton>
-              <FileText aria-hidden className="size-3.5" />
-              {t('scope')}
-            </ToolbarButton>
-            <ToolbarButton>
-              {t('model')}
-              <ChevronDown aria-hidden className="size-3.5 opacity-60" />
-            </ToolbarButton>
+        {/* Toolbar row on the sidebar's first-row axis, text on the conversation column. */}
+        <header className="px-gutter pt-3">
+          <div className="mx-auto flex max-w-reading flex-col gap-2 sm:h-8 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <h2 className="truncate text-title-3 font-semibold">{t('chatTitle')}</h2>
+            <div className="-ml-2 flex shrink-0 items-center gap-1 sm:-mr-2 sm:ml-0">
+              <ToolbarButton>
+                <FileText aria-hidden className="size-3.5" />
+                {t('scope')}
+              </ToolbarButton>
+              <ToolbarButton>
+                {t('model')}
+                <ChevronDown aria-hidden className="size-3.5 opacity-60" />
+              </ToolbarButton>
+            </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-40">
-          <div className="mx-auto flex max-w-[720px] flex-col gap-8 pt-6">
-            <div className="ml-auto max-w-[80%] rounded-card bg-fill-strong px-4 py-2.5 text-reading">
+        <div className="flex-1 overflow-y-auto px-gutter pb-40">
+          <div className="mx-auto flex max-w-reading flex-col gap-8 pt-6">
+            <div className="ml-auto max-w-[80%] rounded-card bg-fill-strong px-4 py-2 text-reading">
               {t('question')}
             </div>
 
@@ -119,7 +122,7 @@ export function AppPreview() {
                     type="button"
                     onClick={() => setActiveSource(n)}
                     className={cn(
-                      'flex w-fit items-center gap-2.5 rounded-control px-2 py-1 text-footnote text-ink-muted',
+                      '-mx-2 flex h-7 w-fit items-center gap-2 rounded-control px-2 text-footnote text-ink-muted pointer-coarse:h-11',
                       'transition-colors hover:bg-fill hover:text-ink',
                       activeSource === n && 'bg-fill text-ink',
                     )}
@@ -137,9 +140,9 @@ export function AppPreview() {
         </div>
 
         {/* Composer: floating glass */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 px-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 px-gutter">
           <form
-            className="glass pointer-events-auto mx-auto flex max-w-[720px] items-end gap-2 rounded-[22px] p-2"
+            className="glass pointer-events-auto mx-auto flex max-w-reading items-end gap-2 rounded-panel p-2"
             onSubmit={(event) => event.preventDefault()}
           >
             <Tooltip content={t('attach')}>
@@ -154,7 +157,7 @@ export function AppPreview() {
               id="preview-composer"
               rows={1}
               placeholder={t('composerPlaceholder')}
-              className="min-h-9 flex-1 resize-none bg-transparent py-1.5 text-reading outline-none placeholder:text-ink-muted"
+              className="min-h-8 flex-1 resize-none bg-transparent py-0.5 text-reading outline-none placeholder:text-ink-muted"
             />
             <Button icon variant="primary" aria-label={t('send')} type="submit">
               <ArrowUp />
@@ -167,9 +170,9 @@ export function AppPreview() {
       {activeSource && highlightedRow && (
         <section
           aria-label={t('docTitle')}
-          className="hidden w-[440px] shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline xl:flex"
+          className="hidden w-panel shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline xl:flex"
         >
-          <header className="glass flex items-center justify-between gap-3 rounded-none border-0 border-b border-hairline px-4 py-3 shadow-none">
+          <header className="glass flex h-14 shrink-0 items-center justify-between gap-3 rounded-none border-0 border-b border-hairline pr-4 pl-6 shadow-none">
             <div className="min-w-0">
               <p className="truncate text-body font-medium">Mira_L_Datenblatt.pdf</p>
               <p className="text-caption text-ink-muted">{t('page')}</p>
@@ -178,7 +181,7 @@ export function AppPreview() {
               <X />
             </Button>
           </header>
-          <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex-1 overflow-y-auto p-6">
             <p className="text-caption text-ink-muted">{t('docSubtitle')}</p>
             <h3 className="mt-1 text-title-2 font-semibold">{t('docTitle')}</h3>
             <dl className="mt-6 divide-y divide-hairline text-footnote">
@@ -186,7 +189,7 @@ export function AppPreview() {
                 <div
                   key={row}
                   className={cn(
-                    'grid grid-cols-[1fr_1.2fr] gap-4 rounded-[6px] px-2 py-2.5',
+                    '-mx-2 grid grid-cols-[1fr_1.2fr] gap-4 rounded-inner px-2 py-2',
                     row === highlightedRow && 'lamp-on bg-highlight',
                   )}
                 >
@@ -205,7 +208,7 @@ export function AppPreview() {
 function ChatGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <p className="px-2 pb-1 text-caption font-medium text-ink-muted">{label}</p>
+      <p className="px-2 pb-2 text-caption font-medium text-ink-muted">{label}</p>
       <ul className="flex flex-col gap-0.5">{children}</ul>
     </div>
   );
@@ -218,11 +221,11 @@ function ChatItem({ active = false, children }: { active?: boolean; children: Re
         href="#"
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'block truncate rounded-control px-2 py-1.5 text-body',
+          'flex h-8 items-center rounded-control px-2 text-body',
           active ? 'bg-fill-strong font-medium' : 'text-ink/85 hover:bg-fill',
         )}
       >
-        <span className="truncate">{children}</span>
+        <span className="min-w-0 truncate">{children}</span>
       </a>
     </li>
   );
@@ -232,7 +235,7 @@ function NavItem({ icon, children }: { icon: React.ReactNode; children: React.Re
   return (
     <a
       href="#"
-      className="flex items-center gap-2.5 rounded-control px-2 py-1.5 text-body text-ink/85 hover:bg-fill [&_svg]:size-4 [&_svg]:opacity-60"
+      className="flex h-8 items-center gap-2 rounded-control px-2 text-body text-ink/85 hover:bg-fill [&_svg]:size-4 [&_svg]:opacity-60"
     >
       {icon}
       {children}
@@ -245,7 +248,7 @@ function ToolbarButton({ children }: { children: React.ReactNode }) {
   return (
     <button
       type="button"
-      className="inline-flex h-7 items-center gap-1.5 rounded-[7px] px-2 text-footnote font-medium text-ink-muted transition-colors hover:bg-fill hover:text-ink"
+      className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-footnote font-medium pointer-coarse:h-11 text-ink-muted transition-colors hover:bg-fill hover:text-ink"
     >
       {children}
     </button>
