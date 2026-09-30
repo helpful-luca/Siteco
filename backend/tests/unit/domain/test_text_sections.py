@@ -37,3 +37,26 @@ def test_blank_sections_are_skipped() -> None:
     sections = list(text_sections(TextContent(text, ((0, "Leer"), (9, "Voll")))))
     assert [s.heading for s in sections] == ["Leer", "Voll"]
     assert list(text_sections(TextContent("   \n  "))) == []
+
+
+def _sentences(section) -> list[str]:  # type: ignore[no-untyped-def]
+    return [section.text[s.start : s.end] for s in section.sentences]
+
+
+def test_an_atx_heading_is_its_own_sentence() -> None:
+    text = "# Technische Daten\nDie Mira L hat IP66. Sie wiegt 7,4 kg."
+    [section] = text_sections(TextContent(text, ((0, "Technische Daten"),)))
+    assert _sentences(section) == [
+        "# Technische Daten",
+        "Die Mira L hat IP66.",
+        "Sie wiegt 7,4 kg.",
+    ]
+
+
+def test_a_setext_heading_keeps_its_underline_and_is_its_own_sentence() -> None:
+    text = "Vorwort.\n\nTechnische Daten\n================\nDie Mira L hat IP66."
+    sections = list(text_sections(TextContent(text, ((0, ""), (10, "Technische Daten")))))
+    assert _sentences(sections[-1]) == [
+        "Technische Daten\n================",
+        "Die Mira L hat IP66.",
+    ]

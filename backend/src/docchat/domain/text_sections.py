@@ -9,6 +9,19 @@ from docchat.domain.chunking import section_from_text
 from docchat.domain.parsing import TextContent, TextSection
 
 MAX_BLOCK_CHARS = 100_000
+_SETEXT_UNDERLINE = frozenset("=-")
+
+
+def _heading_end(text: str, start: int, end: int) -> int:
+    """End of the heading line at `start`, a setext underline below it included."""
+    line_end = text.find("\n", start, end)
+    if line_end < 0:
+        return end
+    next_end = text.find("\n", line_end + 1, end)
+    underline = text[line_end + 1 : next_end if next_end >= 0 else end].strip()
+    if underline and set(underline) <= _SETEXT_UNDERLINE:
+        return next_end if next_end >= 0 else end
+    return line_end
 
 
 def _cut(text: str, start: int, end: int, max_chars: int) -> Iterator[tuple[int, int]]:
@@ -39,7 +52,10 @@ def text_sections(
         bounds[0] = content.headings[0]
     for index, (start, heading) in enumerate(bounds):
         end = bounds[index + 1][0] if index + 1 < len(bounds) else len(text)
+        # The heading line is a sentence of its own, not the start of the first paragraph's.
+        heading_end = _heading_end(text, start, end) if heading else start
         for block_start, block_end in _cut(text, start, end, max_block_chars):
             block = text[block_start:block_end].rstrip()
             if block.strip():
-                yield section_from_text(block, heading=heading, offset=block_start)
+                cuts = (heading_end - block_start,) if block_start <= heading_end else ()
+                yield section_from_text(block, heading=heading, offset=block_start, cuts=cuts)

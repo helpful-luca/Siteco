@@ -40,10 +40,10 @@ def _pgm(bitmap: pdfium.PdfBitmap) -> bytes:
     return b"P5\n%d %d\n255\n" % (bitmap.width, bitmap.height) + data
 
 
-def _tesseract(image: bytes, options: OcrOptions) -> str | None:
+def _tesseract(image: bytes, dpi: int, options: OcrOptions) -> str | None:
     command = [
         options.binary, "stdin", "stdout",
-        "-l", options.languages, "--psm", "3", "--dpi", str(options.dpi), "tsv",
+        "-l", options.languages, "--psm", "3", "--dpi", str(dpi), "tsv",
     ]  # fmt: skip
     # One thread per page: OpenMP on every core would slow down answers during a large upload.
     env = {"PATH": os.environ.get("PATH", ""), "OMP_THREAD_LIMIT": "1", "LC_ALL": "C.UTF-8"}
@@ -68,8 +68,10 @@ def _tesseract(image: bytes, options: OcrOptions) -> str | None:
     return result.stdout.decode("utf-8", errors="replace")
 
 
-def recognize_page(path: Path, index: int, options: OcrOptions) -> TextSection | None:
-    """Page `index` (0-based) as a section with sentence rectangles, or None without text."""
+def _render(
+    path: Path, index: int, options: OcrOptions
+) -> tuple[bytes, tuple[int, int], int] | None:
+    """The page as a PGM image, its pixel size and its effective resolution."""
     pdf = pdfium.PdfDocument(path)
     try:
         page = pdf[index]
@@ -80,14 +82,28 @@ def recognize_page(path: Path, index: int, options: OcrOptions) -> TextSection |
             scale = min(options.dpi / 72, options.max_side_px / max(width, height, 1))
             bitmap = page.render(scale=scale, grayscale=True, draw_annots=False)
             try:
-                image, size = _pgm(bitmap), (bitmap.width, bitmap.height)
+                # Tesseract sizes its models by dpi: a downscaled large page tells the truth.
+                return _pgm(bitmap), (bitmap.width, bitmap.height), max(1, round(scale * 72))
             finally:
                 bitmap.close()
         finally:
             page.close()
     finally:
         pdf.close()
-    tsv = _tesseract(image, options)
+
+
+def recognize_page(path: Path, index: int, options: OcrOptions) -> TextSection | None:
+    """Page `index` (0-based) as a section with sentence rectangles, or None without text.
+    A page pdfium cannot open or render is None too: one bad page must not stop the document."""
+    try:
+        rendered = _render(path, index, options)
+    except pdfium.PdfiumError:
+        log.warning("ocr_page_unreadable")
+        return None
+    if rendered is None:
+        return None
+    image, size, dpi = rendered
+    tsv = _tesseract(image, dpi, options)
     if tsv is None:
         return None
     words = parse_tesseract_tsv(tsv)

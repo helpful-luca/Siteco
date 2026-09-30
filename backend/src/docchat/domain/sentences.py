@@ -6,6 +6,7 @@ err on the side of keeping text together.
 """
 
 import re
+from collections.abc import Iterable
 
 MAX_SENTENCE_CHARS = 600
 
@@ -71,11 +72,13 @@ def _cap(text: str, start: int, end: int) -> list[tuple[int, int]]:
     return spans
 
 
-def split_sentences(text: str) -> list[tuple[int, int]]:
-    """Returns [start, end) spans without surrounding whitespace, in text order."""
+def split_sentences(text: str, extra_cuts: Iterable[int] = ()) -> list[tuple[int, int]]:
+    """Returns [start, end) spans without surrounding whitespace, in text order. `extra_cuts` are
+    boundaries the caller knows from the structure (the end of a heading line)."""
     spans: list[tuple[int, int]] = []
     start = 0
-    for cut in [*_boundaries(text), len(text)]:
+    forced = {cut for cut in extra_cuts if 0 < cut < len(text)}
+    for cut in [*sorted(forced.union(_boundaries(text))), len(text)]:
         trimmed = _trim(text, start, cut)
         if trimmed:
             spans.extend(_cap(text, *trimmed))

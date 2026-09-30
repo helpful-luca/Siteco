@@ -70,3 +70,25 @@ def test_self_test_page_is_a_valid_pdf(tmp_path: Path) -> None:
 def test_self_test_passes_with_tesseract(capsys: pytest.CaptureFixture[str]) -> None:
     assert ocr_selftest.main() == 0
     assert capsys.readouterr().out.strip() == "ocr OK"
+
+
+async def test_a_page_pdfium_cannot_read_is_skipped_not_fatal(tmp_path: Path) -> None:
+    broken = tmp_path / "broken.pdf"
+    broken.write_bytes(build_pdf([scanned_page(*LINES)])[:300])
+    assert recognize_page(broken, 0, OcrOptions()) is None
+    process = IsolatedProcess()
+    try:
+        assert await TesseractPageOcr(process, OcrOptions()).recognize(broken, 1) is None
+    finally:
+        await process.close()
+
+
+def test_large_pages_tell_tesseract_their_real_resolution(tmp_path: Path) -> None:
+    from docchat.adapters import pdfium_ocr_page
+
+    poster = PageSpec(lines=[], media_box=(0, 0, 2384, 3370), image_only=True)  # A0
+    rendered = pdfium_ocr_page._render(_scan(tmp_path, poster), 0, OcrOptions())
+    assert rendered is not None
+    _, (width, height), dpi = rendered
+    assert max(width, height) <= 5000
+    assert dpi == round(5000 / 3370 * 72)

@@ -153,3 +153,18 @@ async def test_batch_timeouts_and_crashes_become_batch_failures(
         await parser.count_pages(tmp_path / "x.pdf")
     expected = ErrorCode.PROCESSING_TIMEOUT if timed_out else ErrorCode.PDF_CORRUPT
     assert counted.value.code is expected
+
+
+def test_a_heading_line_in_larger_type_is_its_own_sentence(tmp_path: Path) -> None:
+    page = PageSpec(
+        lines=[
+            TextLine("Technische Daten", x=72, y=740, size=20),
+            TextLine("Die Mira L ist nach IP66 geschützt, nicht nur der", x=72, y=700, size=11),
+            TextLine("Optikraum. Die Schlagfestigkeit liegt bei IK09.", x=72, y=684, size=11),
+        ]
+    )
+    section = _only_section(_write(tmp_path, build_pdf([page])))
+    texts = [section.text[s.start : s.end] for s in section.sentences]
+    assert texts[0] == "Technische Daten"
+    assert texts[1] == "Die Mira L ist nach IP66 geschützt, nicht nur der\nOptikraum."
+    assert len(section.sentences[1].rects) == 2

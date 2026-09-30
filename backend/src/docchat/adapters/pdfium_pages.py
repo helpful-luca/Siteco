@@ -10,10 +10,11 @@ import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_c
 
 from docchat.domain.errors import ErrorCode, IngestionError
+from docchat.domain.heading_lines import heading_line_cuts
 from docchat.domain.models import Rect
 from docchat.domain.parsing import PageBatch, SentenceSpan, TextSection
 from docchat.domain.sentences import split_sentences
-from docchat.domain.text_cleanup import clean_page_text
+from docchat.domain.text_cleanup import CleanText, clean_page_text
 
 _PRECISION = 4
 
@@ -56,6 +57,20 @@ def normalize_rect(
     )
 
 
+def _heading_cuts(textpage: pdfium.PdfTextPage, cleaned: CleanText) -> list[int]:
+    """Sentence cuts around lines in larger type (headings), from pdfium's font sizes."""
+    sizes, start = [], 0
+    for line in cleaned.text.split("\n"):
+        offset = len(line) - len(line.lstrip())
+        if start + offset < len(cleaned.raw_index) and line.strip():
+            raw = cleaned.raw_index[start + offset]
+            sizes.append(float(pdfium_c.FPDFText_GetFontSize(textpage, raw)))
+        else:
+            sizes.append(0.0)
+        start += len(line) + 1
+    return heading_line_cuts(cleaned.text, sizes)
+
+
 def _read_page(pdf: pdfium.PdfDocument, index: int) -> TextSection:
     page = pdf[index]
     textpage = page.get_textpage()
@@ -67,8 +82,9 @@ def _read_page(pdf: pdfium.PdfDocument, index: int) -> TextSection:
         cleaned = clean_page_text(raw)
         crop = page.get_cropbox()
         rotation = page.get_rotation()
+        cuts = _heading_cuts(textpage, cleaned) if precise else []
         sentences = []
-        for start, end in split_sentences(cleaned.text):
+        for start, end in split_sentences(cleaned.text, cuts):
             rects: tuple[Rect, ...] = ()
             if precise:
                 raw_start, raw_count = cleaned.raw_span(start, end)

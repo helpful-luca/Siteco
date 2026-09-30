@@ -131,6 +131,7 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 90 | Deleted sources | Chips and source rows of deleted documents open a "Quelle wurde gelöscht" panel with the stored cited sentence and snippet; a 404 of chunk or file (deleted meanwhile) ends there too | Opening nothing (annex 10, E13) | Master spec 6.3 and annex 11 8.5 win: the snapshot stays readable; WP-G redaction empties it |
 | 91 | Panel width and keyboard | PDFs open the wide panel (600 px); Escape closes the column unless a field, menu or dialog used the key; focus returns to the chip or button that opened it; answer markdown keeps stable renderers so chips are not remounted | 440 px; focus to the composer | At 440 px 11 pt type is about 6 px high; returning focus is the dialog convention |
 | 92 | Static CSP | Production pages (not `/api`, whose files keep `sandbox`) get `default-src 'self'`, `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'`, `worker-src 'self' blob:`, no `unsafe-eval`; `next dev` gets none | Nonces now | Nonces are phase 13; this already proves the viewer runs without eval |
+| 93 | Headings as sentences | Markdown: the heading line (setext underline included) ends in a forced sentence cut; PDF: lines in larger type than the page's body text (pdfium font size, at most 120 characters) get cuts before and after; OCR headings are their own Tesseract paragraph | Changing the sentence regexes | "Technische Daten" was the start of the first cited sentence and got highlighted; documents indexed before keep their chunks |
 
 ## Measurements
 

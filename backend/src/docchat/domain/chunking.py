@@ -6,7 +6,7 @@ that is cited and highlighted.
 """
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from uuid import uuid4
 
 from docchat.domain.models import Chunk, Sentence
@@ -35,10 +35,16 @@ def context_header(document_name: str, page: int | None, heading: str) -> str:
 
 
 def section_from_text(
-    text: str, *, page: int | None = None, heading: str = "", offset: int = 0
+    text: str,
+    *,
+    page: int | None = None,
+    heading: str = "",
+    offset: int = 0,
+    cuts: Iterable[int] = (),
 ) -> TextSection:
-    """A section whose sentences come from the splitter (text files, pages without geometry)."""
-    spans = tuple(SentenceSpan(start, end) for start, end in split_sentences(text))
+    """A section whose sentences come from the splitter (text files, pages without geometry).
+    `cuts` are known sentence boundaries, e.g. the end of the heading line."""
+    spans = tuple(SentenceSpan(start, end) for start, end in split_sentences(text, cuts))
     return TextSection(text=text, sentences=spans, page=page, heading=heading, offset=offset)
 
 

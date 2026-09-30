@@ -73,3 +73,14 @@ def test_many_sentences_in_a_large_block_split_in_linear_time() -> None:
     spans = split_sentences(text)
     assert time.perf_counter() - started < 0.5
     assert len(spans) > 5000
+
+
+def test_forced_cuts_split_where_the_text_has_no_punctuation() -> None:
+    text = "Technische Daten\nDie Mira L hat IP66. Sie wiegt 7,4 kg."
+    assert _texts(text) == ["Technische Daten\nDie Mira L hat IP66.", "Sie wiegt 7,4 kg."]
+    spans = split_sentences(text, extra_cuts=[17])
+    assert [text[a:b] for a, b in spans] == [
+        "Technische Daten",
+        "Die Mira L hat IP66.",
+        "Sie wiegt 7,4 kg.",
+    ]
