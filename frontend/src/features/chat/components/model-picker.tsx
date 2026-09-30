@@ -3,6 +3,7 @@
 import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useConfig } from '@/shared/api/use-config';
+import { useChatSettings } from '../chat-settings';
 import { cn, Menu, MenuLabel, MenuRadioGroup, MenuRadioItem, ToolbarButton, Tooltip } from '@/shared/ui';
 import { modelLabel, priceLevel } from '../format';
 
@@ -12,6 +13,7 @@ type Props = { value: string | null; onChange: (model: string) => void };
 export function ModelPicker({ value, onChange }: Props) {
   const t = useTranslations('chat.model');
   const { data: config } = useConfig();
+  const { pickerOpen, setPickerOpen } = useChatSettings();
   const models = config?.models ?? [];
   if (!config || models.length === 0) return null;
 
@@ -30,6 +32,8 @@ export function ModelPicker({ value, onChange }: Props) {
     <Menu
       align="end"
       className="w-80"
+      open={pickerOpen}
+      onOpenChange={setPickerOpen}
       trigger={
         <ToolbarButton aria-label={`${t('label')}: ${modelLabel(models, value)}`}>
           <span className="truncate">{modelLabel(models, value)}</span>
@@ -54,7 +58,7 @@ export function ModelPicker({ value, onChange }: Props) {
                 </span>
               </span>
               <span className="block text-caption text-ink-muted">
-                {t.has(`tier.${model.tier}`) ? t(`tier.${model.tier}`) : model.tier}
+                {model.available ? (t.has(`tier.${model.tier}`) ? t(`tier.${model.tier}`) : model.tier) : t('unavailable')}
               </span>
               <span className="block text-caption text-ink-muted">
                 {t('price', { input: model.input_usd_per_mtok, output: model.output_usd_per_mtok })}

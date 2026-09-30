@@ -3,7 +3,8 @@
 import { RotateCw, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCodeText } from '@/shared/i18n/use-code-text';
-import { Button, Tooltip } from '@/shared/ui';
+import { useCountdown } from '@/shared/lib/use-countdown';
+import { Button, Countdown, ErrorId, Tooltip } from '@/shared/ui';
 import { extensionOf } from '../upload/pre-check';
 import type { UploadItem } from '../upload/upload-queue';
 import { useFormatSize } from '../use-format-size';
@@ -19,11 +20,16 @@ type Props = { item: UploadItem; onRetry: (id: string) => void; onDismiss: (id: 
 /** A file on its way to the library, or one that did not make it (with the reason). */
 export function UploadRow({ item, onRetry, onDismiss }: Props) {
   const t = useTranslations('library');
+  const tAnswer = useTranslations('chat.answer');
   const text = useCodeText();
   const formatSize = useFormatSize();
   const name = item.file.name;
   const kind = KINDS[extensionOf(name) as keyof typeof KINDS] ?? null;
   const failed = item.state === 'failed';
+  const error = failed ? item.error : null;
+  const retryAt = error?.retryAt ?? null;
+  // Our own upload limit: the row counts down, and trying again makes sense once it is over.
+  const waiting = useCountdown(retryAt) > 0;
   return (
     <tr className="group align-top">
       <td className="py-2 pr-3 pl-4">
@@ -39,10 +45,27 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
             <div className="mt-0.5 [--row-line:--spacing(7)] @lg:hidden">
               <UploadStatus item={item} />
             </div>
-            {failed && item.error && (
-              <p role="alert" className="mt-1 text-footnote text-danger">
-                {text.error(item.error.code, item.error.params)}
+            {error && retryAt !== null && (
+              <p className="mt-1 text-footnote text-ink-muted">
+                <Countdown
+                  until={retryAt}
+                  format={(seconds) => text.error(error.code, { ...error.params, seconds })}
+                  done={t('pauseOver')}
+                />
               </p>
+            )}
+            {error && retryAt === null && (
+              <p role="alert" className="mt-1 text-footnote text-danger">
+                {text.error(error.code, error.params)}
+              </p>
+            )}
+            {error?.requestId && (error.code === 'UNKNOWN_ERROR' || error.code === 'INTERNAL_ERROR') && (
+              <ErrorId
+                id={error.requestId}
+                label={tAnswer('errorId', { id: error.requestId })}
+                copyLabel={tAnswer('copyErrorId')}
+                copiedLabel={tAnswer('copied')}
+              />
             )}
           </div>
         </div>
@@ -63,7 +86,17 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
         <div className="flex h-(--row-line) items-center justify-end gap-1">
           {failed && item.error?.retryable && (
             <Tooltip content={t('actions.retry')}>
-              <Button icon size="sm" variant="ghost" aria-label={t('actions.retryOf', { name })} onClick={() => onRetry(item.id)}>
+              <Button
+                icon
+                size="sm"
+                variant="ghost"
+                aria-label={t('actions.retryOf', { name })}
+                aria-disabled={waiting || undefined}
+                onClick={() => {
+                  if (!waiting) onRetry(item.id);
+                }}
+                className="aria-disabled:opacity-40"
+              >
                 <RotateCw />
               </Button>
             </Tooltip>

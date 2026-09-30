@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useUploads } from '@/features/library';
 import { Page } from '@/features/shell';
-import { ApiError } from '@/shared/api/errors';
+import { toApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
-import { useCodeText } from '@/shared/i18n/use-code-text';
+import { useBackendDown } from '@/shared/api/use-connection';
 import { Button, buttonStyles, cn, DelayedSpinner } from '@/shared/ui';
 import { useChatSettings } from '../chat-settings';
 import { isNotFound, useChat, useMessages, useUpdateChat } from '../queries';
@@ -16,12 +16,15 @@ import { useRun, useStreamActions } from '../stream/stream-provider';
 import { buildTurns, runIsPersisted, type Turn } from '../turns';
 import { useComposerBlock } from '../use-composer-state';
 import { useFollowScroll } from '../use-follow-scroll';
+import { useRefusal } from '../use-refusal';
 import { AssistantMessage } from './assistant-message';
 import { ChatFrame } from './chat-frame';
 import { ChatHeader } from './chat-header';
 import { Composer } from './composer';
 import { ComposerNotice } from './composer-notice';
 import { ModelPicker } from './model-picker';
+import { OfflineNotice } from './offline-notice';
+import { RefusalNotice } from './refusal-notice';
 import { ScopePicker, type ScopeValue } from './scope-picker';
 import { UserMessage } from './user-message';
 
@@ -30,7 +33,6 @@ const NOTICE_ID = 'composer-notice';
 /** An existing chat: the conversation, live answers from the stream provider, the composer. */
 export function ChatView({ chatId }: { chatId: string }) {
   const t = useTranslations('chat');
-  const text = useCodeText();
   const locale = useLocale() as 'de' | 'en';
   const { data: config } = useConfig();
   const chat = useChat(chatId);
@@ -42,12 +44,13 @@ export function ChatView({ chatId }: { chatId: string }) {
   const updateChat = useUpdateChat();
   const uploads = useUploads();
   const { block } = useComposerBlock();
+  const down = useBackendDown();
 
   const { scrollRef, contentRef, atEnd, scrolled, scrollToEnd, scrollToTop } = useFollowScroll();
   const [viewHeight, setViewHeight] = useState(0);
   const [pinned, setPinned] = useState<string | null>(null);
   const [draft, setDraftState] = useState(() => settings.draft(chatId));
-  const [refusal, setRefusal] = useState<ApiError | null>(null);
+  const { refusal, refuse, clear: clearRefusal, endWait, waiting } = useRefusal();
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
 
@@ -105,12 +108,12 @@ export function ChatView({ chatId }: { chatId: string }) {
     if (!settings.model || sendingRef.current) return;
     sendingRef.current = true;
     setSending(true);
-    setRefusal(null);
+    clearRefusal();
     try {
       if (await streams.ask({ chatId, question, model: settings.model, locale })) setDraft('');
     } catch (error) {
-      const apiError = error instanceof ApiError ? error : null;
-      if (apiError?.code !== 'DUPLICATE_REQUEST') setRefusal(apiError ?? new ApiError('UNKNOWN_ERROR', 0));
+      const apiError = toApiError(error);
+      if (apiError.code !== 'DUPLICATE_REQUEST') refuse(apiError);
     } finally {
       sendingRef.current = false;
       setSending(false);
@@ -120,21 +123,21 @@ export function ChatView({ chatId }: { chatId: string }) {
   const model = settings.model;
   const defaultModel = config?.default_model;
   const regenerate = useCallback(
-    async (assistantId: string, question: string, previousModel: string | null) => {
-      setRefusal(null);
+    async (assistantId: string, question: string, previousModel: string | null, override?: string) => {
+      clearRefusal();
       try {
         await streams.regenerate({
           chatId,
           assistantId,
           question,
-          model: model ?? previousModel ?? defaultModel ?? '',
+          model: override ?? model ?? previousModel ?? defaultModel ?? '',
           locale,
         });
       } catch (error) {
-        setRefusal(error instanceof ApiError ? error : new ApiError('UNKNOWN_ERROR', 0));
+        refuse(toApiError(error));
       }
     },
-    [streams, chatId, model, defaultModel, locale],
+    [streams, chatId, model, defaultModel, locale, clearRefusal, refuse],
   );
 
   if (isNotFound(chat.error) || isNotFound(messages.error)) {
@@ -159,10 +162,10 @@ export function ChatView({ chatId }: { chatId: string }) {
     });
 
   const lastTurn = turns.at(-1);
-  const notice = refusal ? (
-    <ComposerNotice id={NOTICE_ID} tone="error" onDismiss={() => setRefusal(null)}>
-      {text.error(refusal.code, refusal.params, refusal.retryAfter)}
-    </ComposerNotice>
+  const notice = down ? (
+    <OfflineNotice id={NOTICE_ID} />
+  ) : refusal ? (
+    <RefusalNotice id={NOTICE_ID} refusal={refusal} onDismiss={clearRefusal} onWaitEnd={endWait} />
   ) : block ? (
     <ComposerNotice
       id={NOTICE_ID}
@@ -204,7 +207,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             onAttach={uploads.openPicker}
             busy={running}
             sending={sending}
-            blocked={block !== null || !settings.model}
+            blocked={block !== null || !settings.model || down || waiting}
             maxChars={config?.limits.max_question_chars}
             describedBy={notice ? NOTICE_ID : undefined}
             autoFocus
@@ -256,7 +259,7 @@ type TurnRowProps = {
   minHeight: number | undefined;
   chatTitle: string | null;
   canRegenerate: boolean;
-  onRegenerate: (assistantId: string, question: string, previousModel: string | null) => void;
+  onRegenerate: (assistantId: string, question: string, previousModel: string | null, model?: string) => void;
 };
 
 /** One question and its answer. Memoised: while an answer streams, only its own row renders. */
@@ -271,7 +274,9 @@ const TurnRow = memo(function TurnRow({ turn, minHeight, chatTitle, canRegenerat
           answer={answer}
           chatTitle={chatTitle}
           onRegenerate={
-            canRegenerate && messageId ? () => onRegenerate(messageId, turn.question, answer.model) : undefined
+            canRegenerate && messageId
+              ? (model?: string) => onRegenerate(messageId, turn.question, answer.model, model)
+              : undefined
           }
         />
       )}

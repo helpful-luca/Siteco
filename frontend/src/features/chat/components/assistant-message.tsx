@@ -1,6 +1,6 @@
 'use client';
 
-import { Code2, Table2 } from 'lucide-react';
+import { Code2, RotateCcw, Table2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 import { AnswerMarkdown, markCitations, SourcesList } from '@/features/citations';
@@ -22,8 +22,8 @@ const LEADING_NOTICES = new Set(['SOURCES_PARTIAL', 'SUMMARY_PARTIAL']);
 type Props = {
   answer: Answer;
   chatTitle: string | null;
-  /** Only the answer to the latest question can be regenerated. */
-  onRegenerate?: () => void;
+  /** Only the answer to the latest question can be regenerated, optionally with another model. */
+  onRegenerate?: (model?: string) => void;
 };
 
 function hash(text: string): string {
@@ -101,7 +101,9 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate }: Props) {
         : answer.error?.partial
           ? t('answer.incomplete')
           : null;
-  const hasFooter = settled && answer.status !== 'error' && answer.status !== 'refused' && (answer.text || answer.sources.length);
+  const retry = onRegenerate ? () => onRegenerate() : undefined;
+  const hasFooter =
+    settled && answer.status !== 'error' && answer.status !== 'refused' && (answer.text.length > 0 || answer.sources.length > 0);
 
   return (
     <article aria-label={t('answer.label')} aria-busy={streaming} className="flex flex-col gap-4">
@@ -127,7 +129,15 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate }: Props) {
       {streaming && answer.text && answer.phase && <StatusLine phase={answer.phase} startedAt={null} />}
 
       {label && <p className="text-caption font-medium text-ink-muted">{label}</p>}
-      {answer.error && <AnswerError error={answer.error} onRetry={onRegenerate} />}
+      {answer.error && (
+        <AnswerError error={answer.error} model={answer.model} onRetry={retry} onRetryWith={onRegenerate} />
+      )}
+      {label && !answer.error && !hasFooter && retry && (
+        <Button size="sm" variant="ghost" className="-ml-3 w-fit" onClick={retry}>
+          <RotateCcw aria-hidden />
+          {t('answer.regenerate')}
+        </Button>
+      )}
       {settled && trailing.length > 0 && <AnswerNotices notices={trailing} />}
 
       {hasFooter && (
@@ -140,7 +150,7 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate }: Props) {
               onOpenSource={open}
             />
           )}
-          <AnswerFooter answer={answer} onRegenerate={onRegenerate} onOpenArtifact={openWholeAnswer} />
+          <AnswerFooter answer={answer} onRegenerate={retry} onOpenArtifact={openWholeAnswer} />
         </div>
       )}
     </article>

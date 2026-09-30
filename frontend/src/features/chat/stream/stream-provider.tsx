@@ -3,9 +3,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
+import { accountStatus } from '@/shared/api/account-status';
 import { fetchJson } from '@/shared/api/client';
-import { clientError } from '@/shared/api/errors';
-import type { Lane } from '@/shared/api/types';
+import { CONFIG_CHANGING_CODES } from '@/shared/api/error-catalog';
+import { ApiError, clientError } from '@/shared/api/errors';
+import type { ConfigOut, Lane } from '@/shared/api/types';
 import { CHATS_KEY, chatKey, messagesKey } from '../queries';
 import type { StreamEvent } from './events';
 import { readStream } from './read-stream';
@@ -61,6 +63,19 @@ export function StreamProvider({ children }: { children: ReactNode }) {
     for (const key of [...pending.current.keys()]) flush(key);
   }, [flush]);
 
+  /** What an answer tells about the whole app: a rejected key, a gone model, the budget, billing. */
+  const learn = useCallback(
+    (code: string | null) => {
+      if (code === 'LLM_BILLING') accountStatus.reportBillingBlocked();
+      if (code === null) accountStatus.reportAnswerWentThrough();
+      const budgeted = client.getQueryData<ConfigOut>(['config'])?.limits.daily_budget_usd != null;
+      if ((code !== null && CONFIG_CHANGING_CODES.has(code)) || (code === null && budgeted)) {
+        void client.invalidateQueries({ queryKey: ['config'] });
+      }
+    },
+    [client],
+  );
+
   const refresh = useCallback(
     async (chatId: string) => {
       void client.invalidateQueries({ queryKey: chatKey(chatId) });
@@ -101,6 +116,8 @@ export function StreamProvider({ children }: { children: ReactNode }) {
             resolve(true);
             void client.invalidateQueries({ queryKey: CHATS_KEY });
           }
+          if (event.type === 'error') learn(event.data.error.code);
+          if (event.type === 'done' && event.data.status !== 'sources_only') learn(null);
           if (event.type === 'done' || event.type === 'error') void refresh(chatId);
         };
         readStream({ url, body, signal: controller.signal, onEvent })
@@ -121,6 +138,7 @@ export function StreamProvider({ children }: { children: ReactNode }) {
           })
           .catch((error: unknown) => {
             if (current()) store.dispatch({ type: 'local/clear', key });
+            if (error instanceof ApiError) learn(error.code);
             reject(error);
           })
           .finally(() => {
@@ -128,7 +146,7 @@ export function StreamProvider({ children }: { children: ReactNode }) {
           });
       });
     },
-    [client, flush, flushAll, refresh, store],
+    [client, flush, flushAll, learn, refresh, store],
   );
 
   const ask = useCallback(

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { connection } from '@/shared/api/connection';
 import { ApiError } from '@/shared/api/errors';
 import type { StreamEvent } from './events';
 import { readStream } from './read-stream';
@@ -34,7 +35,10 @@ async function read(chunks: string[], options: { close?: boolean; watchdogMs?: n
   return { end, events };
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  connection.reset();
+});
 
 describe('readStream', () => {
   it('sends the question as JSON with the app header', async () => {
@@ -136,5 +140,38 @@ describe('readStream', () => {
     await vi.waitFor(() => expect(events).toHaveLength(1));
     controller.abort();
     expect(await promise).toBe('aborted');
+  });
+
+  it('asks for a check of the backend when a stream is cut off (a restart mid-answer)', async () => {
+    const cut = new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(new TextEncoder().encode('event: delta\ndata: {"text":"Teil"}\n\n'));
+        c.error(new TypeError('network error'));
+      },
+    });
+    mockFetch(new Response(cut, { headers: SSE }));
+    const end = await readStream({ url: '/x', body: {}, signal: new AbortController().signal, onEvent: () => {} });
+    expect(end).toBe('interrupted');
+    expect(connection.getState()).toBe('unsure');
+  });
+
+  it('marks the backend down when the question cannot be sent at all', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))));
+    await expect(
+      readStream({ url: '/x', body: {}, signal: new AbortController().signal, onEvent: () => {} }),
+    ).rejects.toBeInstanceOf(ApiError);
+    expect(connection.getState()).toBe('down');
+  });
+
+  it('carries the countdown of our own rate limit', async () => {
+    mockFetch(
+      Response.json(
+        { error: { code: 'RATE_LIMITED', retryable: true, retry_after: 23, request_id: 'r1', params: { seconds: 23, scope: 'chat' } } },
+        { status: 429, headers: { 'retry-after': '23' } },
+      ),
+    );
+    await expect(
+      readStream({ url: '/x', body: {}, signal: new AbortController().signal, onEvent: () => {} }),
+    ).rejects.toMatchObject({ code: 'RATE_LIMITED', status: 429, retryAfter: 23, params: { seconds: 23 } });
   });
 });

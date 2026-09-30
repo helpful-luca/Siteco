@@ -51,6 +51,13 @@ export function DocumentStatus({ document, announce = true }: { document: Docume
 export function UploadStatus({ item }: { item: UploadItem }) {
   const t = useTranslations('library.status');
   const name = item.file.name;
+  if (item.state === 'failed' && item.error?.code === 'RATE_LIMITED') {
+    return (
+      <StatusStack badge={<Badge tone="neutral">{t('uploadPaused')}</Badge>}>
+        <Announcement name={name} stage="uploadPaused" />
+      </StatusStack>
+    );
+  }
   if (item.state === 'failed') {
     return (
       <StatusStack badge={<Badge tone="failed">{t('uploadFailed')}</Badge>}>

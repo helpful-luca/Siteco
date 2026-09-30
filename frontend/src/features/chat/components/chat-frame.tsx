@@ -3,7 +3,7 @@
 import { ArrowDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { GlobalBanner } from '@/features/shell';
+import { GlobalBanner, RECONNECTING_BANNER } from '@/features/shell';
 import { Button } from '@/shared/ui';
 
 type Props = {
@@ -65,7 +65,8 @@ export function ChatFrame({
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter data-scrolled:[mask-image:linear-gradient(to_bottom,transparent,black_calc(var(--spacing)*10))]"
       >
         <div ref={contentRef} className="mx-auto max-w-reading pt-6" style={{ paddingBottom: dockHeight + 24 }}>
-          <GlobalBanner className="mb-6" />
+          {/* An outage is told once, in the composer note where the question waits. */}
+          <GlobalBanner className="mb-6" omit={[RECONNECTING_BANNER]} />
           {children}
         </div>
       </div>

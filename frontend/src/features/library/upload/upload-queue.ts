@@ -62,8 +62,21 @@ export function uploadReducer(items: UploadItem[], action: UploadAction): Upload
   }
 }
 
+/**
+ * Until when the queue waits: while our own upload limit asks for a pause, starting the next
+ * files would only fail them too.
+ */
+export function pausedUntil(items: readonly UploadItem[]): number | null {
+  const until = items
+    .filter((i) => i.state === 'failed' && i.error?.code === 'RATE_LIMITED' && i.error.retryAt)
+    .map((i) => i.error?.retryAt ?? 0);
+  return until.length ? Math.max(...until) : null;
+}
+
 /** The waiting items that may start now, oldest first, filling the free slots. */
-export function nextToStart(items: readonly UploadItem[], maxParallel = MAX_PARALLEL): UploadItem[] {
+export function nextToStart(items: readonly UploadItem[], maxParallel = MAX_PARALLEL, now = Date.now()): UploadItem[] {
+  const pause = pausedUntil(items);
+  if (pause !== null && now < pause) return [];
   const running = items.filter((i) => i.state === 'uploading').length;
   return items.filter((i) => i.state === 'waiting').slice(0, Math.max(0, maxParallel - running));
 }

@@ -2,9 +2,11 @@ export { Badge } from './badge';
 export { Button, buttonStyles, type ButtonProps } from './button';
 export { cn } from './cn';
 export { CopyButton } from './copy-button';
+export { Countdown } from './countdown';
 export { DelayedSpinner } from './delayed-spinner';
 export { Dialog, DialogClose } from './dialog';
 export { ErrorBoundary } from './error-boundary';
+export { ErrorId } from './error-id';
 export { HoverCard } from './hover-card';
 export {
   Menu,

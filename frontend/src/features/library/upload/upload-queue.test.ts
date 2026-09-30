@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createItems, isBusy, nextToStart, uploadReducer, type UploadItem } from './upload-queue';
+import { createItems, isBusy, nextToStart, pausedUntil, uploadReducer, type UploadItem } from './upload-queue';
 
 function file(name: string, size = 100): File {
   return new File([new Uint8Array(size)], name);
@@ -64,5 +64,31 @@ describe('upload queue', () => {
     items = uploadReducer(items, { type: 'succeeded', id: items[0].id });
     items = uploadReducer(items, { type: 'dismiss', id: items[0].id });
     expect(items).toEqual([]);
+  });
+});
+
+describe('pause for our own upload limit (annex 11, 6.3)', () => {
+  const limited = (retryAt: number) => ({
+    code: 'RATE_LIMITED',
+    params: { seconds: 20, scope: 'upload' },
+    retryable: true,
+    retryAt,
+  });
+
+  it('starts nothing while a rate-limited upload waits, and continues afterwards', () => {
+    let items = queue('1.pdf', '2.pdf', '3.pdf');
+    items = uploadReducer(items, { type: 'start', id: items[0].id });
+    items = uploadReducer(items, { type: 'failed', id: items[0].id, error: limited(20_000) });
+    expect(pausedUntil(items)).toBe(20_000);
+    expect(nextToStart(items, 3, 19_999)).toEqual([]);
+    expect(nextToStart(items, 3, 20_000).map((i) => i.file.name)).toEqual(['2.pdf', '3.pdf']);
+  });
+
+  it('can be retried like any retryable failure', () => {
+    let items = queue('1.pdf');
+    items = uploadReducer(items, { type: 'failed', id: items[0].id, error: limited(1) });
+    items = uploadReducer(items, { type: 'retry', id: items[0].id });
+    expect(items[0]).toMatchObject({ state: 'waiting', error: null });
+    expect(pausedUntil(items)).toBeNull();
   });
 });

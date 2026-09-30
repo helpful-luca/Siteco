@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ModelInfo } from '@/shared/api/types';
-import { formatCost, formatSeconds, modelLabel, priceLevel } from './format';
+import { alternateModel, formatCost, formatSeconds, modelLabel, priceLevel } from './format';
 
 const model = (id: string, output: number): ModelInfo => ({
   id,
@@ -30,5 +30,22 @@ describe('format', () => {
     expect(modelLabel(models, 'sonnet')).toBe('SONNET');
     expect(modelLabel(models, 'other')).toBe('other');
     expect(models.map((m) => priceLevel(models, m.id))).toEqual([1, 2, 3]);
+  });
+});
+
+describe('alternateModel', () => {
+  const models = [model('haiku', 5), model('sonnet', 10), { ...model('opus', 25), available: false }];
+
+  it('offers the default when another model failed', () => {
+    expect(alternateModel(models, 'haiku', 'sonnet')).toBe('sonnet');
+  });
+
+  it('offers the first other available model when the default failed', () => {
+    expect(alternateModel(models, 'sonnet', 'sonnet')).toBe('haiku');
+  });
+
+  it('never offers an unavailable model or none at all', () => {
+    expect(alternateModel([models[0], models[2]], 'haiku', 'haiku')).toBeNull();
+    expect(alternateModel(undefined, 'haiku')).toBeNull();
   });
 });

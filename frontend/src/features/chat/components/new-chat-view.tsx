@@ -5,18 +5,21 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useUploads } from '@/features/library';
-import { ApiError } from '@/shared/api/errors';
+import { ApiError, toApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
-import { useCodeText } from '@/shared/i18n/use-code-text';
+import { useBackendDown } from '@/shared/api/use-connection';
 import { useChatSettings } from '../chat-settings';
 import { useCreateChat, useDeleteChat } from '../queries';
 import { useStreamActions } from '../stream/stream-provider';
 import { useComposerBlock } from '../use-composer-state';
+import { useRefusal } from '../use-refusal';
 import { ChatFrame } from './chat-frame';
 import { ChatHeader } from './chat-header';
 import { Composer } from './composer';
 import { ComposerNotice } from './composer-notice';
 import { ModelPicker } from './model-picker';
+import { OfflineNotice } from './offline-notice';
+import { RefusalNotice } from './refusal-notice';
 import { ScopePicker, type ScopeValue } from './scope-picker';
 
 const NOTICE_ID = 'composer-notice';
@@ -30,7 +33,6 @@ const SUGGESTIONS = ['summary', 'specs', 'norms'] as const;
  */
 export function NewChatView() {
   const t = useTranslations('chat');
-  const text = useCodeText();
   const locale = useLocale() as 'de' | 'en';
   const router = useRouter();
   const { data: config } = useConfig();
@@ -40,12 +42,13 @@ export function NewChatView() {
   const createChat = useCreateChat();
   const deleteChat = useDeleteChat();
   const { block, readyCount } = useComposerBlock();
+  const down = useBackendDown();
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [scope, setScope] = useState<ScopeValue>({ scope: 'all' });
   const [draft, setDraftState] = useState(() => settings.draft(NEW));
   const [sending, setSending] = useState(false);
-  const [refusal, setRefusal] = useState<ApiError | null>(null);
+  const { refusal, refuse, clear: clearRefusal, endWait, waiting } = useRefusal();
   // Refs, not state: a second Enter in the same frame must not create a second chat, and a
   // confirmation that arrives after the user went elsewhere must not pull them back.
   const sendingRef = useRef(false);
@@ -66,7 +69,7 @@ export function NewChatView() {
     if (!settings.model || sendingRef.current) return;
     sendingRef.current = true;
     setSending(true);
-    setRefusal(null);
+    clearRefusal();
     let chatId: string | null = null;
     try {
       const { chat } = await createChat.mutateAsync(
@@ -81,7 +84,7 @@ export function NewChatView() {
     } catch (error) {
       // Refused before the stream: no empty chat stays behind, the question stays in the composer.
       if (chatId) deleteChat.mutate(chatId);
-      if (mounted.current) setRefusal(error instanceof ApiError ? error : new ApiError('UNKNOWN_ERROR', 0));
+      if (mounted.current) refuse(toApiError(error));
     } finally {
       sendingRef.current = false;
       if (mounted.current) setSending(false);
@@ -89,10 +92,10 @@ export function NewChatView() {
   };
 
   const hasDocuments = block !== 'noDocuments';
-  const notice = refusal ? (
-    <ComposerNotice id={NOTICE_ID} tone="error" onDismiss={() => setRefusal(null)}>
-      {text.error(refusal.code, refusal.params, refusal.retryAfter)}
-    </ComposerNotice>
+  const notice = down ? (
+    <OfflineNotice id={NOTICE_ID} />
+  ) : refusal ? (
+    <RefusalNotice id={NOTICE_ID} refusal={refusal} onDismiss={clearRefusal} onWaitEnd={endWait} />
   ) : block === 'processing' ? (
     <ComposerNotice id={NOTICE_ID} tone="info">
       {t('composer.processing')}
@@ -120,7 +123,7 @@ export function NewChatView() {
             onAttach={uploads.openPicker}
             busy={false}
             sending={sending}
-            blocked={block !== null || !settings.model}
+            blocked={block !== null || !settings.model || down || waiting}
             maxChars={config?.limits.max_question_chars}
             describedBy={notice ? NOTICE_ID : block === 'noDocuments' ? 'new-chat-hint' : undefined}
             autoFocus
@@ -140,7 +143,7 @@ export function NewChatView() {
                 <li key={key}>
                   <button
                     type="button"
-                    disabled={sending || block !== null}
+                    disabled={sending || block !== null || down || waiting}
                     onClick={() => void submit(t(`suggestions.${key}`))}
                     className="-mx-3 flex h-8 items-center rounded-control px-3 text-body text-ink/85 transition-colors hover:bg-fill hover:text-ink disabled:opacity-50 pointer-coarse:h-11"
                   >

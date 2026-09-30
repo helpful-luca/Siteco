@@ -2,7 +2,8 @@
  * One file per request as a raw body (the backend streams it to disk while counting bytes).
  * XHR instead of fetch because only XHR reports upload progress.
  */
-import { ApiError, clientError, normalizeError } from '@/shared/api/errors';
+import { connection } from '@/shared/api/connection';
+import { ApiError, clientError, isConnectionError, normalizeError } from '@/shared/api/errors';
 import type { DocumentEnvelopeOut, DocumentOut } from '@/shared/api/types';
 
 type Options = {
@@ -23,6 +24,7 @@ export function xhrUpload(file: File, { onProgress, signal }: Options): Promise<
     xhr.upload.onprogress = (event) => onProgress(event.loaded, event.total || file.size);
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
+        connection.reportUp();
         try {
           resolve((JSON.parse(xhr.responseText) as DocumentEnvelopeOut).document);
         } catch {
@@ -37,9 +39,19 @@ export function xhrUpload(file: File, { onProgress, signal }: Options): Promise<
           'x-request-id': xhr.getResponseHeader('x-request-id') ?? '',
         },
       });
-      normalizeError(response).then(reject, () => reject(new ApiError('UNKNOWN_ERROR', xhr.status)));
+      normalizeError(response).then(
+        (error) => {
+          if (isConnectionError(error)) connection.reportDown();
+          else connection.reportUp();
+          reject(error);
+        },
+        () => reject(new ApiError('UNKNOWN_ERROR', xhr.status)),
+      );
     };
-    xhr.onerror = () => reject(clientError('NETWORK_ERROR'));
+    xhr.onerror = () => {
+      connection.reportDown();
+      reject(clientError('NETWORK_ERROR'));
+    };
     xhr.onabort = () => reject(new DOMException('Upload cancelled', 'AbortError'));
     if (signal) {
       if (signal.aborted) {

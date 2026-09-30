@@ -30,3 +30,13 @@ export function priceLevel(models: ModelInfo[], id: string): number {
   if (price === undefined || prices.length <= 1) return 1;
   return Math.min(3, 1 + Math.round((prices.indexOf(price) / (prices.length - 1)) * 2));
 }
+
+/**
+ * Another model to try when Claude is overloaded (annex 10, H25): the default if it is not the
+ * one that failed, else the first other model that still answers (the list starts with the
+ * fastest).
+ */
+export function alternateModel(models: ModelInfo[] | undefined, current: string | null, defaultModel?: string): string | null {
+  const others = (models ?? []).filter((m) => m.available && m.id !== current);
+  return (others.find((m) => m.id === defaultModel) ?? others[0])?.id ?? null;
+}

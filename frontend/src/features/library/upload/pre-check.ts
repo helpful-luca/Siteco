@@ -9,6 +9,9 @@ export type UploadError = {
   code: string;
   params: Record<string, string | number>;
   retryable: boolean;
+  /** For our own rate limit: epoch ms from which trying again makes sense (annex 11, 6.3). */
+  retryAt?: number | null;
+  requestId?: string | null;
 };
 
 export function extensionOf(name: string): string {

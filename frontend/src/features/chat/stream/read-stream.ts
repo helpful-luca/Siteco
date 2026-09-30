@@ -1,5 +1,6 @@
 import { createParser } from 'eventsource-parser';
-import { clientError, normalizeError } from '@/shared/api/errors';
+import { connection } from '@/shared/api/connection';
+import { clientError, isAbortError, isConnectionError, normalizeError } from '@/shared/api/errors';
 import { isStreamEventType, type StreamEvent } from './events';
 
 /** 45 s without a single byte (pings arrive every 15 s) means the connection is dead (S5). */
@@ -14,8 +15,6 @@ type Options = {
   onEvent: (event: StreamEvent) => void;
   watchdogMs?: number;
 };
-
-const isAbort = (error: unknown) => error instanceof DOMException && error.name === 'AbortError';
 
 /**
  * POSTs a question and reads the answer stream (annex 11, 8.3). Refusals before the stream are
@@ -38,11 +37,18 @@ export async function readStream({ url, body, signal, onEvent, watchdogMs = WATC
       cache: 'no-store',
     });
   } catch (error) {
-    if (isAbort(error)) return 'aborted';
+    if (isAbortError(error)) return 'aborted';
+    connection.reportDown();
     throw clientError('NETWORK_ERROR');
   }
   const type = res.headers.get('content-type') ?? '';
-  if (!res.ok || !type.startsWith('text/event-stream') || !res.body) throw await normalizeError(res);
+  if (!res.ok || !type.startsWith('text/event-stream') || !res.body) {
+    const error = await normalizeError(res);
+    if (isConnectionError(error)) connection.reportDown();
+    else connection.reportUp();
+    throw error;
+  }
+  connection.reportUp();
 
   let terminal = false;
   const parser = createParser({
@@ -75,14 +81,17 @@ export async function readStream({ url, body, signal, onEvent, watchdogMs = WATC
       clearTimeout(timer);
       if (next === 'timeout') {
         void reader.cancel().catch(() => undefined);
+        connection.suspect();
         return 'interrupted';
       }
       if (next.done) break;
       parser.feed(decoder.decode(next.value, { stream: true }));
     }
   } catch (error) {
-    if (signal.aborted || isAbort(error)) return 'aborted';
-    return terminal ? 'terminal' : 'interrupted';
+    if (signal.aborted || isAbortError(error)) return 'aborted';
+    if (terminal) return 'terminal';
+    connection.suspect(); // a restart or a lost connection cuts streams off: check the backend
+    return 'interrupted';
   } finally {
     clearTimeout(timer);
   }
@@ -90,5 +99,7 @@ export async function readStream({ url, body, signal, onEvent, watchdogMs = WATC
     void reader.cancel().catch(() => undefined);
     return 'terminal';
   }
-  return signal.aborted ? 'aborted' : 'interrupted';
+  if (signal.aborted) return 'aborted';
+  connection.suspect();
+  return 'interrupted';
 }

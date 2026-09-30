@@ -1,12 +1,13 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
+import { deadlineIn } from '@/shared/lib/use-countdown';
 import { useAddDocumentToList } from '../queries';
 import { ACCEPT_ATTRIBUTE, type UploadError } from './pre-check';
-import { createItems, nextToStart, uploadReducer, type UploadItem } from './upload-queue';
+import { createItems, nextToStart, pausedUntil, uploadReducer, type UploadItem } from './upload-queue';
 import { xhrUpload } from './xhr-upload';
 
 type Uploads = {
@@ -21,7 +22,13 @@ const UploadContext = createContext<Uploads | null>(null);
 
 function toUploadError(error: unknown): UploadError {
   if (error instanceof ApiError) {
-    return { code: error.code, params: error.params as UploadError['params'], retryable: error.retryable };
+    return {
+      code: error.code,
+      params: error.params as UploadError['params'],
+      retryable: error.retryable,
+      retryAt: error.code === 'RATE_LIMITED' && error.retryAfter ? deadlineIn(error.retryAfter) : null,
+      requestId: error.requestId,
+    };
   }
   return { code: 'UNKNOWN_ERROR', params: {}, retryable: true };
 }
@@ -36,6 +43,15 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   const addToList = useAddDocumentToList();
   const controllers = useRef(new Map<string, AbortController>());
   const input = useRef<HTMLInputElement>(null);
+  // Bumped when a pause of the upload limit is over, so waiting files start again.
+  const [resumed, setResumed] = useState(0);
+
+  useEffect(() => {
+    const pause = pausedUntil(items);
+    if (pause === null || pause <= Date.now()) return;
+    const timer = setTimeout(() => setResumed((n) => n + 1), pause - Date.now());
+    return () => clearTimeout(timer);
+  }, [items]);
 
   useEffect(() => {
     for (const item of nextToStart(items)) {
@@ -57,7 +73,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         })
         .finally(() => controllers.current.delete(id));
     }
-  }, [items, addToList]);
+  }, [items, addToList, resumed]);
 
   useEffect(() => {
     const running = controllers.current;
