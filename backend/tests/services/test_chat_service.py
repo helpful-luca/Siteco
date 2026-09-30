@@ -70,7 +70,7 @@ def test_scope_change(h: ChatHarness) -> None:
 
 
 async def test_deleting_a_chat_stops_its_answer_first(tmp_path: Path) -> None:
-    llm = FakeLLMClient([FakeScenario.SLOW], slow_delay_s=0.01)
+    llm = FakeLLMClient([FakeScenario.SLOW], slow_delay_s=0.05)
     h = build_chat_harness(tmp_path, llm=llm)
     h.add_document()
     chat = h.new_chat()

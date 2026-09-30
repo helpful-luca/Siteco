@@ -290,7 +290,7 @@ def live(settings: Settings, llm: FakeLLMClient) -> Iterator[httpx2.Client]:
 
 
 def test_busy_lane_concurrency_limit_and_stop(settings: Settings) -> None:
-    slow = FakeLLMClient(default=FakeScenario.SLOW, slow_delay_s=0.02)
+    slow = FakeLLMClient(default=FakeScenario.SLOW, slow_delay_s=0.05)
     with live(settings.model_copy(update={"max_concurrent_streams": 1}), slow) as http:
         add_document(http)
         first, second = new_chat(http), new_chat(http)
@@ -315,7 +315,7 @@ def test_stop_without_running_answer(client: TestClient) -> None:
 
 
 def test_client_disconnect_leaves_an_interrupted_answer(settings: Settings) -> None:
-    slow = FakeLLMClient(default=FakeScenario.SLOW, slow_delay_s=0.02)
+    slow = FakeLLMClient(default=FakeScenario.SLOW, slow_delay_s=0.05)
     with live(settings, slow) as http:
         add_document(http)
         chat_id = new_chat(http)

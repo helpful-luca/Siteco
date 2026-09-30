@@ -1,6 +1,7 @@
 """The answer run end to end with real SQLite and the fake model."""
 
 import asyncio
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,7 @@ from docchat.services.run_events import (
     StatusEvent,
 )
 from tests.services.chat_support import ChatHarness, build_chat_harness
+from tests.waiting import PATIENCE_S, eventually
 
 MIRA = (
     "Die Leuchte Mira hat die Schutzart IP66. Sie ist schlagfest nach IK08.",
@@ -156,7 +158,7 @@ async def test_error_after_the_first_delta_is_never_retried(tmp_path: Path) -> N
 
 
 async def test_stop_persists_the_partial_answer(tmp_path: Path) -> None:
-    llm = FakeLLMClient([FakeScenario.SLOW], slow_delay_s=0.01)
+    llm = FakeLLMClient([FakeScenario.SLOW], slow_delay_s=0.05)
     h = build_chat_harness(tmp_path, llm=llm)
     h.add_document(MIRA)
     chat = h.new_chat()
@@ -178,7 +180,7 @@ async def test_stop_persists_the_partial_answer(tmp_path: Path) -> None:
 
 
 async def test_a_listener_that_goes_away_leaves_an_interrupted_answer(tmp_path: Path) -> None:
-    llm = FakeLLMClient([FakeScenario.SLOW], slow_delay_s=0.01)
+    llm = FakeLLMClient([FakeScenario.SLOW], slow_delay_s=0.05)
     h = build_chat_harness(tmp_path, llm=llm)
     h.add_document(MIRA)
     run = await h.answers.ask(h.command(h.new_chat()))
@@ -187,10 +189,7 @@ async def test_a_listener_that_goes_away_leaves_an_interrupted_answer(tmp_path: 
         if isinstance(event, DeltaEvent):
             break
     await events.aclose()  # what a client disconnect does to the SSE generator
-    for _ in range(100):
-        if h.registry.active == 0:
-            break
-        await asyncio.sleep(0.01)
+    await eventually(lambda: h.registry.active == 0)
     [answer] = [
         m for m in h.chats_repo.list_messages(run.meta.chat_id) if m.role is MessageRole.ASSISTANT
     ]
@@ -369,7 +368,7 @@ async def test_duplicate_client_message_id(h: ChatHarness) -> None:
 
 
 async def test_one_answer_per_lane_and_a_global_limit(tmp_path: Path) -> None:
-    llm = FakeLLMClient(default=FakeScenario.SLOW, slow_delay_s=0.01)
+    llm = FakeLLMClient(default=FakeScenario.SLOW, slow_delay_s=0.05)
     h = build_chat_harness(tmp_path, llm=llm, max_concurrent=2)
     h.add_document(MIRA)
     first, second, third = h.new_chat(), h.new_chat(), h.new_chat()
@@ -463,35 +462,47 @@ async def test_the_user_name_never_reaches_the_model(h: ChatHarness) -> None:
     assert "name" not in {f for f in request.__dataclass_fields__}
 
 
+def _held_preparation(
+    h: ChatHarness, monkeypatch: pytest.MonkeyPatch
+) -> tuple[threading.Event, threading.Event]:
+    """Preparation that stops after the lane is reserved and the rows are saved, until the test
+    releases it. Events instead of sleeps: the test must not bet on thread timing."""
+    prepared, release = threading.Event(), threading.Event()
+    prepare = h.answers._prepare_ask
+
+    def held(command: Any) -> Any:
+        result = prepare(command)
+        prepared.set()
+        release.wait(PATIENCE_S)
+        return result
+
+    monkeypatch.setattr(h.answers, "_prepare_ask", held)
+    return prepared, release
+
+
+def _answers(h: ChatHarness, chat_id: str) -> list[Any]:
+    return [m for m in h.chats_repo.list_messages(chat_id) if m.role is MessageRole.ASSISTANT]
+
+
 async def test_a_request_cancelled_during_preparation_leaves_nothing_taken(
     h: ChatHarness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import time
-
     h.add_document(MIRA)
     chat = h.new_chat()
-    prepare = h.answers._prepare_ask
-
-    def slow_prepare(command: Any) -> Any:
-        result = prepare(command)
-        time.sleep(0.1)  # the request is cancelled while the thread still works
-        return result
-
-    monkeypatch.setattr(h.answers, "_prepare_ask", slow_prepare)
+    prepared, release = _held_preparation(h, monkeypatch)
     request = asyncio.create_task(h.answers.ask(h.command(chat)))
-    await asyncio.sleep(0.02)
-    request.cancel()
+    await asyncio.to_thread(prepared.wait, PATIENCE_S)
+    request.cancel()  # the request goes away while the thread still works
+    release.set()
     with pytest.raises(asyncio.CancelledError):
         await request
-    for _ in range(100):
-        answers = [
-            m for m in h.chats_repo.list_messages(chat.id) if m.role is MessageRole.ASSISTANT
-        ]
-        if h.registry.active == 0 and answers and answers[0].status is not MessageStatus.STREAMING:
-            break
-        await asyncio.sleep(0.01)
-    assert h.registry.active == 0
-    assert answers[0].status is MessageStatus.INTERRUPTED
+    await eventually(
+        lambda: (
+            h.registry.active == 0
+            and any(a.status is not MessageStatus.STREAMING for a in _answers(h, chat.id))
+        )
+    )
+    assert _answers(h, chat.id)[0].status is MessageStatus.INTERRUPTED
 
 
 # Review fixes: saving, deletion during preparation, stale plans, queue time, atomic inserts
@@ -557,22 +568,17 @@ async def test_a_failed_save_still_marks_the_answer_as_error(
 async def test_deleting_a_chat_during_preparation_waits_for_it(
     h: ChatHarness, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import time
-
     h.add_document(MIRA)
     chat = h.new_chat()
-    prepare = h.answers._prepare_ask
-
-    def slow_prepare(command: Any) -> Any:
-        result = prepare(command)
-        time.sleep(0.1)  # reserved and saved, but the run task does not exist yet
-        return result
-
-    monkeypatch.setattr(h.answers, "_prepare_ask", slow_prepare)
+    prepared, release = _held_preparation(h, monkeypatch)
     request = asyncio.create_task(h.answers.ask(h.command(chat)))
-    await asyncio.sleep(0.05)
-    assert h.registry.active == 1
-    await h.chats.delete(chat.id)
+    await asyncio.to_thread(prepared.wait, PATIENCE_S)
+    assert h.registry.active == 1  # reserved and saved, but the run task does not exist yet
+    deletion = asyncio.create_task(h.chats.delete(chat.id))
+    await eventually(lambda: all(c.stop_reason for c in h.registry._controls(chat.id, None)))
+    assert not deletion.done()  # it waits for the answer being prepared
+    release.set()
+    await deletion
     run = await request
     events = [e async for e in run.events()]
     assert isinstance(terminal(events), DoneEvent)
@@ -598,11 +604,12 @@ async def test_waiting_for_a_model_slot_does_not_count_as_first_token_time(
 ) -> None:
     class QueuedLLM(FakeLLMClient):
         async def stream(self, request: Any) -> Any:  # type: ignore[override]
-            await asyncio.sleep(0.2)  # waiting for a free slot, longer than the TTFT limit
+            await asyncio.sleep(1.0)  # waiting for a free slot, twice the TTFT limit
             async for event in super().stream(request):
                 yield event
 
-    h = build_chat_harness(tmp_path, llm=QueuedLLM(), timings=RunTimings(ttft_timeout_s=0.1))
+    # The limit is generous for the few steps after the slot: only the wait may not count.
+    h = build_chat_harness(tmp_path, llm=QueuedLLM(), timings=RunTimings(ttft_timeout_s=0.5))
     h.add_document(MIRA)
     done = terminal(await h.ask(h.new_chat()))
     assert isinstance(done, DoneEvent) and done.status is MessageStatus.COMPLETE
