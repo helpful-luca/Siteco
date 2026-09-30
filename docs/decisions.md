@@ -42,6 +42,16 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 29 | PDF active content | Streaming check in the parse stage: whole name tokens with `#xx` decoding, stream data skipped, object streams inflated (capped at 64 MB) | Grep over the raw file | Compressed object streams hide dictionaries, and random stream bytes contain `/JS` or `/AA`; notices belong to the ingestion pass, so a restart recomputes them |
 | 30 | File of a document in `scanning` | `DOCUMENT_NOT_READY` | Serving the quarantined file | Nothing unscanned leaves the backend |
 
+## App shell and library UI (phase 3 UI)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 31 | Upload in the browser | XHR per file, three in parallel, extension and size checked before sending | `fetch` with a stream body | Only XHR reports upload progress; the backend checks everything again |
+| 32 | Where uploads live | An upload provider above the routes, a drop anywhere opens the library | Uploads owned by the library page | Uploads keep running while you navigate, and the chat page can start one too |
+| 33 | Library columns | Container queries on the table | Viewport breakpoints | The right panel narrows the table on wide screens; columns follow the space they really have |
+| 34 | Status polling | TanStack Query polls every second only while a document is scanning, queued, parsing or embedding | Always polling; SSE | Nothing to poll when the library is at rest (annex 11, 2.5) |
+| 35 | Desktop title bar | Inline script sets `data-desktop` on `<html>` from `window.desktop`, CSS reserves the space | Detecting Electron in React | No layout jump on first paint; Electron code stays in phase 12 |
+
 ## Measurements
 
 | What | Result |
