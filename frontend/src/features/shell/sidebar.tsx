@@ -13,8 +13,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations('shell');
   const [query, setQuery] = useState('');
   return (
-    <div className="flex h-full flex-col p-3 pt-[calc(12px+var(--titlebar-inset))]">
-      <div className="drag-region flex items-center gap-1.5">
+    <div className="flex h-full flex-col p-3 pt-[calc(var(--spacing)*3+var(--titlebar-inset))]">
+      <div className="drag-region flex items-center gap-1">
         <SearchField
           label={t('search')}
           clearLabel={t('clearSearch')}
@@ -41,10 +41,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           {t('quality')}
         </NavItem>
       </nav>
-      <section aria-label={t('chats')} className="mt-6 min-h-0 flex-1 overflow-y-auto">
+      <section aria-label={t('chats')} className="-mx-1 mt-6 min-h-0 flex-1 overflow-y-auto px-1">
         <ChatList query={query} />
       </section>
-      <div className="flex flex-col gap-0.5 pt-2">
+      <div className="flex flex-col gap-0.5 pt-3">
         <NavItem href="/settings" icon={<Settings aria-hidden />} onNavigate={onNavigate}>
           {t('settings')}
         </NavItem>

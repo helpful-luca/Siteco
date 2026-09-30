@@ -15,7 +15,7 @@ export function RightPanel() {
     return (
       <aside
         aria-label={panel.title}
-        className="flex w-[440px] shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline"
+        className="flex w-panel shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline"
       >
         <PanelBody panel={panel} onClose={closePanel} />
       </aside>
@@ -23,7 +23,7 @@ export function RightPanel() {
   }
   return (
     <SideSheet side="right" label={panel.title} open onOpenChange={(open) => !open && closePanel()}>
-      <div className="flex w-[min(440px,calc(100vw-16px))] flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline">
+      <div className="flex w-[min(var(--spacing-panel),calc(100vw-var(--spacing)*4))] flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline">
         <PanelBody panel={panel} onClose={closePanel} />
       </div>
     </SideSheet>
@@ -34,7 +34,8 @@ function PanelBody({ panel, onClose }: { panel: PanelContent; onClose: () => voi
   const t = useTranslations('shell');
   return (
     <>
-      <header className="glass drag-region flex items-center justify-between gap-3 rounded-none border-0 border-b border-hairline px-4 py-3 pt-[calc(12px+var(--titlebar-inset))] shadow-none">
+      {/* 56 px bar: centered on the sidebar's first row; text on the body's 24 px inset. */}
+      <header className="glass drag-region flex h-[calc(var(--spacing)*14+var(--titlebar-inset))] shrink-0 items-center justify-between gap-3 rounded-none border-0 border-b border-hairline pt-(--titlebar-inset) pr-4 pl-6 shadow-none pointer-coarse:pr-2">
         <div className="min-w-0">
           <h2 className="truncate text-body font-medium">{panel.title}</h2>
           {panel.subtitle && <p className="truncate text-caption text-ink-muted">{panel.subtitle}</p>}

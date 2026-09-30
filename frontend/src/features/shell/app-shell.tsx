@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Button, buttonStyles, SideSheet, TooltipProvider } from '@/shared/ui';
-import { GlobalBanner } from './global-banner';
 import { RightPanel } from './right-panel';
 import { Sidebar } from './sidebar';
 import { UIProvider, useUI } from './ui-context';
@@ -25,24 +24,25 @@ function Frame({ children }: { children: ReactNode }) {
   const t = useTranslations('shell');
   const { sidebarOpen, setSidebarOpen } = useUI();
   return (
-    <div className="flex h-dvh gap-3 p-2 lg:p-3">
+    <div className="flex h-dvh gap-3 lg:p-3">
       <a
         href="#main"
         className="sr-only z-50 rounded-control bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         {t('skipToContent')}
       </a>
-      <aside aria-label={t('sidebar')} className="glass hidden w-[264px] shrink-0 rounded-panel lg:block">
+      <aside aria-label={t('sidebar')} className="glass hidden w-sidebar shrink-0 rounded-panel lg:block">
         <Sidebar />
       </aside>
       <SideSheet side="left" label={t('sidebar')} open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <div className="glass-dense w-[280px] max-w-[calc(100vw-48px)] rounded-panel">
+        <div className="glass-dense w-sidebar max-w-[calc(100vw-var(--spacing)*12)] rounded-panel">
           <Sidebar onNavigate={() => setSidebarOpen(false)} />
         </div>
       </SideSheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="drag-region flex items-center justify-between px-1 pt-[var(--titlebar-inset)] lg:hidden">
+        {/* Mobile bar: icon glyphs sit on the page gutter (16 px), buttons are 44 px on touch. */}
+        <div className="drag-region flex h-[calc(var(--spacing)*12+var(--titlebar-inset))] shrink-0 items-center justify-between px-2 pt-(--titlebar-inset) pointer-coarse:h-[calc(var(--spacing)*14+var(--titlebar-inset))] pointer-coarse:px-0.5 lg:hidden">
           <Button icon variant="ghost" aria-label={t('openSidebar')} onClick={() => setSidebarOpen(true)}>
             <PanelLeft />
           </Button>
@@ -50,7 +50,6 @@ function Frame({ children }: { children: ReactNode }) {
             <SquarePen aria-hidden />
           </Link>
         </div>
-        <GlobalBanner />
         <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none">
           {children}
         </main>
