@@ -12,6 +12,8 @@ dependencies = [
   "lancedb==0.39.0",
   "pypdfium2==5.13.0",
   "pyarrow==25.0.1",
+  "anthropic==1.9.0",
+  "onnxruntime==1.30.0",
 ]
 
 [dependency-groups]
@@ -74,7 +76,7 @@ type = "forbidden"
 source_modules = ["docchat.domain"]
 forbidden_modules = ["docchat.api", "docchat.services", "docchat.adapters", "docchat.core",
                      "fastapi", "starlette", "sqlite3", "fastembed", "lancedb", "pyarrow",
-                     "pypdfium2"]
+                     "pypdfium2", "anthropic", "httpx2", "onnxruntime"]
 
 # Direct imports only: `api` reaches concrete adapters solely through the composition root
 # (`core.container`), which is the single place allowed to know them.
@@ -83,6 +85,13 @@ name = "Services and API depend on ports, not adapters"
 type = "forbidden"
 source_modules = ["docchat.services", "docchat.api"]
 forbidden_modules = ["docchat.adapters"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Only the Claude adapter knows the Anthropic SDK"
+type = "forbidden"
+source_modules = ["docchat.services", "docchat.api"]
+forbidden_modules = ["anthropic", "httpx2"]
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
