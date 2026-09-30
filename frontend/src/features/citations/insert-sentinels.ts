@@ -6,6 +6,14 @@
 
 export const SENTINEL_PATTERN = /⟦c:(\d+)⟧/g;
 
+/**
+ * The answer may quote a document that contains sentinel-like text. Every bracket that is not ours
+ * gets an invisible word joiner behind it, so it renders the same but can never form a chip.
+ */
+const OPEN = '⟦';
+const NEUTRAL = '⟦\u2060';
+const neutralize = (text: string) => text.replaceAll(OPEN, NEUTRAL);
+
 export type ChipMark = { offset: number; n: number };
 
 const sentinel = (n: number) => `⟦c:${n}⟧`;
@@ -66,14 +74,18 @@ export function insertSentinels(text: string, marks: ChipMark[]): string {
     numbers.add(mark.n);
     byPosition.set(position, numbers);
   }
-  let result = text;
-  for (const position of [...byPosition.keys()].sort((a, b) => b - a)) {
+  // Slices of the original text (neutralized one by one, so offsets stay valid) and our runs.
+  let result = '';
+  let last = 0;
+  for (const position of [...byPosition.keys()].sort((a, b) => a - b)) {
     const run = [...(byPosition.get(position) ?? [])].sort((a, b) => a - b).map(sentinel).join('');
-    result = result.slice(0, position) + run + result.slice(position);
+    result += neutralize(text.slice(last, position)) + run;
+    last = position;
   }
-  return result;
+  return result + neutralize(text.slice(last));
 }
 
+/** Plain text again: our sentinels removed, neutralized brackets restored. */
 export function stripSentinels(text: string): string {
-  return text.replace(SENTINEL_PATTERN, '');
+  return text.replace(SENTINEL_PATTERN, '').replaceAll(NEUTRAL, OPEN);
 }

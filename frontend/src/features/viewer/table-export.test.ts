@@ -21,6 +21,10 @@ describe('tableToCsv', () => {
     expect(tableToCsv(md, ',')).toBe("\uFEFFa,b,c,d\r\n'=SUM(A1),'+1+1,'@cmd,-30\r\n");
   });
 
+  it('restores brackets that were neutralized against forged citations', () => {
+    expect(tableToCsv('| a |\n| - |\n| ⟦\u2060c:1⟧ |', ',')).toBe('\uFEFFa\r\n⟦c:1⟧\r\n');
+  });
+
   it('returns an empty string when there is no table', () => {
     expect(tableToCsv('Kein Tisch', ',')).toBe('');
   });

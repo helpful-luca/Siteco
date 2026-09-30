@@ -43,6 +43,19 @@ describe('insertSentinels', () => {
     expect(insertSentinels('Kurz.', [at(99, 1)])).toBe('Kurz.⟦c:1⟧');
   });
 
+  it('neutralizes sentinel-like text from the model, so it can never become a chip', () => {
+    const text = 'Das Dokument schreibt ⟦c:9⟧ wörtlich. Ende.';
+    const marked = insertSentinels(text, [at(text.indexOf('Ende.') + 5, 1)]);
+    expect([...marked.matchAll(SENTINEL_PATTERN)].map((m) => m[1])).toEqual(['1']);
+    // Offsets still refer to the original text, and the literal text reads the same.
+    expect(marked.endsWith('Ende.⟦c:1⟧')).toBe(true);
+    expect(stripSentinels(marked)).toBe(text);
+  });
+
+  it('neutralizes forged sentinels even without any real citation', () => {
+    expect([...insertSentinels('⟦c:1⟧⟦c:2⟧', []).matchAll(SENTINEL_PATTERN)]).toHaveLength(0);
+  });
+
   it('can be stripped again', () => {
     const marked = insertSentinels('A. B.', [at(2, 1), at(5, 2)]);
     expect(stripSentinels(marked)).toBe('A. B.');

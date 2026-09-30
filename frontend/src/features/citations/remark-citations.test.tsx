@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import de from '../../../messages/de.json';
 import { Markdown } from '@/shared/markdown';
 import { TooltipProvider } from '@/shared/ui';
+import { insertSentinels } from './insert-sentinels';
 import { CITATION_ATTRIBUTE, GROUP_ATTRIBUTE, remarkCitations } from './remark-citations';
 
 function chips(text: string) {
@@ -58,6 +59,12 @@ describe('remarkCitations', () => {
   it('keeps the last word and its chips together so a chip never wraps alone', () => {
     const container = chips('Die Schutzart ist IP66.⟦c:1⟧⟦c:2⟧ Mehr.');
     expect([...container.querySelectorAll('.group')].map((g) => g.textContent)).toEqual(['IP66.[1][2]']);
+  });
+
+  it('shows a sentinel echoed from a document as plain text, never as a chip', () => {
+    const container = chips(insertSentinels('Zitat: ⟦c:1⟧ steht so im PDF.', []));
+    expect(container.querySelectorAll('button')).toHaveLength(0);
+    expect(container.querySelector('p')?.textContent?.replace(/\u2060/g, '')).toBe('Zitat: ⟦c:1⟧ steht so im PDF.');
   });
 
   it('leaves text without sentinels alone', () => {

@@ -4,8 +4,8 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import { visit, EXIT } from 'unist-util-visit';
+import { stripSentinels } from '@/features/citations';
 
-const SENTINELS = /⟦c:\d+⟧/g;
 const FORMULA = /^[=+\-@\t\r]/;
 const NUMBER = /^-?\d+([.,]\d+)?$/;
 
@@ -21,7 +21,7 @@ function cell(value: string, separator: string): string {
  * emphasis, links and citation markers become plain text. A BOM lets spreadsheets detect UTF-8.
  */
 export function tableToCsv(markdown: string, separator: ',' | ';'): string {
-  const tree = unified().use(remarkParse).use(remarkGfm).parse(markdown.replace(SENTINELS, '')) as Root;
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(stripSentinels(markdown)) as Root;
   let table: Table | null = null;
   visit(tree, 'table', (node: Table) => {
     table = node;
