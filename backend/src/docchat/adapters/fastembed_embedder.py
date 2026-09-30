@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+import onnxruntime
 from fastembed import TextEmbedding
 from fastembed.common.model_description import ModelSource, PoolingType
 
@@ -58,6 +59,8 @@ class FastEmbedEmbedder:
         self._model: TextEmbedding | None = None
 
     def load(self) -> None:
+        # Second guard next to ORT_DISABLE_TELEMETRY (docchat/__init__.py), before any session.
+        onnxruntime.disable_telemetry_events()
         register_custom_models()
         self._model = TextEmbedding(
             self.model_name,
