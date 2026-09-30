@@ -1,6 +1,6 @@
 """A deterministic stand-in for Claude (`LLM_PROVIDER=fake`).
 
-It answers with one sentence of the first search result and cites it, so E2E tests and a demo
+It answers with the first real sentence of the search results and cites it, so E2E tests and a demo
 without a key run through the real retrieval, SSE, citations and persistence. Scenarios for
 error paths come from a script (tests) or a `#fake:<scenario>` marker in the question (E2E).
 """
@@ -21,6 +21,7 @@ from docchat.domain.llm import (
     LLMRequest,
     ModelResolved,
     RequestStarted,
+    SearchResult,
     TextBlockEnd,
     TextDelta,
     UsageReported,
@@ -29,7 +30,7 @@ from docchat.domain.usage import ModelUsage, TokenUsage
 
 
 class FakeScenario(StrEnum):
-    NORMAL = "normal"  # cites the first real sentence of the first source
+    NORMAL = "normal"  # cites the first real sentence of the search results
     OVERLOADED = "overloaded"  # overloaded_error before the first token
     ERROR_MID_STREAM = "error_mid_stream"  # overloaded_error after some text
     REFUSAL = "refusal"  # stop_reason refusal after some text
@@ -52,6 +53,7 @@ class FakeScenario(StrEnum):
 
 
 _MIN_ANSWER_WORDS = 4
+_SENTENCE_ENDS = (".", "!", "?", ":", ";", ")", '"', "\u201c")
 _MARKER = re.compile(r"#fake:([a-z_]+)")
 _INTRO = {Locale.DE: "Laut deinen Dokumenten: ", Locale.EN: "According to your documents: "}
 _NOTHING = {
@@ -77,12 +79,24 @@ def _words(text: str) -> list[str]:
     return re.findall(r"\S+\s*|\s+", text)
 
 
-def _citable(sentences: Sequence[str]) -> int:
-    """Index of the first real sentence (a heading line alone is no answer), else 0."""
-    for index, sentence in enumerate(sentences):
-        if len(sentence.split()) >= _MIN_ANSWER_WORDS:
-            return index
-    return 0
+def _is_sentence(text: str, *, strict: bool) -> bool:
+    """Reads like an answer: enough words, no markdown heading or table row, and (strict)
+    ends like a sentence. A heading can be long ("## Technische Daten der Mira L")."""
+    stripped = text.strip()
+    if len(stripped.split()) < _MIN_ANSWER_WORDS or stripped.startswith(("#", "|", "---")):
+        return False
+    return not strict or stripped.endswith(_SENTENCE_ENDS)
+
+
+def _citable(results: Sequence[SearchResult]) -> tuple[SearchResult, int] | None:
+    """The first real sentence across the results, else the first sentence at all."""
+    for strict in (True, False):
+        for result in results:
+            for index, sentence in enumerate(result.sentences):
+                if _is_sentence(sentence, strict=strict):
+                    return result, index
+    first = next((r for r in results if r.sentences), None)
+    return (first, 0) if first is not None else None
 
 
 class FakeLLMClient:
@@ -160,14 +174,14 @@ class FakeLLMClient:
             model = _FALLBACK_MODEL.get(request.model, "claude-opus-4-8")
             yield ModelResolved(model)
 
-        first = request.search_results[0] if request.search_results else None
-        cited = _citable(first.sentences) if first is not None else 0
-        if first is None or not first.sentences:
+        pick = _citable(request.search_results)
+        if pick is None:
             body = _NOTHING[request.ui_language]
         else:
-            body = first.sentences[cited]
-        if first is not None and first.sentences and scenario is not FakeScenario.NO_CITATIONS:
-            yield CitationDelta(first.source, cited, cited + 1, first.sentences[cited])
+            result, cited = pick
+            body = result.sentences[cited]
+            if scenario is not FakeScenario.NO_CITATIONS:
+                yield CitationDelta(result.source, cited, cited + 1, body)
         for word in _words(body):
             yield TextDelta(word)
         yield TextBlockEnd()
