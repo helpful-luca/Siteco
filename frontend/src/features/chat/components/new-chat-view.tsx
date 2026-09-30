@@ -62,7 +62,9 @@ export function NewChatView() {
         scope.scope === 'all' ? { scope: 'all' } : { scope: 'selected', document_ids: scope.documentIds },
       );
       chatId = chat.id;
-      await streams.ask({ chatId, question, model: settings.model, locale });
+      if (!(await streams.ask({ chatId, question, model: settings.model, locale }))) {
+        throw new ApiError('STREAM_INTERRUPTED', 0);
+      }
       setDraft('');
       router.replace(`/chat/${chatId}`);
     } catch (error) {

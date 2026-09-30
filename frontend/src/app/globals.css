@@ -448,10 +448,18 @@ html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
   }
 }
 
-/* Phones: wide tables scroll edge to edge, so a cut column at the screen edge shows there is more. */
+/*
+ * Wide tables scroll edge to edge, so a column cut at the edge shows there is more: on phones
+ * across the page gutter, in the side panel across its 24 px inset.
+ */
 @media (max-width: 639px) {
-  .markdown .md-table > .overflow-x-auto {
+  .markdown:not(.markdown-wide) .md-table > .overflow-x-auto {
     margin-inline: calc(var(--gutter) * -1);
     padding-inline: var(--gutter);
   }
+}
+
+.markdown-wide .md-table > .overflow-x-auto {
+  margin-inline: -24px;
+  padding-inline: 24px;
 }

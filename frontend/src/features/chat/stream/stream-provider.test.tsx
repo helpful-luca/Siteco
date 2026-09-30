@@ -36,7 +36,11 @@ describe('StreamProvider', () => {
   it('confirms at meta, collects deltas per frame and refreshes the chat when done', async () => {
     const body = [frame('meta', META), ...['Die ', 'Mira ', 'hat ', 'IP66.'].map((text) => frame('delta', { text })), frame('done', DONE)];
     const { api, fetchMock, invalidate } = setup(async () => new Response(body.join(''), { headers: SSE }));
-    await act(() => api().ask({ chatId: 'c1', question: 'Schutzart?', model: 'claude-sonnet-5-5', locale: 'de' }));
+    let confirmed = false;
+    await act(async () => {
+      confirmed = await api().ask({ chatId: 'c1', question: 'Schutzart?', model: 'claude-sonnet-5-5', locale: 'de' });
+    });
+    expect(confirmed).toBe(true);
     await waitFor(() => expect(api().runs[runKey('c1')].outcome?.kind).toBe('done'));
     const run = api().runs[runKey('c1')];
     expect(run.text).toBe('Die Mira hat IP66.');
@@ -83,6 +87,14 @@ describe('StreamProvider', () => {
     expect(signal?.aborted).toBe(true);
     const stopCall = fetchMock.mock.calls.find(([url]) => url === '/api/chats/c1/stop');
     expect(JSON.parse(String(stopCall?.[1]?.body))).toEqual({ lane: 'a' });
+  });
+
+  it('rejects a stream cut off before meta, so the question stays in the composer', async () => {
+    const { api } = setup(async () => new Response('', { headers: SSE }));
+    await expect(api().ask({ chatId: 'c1', question: 'x', model: 'm', locale: 'de' })).rejects.toMatchObject({
+      code: 'STREAM_INTERRUPTED',
+    });
+    await waitFor(() => expect(api().runs).toEqual({}));
   });
 
   it('keeps streams of different chats apart', async () => {

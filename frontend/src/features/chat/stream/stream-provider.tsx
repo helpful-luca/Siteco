@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { fetchJson } from '@/shared/api/client';
+import { clientError } from '@/shared/api/errors';
 import type { Lane } from '@/shared/api/types';
 import { CHATS_KEY, chatKey, messagesKey } from '../queries';
 import type { StreamEvent } from './events';
@@ -17,9 +18,12 @@ export type RegenerateInput = { chatId: string; assistantId: string; question: s
 
 type StreamApi = {
   runs: RunsState;
-  /** Resolves once the server confirmed the question (`meta`); rejects with an ApiError before that. */
-  ask: (input: AskInput) => Promise<void>;
-  regenerate: (input: RegenerateInput) => Promise<void>;
+  /**
+   * Resolves `true` once the server confirmed the question (`meta`), `false` when it was stopped
+   * before that; rejects with an ApiError when refused or cut off before `meta`.
+   */
+  ask: (input: AskInput) => Promise<boolean>;
+  regenerate: (input: RegenerateInput) => Promise<boolean>;
   stop: (chatId: string) => Promise<void>;
   clear: (chatId: string) => void;
 };
@@ -71,7 +75,8 @@ export function StreamProvider({ children }: { children: ReactNode }) {
       controllers.current.set(key, controller);
       dispatch({ type: 'local/start', key, run });
 
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<boolean>((resolve, reject) => {
+        let confirmed = false;
         const onEvent = (event: StreamEvent) => {
           if (event.type === 'delta') {
             pending.current.set(key, (pending.current.get(key) ?? '') + event.data.text);
@@ -81,7 +86,8 @@ export function StreamProvider({ children }: { children: ReactNode }) {
           flush(key);
           dispatch({ ...event, key });
           if (event.type === 'meta') {
-            resolve();
+            confirmed = true;
+            resolve(true);
             void client.invalidateQueries({ queryKey: CHATS_KEY });
           }
           if (event.type === 'done' || event.type === 'error') refresh(chatId);
@@ -89,11 +95,17 @@ export function StreamProvider({ children }: { children: ReactNode }) {
         readStream({ url, body, signal: controller.signal, onEvent })
           .then((end) => {
             flush(key);
+            if (!confirmed) {
+              // Nothing was saved yet: the question goes back to the composer with a note.
+              dispatch({ type: 'local/clear', key });
+              if (end !== 'aborted') reject(clientError('STREAM_INTERRUPTED'));
+              else resolve(false);
+              return;
+            }
             if (end === 'interrupted') {
               dispatch({ type: 'local/interrupted', key });
               refresh(chatId);
             }
-            resolve(); // no-op when meta already resolved
           })
           .catch((error: unknown) => {
             dispatch({ type: 'local/clear', key });

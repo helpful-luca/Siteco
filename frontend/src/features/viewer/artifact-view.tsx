@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { AnswerMarkdown, stripSentinels } from '@/features/citations';
 import type { CitationOut, SourceOut } from '@/shared/api/types';
 import { downloadText } from '@/shared/lib/download';
-import { Button, CopyButton } from '@/shared/ui';
+import { Button, CopyButton, Tooltip } from '@/shared/ui';
 import { downloadName } from './file-name';
 import { tableToCsv } from './table-export';
 import { useActiveSourceId, useOpenSource } from './use-open-source';
@@ -33,20 +33,29 @@ export function ArtifactView({ artifact }: { artifact: Artifact }) {
   return (
     <div className="flex flex-col">
       <div className="flex flex-wrap items-center gap-2 px-6 pt-4">
-        <Button size="sm" onClick={() => downloadText(name('md'), plain, 'text/markdown;charset=utf-8')}>
-          <Download aria-hidden />
-          {t('saveMarkdown')}
-        </Button>
-        {artifact.kind === 'table' && (
+        <Tooltip content={t('saveMarkdown')}>
           <Button
             size="sm"
-            onClick={() =>
-              downloadText(name('csv'), tableToCsv(artifact.markdown, locale === 'de' ? ';' : ','), 'text/csv;charset=utf-8')
-            }
+            aria-label={t('saveMarkdown')}
+            onClick={() => downloadText(name('md'), plain, 'text/markdown;charset=utf-8')}
           >
-            <FileSpreadsheet aria-hidden />
-            {t('saveCsv')}
+            <Download aria-hidden />
+            Markdown
           </Button>
+        </Tooltip>
+        {artifact.kind === 'table' && (
+          <Tooltip content={t('saveCsv')}>
+            <Button
+              size="sm"
+              aria-label={t('saveCsv')}
+              onClick={() =>
+                downloadText(name('csv'), tableToCsv(artifact.markdown, locale === 'de' ? ';' : ','), 'text/csv;charset=utf-8')
+              }
+            >
+              <FileSpreadsheet aria-hidden />
+              CSV
+            </Button>
+          </Tooltip>
         )}
         <CopyButton text={plain} label={t('copy')} copiedLabel={t('copied')} />
       </div>

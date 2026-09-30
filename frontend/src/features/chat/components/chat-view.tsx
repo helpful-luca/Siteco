@@ -96,8 +96,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     setSending(true);
     setRefusal(null);
     try {
-      await streams.ask({ chatId, question, model: settings.model, locale });
-      setDraft('');
+      if (await streams.ask({ chatId, question, model: settings.model, locale })) setDraft('');
     } catch (error) {
       const apiError = error instanceof ApiError ? error : null;
       if (apiError?.code !== 'DUPLICATE_REQUEST') setRefusal(apiError ?? new ApiError('UNKNOWN_ERROR', 0));
