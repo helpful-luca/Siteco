@@ -12,6 +12,12 @@ from tests.services.conftest import Harness, build_harness
 TEXT = "Die Leuchte ist hell. Sie hat IP66 und 5000 Lumen."
 
 
+async def _wait_idle(harness: Harness) -> None:
+    async with asyncio.timeout(10):
+        while not harness.worker.idle:
+            await asyncio.sleep(0.01)
+
+
 async def test_pdf_goes_from_queued_to_ready(harness: Harness) -> None:
     doc = harness.add_document(pages=[TEXT, "", TEXT, TEXT, TEXT])
     await harness.worker.process(doc.id)
@@ -170,7 +176,7 @@ async def test_queue_prefers_small_documents(harness: Harness) -> None:
     assert harness.documents.get(big.id).queue_position == 2
     harness.worker.start()
     try:
-        await harness.worker.wait_idle(timeout=10)
+        await _wait_idle(harness)
     finally:
         await harness.worker.stop()
     order = [name for name, _, _ in harness.pdf.calls]
@@ -207,8 +213,22 @@ async def test_recovery_after_a_crash(harness: Harness) -> None:
     assert set(harness.worker.queue_positions()) == {interrupted.id, queued.id}
     harness.worker.start()
     try:
-        await harness.worker.wait_idle(timeout=10)
+        await _wait_idle(harness)
     finally:
         await harness.worker.stop()
     assert harness.reload(interrupted).status is DocumentStatus.READY  # type: ignore[union-attr]
     assert harness.reload(queued).status is DocumentStatus.READY  # type: ignore[union-attr]
+
+
+async def test_a_failing_recovery_step_does_not_stop_the_others(harness: Harness) -> None:
+    queued = harness.add_document(pages=[TEXT])
+    deleting = harness.add_document(pages=[TEXT])
+    harness.repository.mark_deleting(deleting.id, harness.clock.now())
+
+    def broken(document_id: str) -> None:
+        raise OSError("index unavailable")
+
+    harness.vectors.delete_document = broken  # type: ignore[method-assign]
+    await harness.worker.recover()
+    assert harness.worker.queue_positions() == {queued.id: 1}
+    assert harness.reload(deleting).status is DocumentStatus.DELETING  # type: ignore[union-attr]

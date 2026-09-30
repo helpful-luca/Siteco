@@ -8,6 +8,7 @@ what it wrote. Deleting never waits for the worker and always wins.
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable, Callable
 
 from docchat.domain.enums import DocumentStatus
 from docchat.domain.errors import ErrorCode, IngestionError
@@ -72,37 +73,51 @@ class IngestionWorker:
             document_id = await self._queue.get()
             await self.process(document_id)
 
-    async def wait_idle(self, timeout: float) -> None:
-        """For tests and shutdown: returns once the queue is empty and nothing is running."""
-        async with asyncio.timeout(timeout):
-            while len(self._queue) or self.current_id is not None:
-                await asyncio.sleep(0.01)
+    @property
+    def idle(self) -> bool:
+        return not self._queue and self.current_id is None
 
     # Recovery ---------------------------------------------------------------------------
 
     async def recover(self) -> None:
-        """Startup: finish deletes, requeue interrupted work, sweep orphans, queue the rest."""
+        """Startup: finish deletes, requeue interrupted work, sweep orphans, queue the rest.
+
+        A failing step is logged and skipped: recovery must never keep the app from starting.
+        """
+        await self._step("finish_deletes", self._finish_deletes)
+        await self._step("requeue_interrupted", self._requeue_interrupted)
+        await self._step("sweep_orphans", self._sweep_orphans)
+        queued = await asyncio.to_thread(self._repository.list_by_status, DocumentStatus.QUEUED)
+        for document in queued:
+            self.enqueue(document)
+        log.info("ingestion_recovered", extra={"queued": len(queued)})
+
+    async def _step(self, name: str, step: Callable[[], Awaitable[None]]) -> None:
+        try:
+            await step()
+        except Exception:
+            log.exception("recovery_step_failed", extra={"step": name})
+
+    async def _finish_deletes(self) -> None:
         deleting = await asyncio.to_thread(self._repository.list_by_status, DocumentStatus.DELETING)
         for document in deleting:
             await self._purge.purge(document)
+
+    async def _requeue_interrupted(self) -> None:
         interrupted = await asyncio.to_thread(
             self._repository.list_by_status, DocumentStatus.PARSING, DocumentStatus.EMBEDDING
         )
         for document in interrupted:
             await asyncio.to_thread(self._repository.requeue, document.id, self._clock.now())
+
+    async def _sweep_orphans(self) -> None:
         known = await asyncio.to_thread(self._repository.all_ids)
         orphans = await asyncio.to_thread(self._storage.delete_except, known)
         await asyncio.to_thread(self._storage.clear_temp)
         await asyncio.to_thread(self._spool.clear)
         await asyncio.to_thread(self._vectors.delete_documents_except, known)
         await asyncio.to_thread(self._vectors.optimize)
-        queued = await asyncio.to_thread(self._repository.list_by_status, DocumentStatus.QUEUED)
-        for document in queued:
-            self.enqueue(document)
-        log.info(
-            "ingestion_recovered",
-            extra={"requeued": len(interrupted), "queued": len(queued), "orphan_files": orphans},
-        )
+        log.info("orphans_swept", extra={"files": orphans})
 
     # Processing -------------------------------------------------------------------------
 
