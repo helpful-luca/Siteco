@@ -7,7 +7,7 @@ import { AppPreview } from './app-preview';
 import { ComponentSheet } from './component-sheet';
 import { ThemeSwitcher } from './theme-switcher';
 
-export function StyleguideView({ theme }: { theme: Theme }) {
+export function StyleguideView({ theme, startOnboarding }: { theme: Theme; startOnboarding: boolean }) {
   const t = useTranslations('styleguide');
   return (
     <TooltipProvider>
@@ -22,7 +22,7 @@ export function StyleguideView({ theme }: { theme: Theme }) {
           </div>
           <ThemeSwitcher initial={theme} />
         </div>
-        <ComponentSheet />
+        <ComponentSheet theme={theme} startOnboarding={startOnboarding} />
       </div>
     </TooltipProvider>
   );

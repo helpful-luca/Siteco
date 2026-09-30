@@ -1,8 +1,10 @@
 'use client';
 
 import { Plus, Trash2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { OnboardingOverlay } from '@/features/onboarding';
+import type { Locale, Theme } from '@/shared/preferences/cookies';
 import { Badge, Button, Dialog, DialogClose, SegmentedControl, Spinner, Switch, Tooltip } from '@/shared/ui';
 
 const SWATCHES = [
@@ -17,9 +19,11 @@ const SWATCHES = [
   'danger',
 ] as const;
 
-export function ComponentSheet() {
+export function ComponentSheet({ theme, startOnboarding = false }: { theme: Theme; startOnboarding?: boolean }) {
   const t = useTranslations('styleguide.sheet');
+  const locale = useLocale() as Locale;
   const [compare, setCompare] = useState(true);
+  const [onboarding, setOnboarding] = useState(startOnboarding);
   const [language, setLanguage] = useState<'de' | 'en'>('de');
 
   return (
@@ -70,10 +74,18 @@ export function ComponentSheet() {
 
       <Section title={t('overlays')}>
         <div className="flex flex-wrap items-center gap-3">
+          <Button variant="primary" onClick={() => setOnboarding(true)}>
+            {t('openDialog')}
+          </Button>
+          <OnboardingOverlay
+            open={onboarding}
+            initial={{ locale, theme, name: '' }}
+            onDone={() => setOnboarding(false)}
+          />
           <Dialog
             title={t('dialogTitle')}
             description={t('dialogDescription')}
-            trigger={<Button variant="secondary">{t('openDialog')}</Button>}
+            trigger={<Button variant="secondary">{t('dialogDemo')}</Button>}
           >
             <div className="flex flex-col items-start gap-5">
               <SegmentedControl

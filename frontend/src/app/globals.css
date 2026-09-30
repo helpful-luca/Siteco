@@ -169,6 +169,16 @@
     background-attachment: fixed;
   }
 
+  /* Everything pressable shows the hand cursor; disabled controls say so. */
+  :is(button, [role='button'], [role='radio'], [role='switch'], [role='tab'], [role='option'],
+      [role='menuitem'], a[href], summary, select, label:has(input[type='radio'], input[type='checkbox'])) {
+    cursor: pointer;
+  }
+
+  :is(button, [role='button'], [role='radio'], [role='switch'], [role='tab'], select):is(:disabled, [aria-disabled='true'], [data-disabled]) {
+    cursor: not-allowed;
+  }
+
   :focus-visible {
     outline: 2px solid var(--c-sodium);
     outline-offset: 2px;

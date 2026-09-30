@@ -111,7 +111,7 @@
       "working": "Reading, 62 %",
       "failed": "Password protected",
       "queued": "Queued",
-      "openDialog": "Open setup",
+      "openDialog": "Start setup",
       "tooltip": "Show hint",
       "tooltipText": "Appears on hover and keyboard focus.",
       "dialogTitle": "Welcome",
@@ -120,8 +120,36 @@
       "namePlaceholder": "Your name",
       "language": "Language",
       "continue": "Continue",
-      "skip": "Skip"
+      "skip": "Skip",
+      "dialogDemo": "Open dialog"
     },
     "search": "Search chats"
+  },
+  "onboarding": {
+    "progress": "Step {current} of {total}",
+    "skip": "Skip",
+    "back": "Back",
+    "continue": "Continue",
+    "finish": "Get started",
+    "language": {
+      "title": "Welcome",
+      "subtitle": "Ask your documents and see right away where the answer comes from. First: which language would you like to work in?",
+      "label": "Language"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "subtitle": "Light for the day, dark for the evening, or automatic like your system.",
+      "label": "Appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "Automatic"
+    },
+    "name": {
+      "title": "What should we call you?",
+      "subtitle": "We use it to greet you. You can change it any time in Settings.",
+      "label": "Your name",
+      "placeholder": "First name",
+      "privacy": "Your documents stay on this computer. For an answer, only the matching excerpts are sent to Claude by Anthropic (USA). Anthropic does not train on this data."
+    }
   }
 }

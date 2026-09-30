@@ -111,7 +111,7 @@
       "working": "Wird gelesen, 62 %",
       "failed": "Passwortgeschützt",
       "queued": "In der Warteschlange",
-      "openDialog": "Einrichtung öffnen",
+      "openDialog": "Einrichtung starten",
       "tooltip": "Hinweis anzeigen",
       "tooltipText": "Erscheint bei Hover und Tastaturfokus.",
       "dialogTitle": "Willkommen",
@@ -120,8 +120,36 @@
       "namePlaceholder": "Dein Name",
       "language": "Sprache",
       "continue": "Weiter",
-      "skip": "Überspringen"
+      "skip": "Überspringen",
+      "dialogDemo": "Dialog öffnen"
     },
     "search": "Chats durchsuchen"
+  },
+  "onboarding": {
+    "progress": "Schritt {current} von {total}",
+    "skip": "Überspringen",
+    "back": "Zurück",
+    "continue": "Weiter",
+    "finish": "Los geht’s",
+    "language": {
+      "title": "Willkommen",
+      "subtitle": "Frag deine Dokumente und sieh sofort, wo die Antwort steht. Zuerst: In welcher Sprache möchtest du arbeiten?",
+      "label": "Sprache"
+    },
+    "appearance": {
+      "title": "Erscheinungsbild",
+      "subtitle": "Hell für den Tag, dunkel für den Abend oder automatisch wie dein System.",
+      "label": "Erscheinungsbild",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "system": "Automatisch"
+    },
+    "name": {
+      "title": "Wie sollen wir dich nennen?",
+      "subtitle": "Wir begrüßen dich damit. Du kannst es jederzeit in den Einstellungen ändern.",
+      "label": "Dein Name",
+      "placeholder": "Vorname",
+      "privacy": "Deine Dokumente bleiben auf diesem Rechner. Für eine Antwort gehen nur die passenden Ausschnitte an Claude von Anthropic (USA). Anthropic trainiert nicht mit diesen Daten."
+    }
   }
 }
