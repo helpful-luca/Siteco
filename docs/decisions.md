@@ -54,6 +54,16 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 34 | Status polling | TanStack Query polls every second only while a document is scanning, queued, parsing or embedding | Always polling; SSE | Nothing to poll when the library is at rest (annex 11, 2.5) |
 | 35 | Desktop title bar | Inline script sets `data-desktop` on `<html>` from `window.desktop`, CSS reserves the space | Detecting Electron in React | No layout jump on first paint; Electron code stays in phase 12 |
 
+## UI polish (spacing and layout)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 36 | Root font size | Browser default 16 px, body text 15 px on `<body>` | 15 px root | Tailwind spacing is rem based; a 15 px root made every step 3.75 px and nothing sat on the 4 px grid |
+| 37 | Control height | One toolbar height of 32 px (md buttons, search, segmented), sm 28 | 36 px md buttons | Controls in one row share a height; 32 is macOS toolbar scale |
+| 38 | Touch targets | `pointer-coarse:` grows controls to 44 px | Breakpoint based sizes | The device decides, not the window width; a narrow desktop window keeps desktop density |
+| 39 | Control radius | 12 px | 10 px | Concentric with the 24 px sidebar and its 12 px padding |
+| 40 | Global banner | Rendered inside the page column by `Page` | Full width above `<main>` | Shares the left edge with title, toolbar and table and scrolls away on phones |
+
 ## Measurements
 
 | What | Result |
