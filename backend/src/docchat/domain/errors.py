@@ -12,6 +12,9 @@ class ErrorCode(StrEnum):
     UNAUTHORIZED_CLIENT = "UNAUTHORIZED_CLIENT"
     SERVICE_STARTING = "SERVICE_STARTING"
     INTERNAL_ERROR = "INTERNAL_ERROR"
+    REQUEST_TOO_LARGE = "REQUEST_TOO_LARGE"
+    # Our own limits (annex 11, 6): 429 means "wait a moment", never "Claude is busy"
+    RATE_LIMITED = "RATE_LIMITED"
     # Upload (synchronous checks in the request)
     UPLOAD_TOO_LARGE = "UPLOAD_TOO_LARGE"
     UNSUPPORTED_TYPE = "UNSUPPORTED_TYPE"
@@ -104,6 +107,8 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     ErrorCode.UNAUTHORIZED_CLIENT: ErrorSpec(401, False),
     ErrorCode.SERVICE_STARTING: ErrorSpec(503, True),
     ErrorCode.INTERNAL_ERROR: ErrorSpec(500, True),
+    ErrorCode.REQUEST_TOO_LARGE: ErrorSpec(413, False),
+    ErrorCode.RATE_LIMITED: ErrorSpec(429, True),
     ErrorCode.UPLOAD_TOO_LARGE: ErrorSpec(413, False),
     ErrorCode.UNSUPPORTED_TYPE: ErrorSpec(415, False),
     ErrorCode.FILE_CONTENT_MISMATCH: ErrorSpec(415, False),

@@ -5,6 +5,7 @@ import logging
 import re
 import time
 
+from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from docchat.api.schemas.common import error_response
@@ -95,3 +96,37 @@ class InternalTokenMiddleware:
             ErrorCode.UNAUTHORIZED_CLIENT, "Missing or invalid internal token."
         )
         await response(scope, receive, send)
+
+
+class BodyLimitMiddleware:
+    """JSON bodies are small (annex 10, P5). The declared length is checked before anything is
+    read, the received bytes while reading (a chunked body declares none). Uploads have their
+    own limit in the upload service and are exempt."""
+
+    def __init__(self, app: ASGIApp, max_bytes: int, exempt: tuple[tuple[str, str], ...]) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+        self.exempt = exempt
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or (scope["method"], scope["path"]) in self.exempt:
+            await self.app(scope, receive, send)
+            return
+        declared = _header(scope, b"content-length")
+        if declared.isdigit() and int(declared) > self.max_bytes:
+            await error_response(ErrorCode.REQUEST_TOO_LARGE)(scope, receive, send)
+            return
+        received = 0
+
+        async def counted() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.max_bytes:
+                    # Raised inside FastAPI's body read, which passes HTTP errors on unchanged;
+                    # the handler turns 413 into REQUEST_TOO_LARGE.
+                    raise HTTPException(status_code=413)
+            return message
+
+        await self.app(scope, counted, send)

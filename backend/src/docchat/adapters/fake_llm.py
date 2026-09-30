@@ -38,6 +38,17 @@ class FakeScenario(StrEnum):
     FALLBACK = "fallback"  # server-side fallback to another model mid-stream
     EMPTY = "empty"  # end_turn without any text
     NO_CITATIONS = "no_citations"  # an answer without citations
+    HANG = "hang"  # never sends a token (first-token timeout)
+    # Claude's errors before the first token, one per code (annex 10, H1 to H11)
+    AUTH = "auth"
+    BILLING = "billing"
+    FORBIDDEN = "forbidden"
+    MODEL_NOT_FOUND = "model_not_found"
+    RATE_LIMITED = "rate_limited"
+    UNAVAILABLE = "unavailable"
+    UNREACHABLE = "unreachable"
+    BAD_REQUEST = "bad_request"
+    CONTEXT_TOO_LARGE = "context_too_large"
 
 
 _MIN_ANSWER_WORDS = 4
@@ -48,6 +59,17 @@ _NOTHING = {
     Locale.EN: "I could not find anything about this in your documents.",
 }
 _FALLBACK_MODEL = {"claude-sonnet-5-5": "claude-sonnet-5"}
+_ERRORS: dict[FakeScenario, tuple[ErrorCode, int | None]] = {
+    FakeScenario.AUTH: (ErrorCode.LLM_AUTH, None),
+    FakeScenario.BILLING: (ErrorCode.LLM_BILLING, None),
+    FakeScenario.FORBIDDEN: (ErrorCode.LLM_FORBIDDEN, None),
+    FakeScenario.MODEL_NOT_FOUND: (ErrorCode.MODEL_UNAVAILABLE, None),
+    FakeScenario.RATE_LIMITED: (ErrorCode.LLM_RATE_LIMITED, 30),
+    FakeScenario.UNAVAILABLE: (ErrorCode.LLM_UNAVAILABLE, None),
+    FakeScenario.UNREACHABLE: (ErrorCode.LLM_UNREACHABLE, None),
+    FakeScenario.BAD_REQUEST: (ErrorCode.LLM_BAD_REQUEST, None),
+    FakeScenario.CONTEXT_TOO_LARGE: (ErrorCode.LLM_CONTEXT_TOO_LARGE, None),
+}
 
 
 def _words(text: str) -> list[str]:
@@ -106,6 +128,11 @@ class FakeLLMClient:
             await asyncio.sleep(self.delay_s)
         if scenario is FakeScenario.OVERLOADED:
             raise LLMError(ErrorCode.LLM_OVERLOADED, retry_after=1)
+        if scenario in _ERRORS:
+            code, retry_after = _ERRORS[scenario]
+            raise LLMError(code, retry_after=retry_after)
+        if scenario is FakeScenario.HANG:
+            await asyncio.sleep(3600)
         model = request.model
         usage = TokenUsage(
             input_tokens=estimate_tokens(

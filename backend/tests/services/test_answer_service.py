@@ -622,3 +622,54 @@ async def test_the_first_token_timeout_is_not_retried(tmp_path: Path) -> None:
     error = terminal(await h.ask(h.new_chat()))
     assert isinstance(error, ErrorEvent) and error.code is ErrorCode.LLM_TIMEOUT
     assert len(llm.requests) == 1
+
+
+# Own rate limit and model availability (WP-F)
+
+
+async def test_chat_rate_limit_refuses_before_anything_is_saved(tmp_path: Path) -> None:
+    h = build_chat_harness(tmp_path, chat_per_minute=1)
+    h.add_document(MIRA)
+    chat = h.new_chat()
+    events = await h.ask(chat)
+    with pytest.raises(AppError) as caught:
+        await h.answers.ask(h.command(chat, "Und die Leistung?"))
+    assert caught.value.code is ErrorCode.RATE_LIMITED
+    assert caught.value.params == {"seconds": 60, "scope": "chat"}
+    assert caught.value.retry_after == 60
+    assert len(h.chats_repo.list_messages(chat.id)) == 2  # the refused question left no trace
+    assert h.registry.active == 0  # the lane reserved for the check was given back
+    # Regenerating asks the model again, so it counts too; after the window it passes.
+    answer = answer_of(h, events)
+    with pytest.raises(AppError) as again:
+        await h.answers.regenerate(chat.id, answer.id, h.options)
+    assert again.value.code is ErrorCode.RATE_LIMITED
+    h.ticker.advance(60)
+    run = await h.answers.regenerate(chat.id, answer.id, h.options)
+    assert isinstance(terminal([e async for e in run.events()]), DoneEvent)
+
+
+async def test_other_refusals_do_not_use_up_the_rate_limit(tmp_path: Path) -> None:
+    h = build_chat_harness(tmp_path, chat_per_minute=1)
+    chat = h.new_chat()
+    with pytest.raises(AppError) as caught:
+        await h.answers.ask(h.command(chat))
+    assert caught.value.code is ErrorCode.NO_DOCUMENTS
+    h.add_document(MIRA)
+    assert isinstance(terminal(await h.ask(chat)), DoneEvent)
+
+
+async def test_a_model_claude_does_not_know_is_unavailable_until_restart(tmp_path: Path) -> None:
+    h = build_chat_harness(tmp_path, llm=FakeLLMClient([FakeScenario.MODEL_NOT_FOUND]))
+    h.add_document(MIRA)
+    chat = h.new_chat()
+    end = terminal(await h.ask(chat))
+    assert isinstance(end, ErrorEvent) and end.code is ErrorCode.MODEL_UNAVAILABLE
+    assert end.params == {"model": "claude-sonnet-5-5", "fallback": "claude-haiku-4-5"}
+    assert h.models.is_available("claude-sonnet-5-5") is False
+    with pytest.raises(AppError) as refused:
+        await h.answers.ask(h.command(chat, "Und die Leistung?"))
+    assert refused.value.code is ErrorCode.MODEL_UNAVAILABLE
+    assert refused.value.params == {"model": "claude-sonnet-5-5", "fallback": "claude-haiku-4-5"}
+    haiku = h.options.__class__(model="claude-haiku-4-5", locale=h.options.locale)
+    assert isinstance(terminal(await h.ask(chat, "Und die Leistung?", options=haiku)), DoneEvent)

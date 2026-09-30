@@ -22,6 +22,12 @@ class Clock(Protocol):
     def now(self) -> datetime: ...
 
 
+class MonotonicClock(Protocol):
+    """Seconds that never jump with the wall clock, for time windows."""
+
+    def monotonic(self) -> float: ...
+
+
 class Embedder(Protocol):
     dim: int
 

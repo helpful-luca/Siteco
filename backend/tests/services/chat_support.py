@@ -18,11 +18,13 @@ from docchat.domain.sentences import split_sentences
 from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerOptions, AnswerService, AskCommand
 from docchat.services.chat_service import ChatService
+from docchat.services.limits import DailyBudget, LimitScope, RateLimit
 from docchat.services.llm_health import LlmHealth
+from docchat.services.model_availability import ModelAvailability
 from docchat.services.retrieval_service import RetrievalService, RetrievalSettings
 from docchat.services.run_events import RunEvent
 from docchat.services.run_registry import RunRegistry
-from tests.fakes import FakeClock, FakeEmbedder, FakeSleep, FakeVectorStore
+from tests.fakes import FakeClock, FakeEmbedder, FakeSleep, FakeTicker, FakeVectorStore
 
 MODELS = ("claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5")
 
@@ -40,6 +42,8 @@ class ChatHarness:
     registry: RunRegistry
     chats: ChatService
     answers: AnswerService
+    models: ModelAvailability
+    ticker: FakeTicker
     options: AnswerOptions = field(
         default_factory=lambda: AnswerOptions(model="claude-sonnet-5-5", locale=Locale.DE)
     )
@@ -132,6 +136,7 @@ def build_chat_harness(
     max_concurrent: int = 3,
     full_context_max_tokens: int = 20_000,
     max_messages: int = 200,
+    chat_per_minute: int = 0,
 ) -> ChatHarness:
     database = Database(root / "app.db")
     database.migrate()
@@ -151,6 +156,8 @@ def build_chat_harness(
         RetrievalSettings(full_context_max_tokens=full_context_max_tokens),
     )
     llm_port: LLMClient | None = client
+    models = ModelAvailability(MODELS, "claude-sonnet-5-5")
+    ticker = FakeTicker()
     deps = RunDeps(
         chats=chats_repo,
         retrieval=retrieval,
@@ -160,18 +167,20 @@ def build_chat_harness(
         clock=clock,
         registry=registry,
         timings=timings or RunTimings(),
+        models=models,
         sleep=sleep,
     )
     answers = AnswerService(
         deps,
         AnswerLimits(
             enabled_models=MODELS,
-            daily_budget_usd=daily_budget_usd,
             max_messages_per_chat=max_messages,
         ),
+        rate=RateLimit(LimitScope.CHAT, chat_per_minute, ticker),
+        budget=DailyBudget(ledger, clock, daily_budget_usd),
     )
     chats = ChatService(chats_repo, documents, registry, clock, max_chats=5)
     return ChatHarness(
         documents, chats_repo, ledger, vectors, client, health, clock, sleep, registry, chats,
-        answers,
+        answers, models, ticker,
     )  # fmt: skip

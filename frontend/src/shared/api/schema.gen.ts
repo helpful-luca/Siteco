@@ -123,7 +123,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Config */
+        /**
+         * Config
+         * @description Loaded at start. The UI loads it again when an answer reveals a change: a rejected key
+         *     (`llm_status`), a model Claude does not know (`available`), the budget.
+         */
         get: operations["config_api_config_get"];
         put?: never;
         post?: never;
@@ -305,6 +309,23 @@ export interface components {
             /** @default concise */
             style: components["schemas"]["AnswerStyle"];
         };
+        /**
+         * BudgetOut
+         * @description Only present with DAILY_BUDGET_USD. Resets at midnight UTC.
+         */
+        BudgetOut: {
+            /** Exceeded */
+            exceeded: boolean;
+            /** Limit Usd */
+            limit_usd: number;
+            /**
+             * Reset Time
+             * Format: date-time
+             */
+            reset_time: string;
+            /** Spent Usd */
+            spent_usd: number;
+        };
         /** ChatEnvelopeOut */
         ChatEnvelopeOut: {
             chat: components["schemas"]["ChatOut"];
@@ -421,6 +442,7 @@ export interface components {
         ComponentStatus: "loading" | "ok" | "failed";
         /** ConfigOut */
         ConfigOut: {
+            budget: components["schemas"]["BudgetOut"] | null;
             /** Commit */
             commit: string;
             /** Default Model */
@@ -544,7 +566,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
+        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
@@ -585,6 +607,18 @@ export interface components {
          * @description Known to the UI so it can reject files and questions before sending them.
          */
         Limits: {
+            /**
+             * Chat Per Minute
+             * @description Own limit for questions; 0 is off.
+             */
+            chat_per_minute: number;
+            /**
+             * Daily Budget Usd
+             * @description Optional cost brake; null is off.
+             */
+            daily_budget_usd: number | null;
+            /** Max Concurrent Answers */
+            max_concurrent_answers: number;
             /** Max Pdf Pages */
             max_pdf_pages: number;
             /** Max Question Chars */
@@ -593,6 +627,11 @@ export interface components {
             max_storage_mb: number;
             /** Max Upload Mb */
             max_upload_mb: number;
+            /**
+             * Uploads Per Minute
+             * @description Own limit for uploads; 0 is off.
+             */
+            uploads_per_minute: number;
         };
         /** LiveOut */
         LiveOut: {

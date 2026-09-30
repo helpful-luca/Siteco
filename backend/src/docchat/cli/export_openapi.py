@@ -10,6 +10,7 @@ from docchat.api.schemas.answer_events import SSE_EVENT_MODELS
 from docchat.api.schemas.common import ErrorEnvelope
 from docchat.core.config import Settings
 from docchat.core.container import build_container
+from docchat.domain.errors import ERROR_SPECS
 from docchat.main import create_app
 
 
@@ -39,7 +40,14 @@ def build_openapi() -> dict[str, Any]:
         [(ErrorEnvelope, "validation"), *((m, "serialization") for m in SSE_EVENT_MODELS)],
         ref_template="#/components/schemas/{model}",
     )
-    spec.setdefault("components", {}).setdefault("schemas", {}).update(extra.get("$defs", {}))
+    schemas = spec.setdefault("components", {}).setdefault("schemas", {})
+    schemas.update(extra.get("$defs", {}))
+    # Status and retryable per code: `docs/errors.md` is generated from this, so the catalog
+    # cannot drift from `domain/errors.py` (the contract itself has a drift test).
+    schemas["ErrorCode"]["x-error-specs"] = {
+        code.value: {"status": spec.status, "retryable": spec.retryable}
+        for code, spec in ERROR_SPECS.items()
+    }
     return spec
 
 

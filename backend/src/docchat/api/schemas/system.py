@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from docchat.domain.enums import ComponentStatus, Effort, LlmStatus
 from docchat.domain.model_profiles import ModelProfile
@@ -35,6 +36,19 @@ class Limits(BaseModel):
     max_pdf_pages: int
     max_storage_mb: int
     max_question_chars: int
+    chat_per_minute: int = Field(description="Own limit for questions; 0 is off.")
+    uploads_per_minute: int = Field(description="Own limit for uploads; 0 is off.")
+    max_concurrent_answers: int
+    daily_budget_usd: float | None = Field(description="Optional cost brake; null is off.")
+
+
+class BudgetOut(BaseModel):
+    """Only present with DAILY_BUDGET_USD. Resets at midnight UTC."""
+
+    limit_usd: float
+    spent_usd: float
+    exceeded: bool
+    reset_time: datetime
 
 
 class ModelInfo(BaseModel):
@@ -68,6 +82,7 @@ class ConfigOut(BaseModel):
     commit: str
     llm_status: LlmStatus
     limits: Limits
+    budget: BudgetOut | None
     features: Features
     models: list[ModelInfo]
     default_model: str

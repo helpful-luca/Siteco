@@ -1,7 +1,8 @@
 """Accepts one upload: cheap checks first, then the body is streamed to a temp file.
 
-Order (annex 10, C): name and extension, declared size, quota and free disk, magic bytes while
-streaming, byte count, duplicate by SHA-256, atomic rename into the quarantine, row `scanning`.
+Order (annex 10, C): name and extension, declared size, quota and free disk, uploads per minute,
+magic bytes while streaming, byte count, duplicate by SHA-256, atomic rename into the quarantine,
+row `scanning`.
 The malware scan and everything that opens the document happen later in background workers.
 """
 
@@ -30,6 +31,7 @@ from docchat.domain.upload_validation import (
     sanitize_filename,
     text_chunk_is_binary,
 )
+from docchat.services.limits import RateLimit
 
 log = logging.getLogger("docchat.upload")
 
@@ -89,12 +91,14 @@ class UploadService:
         scans: ScanScheduler,
         clock: Clock,
         limits: UploadLimits,
+        rate: RateLimit | None = None,
     ) -> None:
         self._repository = repository
         self._storage = storage
         self._scans = scans
         self._clock = clock
         self._limits = limits
+        self._rate = rate  # uploads per minute; None: no limit
 
     def _check_name(self, header: str) -> tuple[str, DocumentKind]:
         decoded = decode_file_name_header(header)
@@ -130,6 +134,8 @@ class UploadService:
     ) -> Document:
         filename, kind = self._check_name(file_name)
         await self._check_space(declared_size)
+        if self._rate is not None:  # after the cheap checks: a refused file never counts
+            self._rate.acquire()
         sink = await asyncio.to_thread(self._storage.new_upload)
         try:
             receiver = _Receiver(sink, kind, self._limits.max_bytes)

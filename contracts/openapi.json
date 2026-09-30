@@ -64,6 +64,36 @@
         "title": "AskIn",
         "type": "object"
       },
+      "BudgetOut": {
+        "description": "Only present with DAILY_BUDGET_USD. Resets at midnight UTC.",
+        "properties": {
+          "exceeded": {
+            "title": "Exceeded",
+            "type": "boolean"
+          },
+          "limit_usd": {
+            "title": "Limit Usd",
+            "type": "number"
+          },
+          "reset_time": {
+            "format": "date-time",
+            "title": "Reset Time",
+            "type": "string"
+          },
+          "spent_usd": {
+            "title": "Spent Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "limit_usd",
+          "spent_usd",
+          "exceeded",
+          "reset_time"
+        ],
+        "title": "BudgetOut",
+        "type": "object"
+      },
       "ChatEnvelopeOut": {
         "properties": {
           "chat": {
@@ -323,6 +353,16 @@
       },
       "ConfigOut": {
         "properties": {
+          "budget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "commit": {
             "title": "Commit",
             "type": "string"
@@ -357,6 +397,7 @@
           "commit",
           "llm_status",
           "limits",
+          "budget",
           "features",
           "models",
           "default_model"
@@ -638,6 +679,8 @@
           "UNAUTHORIZED_CLIENT",
           "SERVICE_STARTING",
           "INTERNAL_ERROR",
+          "REQUEST_TOO_LARGE",
+          "RATE_LIMITED",
           "UPLOAD_TOO_LARGE",
           "UNSUPPORTED_TYPE",
           "FILE_CONTENT_MISMATCH",
@@ -689,7 +732,237 @@
           "LLM_EMPTY_ANSWER"
         ],
         "title": "ErrorCode",
-        "type": "string"
+        "type": "string",
+        "x-error-specs": {
+          "CHAT_BUSY": {
+            "retryable": true,
+            "status": 409
+          },
+          "CHAT_LIMIT": {
+            "retryable": false,
+            "status": 409
+          },
+          "CHAT_NOT_FOUND": {
+            "retryable": false,
+            "status": 404
+          },
+          "CONCURRENCY_LIMIT": {
+            "retryable": true,
+            "status": 429
+          },
+          "DELETE_FAILED": {
+            "retryable": true,
+            "status": 500
+          },
+          "DOCUMENTS_NOT_READY": {
+            "retryable": true,
+            "status": 409
+          },
+          "DOCUMENT_EMPTY": {
+            "retryable": false,
+            "status": 422
+          },
+          "DOCUMENT_FILE_MISSING": {
+            "retryable": false,
+            "status": 410
+          },
+          "DOCUMENT_NOT_READY": {
+            "retryable": true,
+            "status": 409
+          },
+          "DOCUMENT_TOO_LONG": {
+            "retryable": false,
+            "status": 422
+          },
+          "DUPLICATE_DOCUMENT": {
+            "retryable": false,
+            "status": 409
+          },
+          "DUPLICATE_REQUEST": {
+            "retryable": false,
+            "status": 409
+          },
+          "EMPTY_FILE": {
+            "retryable": false,
+            "status": 422
+          },
+          "FILE_CONTENT_MISMATCH": {
+            "retryable": false,
+            "status": 415
+          },
+          "INTERNAL_ERROR": {
+            "retryable": true,
+            "status": 500
+          },
+          "LLM_AUTH": {
+            "retryable": false,
+            "status": 503
+          },
+          "LLM_BAD_REQUEST": {
+            "retryable": false,
+            "status": 500
+          },
+          "LLM_BILLING": {
+            "retryable": false,
+            "status": 503
+          },
+          "LLM_CONTEXT_TOO_LARGE": {
+            "retryable": false,
+            "status": 500
+          },
+          "LLM_EMPTY_ANSWER": {
+            "retryable": true,
+            "status": 502
+          },
+          "LLM_FORBIDDEN": {
+            "retryable": false,
+            "status": 503
+          },
+          "LLM_OVERLOADED": {
+            "retryable": true,
+            "status": 503
+          },
+          "LLM_RATE_LIMITED": {
+            "retryable": true,
+            "status": 503
+          },
+          "LLM_TIMEOUT": {
+            "retryable": true,
+            "status": 504
+          },
+          "LLM_UNAVAILABLE": {
+            "retryable": true,
+            "status": 502
+          },
+          "LLM_UNREACHABLE": {
+            "retryable": true,
+            "status": 502
+          },
+          "MALWARE_DETECTED": {
+            "retryable": false,
+            "status": 422
+          },
+          "MALWARE_SCAN_FAILED": {
+            "retryable": true,
+            "status": 422
+          },
+          "MESSAGE_LIMIT": {
+            "retryable": false,
+            "status": 409
+          },
+          "MESSAGE_NOT_LATEST": {
+            "retryable": false,
+            "status": 409
+          },
+          "METHOD_NOT_ALLOWED": {
+            "retryable": false,
+            "status": 405
+          },
+          "MODEL_NOT_ALLOWED": {
+            "retryable": false,
+            "status": 422
+          },
+          "MODEL_UNAVAILABLE": {
+            "retryable": false,
+            "status": 503
+          },
+          "NOT_FOUND": {
+            "retryable": false,
+            "status": 404
+          },
+          "NO_DOCUMENTS": {
+            "retryable": false,
+            "status": 409
+          },
+          "PDF_CORRUPT": {
+            "retryable": false,
+            "status": 422
+          },
+          "PDF_ENCRYPTED": {
+            "retryable": false,
+            "status": 422
+          },
+          "PDF_NO_TEXT": {
+            "retryable": false,
+            "status": 422
+          },
+          "PDF_TOO_MANY_PAGES": {
+            "retryable": false,
+            "status": 422
+          },
+          "PROCESSING_FAILED": {
+            "retryable": true,
+            "status": 500
+          },
+          "PROCESSING_INTERRUPTED": {
+            "retryable": true,
+            "status": 500
+          },
+          "PROCESSING_TIMEOUT": {
+            "retryable": true,
+            "status": 500
+          },
+          "QUESTION_EMPTY": {
+            "retryable": false,
+            "status": 422
+          },
+          "QUESTION_TOO_LONG": {
+            "retryable": false,
+            "status": 422
+          },
+          "RANGE_NOT_SATISFIABLE": {
+            "retryable": false,
+            "status": 416
+          },
+          "RATE_LIMITED": {
+            "retryable": true,
+            "status": 429
+          },
+          "REQUEST_TOO_LARGE": {
+            "retryable": false,
+            "status": 413
+          },
+          "SERVICE_STARTING": {
+            "retryable": true,
+            "status": 503
+          },
+          "STORAGE_FULL": {
+            "retryable": false,
+            "status": 507
+          },
+          "STORAGE_QUOTA": {
+            "retryable": false,
+            "status": 409
+          },
+          "TEXT_ENCODING_UNSUPPORTED": {
+            "retryable": false,
+            "status": 422
+          },
+          "TOKEN_BUDGET_EXCEEDED": {
+            "retryable": true,
+            "status": 429
+          },
+          "UNAUTHORIZED_CLIENT": {
+            "retryable": false,
+            "status": 401
+          },
+          "UNSUPPORTED_TYPE": {
+            "retryable": false,
+            "status": 415
+          },
+          "UPLOAD_INCOMPLETE": {
+            "retryable": true,
+            "status": 400
+          },
+          "UPLOAD_TOO_LARGE": {
+            "retryable": false,
+            "status": 413
+          },
+          "VALIDATION_ERROR": {
+            "retryable": false,
+            "status": 422
+          }
+        }
       },
       "ErrorEnvelope": {
         "properties": {
@@ -779,6 +1052,27 @@
       "Limits": {
         "description": "Known to the UI so it can reject files and questions before sending them.",
         "properties": {
+          "chat_per_minute": {
+            "description": "Own limit for questions; 0 is off.",
+            "title": "Chat Per Minute",
+            "type": "integer"
+          },
+          "daily_budget_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional cost brake; null is off.",
+            "title": "Daily Budget Usd"
+          },
+          "max_concurrent_answers": {
+            "title": "Max Concurrent Answers",
+            "type": "integer"
+          },
           "max_pdf_pages": {
             "title": "Max Pdf Pages",
             "type": "integer"
@@ -794,13 +1088,22 @@
           "max_upload_mb": {
             "title": "Max Upload Mb",
             "type": "integer"
+          },
+          "uploads_per_minute": {
+            "description": "Own limit for uploads; 0 is off.",
+            "title": "Uploads Per Minute",
+            "type": "integer"
           }
         },
         "required": [
           "max_upload_mb",
           "max_pdf_pages",
           "max_storage_mb",
-          "max_question_chars"
+          "max_question_chars",
+          "chat_per_minute",
+          "uploads_per_minute",
+          "max_concurrent_answers",
+          "daily_budget_usd"
         ],
         "title": "Limits",
         "type": "object"
@@ -2366,6 +2669,7 @@
     },
     "/api/config": {
       "get": {
+        "description": "Loaded at start. The UI loads it again when an answer reveals a change: a rejected key\n(`llm_status`), a model Claude does not know (`available`), the budget.",
         "operationId": "config_api_config_get",
         "responses": {
           "200": {

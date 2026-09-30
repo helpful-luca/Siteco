@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     max_messages_per_chat: int = 200
     max_concurrent_streams: int = 3
     daily_budget_usd: float | None = None
+    # Own rate limits per minute, global for the workspace (annex 11, 6.1). 0 turns one off.
+    rate_chat_per_min: int = 20
+    rate_upload_per_min: int = 30
+    # JSON bodies of every route except the raw upload (annex 10, P5)
+    max_json_body_kb: int = 64
 
     data_dir: Path = Path("/data")
     embedding_model: str = "ibm-granite/granite-embedding-97m-multilingual-r2"

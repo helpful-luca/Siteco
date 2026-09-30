@@ -44,6 +44,7 @@ from docchat.domain.ports import ChatRepository, Clock, LLMClient, UsageLedger
 from docchat.domain.retrieval import snippet
 from docchat.domain.usage import ModelUsage, total_usage
 from docchat.services.llm_health import LlmHealth
+from docchat.services.model_availability import ModelAvailability
 from docchat.services.retrieval_service import RetrievalPlan, RetrievalService, Retrieved
 from docchat.services.run_events import (
     CitationEvent,
@@ -83,6 +84,7 @@ class RunDeps:
     clock: Clock
     registry: RunRegistry
     timings: RunTimings
+    models: ModelAvailability
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep
     jitter: Callable[[], float] = lambda: 0.0  # 0..1, share of the delay added on top
 
@@ -416,7 +418,10 @@ class AnswerRun:
         self._emit_citations()
         params: dict[str, Any] = {}
         if error.code is ErrorCode.MODEL_UNAVAILABLE:
+            self._deps.models.mark_unavailable(self._requested)
             params["model"] = self._requested
+            if fallback := self._deps.models.fallback(self._requested):
+                params["fallback"] = fallback
         if error.retry_after is not None:
             params["seconds"] = error.retry_after
         return self._failed(

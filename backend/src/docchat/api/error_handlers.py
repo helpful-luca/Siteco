@@ -12,7 +12,11 @@ from docchat.domain.errors import AppError, ErrorCode
 
 log = logging.getLogger("docchat.errors")
 
-_HTTP_TO_CODE = {404: ErrorCode.NOT_FOUND, 405: ErrorCode.METHOD_NOT_ALLOWED}
+_HTTP_TO_CODE = {
+    404: ErrorCode.NOT_FOUND,
+    405: ErrorCode.METHOD_NOT_ALLOWED,
+    413: ErrorCode.REQUEST_TOO_LARGE,
+}
 
 
 async def _app_error(_: Request, exc: Exception) -> JSONResponse:

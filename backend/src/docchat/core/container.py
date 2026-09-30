@@ -44,8 +44,10 @@ from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
 from docchat.services.ingestion_worker import IngestionWorker
+from docchat.services.limits import DailyBudget, LimitScope, RateLimit
 from docchat.services.llm_health import LlmHealth
 from docchat.services.malware_scan_worker import MalwareScanWorker, ScanRetry
+from docchat.services.model_availability import ModelAvailability
 from docchat.services.parse_stage import ParseLimits, ParseStage
 from docchat.services.retrieval_service import RetrievalService, RetrievalSettings
 from docchat.services.run_registry import RunRegistry
@@ -71,6 +73,8 @@ class Container:
     chats: ChatService
     answers: AnswerService
     llm_health: LlmHealth
+    models: ModelAvailability
+    budget: DailyBudget
     embedder_status: ComponentStatus = ComponentStatus.LOADING
     vector_store_status: ComponentStatus = ComponentStatus.LOADING
 
@@ -221,6 +225,9 @@ def build_container(
     runs = RunRegistry(settings.max_concurrent_streams)
     llm_client, llm_status = (llm, LlmStatus.OK) if llm is not None else _llm(settings)
     llm_health = LlmHealth(llm_status)
+    models = ModelAvailability(settings.enabled_models, settings.default_model)
+    ledger = SqliteUsageLedger(database)
+    budget = DailyBudget(ledger, clock, settings.daily_budget_usd)
     retrieval = RetrievalService(
         repository,
         vectors,
@@ -237,7 +244,7 @@ def build_container(
         retrieval=retrieval,
         llm=llm_client,
         health=llm_health,
-        ledger=SqliteUsageLedger(database),
+        ledger=ledger,
         clock=clock,
         registry=runs,
         timings=RunTimings(
@@ -245,6 +252,7 @@ def build_container(
             total_timeout_s=settings.llm_total_timeout_s,
             max_retries=settings.llm_max_retries,
         ),
+        models=models,
         jitter=random.random,
     )
     return Container(
@@ -276,6 +284,7 @@ def build_container(
                 max_storage_bytes=settings.max_storage_mb * _MB,
                 min_free_bytes=settings.min_free_disk_mb * _MB,
             ),
+            RateLimit(LimitScope.UPLOAD, settings.rate_upload_per_min, clock),
         ),
         chats=ChatService(chats, repository, runs, clock, max_chats=settings.max_chats),
         answers=AnswerService(
@@ -287,8 +296,11 @@ def build_container(
                 max_output_tokens=settings.max_output_tokens,
                 history_max_turns=settings.history_max_turns,
                 history_max_tokens=settings.history_max_tokens,
-                daily_budget_usd=settings.daily_budget_usd,
             ),
+            rate=RateLimit(LimitScope.CHAT, settings.rate_chat_per_min, clock),
+            budget=budget,
         ),
         llm_health=llm_health,
+        models=models,
+        budget=budget,
     )

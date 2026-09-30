@@ -59,6 +59,19 @@ class FakeClock:
         return self.current
 
 
+class FakeTicker:
+    """Monotonic seconds that only move when a test says so."""
+
+    def __init__(self) -> None:
+        self.current = 1000.0
+
+    def monotonic(self) -> float:
+        return self.current
+
+    def advance(self, seconds: float) -> None:
+        self.current += seconds
+
+
 def page(number: int, text: str) -> TextSection:
     return section_from_text(text, page=number)
 

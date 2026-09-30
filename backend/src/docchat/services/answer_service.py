@@ -10,7 +10,6 @@ import logging
 import uuid
 from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
-from datetime import UTC, datetime, timedelta
 
 from docchat.domain.chat_models import Chat, Message
 from docchat.domain.chat_title import title_from_question
@@ -28,6 +27,7 @@ from docchat.domain.model_profiles import MODEL_PROFILES, resolve_effort
 from docchat.domain.ports import ChatRepository, DuplicateMessage
 from docchat.domain.retrieval import follow_up_query
 from docchat.services.answer_run import AnswerRun, RunDeps, RunInput
+from docchat.services.limits import DailyBudget, RateLimit
 from docchat.services.retrieval_service import RetrievalPlan
 from docchat.services.run_registry import RunControl, StopReason
 
@@ -43,7 +43,6 @@ class AnswerLimits:
     max_output_tokens: int = 4096
     history_max_turns: int = 6
     history_max_tokens: int = 6000
-    daily_budget_usd: float | None = None  # off by default (decision Luca)
 
 
 @dataclass(frozen=True)
@@ -64,15 +63,19 @@ class AskCommand:
     comparison_id: str | None = None
 
 
-def _next_utc_midnight(now: datetime) -> datetime:
-    day = now.astimezone(UTC).date() + timedelta(days=1)
-    return datetime(day.year, day.month, day.day, tzinfo=UTC)
-
-
 class AnswerService:
-    def __init__(self, deps: RunDeps, limits: AnswerLimits) -> None:
+    def __init__(
+        self,
+        deps: RunDeps,
+        limits: AnswerLimits,
+        *,
+        rate: RateLimit | None = None,
+        budget: DailyBudget | None = None,
+    ) -> None:
         self._deps = deps
         self._limits = limits
+        self._rate = rate  # chat requests per minute; None: no limit
+        self._budget = budget  # None or a budget without a limit: no brake
 
     @property
     def _chats(self) -> ChatRepository:
@@ -94,6 +97,12 @@ class AnswerService:
         model = model or self._limits.default_model
         if model not in self._limits.enabled_models or model not in MODEL_PROFILES:
             raise AppError(ErrorCode.MODEL_NOT_ALLOWED, params={"model": model})
+        models = self._deps.models
+        if not models.is_available(model):
+            params = {"model": model}
+            if fallback := models.fallback(model):
+                params["fallback"] = fallback
+            raise AppError(ErrorCode.MODEL_UNAVAILABLE, params=params)
         return model
 
     def _chat(self, chat_id: str) -> Chat:
@@ -102,19 +111,14 @@ class AnswerService:
             raise AppError(ErrorCode.CHAT_NOT_FOUND)
         return chat
 
-    def _budget(self) -> None:
-        budget = self._limits.daily_budget_usd
-        if budget is None:
-            return
-        now = self._deps.clock.now()
-        if self._deps.ledger.cost_on(now.astimezone(UTC).date().isoformat()) < budget:
-            return
-        reset = _next_utc_midnight(now)
-        raise AppError(
-            ErrorCode.TOKEN_BUDGET_EXCEEDED,
-            params={"reset_time": reset.isoformat().replace("+00:00", "Z")},
-            retry_after=max(1, round((reset - now).total_seconds())),
-        )
+    def _check_budget(self) -> None:
+        if self._budget is not None:
+            self._budget.check()
+
+    def _count_request(self) -> None:
+        """Last of all checks: a question refused for another reason never uses up the limit."""
+        if self._rate is not None:
+            self._rate.acquire()
 
     def _message_room(self, chat_id: str, adding: int) -> None:
         count = self._chats.count_messages(chat_id)
@@ -184,10 +188,11 @@ class AnswerService:
         ):
             raise AppError(ErrorCode.DUPLICATE_REQUEST)
         self._message_room(chat.id, 1 if existing else 2)
-        self._budget()
+        self._check_budget()
         plan = self._deps.retrieval.plan(chat)
         control = self._deps.registry.reserve(chat.id, command.lane)
         try:
+            self._count_request()
             earlier = self._chats.list_messages(chat.id)
             if existing is not None:
                 earlier = [m for m in earlier if m.created_at < existing.created_at]
@@ -234,11 +239,12 @@ class AnswerService:
         if not questions or questions[-1].id != answer.parent_id:
             raise AppError(ErrorCode.MESSAGE_NOT_LATEST)
         question = questions[-1]
-        self._budget()
+        self._check_budget()
         plan = self._deps.retrieval.plan(chat)
         lane = answer.lane or Lane.A
         control = self._deps.registry.reserve(chat.id, lane)
         try:
+            self._count_request()
             fresh = self._placeholder(chat, question, options, lane)
             answer = replace(
                 fresh,
