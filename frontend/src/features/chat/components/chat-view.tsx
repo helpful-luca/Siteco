@@ -161,7 +161,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   const lastTurn = turns.at(-1);
   const notice = refusal ? (
     <ComposerNotice id={NOTICE_ID} tone="error" onDismiss={() => setRefusal(null)}>
-      {text.error(refusal.code, { seconds: refusal.retryAfter ?? 0, ...(refusal.params as Record<string, string>) })}
+      {text.error(refusal.code, refusal.params, refusal.retryAfter)}
     </ComposerNotice>
   ) : block ? (
     <ComposerNotice

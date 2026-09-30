@@ -2,22 +2,13 @@
 
 import { Info } from 'lucide-react';
 import type { NoticeOut } from '@/shared/api/types';
-import { useConfig } from '@/shared/api/use-config';
 import { useCodeText } from '@/shared/i18n/use-code-text';
-import { modelLabel } from '../format';
 
 /** Hints that are no errors, as calm notes: an icon and one or two lines of muted text. */
 export function AnswerNotices({ notices }: { notices: NoticeOut[] }) {
   const text = useCodeText();
-  const { data: config } = useConfig();
   const shown = notices.flatMap((notice) => {
-    const params = Object.fromEntries(
-      Object.entries(notice.params ?? {}).map(([key, value]) => [
-        key,
-        notice.code === 'MODEL_SWITCHED' ? modelLabel(config?.models, String(value)) : value,
-      ]),
-    );
-    const message = text.notice(notice.code, params);
+    const message = text.notice(notice.code, notice.params);
     return message ? [{ code: notice.code, message }] : [];
   });
   if (shown.length === 0) return null;

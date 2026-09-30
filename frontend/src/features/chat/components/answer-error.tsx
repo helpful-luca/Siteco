@@ -15,10 +15,7 @@ type Props = { error: RunError; onRetry?: () => void };
 export function AnswerError({ error, onRetry }: Props) {
   const t = useTranslations('chat.answer');
   const text = useCodeText();
-  const params = Object.fromEntries(
-    Object.entries(error.params).map(([key, value]) => [key, typeof value === 'number' ? value : String(value)]),
-  );
-  const message = text.error(error.code, { seconds: error.retryAfter ?? 0, ...params });
+  const message = text.error(error.code, error.params, error.retryAfter);
   return (
     <div
       role="alert"
