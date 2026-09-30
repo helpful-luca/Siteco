@@ -14,6 +14,7 @@ export async function fetchJson<T>(path: string, init: RequestInit = {}): Promis
     throw clientError('NETWORK_ERROR');
   }
   if (!res.ok) throw await normalizeError(res);
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 

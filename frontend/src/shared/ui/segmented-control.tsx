@@ -35,7 +35,7 @@ export function SegmentedControl<T extends string>({
           key={option.value}
           value={option.value}
           className={cn(
-            'min-w-20 rounded-[8px] px-3 py-1 text-footnote font-medium text-ink-muted',
+            'min-w-20 whitespace-nowrap rounded-[8px] px-3 py-1 text-footnote font-medium text-ink-muted',
             'transition-[background-color,color,box-shadow] duration-200 ease-out-soft',
             'hover:text-ink data-checked:bg-surface data-checked:text-ink',
             'data-checked:shadow-[0_1px_2px_rgb(0_0_0/0.12),0_0_0_0.5px_rgb(0_0_0/0.04)]',

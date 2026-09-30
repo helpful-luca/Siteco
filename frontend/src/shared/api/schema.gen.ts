@@ -210,7 +210,7 @@ export interface components {
              * Error Params
              * @description Details for the error text, e.g. the signature for MALWARE_DETECTED.
              */
-            error_params?: {
+            error_params: {
                 [key: string]: number | string;
             };
             /**

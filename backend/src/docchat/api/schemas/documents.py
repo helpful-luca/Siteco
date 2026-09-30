@@ -26,7 +26,6 @@ class DocumentOut(BaseModel):
     queue_position: int | None = Field(description="1-based place in the queue while queued.")
     error_code: ErrorCode | None = Field(description="Why the document is `failed`.")
     error_params: dict[str, int | str] = Field(
-        default_factory=dict,
         description="Details for the error text, e.g. the signature for MALWARE_DETECTED.",
     )
     notices: list[NoticeOut]

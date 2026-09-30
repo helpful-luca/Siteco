@@ -58,6 +58,28 @@
   --c-light-fill: rgb(90 110 150 / 0.12);
 }
 
+/*
+ * Electron (phase 12) marks <html data-desktop> before first paint (shared/desktop). The title
+ * bar then leaves room for the traffic lights and drags the window.
+ */
+:root {
+  --titlebar-inset: 0px;
+}
+
+html[data-desktop] {
+  --titlebar-inset: 28px;
+}
+
+html[data-desktop] .drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
 @theme inline {
   --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), 'Segoe UI', sans-serif;
 
@@ -210,6 +232,15 @@
   to {
     background-color: var(--c-highlight);
     box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
   }
 }
 

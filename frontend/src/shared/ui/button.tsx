@@ -32,6 +32,15 @@ const SIZES: Record<Size, { text: string; icon: string }> = {
   md: { text: 'h-9 px-4 text-body', icon: 'size-9' },
 };
 
+/** Classes of a button, for links that look like one (`<Link className={buttonStyles(...)}>`). */
+export function buttonStyles({
+  variant = 'secondary',
+  size = 'md',
+  icon = false,
+}: { variant?: Variant; size?: Size; icon?: boolean } = {}): string {
+  return cn(BASE, VARIANTS[variant], icon ? SIZES[size].icon : SIZES[size].text);
+}
+
 export function Button({
   variant = 'secondary',
   size = 'md',
@@ -45,7 +54,7 @@ export function Button({
     <button
       type={type}
       data-variant={variant}
-      className={cn(BASE, VARIANTS[variant], icon ? SIZES[size].icon : SIZES[size].text, className)}
+      className={cn(buttonStyles({ variant, size, icon }), className)}
       {...rest}
     >
       {children}

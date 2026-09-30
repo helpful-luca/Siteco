@@ -245,6 +245,7 @@
           "progress",
           "queue_position",
           "error_code",
+          "error_params",
           "notices",
           "created_at",
           "ready_at"

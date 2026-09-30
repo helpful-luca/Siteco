@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { QueryProvider } from '@/shared/api/query-provider';
+import { DESKTOP_SCRIPT } from '@/shared/desktop/desktop-script';
 import { COOKIE_THEME, resolveTheme } from '@/shared/preferences/cookies';
 import { THEME_SCRIPT } from '@/shared/preferences/theme-script';
 import './globals.css';
@@ -28,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         {theme === 'system' && <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />}
+        <script dangerouslySetInnerHTML={{ __html: DESKTOP_SCRIPT }} />
       </head>
       <body>
         <NextIntlClientProvider>
