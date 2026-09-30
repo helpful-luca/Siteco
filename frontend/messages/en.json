@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "Siteco Document Chat",
+    "description": "Upload documents, ask questions, get answers with sources.",
     "greeting": "Hello. What would you like to know today?"
   },
   "startup": {

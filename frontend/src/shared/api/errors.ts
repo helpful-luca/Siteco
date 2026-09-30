@@ -1,4 +1,10 @@
-/** One error type for the whole UI: backend envelopes, proxy errors and network failures. */
+/**
+ * One error type for the whole UI: backend envelopes, proxy errors and network failures.
+ * Backend codes come from the generated contract. The codes below exist only on the client side,
+ * because the backend can never produce them (it is unreachable, or the request never left).
+ */
+import type { BackendErrorCode } from '@/shared/api/types';
+
 
 export type ClientErrorCode =
   | 'BACKEND_UNAVAILABLE'
@@ -59,7 +65,7 @@ export async function normalizeError(res: Response): Promise<ApiError> {
 /** Envelope with the same shape as the backend, for errors raised by the Next.js proxy itself. */
 export function envelopeResponse(
   status: number,
-  code: ClientErrorCode | 'VALIDATION_ERROR',
+  code: ClientErrorCode | BackendErrorCode,
   requestId: string,
   retryable = false,
 ): Response {

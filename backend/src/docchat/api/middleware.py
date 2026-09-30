@@ -40,11 +40,13 @@ class RequestContextMiddleware:
         token = request_id_var.set(request_id)
         started = time.perf_counter()
         status = 500
+        response_started = False
 
         async def send_with_request_id(message: Message) -> None:
-            nonlocal status
+            nonlocal status, response_started
             if message["type"] == "http.response.start":
                 status = message["status"]
+                response_started = True
                 headers = list(message.get("headers", []))
                 headers.append((b"x-request-id", request_id.encode()))
                 message["headers"] = headers
@@ -52,6 +54,14 @@ class RequestContextMiddleware:
 
         try:
             await self.app(scope, receive, send_with_request_id)
+        except Exception:
+            # Handled here, not by a FastAPI exception handler: those run outside this
+            # middleware, after the request id is gone. A started stream cannot be replaced.
+            log.exception("unhandled_exception")
+            if response_started:
+                raise
+            response = error_response(ErrorCode.INTERNAL_ERROR, "Unexpected server error.")
+            await response(scope, receive, send_with_request_id)
         finally:
             log.info(
                 "request",

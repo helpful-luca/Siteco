@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterator
 
 import pytest
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.testclient import TestClient
 
 from docchat.core.config import Settings
@@ -17,6 +17,10 @@ def client(settings: Settings) -> Iterator[TestClient]:
     @probes.get("/api/_test/boom")
     def _boom() -> None:
         raise RuntimeError("secret stack detail")
+
+    @probes.get("/api/_test/teapot")
+    def _teapot() -> None:
+        raise HTTPException(status_code=418)
 
     @probes.get("/api/_test/needs-int")
     def _needs_int(n: int) -> dict[str, int]:
@@ -59,8 +63,16 @@ def test_unhandled_exception_hides_stack_and_logs_request_id(
     assert r.status_code == 500
     body = r.json()["error"]
     assert body["code"] == "INTERNAL_ERROR"
+    assert body["request_id"].startswith("req_")
+    assert r.headers["x-request-id"] == body["request_id"]
     assert "secret stack detail" not in r.text
     assert any(getattr(rec, "request_id", None) == body["request_id"] for rec in caplog.records)
+
+
+def test_unmapped_http_status_is_not_reported_as_validation_error(client: TestClient) -> None:
+    r = client.get("/api/_test/teapot")
+    assert r.status_code == 500
+    assert r.json()["error"]["code"] == "INTERNAL_ERROR"
 
 
 def test_valid_incoming_request_id_is_echoed(client: TestClient) -> None:

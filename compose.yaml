@@ -11,6 +11,8 @@ services:
         required: false   # the app also starts without .env (search-only mode)
     environment:
       DATA_DIR: /data
+      # Compose fills this from the shell or from .env, whichever is set.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     expose: ["8000"]      # no host port: only the frontend container can reach the backend
     volumes:
       - appdata:/data

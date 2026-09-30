@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "Siteco Document Chat",
+    "description": "Dokumente hochladen, Fragen stellen, Antworten mit Quellen bekommen.",
     "greeting": "Hallo. Was möchtest du heute wissen?"
   },
   "startup": {

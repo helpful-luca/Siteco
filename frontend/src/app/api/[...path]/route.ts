@@ -14,7 +14,7 @@ const BACKEND_URL = process.env.BACKEND_URL ?? 'http://127.0.0.1:8000';
 async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const requestId = `req_${crypto.randomUUID().replaceAll('-', '').slice(0, 8)}`;
   const { path } = await ctx.params;
-  if (!isSafePath(path)) return envelopeResponse(400, 'VALIDATION_ERROR', requestId);
+  if (!isSafePath(path)) return envelopeResponse(422, 'VALIDATION_ERROR', requestId);
   if (checkMutationGuard(req.method, req.headers, req.headers.get('host') ?? '') !== 'ok') {
     return envelopeResponse(403, 'FORBIDDEN_ORIGIN', requestId);
   }
@@ -49,4 +49,4 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
 }
 
-export { proxy as DELETE, proxy as GET, proxy as PATCH, proxy as POST, proxy as PUT };
+export { proxy as DELETE, proxy as GET, proxy as HEAD, proxy as PATCH, proxy as POST, proxy as PUT };

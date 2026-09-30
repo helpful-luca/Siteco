@@ -9,8 +9,8 @@ FROM base AS deps
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-install-project
 
-# Embedding model: depends only on the two files that download and verify it,
-# so code changes elsewhere never trigger the ~400 MB download again.
+# Embedding model: besides the locked dependencies it depends only on the files that download
+# and verify it, so application code changes never trigger the ~400 MB download again.
 FROM deps AS model
 COPY src/docchat/__init__.py src/docchat/__init__.py
 COPY src/docchat/adapters/__init__.py src/docchat/adapters/fastembed_embedder.py src/docchat/adapters/

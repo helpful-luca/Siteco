@@ -1,4 +1,4 @@
-"""Every failure leaves the API as the same envelope. Stack traces only go to the log."""
+"""Expected failures leave the API as the same envelope. Stack traces only go to the log."""
 
 import logging
 
@@ -32,17 +32,17 @@ async def _validation_error(_: Request, exc: Exception) -> JSONResponse:
 
 
 async def _http_error(_: Request, exc: Exception) -> JSONResponse:
+    """Framework HTTP errors. Our own code raises AppError, so anything unmapped is a bug."""
     assert isinstance(exc, StarletteHTTPException)
-    return error_response(_HTTP_TO_CODE.get(exc.status_code, ErrorCode.VALIDATION_ERROR))
-
-
-async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
-    log.error("unhandled_exception", exc_info=exc)
-    return error_response(ErrorCode.INTERNAL_ERROR, "Unexpected server error.")
+    code = _HTTP_TO_CODE.get(exc.status_code)
+    if code is None:
+        log.error("unmapped_http_error", extra={"status": exc.status_code})
+        code = ErrorCode.INTERNAL_ERROR
+    return error_response(code)
 
 
 def register_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppError, _app_error)
     app.add_exception_handler(RequestValidationError, _validation_error)
     app.add_exception_handler(StarletteHTTPException, _http_error)
-    app.add_exception_handler(Exception, _unhandled)
+    # Unexpected exceptions are turned into INTERNAL_ERROR by RequestContextMiddleware.

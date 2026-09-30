@@ -12,7 +12,7 @@ Prerequisites: Docker Desktop (or any Docker with Compose v2) and about 2 GB of 
 Open http://localhost:3000.
 
 - Without an API key the app still starts, explains how to add one and runs in search-only mode.
-- The first build downloads the local embedding model once (about 400 MB) and verifies it works offline.
+- The first build needs internet: it downloads dependencies, the web font and the local embedding model (about 400 MB) and verifies the model works offline. After that the app runs fully offline, except for calls to the Claude API.
 - Only the web app is published on the host (`127.0.0.1:3000`). The backend is reachable only inside the Compose network.
 
 | Variable | Required | Default | Purpose |
