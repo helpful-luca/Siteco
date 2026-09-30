@@ -13,7 +13,19 @@
   },
   "banner": {
     "missingKey": "Kein API-Key hinterlegt. Suche und Fundstellen funktionieren, Antworten noch nicht.",
-    "missingKeyHint": "Trag ANTHROPIC_API_KEY in die Datei .env ein und starte die App neu."
+    "missingKeyHint": "Trag ANTHROPIC_API_KEY in die Datei .env ein und starte die App neu.",
+    "reconnecting": "Die Verbindung zum Server ist unterbrochen.",
+    "reconnectingHint": "Wir versuchen es automatisch weiter. Was du eingegeben hast, bleibt erhalten.",
+    "retryNow": "Jetzt versuchen",
+    "reconnected": "Die Verbindung ist wieder da.",
+    "offline": "Du bist offline.",
+    "offlineHint": "Deine Bibliothek und die Suche funktionieren weiter. Für Antworten braucht Claude eine Internetverbindung.",
+    "invalidKey": "Der Claude API-Schlüssel wird nicht akzeptiert. Suche und Fundstellen funktionieren weiter.",
+    "invalidKeyHint": "Prüfe ANTHROPIC_API_KEY in der Datei .env und starte die App neu.",
+    "budget": "Das Tagesbudget dieser Demo ist aufgebraucht. Deine Bibliothek bleibt nutzbar.",
+    "billing": "Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Deine Bibliothek bleibt nutzbar.",
+    "billingHint": "Prüfe die Abrechnung in der Claude Console und versuch es danach noch einmal.",
+    "budgetHint": "Ab {time} Uhr kannst du wieder fragen. Das Limit steht in DAILY_BUDGET_USD in der .env."
   },
   "errors": {
     "VALIDATION_ERROR": "Da hat etwas mit der Anfrage nicht gepasst. Lade die Seite neu und versuch es noch einmal.",
@@ -50,7 +62,7 @@
     "CHAT_BUSY": "In diesem Chat entsteht gerade noch eine Antwort. Warte kurz oder stoppe sie.",
     "CHAT_LIMIT": "Du hast {max} Chats. Lösche ältere Chats, um einen neuen zu beginnen.",
     "MESSAGE_LIMIT": "Dieser Chat ist sehr lang geworden. Starte für weitere Fragen einen neuen Chat.",
-    "MESSAGE_NOT_LATEST": "Neu erzeugen geht nur für die Antwort auf die letzte Frage.",
+    "MESSAGE_NOT_LATEST": "Neu erzeugen geht nur für die Antwort auf die letzte Frage. Stell deine Frage einfach noch einmal.",
     "DUPLICATE_REQUEST": "Diese Frage ist schon unterwegs.",
     "CONCURRENCY_LIMIT": "Es laufen schon {max} Antworten gleichzeitig. Sobald eine fertig ist, kannst du weitermachen.",
     "NO_DOCUMENTS": "Lade zuerst ein Dokument hoch. Danach kannst du Fragen dazu stellen.",
@@ -79,7 +91,8 @@
     "goHome": "Zur Startseite",
     "STREAM_INTERRUPTED": "Die Verbindung ist abgerissen, bevor die Antwort fertig war. Versuch es noch einmal.",
     "REQUEST_TOO_LARGE": "Diese Anfrage ist zu groß. Kürze den Text und versuch es erneut.",
-    "RATE_LIMITED": "Kurze Pause. {seconds, plural, one {In einer Sekunde} other {In # Sekunden}} kannst du weitermachen."
+    "RATE_LIMITED": "Kurze Pause. {seconds, plural, one {In einer Sekunde} other {In # Sekunden}} kannst du weitermachen.",
+    "pageNotFound": "Diese Seite gibt es nicht. Vielleicht hat sich die Adresse geändert."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne Text, vermutlich gescannt. Diese Seite wird nicht durchsucht.} other {# Seiten ohne Text, vermutlich gescannt. Diese Seiten werden nicht durchsucht.}}",
@@ -305,7 +318,11 @@
       "openTable": "Tabelle im Seitenbereich öffnen",
       "openCode": "Code im Seitenbereich öffnen",
       "errorId": "Fehler-ID {id}",
-      "copyErrorId": "Fehler-ID kopieren"
+      "copyErrorId": "Fehler-ID kopieren",
+      "waitOver": "Die Pause ist vorbei. Du kannst es jetzt noch einmal versuchen.",
+      "otherModel": "Mit anderem Modell versuchen",
+      "chooseModel": "Anderes Modell wählen",
+      "newChat": "Neuen Chat starten"
     },
     "detail": {
       "toggle": "Details zur Antwort",
@@ -351,7 +368,11 @@
       "processing": "Deine Dokumente werden noch verarbeitet. Sobald eins bereit ist, kannst du fragen.",
       "addDocuments": "Dokumente hinzufügen",
       "dismiss": "Hinweis schließen",
-      "attach": "Dokumente hinzufügen"
+      "attach": "Dokumente hinzufügen",
+      "offline": "Der Server antwortet gerade nicht. Deine Frage bleibt hier, wir versuchen es automatisch weiter.",
+      "waitOver": "Die Pause ist vorbei. Du kannst wieder senden.",
+      "chooseModel": "Modell wählen",
+      "newChat": "Neuer Chat"
     },
     "scope": {
       "label": "Dokumente für diesen Chat",
@@ -368,7 +389,8 @@
         "strongest": "Am gründlichsten, teurer"
       },
       "price": "{input} $ Eingabe, {output} $ Ausgabe pro Million Tokens",
-      "noKey": "Ohne API-Schlüssel antwortet kein Modell, du bekommst die Fundstellen."
+      "noKey": "Ohne API-Schlüssel antwortet kein Modell, du bekommst die Fundstellen.",
+      "unavailable": "Gerade nicht verfügbar"
     }
   },
   "library": {
@@ -410,7 +432,8 @@
       "uploading": "Wird hochgeladen, {percent} %",
       "uploadWaiting": "Wartet auf Upload",
       "uploadFailed": "Nicht hochgeladen",
-      "recognizing": "Texterkennung, {percent} %"
+      "recognizing": "Texterkennung, {percent} %",
+      "uploadPaused": "Pausiert"
     },
     "kind": {
       "pdf": "PDF-Dokument",
@@ -475,9 +498,11 @@
       "uploading": "{name}: wird hochgeladen",
       "uploadWaiting": "{name}: wartet auf Upload",
       "uploadFailed": "{name}: nicht hochgeladen",
-      "recognizing": "{name}: Texterkennung läuft"
+      "recognizing": "{name}: Texterkennung läuft",
+      "uploadPaused": "{name}: Upload pausiert"
     },
-    "notAddedYet": "noch nicht hinzugefügt"
+    "notAddedYet": "noch nicht hinzugefügt",
+    "pauseOver": "Die Pause ist vorbei. Versuch es jetzt noch einmal."
   },
   "placeholder": {
     "note": "Folgt in einem der nächsten Schritte.",
@@ -537,5 +562,11 @@
       "loading": "Text wird geladen",
       "label": "Text des Dokuments"
     }
+  },
+  "errorScreen": {
+    "title": "Diese Ansicht lässt sich gerade nicht anzeigen.",
+    "text": "Deine Dokumente und Chats sind sicher. Versuch es noch einmal, meistens klappt es dann.",
+    "retry": "Erneut versuchen",
+    "home": "Zum neuen Chat"
   }
 }

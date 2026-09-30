@@ -13,7 +13,19 @@
   },
   "banner": {
     "missingKey": "No API key configured. Search and sources work, answers do not yet.",
-    "missingKeyHint": "Add ANTHROPIC_API_KEY to the .env file and restart the app."
+    "missingKeyHint": "Add ANTHROPIC_API_KEY to the .env file and restart the app.",
+    "reconnecting": "The connection to the server was lost.",
+    "reconnectingHint": "We'll keep trying automatically. Anything you typed stays here.",
+    "retryNow": "Try now",
+    "reconnected": "The connection is back.",
+    "offline": "You're offline.",
+    "offlineHint": "Your library and search keep working. Claude needs an internet connection for answers.",
+    "invalidKey": "The Claude API key isn't accepted. Search and sources keep working.",
+    "invalidKeyHint": "Check ANTHROPIC_API_KEY in the .env file and restart the app.",
+    "budget": "This demo's daily budget is used up. Your library stays available.",
+    "billing": "The API account's credit or spend limit has been reached. Your library stays available.",
+    "billingHint": "Check billing in the Claude Console, then try again.",
+    "budgetHint": "You can ask again from {time}. The limit is DAILY_BUDGET_USD in the .env file."
   },
   "errors": {
     "VALIDATION_ERROR": "Something about this request didn't work. Reload the page and try again.",
@@ -50,7 +62,7 @@
     "CHAT_BUSY": "An answer is still being written in this chat. Wait a moment or stop it.",
     "CHAT_LIMIT": "You have {max} chats. Delete older ones to start a new chat.",
     "MESSAGE_LIMIT": "This chat has gotten very long. Start a new chat for more questions.",
-    "MESSAGE_NOT_LATEST": "You can only regenerate the answer to the latest question.",
+    "MESSAGE_NOT_LATEST": "You can only regenerate the answer to the latest question. Just ask your question again.",
     "DUPLICATE_REQUEST": "This question is already on its way.",
     "CONCURRENCY_LIMIT": "{max} answers are already running. You can continue as soon as one finishes.",
     "NO_DOCUMENTS": "Add a document first. Then you can ask questions about it.",
@@ -79,7 +91,8 @@
     "goHome": "Go to start",
     "STREAM_INTERRUPTED": "The connection dropped before the answer was finished. Please try again.",
     "REQUEST_TOO_LARGE": "This request is too large. Shorten the text and try again.",
-    "RATE_LIMITED": "Quick pause. You can continue in {seconds, plural, one {one second} other {# seconds}}."
+    "RATE_LIMITED": "Quick pause. You can continue in {seconds, plural, one {one second} other {# seconds}}.",
+    "pageNotFound": "This page doesn't exist. The address may have changed."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no text, probably scanned. It won't be searched.} other {# pages have no text, probably scanned. They won't be searched.}}",
@@ -305,7 +318,11 @@
       "openTable": "Open table in side panel",
       "openCode": "Open code in side panel",
       "errorId": "Error ID {id}",
-      "copyErrorId": "Copy error ID"
+      "copyErrorId": "Copy error ID",
+      "waitOver": "The pause is over. You can try again now.",
+      "otherModel": "Try with another model",
+      "chooseModel": "Choose another model",
+      "newChat": "Start a new chat"
     },
     "detail": {
       "toggle": "Answer details",
@@ -351,7 +368,11 @@
       "processing": "Your documents are still being processed. As soon as one is ready, you can ask.",
       "addDocuments": "Add documents",
       "dismiss": "Dismiss note",
-      "attach": "Add documents"
+      "attach": "Add documents",
+      "offline": "The server isn't responding right now. Your question stays here, we'll keep trying automatically.",
+      "waitOver": "The pause is over. You can send again.",
+      "chooseModel": "Choose model",
+      "newChat": "New chat"
     },
     "scope": {
       "label": "Documents for this chat",
@@ -368,7 +389,8 @@
         "strongest": "Most thorough, pricier"
       },
       "price": "${input} input, ${output} output per million tokens",
-      "noKey": "Without an API key no model answers, you get the passages."
+      "noKey": "Without an API key no model answers, you get the passages.",
+      "unavailable": "Not available right now"
     }
   },
   "library": {
@@ -410,7 +432,8 @@
       "uploading": "Uploading, {percent} %",
       "uploadWaiting": "Waiting to upload",
       "uploadFailed": "Not uploaded",
-      "recognizing": "Recognizing text, {percent} %"
+      "recognizing": "Recognizing text, {percent} %",
+      "uploadPaused": "Paused"
     },
     "kind": {
       "pdf": "PDF document",
@@ -475,9 +498,11 @@
       "uploading": "{name}: uploading",
       "uploadWaiting": "{name}: waiting to upload",
       "uploadFailed": "{name}: not uploaded",
-      "recognizing": "{name}: recognizing text"
+      "recognizing": "{name}: recognizing text",
+      "uploadPaused": "{name}: upload paused"
     },
-    "notAddedYet": "not added yet"
+    "notAddedYet": "not added yet",
+    "pauseOver": "The pause is over. Try again now."
   },
   "placeholder": {
     "note": "Follows in one of the next steps.",
@@ -537,5 +562,11 @@
       "loading": "Loading text",
       "label": "Document text"
     }
+  },
+  "errorScreen": {
+    "title": "This view can't be shown right now.",
+    "text": "Your documents and chats are safe. Try again, it usually works the second time.",
+    "retry": "Try again",
+    "home": "Go to a new chat"
   }
 }

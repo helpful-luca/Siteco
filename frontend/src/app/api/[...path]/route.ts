@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { envelopeResponse } from '@/shared/api/errors';
 import {
   checkMutationGuard,
+  exceedsBodyLimit,
   FORWARD_REQUEST_HEADERS,
   FORWARD_RESPONSE_HEADERS,
   isSafePath,
@@ -17,6 +18,9 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   if (!isSafePath(path)) return envelopeResponse(422, 'VALIDATION_ERROR', requestId);
   if (checkMutationGuard(req.method, req.headers, req.headers.get('host') ?? '') !== 'ok') {
     return envelopeResponse(403, 'FORBIDDEN_ORIGIN', requestId);
+  }
+  if (exceedsBodyLimit(req.method, path, req.headers.get('content-length'))) {
+    return envelopeResponse(413, 'REQUEST_TOO_LARGE', requestId);
   }
 
   const headers = pickHeaders(req.headers, FORWARD_REQUEST_HEADERS);

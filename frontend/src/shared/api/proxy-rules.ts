@@ -57,3 +57,13 @@ export function pickHeaders(source: Headers, allow: readonly string[]): Headers 
   }
   return picked;
 }
+
+/** JSON bodies are small; the raw upload (`POST /api/documents`) has its own limit (annex 10, P5). */
+export const MAX_JSON_BODY_BYTES = 64 * 1024;
+
+export function exceedsBodyLimit(method: string, path: string[], contentLength: string | null): boolean {
+  if (!MUTATING_METHODS.has(method.toUpperCase())) return false;
+  if (method.toUpperCase() === 'POST' && path.length === 1 && path[0] === 'documents') return false;
+  const length = Number(contentLength);
+  return Number.isFinite(length) && length > MAX_JSON_BODY_BYTES;
+}

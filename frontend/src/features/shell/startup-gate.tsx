@@ -6,10 +6,17 @@ import { ApiError, fetchJson } from '@/shared/api/client';
 import type { ReadyOut } from '@/shared/api/types';
 import { Button, Spinner } from '@/shared/ui';
 
+/**
+ * Polls every 1.5 s. The backend loads the search model before it listens, so for a while the
+ * proxy cannot reach it at all; only after this many failed checks (30 s) does the screen say
+ * that the server is not running, instead of "starting".
+ */
+const UNREACHABLE_AFTER_CHECKS = 20;
+
 /** Holds the app back until search works, and explains calmly why it is waiting. */
 export function StartupGate({ children }: { children: React.ReactNode }) {
   const t = useTranslations('startup');
-  const { data, error, refetch, isFetching } = useQuery({
+  const { data, error, refetch, isFetching, errorUpdateCount } = useQuery({
     queryKey: ['health', 'ready'],
     queryFn: () => fetchJson<ReadyOut>('/api/health/ready'),
     retry: false,
@@ -20,7 +27,8 @@ export function StartupGate({ children }: { children: React.ReactNode }) {
 
   const unavailable =
     error instanceof ApiError &&
-    (error.code === 'BACKEND_UNAVAILABLE' || error.code === 'NETWORK_ERROR');
+    (error.code === 'BACKEND_UNAVAILABLE' || error.code === 'NETWORK_ERROR') &&
+    errorUpdateCount >= UNREACHABLE_AFTER_CHECKS;
 
   return (
     <div role="status" aria-live="polite" className="flex min-h-dvh flex-col items-center px-gutter">

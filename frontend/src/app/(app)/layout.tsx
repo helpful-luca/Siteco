@@ -1,6 +1,6 @@
 import { ChatList, ChatProvider } from '@/features/chat';
 import { DropOverlay, UploadProvider } from '@/features/library';
-import { AppShell, StartupGate } from '@/features/shell';
+import { AppShell, ConnectionWatcher, StartupGate } from '@/features/shell';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,6 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </ChatProvider>
         <DropOverlay />
       </UploadProvider>
+      <ConnectionWatcher />
     </StartupGate>
   );
 }

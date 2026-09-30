@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkMutationGuard, isSafePath, pickHeaders } from '@/shared/api/proxy-rules';
+import { checkMutationGuard, exceedsBodyLimit, isSafePath, pickHeaders } from '@/shared/api/proxy-rules';
 
 describe('isSafePath', () => {
   it('accepts normal segments', () => expect(isSafePath(['chats', 'c_12', 'messages'])).toBe(true));
@@ -51,5 +51,19 @@ describe('pickHeaders', () => {
     );
     expect(out.get('cookie')).toBeNull();
     expect(out.get('content-type')).toBe('application/json');
+  });
+});
+
+describe('exceedsBodyLimit', () => {
+  it('refuses JSON bodies over 64 KB before they reach the backend', () => {
+    expect(exceedsBodyLimit('POST', ['chats'], String(64 * 1024 + 1))).toBe(true);
+    expect(exceedsBodyLimit('PATCH', ['chats', 'c1'], '70000')).toBe(true);
+  });
+
+  it('lets small bodies, reads and the raw upload through', () => {
+    expect(exceedsBodyLimit('POST', ['chats'], '512')).toBe(false);
+    expect(exceedsBodyLimit('POST', ['chats'], null)).toBe(false);
+    expect(exceedsBodyLimit('GET', ['documents'], '999999')).toBe(false);
+    expect(exceedsBodyLimit('POST', ['documents'], String(500 * 1024 * 1024))).toBe(false);
   });
 });

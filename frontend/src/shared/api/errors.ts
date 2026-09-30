@@ -5,7 +5,6 @@
  */
 import type { BackendErrorCode } from '@/shared/api/types';
 
-
 export type ClientErrorCode =
   | 'BACKEND_UNAVAILABLE'
   | 'FORBIDDEN_ORIGIN'
@@ -37,8 +36,36 @@ export class ApiError extends Error {
   }
 }
 
+export type AnyErrorCode = BackendErrorCode | ClientErrorCode;
+
+export const CLIENT_ERROR_CODES: readonly ClientErrorCode[] = [
+  'BACKEND_UNAVAILABLE',
+  'FORBIDDEN_ORIGIN',
+  'NETWORK_ERROR',
+  'STREAM_INTERRUPTED',
+  'UNKNOWN_ERROR',
+];
+
 export function clientError(code: ClientErrorCode, status = 0): ApiError {
   return new ApiError(code, status, code !== 'FORBIDDEN_ORIGIN');
+}
+
+/** Our own abort (stop, navigation, cancelled upload): never shown as an error. */
+export function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
+/** The app itself cannot be reached: the proxy says so, or the request never got an answer. */
+export function isConnectionError(error: unknown): boolean {
+  return error instanceof ApiError && (error.code === 'BACKEND_UNAVAILABLE' || error.code === 'NETWORK_ERROR');
+}
+
+/** Anything thrown becomes an ApiError, so the UI knows exactly one error type. */
+export function toApiError(error: unknown): ApiError {
+  if (error instanceof ApiError) return error;
+  // fetch rejects with a TypeError when the network is gone.
+  if (error instanceof TypeError) return clientError('NETWORK_ERROR');
+  return clientError('UNKNOWN_ERROR');
 }
 
 export async function normalizeError(res: Response): Promise<ApiError> {
@@ -60,7 +87,10 @@ export async function normalizeError(res: Response): Promise<ApiError> {
       // Invalid JSON: fall through to the generic error below.
     }
   }
-  return new ApiError('UNKNOWN_ERROR', res.status, res.status >= 500, null, requestId);
+  // An HTML error page, an empty body or JSON without our envelope (annex 10, A11).
+  return new ApiError('UNKNOWN_ERROR', res.status, res.status >= 500, null, requestId || null, {
+    status: res.status,
+  });
 }
 
 /** Envelope with the same shape as the backend, for errors raised by the Next.js proxy itself. */

@@ -30,4 +30,21 @@ describe('message catalogs', () => {
       expect(text).not.toMatch(/\b(Sie|Ihnen|Ihr|Ihre|Ihren)\b/);
     }
   });
+
+  it('never blames or apologizes in German: no "ungültig", no "leider" (annex 10, 2.2)', () => {
+    for (const text of Object.values(german)) {
+      expect(text).not.toMatch(/ungültig|leider/i);
+    }
+  });
+
+  it('gives every error a next step: what happened, then what to do', () => {
+    // A single sentence is fine only when it is the instruction itself.
+    const oneStep = new Set(['errors.QUESTION_EMPTY', 'errors.DUPLICATE_REQUEST']);
+    const errors = Object.entries(german).filter(([key]) => /^errors\.[A-Z_]+$/.test(key));
+    for (const [key, text] of errors) {
+      if (oneStep.has(key)) continue;
+      expect(text.split(/[.!?](\s|$)/).filter((part) => part && part.trim()).length, key).toBeGreaterThanOrEqual(2);
+    }
+  });
 });
+
