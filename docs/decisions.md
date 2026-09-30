@@ -94,7 +94,7 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 
 | # | Topic | Pick | Rejected | Reason |
 |---|---|---|---|---|
-| 61 | Where answers stream | A `StreamProvider` above the routes with a reducer keyed by chat and lane; deltas batched per animation frame | Streams owned by the chat page; TanStack Query | Answers keep streaming while you switch chats; the reducer is pure and tested |
+| 61 | Where answers stream | A `StreamProvider` above the routes: a small external store around a pure reducer keyed by chat and lane, stable actions in context, components subscribe to their own slice (`useSyncExternalStore`); deltas batched per animation frame | Streams owned by the chat page; one context with all runs; TanStack Query | Answers keep streaming while you switch chats, and a delta re-renders only the chat that shows it |
 | 62 | Stream reading | `fetch` POST, `eventsource-parser` on the raw bytes, a 45 s watchdog on bytes (pings included) | `EventSource` | `EventSource` cannot POST; the watchdog must see pings, which the parser swallows |
 | 63 | Question confirmation | The question stays in the composer until `meta`; the live turn appears only then | Optimistic bubble | A refusal before the stream never loses the typed text (annex 11, 8.2) |
 | 64 | Stop | Mark the run stopped, abort the fetch and call `POST stop` together | Waiting for the server's `done` | The UI reacts at once; the server saves `stopped` anyway |
@@ -109,7 +109,9 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 73 | Source panel until WP-E | Cited sentence, snippet and "open document" to the sandboxed file endpoint in a new tab, behind `useOpenSource` | A dead button | Useful now, the PDF highlight viewer replaces only the panel body |
 | 74 | Sidebar chat list | The chat feature passes its list into the shell as a slot; the search text lives in the UI context | The shell importing the chat feature | No import cycle between shell and chat |
 | 75 | Empty first send | A chat is created on the first send and deleted again when the question is refused before the stream | Keeping it | No empty "New chat" rows after a refusal (annex 10, E20) |
-| 76 | Scrolling | A new question moves to the top and its turn fills the view; following only near the end, otherwise a jump button | Always scrolling to the end | Reading position is never stolen (annex 11, 8.3) |
+| 76 | Scrolling | A new question moves to the top and its turn fills the view; following only near the end, otherwise a jump button; once scrolled, the list's top edge fades out under the header | Always scrolling to the end; a glass header band | Reading position is never stolen (annex 11, 8.3); text never runs into the title |
+| 77 | Forged citations | Brackets of sentinel-like text in the answer get an invisible word joiner while our sentinels are inserted between the original slices | Trusting model output | A document quoting `⟦c:1⟧` must not turn into a chip; offsets stay exact |
+| 78 | Long streaming answers | Finished blocks (up to the last blank line outside code) render once as memoised pieces, only the tail is parsed each frame; saved turns keep their identity | Parsing the whole answer each frame | Linear instead of quadratic work; a 20k answer parses about twice its length in total |
 
 ## Measurements
 

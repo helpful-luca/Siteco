@@ -18,6 +18,7 @@ export function useFollowScroll() {
   const content = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const [atEnd, setAtEnd] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
 
   const measure = useCallback(() => {
     const element = scroller.current;
@@ -25,6 +26,7 @@ export function useFollowScroll() {
     const near = element.scrollHeight - element.scrollTop - element.clientHeight < NEAR_END;
     stick.current = near;
     setAtEnd(near);
+    setScrolled(element.scrollTop > 0);
   }, []);
 
   useEffect(() => {
@@ -66,5 +68,5 @@ export function useFollowScroll() {
     [measure],
   );
 
-  return { scrollRef: scroller, contentRef: content, atEnd, scrollToEnd, scrollToTop };
+  return { scrollRef: scroller, contentRef: content, atEnd, scrolled, scrollToEnd, scrollToTop };
 }
