@@ -28,7 +28,7 @@ export function Dialog({ title, description, trigger, open, onOpenChange, classN
         />
         <BaseDialog.Popup
           className={cn(
-            'glass fixed top-1/2 left-1/2 w-[min(520px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2',
+            'glass-dense fixed top-1/2 left-1/2 w-[min(520px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2',
             'rounded-panel p-6 outline-none',
             'transition-[opacity,scale] duration-200 ease-out-soft',
             'data-starting-style:scale-[0.97] data-starting-style:opacity-0',

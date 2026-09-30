@@ -27,6 +27,7 @@
   --c-highlight: rgb(240 160 48 / 0.28);
   --c-glass: rgb(255 255 255 / 0.62);
   --c-glass-edge: rgb(255 255 255 / 0.9);
+  --c-glass-dense: rgb(250 250 252 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.12);
   --c-light-key: rgb(255 196 110 / 0.34);
   --c-light-fill: rgb(170 190 220 / 0.2);
@@ -51,8 +52,9 @@
   --c-highlight: rgb(255 181 71 / 0.3);
   --c-glass: rgb(36 36 40 / 0.55);
   --c-glass-edge: rgb(255 255 255 / 0.12);
+  --c-glass-dense: rgb(32 32 36 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 40px -12px rgb(0 0 0 / 0.7);
-  --c-light-key: rgb(255 170 60 / 0.22);
+  --c-light-key: rgb(255 170 60 / 0.26);
   --c-light-fill: rgb(90 110 150 / 0.12);
 }
 
@@ -119,14 +121,27 @@
     var(--c-shadow);
 }
 
+/* Denser glass for layers that sit above text (dialogs, tooltips): stays readable. */
+@utility glass-dense {
+  background: var(--c-glass-dense);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--c-hairline);
+  box-shadow:
+    inset 0 1px 0 0 var(--c-glass-edge),
+    var(--c-shadow);
+}
+
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass {
+  .glass,
+  .glass-dense {
     background: var(--c-surface-raised);
   }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .glass {
+  .glass,
+  .glass-dense {
     background: var(--c-surface-raised);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -148,8 +163,8 @@
   body {
     min-height: 100dvh;
     background:
-      radial-gradient(60% 55% at 50% -12%, var(--c-light-key), transparent 70%),
-      radial-gradient(45% 40% at 0% 100%, var(--c-light-fill), transparent 70%),
+      radial-gradient(75% 60% at 32% -14%, var(--c-light-key), transparent 72%),
+      radial-gradient(45% 45% at 0% 100%, var(--c-light-fill), transparent 70%),
       var(--c-canvas);
     background-attachment: fixed;
   }
@@ -171,4 +186,23 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/*
+ * The one orchestrated moment: a cited passage "switches on" like a lamp warming up.
+ * Disabled automatically by the reduced motion rule above.
+ */
+@keyframes lamp-warm-up {
+  from {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  to {
+    background-color: var(--c-highlight);
+    box-shadow: 0 0 0 3px var(--c-highlight), 0 0 28px 2px var(--c-highlight);
+  }
+}
+
+.lamp-on {
+  animation: lamp-warm-up 320ms var(--ease-out-soft) both;
 }

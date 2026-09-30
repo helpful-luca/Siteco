@@ -28,5 +28,99 @@
     "UNKNOWN_ERROR": "An unknown error occurred.",
     "retry": "Try again",
     "goHome": "Go to start"
+  },
+  "styleguide": {
+    "title": "Design system",
+    "intro": "This is how the app looks. All content is sample data, the datasheet is fictional.",
+    "theme": "Appearance",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "Automatic",
+    "newChat": "New chat",
+    "today": "Today",
+    "thisWeek": "This week",
+    "library": "Library",
+    "quality": "Quality",
+    "settings": "Settings",
+    "chats": {
+      "a": "Protection rating of the Mira L",
+      "b": "Maintaining the LED modules",
+      "c": "Lighting classes under EN 13201",
+      "d": "Mira L compared with Mira S"
+    },
+    "chatTitle": "Protection rating of the Mira L",
+    "scope": "2 documents",
+    "model": "Claude Sonnet 5.5",
+    "question": "What protection rating and impact resistance does the Mira L have?",
+    "answerLead": "The Mira L is rated",
+    "answerIp": "IP66",
+    "answerMid": "as a complete luminaire, not only the optical compartment.",
+    "answerIkLead": "Its impact resistance is",
+    "answerIk": "IK09",
+    "answerTail": "for the version with glass cover.",
+    "sources": "Sources",
+    "source1": "Mira_L_Datenblatt.pdf, page 4",
+    "source2": "Mira_L_Datenblatt.pdf, page 5",
+    "answerMeta": "Claude Sonnet 5.5, 1.8 s, 0.4 cents",
+    "composerPlaceholder": "Ask something about your documents",
+    "attach": "Add document",
+    "send": "Send",
+    "citation": "Source {n}: {source}",
+    "closePanel": "Close document",
+    "page": "Page 4 of 12",
+    "docTitle": "Mira L street light",
+    "docSubtitle": "Technical data",
+    "rows": {
+      "ip": {
+        "label": "Protection rating",
+        "value": "IP66 (complete luminaire)"
+      },
+      "ik": {
+        "label": "Impact resistance",
+        "value": "IK09 with glass cover"
+      },
+      "flux": {
+        "label": "Luminous flux",
+        "value": "5,200 lm"
+      },
+      "cct": {
+        "label": "Colour temperature",
+        "value": "3,000 K"
+      },
+      "weight": {
+        "label": "Weight",
+        "value": "7.4 kg"
+      },
+      "temp": {
+        "label": "Ambient temperature",
+        "value": "-30 to +50 °C"
+      }
+    },
+    "sheet": {
+      "actions": "Actions",
+      "inputs": "Inputs",
+      "status": "Status",
+      "overlays": "Dialogs and hints",
+      "tokens": "Colors",
+      "primary": "Ask question",
+      "secondary": "Cancel",
+      "ghost": "Rename",
+      "danger": "Delete",
+      "compare": "Compare two models",
+      "ready": "Ready",
+      "working": "Reading, 62 %",
+      "failed": "Password protected",
+      "queued": "Queued",
+      "openDialog": "Open setup",
+      "tooltip": "Show hint",
+      "tooltipText": "Appears on hover and keyboard focus.",
+      "dialogTitle": "Welcome",
+      "dialogDescription": "Three short questions, then you are ready.",
+      "nameLabel": "What should we call you?",
+      "namePlaceholder": "Your name",
+      "language": "Language",
+      "continue": "Continue",
+      "skip": "Skip"
+    }
   }
 }

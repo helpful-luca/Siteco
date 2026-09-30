@@ -28,5 +28,99 @@
     "UNKNOWN_ERROR": "Ein unbekannter Fehler ist aufgetreten.",
     "retry": "Erneut versuchen",
     "goHome": "Zur Startseite"
+  },
+  "styleguide": {
+    "title": "Design-System",
+    "intro": "So sieht die App aus. Alle Inhalte sind Beispiele, das Datenblatt ist fiktiv.",
+    "theme": "Erscheinungsbild",
+    "themeLight": "Hell",
+    "themeDark": "Dunkel",
+    "themeSystem": "Automatisch",
+    "newChat": "Neuer Chat",
+    "today": "Heute",
+    "thisWeek": "Diese Woche",
+    "library": "Bibliothek",
+    "quality": "Qualität",
+    "settings": "Einstellungen",
+    "chats": {
+      "a": "Schutzart der Mira L",
+      "b": "Wartung der LED-Module",
+      "c": "Beleuchtungsklassen nach EN 13201",
+      "d": "Mira L und Mira S im Vergleich"
+    },
+    "chatTitle": "Schutzart der Mira L",
+    "scope": "2 Dokumente",
+    "model": "Claude Sonnet 5.5",
+    "question": "Welche Schutzart und welche Schlagfestigkeit hat die Mira L?",
+    "answerLead": "Die Mira L ist als gesamte Leuchte nach",
+    "answerIp": "IP66",
+    "answerMid": "geschützt, nicht nur der Optikraum.",
+    "answerIkLead": "Die Schlagfestigkeit liegt bei",
+    "answerIk": "IK09",
+    "answerTail": "und gilt für die Ausführung mit Glasabdeckung.",
+    "sources": "Quellen",
+    "source1": "Mira_L_Datenblatt.pdf, Seite 4",
+    "source2": "Mira_L_Datenblatt.pdf, Seite 5",
+    "answerMeta": "Claude Sonnet 5.5, 1,8 s, 0,4 Cent",
+    "composerPlaceholder": "Frag etwas zu deinen Dokumenten",
+    "attach": "Dokument hinzufügen",
+    "send": "Senden",
+    "citation": "Quelle {n}: {source}",
+    "closePanel": "Dokument schließen",
+    "page": "Seite 4 von 12",
+    "docTitle": "Mira L Straßenleuchte",
+    "docSubtitle": "Technische Daten",
+    "rows": {
+      "ip": {
+        "label": "Schutzart",
+        "value": "IP66 (gesamte Leuchte)"
+      },
+      "ik": {
+        "label": "Schlagfestigkeit",
+        "value": "IK09 mit Glasabdeckung"
+      },
+      "flux": {
+        "label": "Lichtstrom",
+        "value": "5.200 lm"
+      },
+      "cct": {
+        "label": "Farbtemperatur",
+        "value": "3.000 K"
+      },
+      "weight": {
+        "label": "Gewicht",
+        "value": "7,4 kg"
+      },
+      "temp": {
+        "label": "Umgebungstemperatur",
+        "value": "-30 bis +50 °C"
+      }
+    },
+    "sheet": {
+      "actions": "Aktionen",
+      "inputs": "Eingaben",
+      "status": "Status",
+      "overlays": "Dialoge und Hinweise",
+      "tokens": "Farben",
+      "primary": "Frage stellen",
+      "secondary": "Abbrechen",
+      "ghost": "Umbenennen",
+      "danger": "Löschen",
+      "compare": "Zwei Modelle vergleichen",
+      "ready": "Bereit",
+      "working": "Wird gelesen, 62 %",
+      "failed": "Passwortgeschützt",
+      "queued": "In der Warteschlange",
+      "openDialog": "Einrichtung öffnen",
+      "tooltip": "Hinweis anzeigen",
+      "tooltipText": "Erscheint bei Hover und Tastaturfokus.",
+      "dialogTitle": "Willkommen",
+      "dialogDescription": "Drei kurze Fragen, dann geht es los.",
+      "nameLabel": "Wie sollen wir dich nennen?",
+      "namePlaceholder": "Dein Name",
+      "language": "Sprache",
+      "continue": "Weiter",
+      "skip": "Überspringen"
+    }
   }
 }
