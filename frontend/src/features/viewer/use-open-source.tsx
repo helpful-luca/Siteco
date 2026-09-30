@@ -40,6 +40,7 @@ export function useOpenSource() {
         size: pdf && !source.deleted ? 'wide' : 'default',
         body: (
           <SourceView
+            key={`${source.document_id}:${source.id}`}
             source={source}
             citedText={citedText}
             sentences={citedSentences(citations, source.id)}
@@ -65,7 +66,7 @@ export function useOpenDocument() {
         title: document.filename,
         subtitle: pdf ? <PageIndicator store={store} /> : t('textFile'),
         size: pdf ? 'wide' : 'default',
-        body: <DocumentPreview document={document} store={store} />,
+        body: <DocumentPreview key={document.id} document={document} store={store} />,
       });
     },
     [openPanel, t],

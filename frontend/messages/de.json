@@ -532,7 +532,8 @@
       "retry": "Erneut versuchen"
     },
     "text": {
-      "loading": "Text wird geladen"
+      "loading": "Text wird geladen",
+      "label": "Text des Dokuments"
     }
   }
 }

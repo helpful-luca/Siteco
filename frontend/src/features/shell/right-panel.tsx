@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { useMediaQuery } from '@/shared/lib/use-media-query';
 import { Button, cn, SideSheet } from '@/shared/ui';
 import { useUI, type PanelContent } from './ui-context';
@@ -12,6 +12,14 @@ export function RightPanel() {
   const { panel, closePanel } = useUI();
   const wide = useMediaQuery('(min-width: 1280px)');
   const open = panel !== null;
+  const column = useRef<HTMLElement>(null);
+  const panelId = panel?.id ?? null;
+
+  // Focus moves into the column when it opens or shows something new (the sheet does this
+  // itself); closing gives it back to the opener (ui-context).
+  useEffect(() => {
+    if (panelId && wide) column.current?.focus({ preventScroll: true });
+  }, [panelId, wide]);
 
   // The column is not modal, so Escape is handled here (the sheet below closes itself). Keys that a
   // field, menu or dialog already used (defaultPrevented) or that happen inside one stay theirs.
@@ -31,10 +39,12 @@ export function RightPanel() {
   if (wide) {
     return (
       <aside
+        ref={column}
+        tabIndex={-1}
         data-right-panel
         aria-label={panel.title}
         className={cn(
-          'flex shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline',
+          'flex shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline outline-none',
           panel.size === 'wide' ? 'w-panel-wide' : 'w-panel',
         )}
       >
@@ -73,7 +83,10 @@ function PanelBody({ panel, onClose }: { panel: PanelContent; onClose: () => voi
           <X />
         </Button>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{panel.body}</div>
+      {/* Keyed by the panel: another source or document starts with fresh viewer state. */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <Fragment key={panel.id}>{panel.body}</Fragment>
+      </div>
     </>
   );
 }

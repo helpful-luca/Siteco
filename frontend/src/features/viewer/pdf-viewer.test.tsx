@@ -16,18 +16,23 @@ vi.mock('react-pdf/dist/Page/TextLayer.css', () => ({}));
 vi.mock('react-pdf', () => {
   type PageMockProps = {
     pageNumber: number;
+    width: number;
     onLoadSuccess?: (page: { getViewport: () => typeof viewport }) => void;
     onRenderSuccess?: () => void;
     onGetTextSuccess?: (content: { items: { str: string }[] }) => void;
     customTextRenderer?: (item: { str: string; itemIndex: number }) => string;
   };
-  function Page({ pageNumber, onLoadSuccess, onRenderSuccess, onGetTextSuccess, customTextRenderer }: PageMockProps) {
+  function Page({ pageNumber, width, onLoadSuccess, onRenderSuccess, onGetTextSuccess, customTextRenderer }: PageMockProps) {
     useEffect(() => {
       onLoadSuccess?.({ getViewport: () => viewport });
-      onRenderSuccess?.();
       onGetTextSuccess?.({ items: TEXT_ITEMS.map((str) => ({ str })) });
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // Like PDF.js, a new width paints the canvas again.
+    useEffect(() => {
+      onRenderSuccess?.();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [width]);
     const html = customTextRenderer ? TEXT_ITEMS.map((str, itemIndex) => customTextRenderer({ str, itemIndex })).join(' ') : '';
     return <div data-testid={`canvas-${pageNumber}`} dangerouslySetInnerHTML={{ __html: html }} />;
   }
@@ -67,19 +72,21 @@ afterAll(() => {
 function setup(props: Partial<PdfViewerProps> = {}) {
   const store = createPageStore({ page: props.page ?? 1, pages: null });
   const onMissing = vi.fn();
-  render(
+  const view = (next: Partial<PdfViewerProps>) => (
     <NextIntlClientProvider locale="de" messages={de}>
       <TooltipProvider>
         <div style={{ height: HEIGHT }}>
-          <PdfViewer url="/api/documents/d1/file" store={store} page={1} marks={[]} passage={null} onMissing={onMissing} {...props} />
+          <PdfViewer url="/api/documents/d1/file" store={store} page={1} marks={[]} passage={null} onMissing={onMissing} {...next} />
         </div>
       </TooltipProvider>
-    </NextIntlClientProvider>,
+    </NextIntlClientProvider>
   );
+  const { rerender } = render(view(props));
+  const update = (next: Partial<PdfViewerProps>) => rerender(view({ ...props, ...next }));
   const scroller = () => screen.getByLabelText('Seiten des Dokuments');
   // jsdom does not fire scroll events for programmatic scrolling; the browser does.
   const settle = () => act(() => void fireEvent.scroll(scroller()));
-  return { store, onMissing, scroller, settle };
+  return { store, onMissing, scroller, settle, update };
 }
 
 describe('PdfViewer', () => {
@@ -125,6 +132,15 @@ describe('PdfViewer', () => {
     expect(store.get().page).toBe(9);
   });
 
+  it('keeps the marks through a zoom, repainted at the new width', async () => {
+    const user = userEvent.setup();
+    setup({ page: 1, marks: [[0.1, 0.2, 0.5, 0.02]] });
+    const slot = await screen.findByLabelText('Seite 1');
+    expect(within(slot).getAllByTestId('pdf-mark')).toHaveLength(1);
+    await user.click(screen.getByRole('button', { name: 'Vergrößern' }));
+    expect(within(screen.getByLabelText('Seite 1')).getAllByTestId('pdf-mark')).toHaveLength(1);
+  });
+
   it('zooms and fits the page back to the width', async () => {
     const user = userEvent.setup();
     setup({ page: 1 });
@@ -141,6 +157,28 @@ describe('PdfViewer', () => {
     const slot = await screen.findByLabelText('Seite 3');
     await waitFor(() => expect(within(slot).getAllByText(/Schutz-|IP66/, { selector: 'mark' })).toHaveLength(2));
     expect(slot).not.toHaveClass('ring-sodium');
+  });
+
+  it('follows a new passage on the same page', async () => {
+    const { update } = setup({ page: 3, passage: 'Technische Daten' });
+    const slot = await screen.findByLabelText('Seite 3');
+    await waitFor(() => expect(within(slot).getByText('Technische Daten', { selector: 'mark' })).toBeInTheDocument());
+    update({ passage: 'Gewicht 7,4 kg' });
+    await waitFor(() => expect(within(slot).getByText('Gewicht 7,4 kg', { selector: 'mark' })).toBeInTheDocument());
+    expect(within(slot).queryByText('Technische Daten', { selector: 'mark' })).toBeNull();
+  });
+
+  it('names the last page when the column is scrolled to the end', async () => {
+    const user = userEvent.setup();
+    const { store, scroller, settle } = setup({ page: 12 });
+    await screen.findByLabelText('Seite 12');
+    // At 50 % a page is shorter than the reading line's distance from the bottom.
+    await user.click(screen.getByRole('button', { name: 'Verkleinern' }));
+    await user.click(screen.getByRole('button', { name: 'Verkleinern' }));
+    const node = scroller();
+    node.scrollTop = 16 + 12 * 423 + 11 * 16 + 16 - HEIGHT;
+    settle();
+    expect(store.get().page).toBe(12);
   });
 
   it('frames the whole page when the passage is not in the text layer either', async () => {

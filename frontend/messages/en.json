@@ -532,7 +532,8 @@
       "retry": "Try again"
     },
     "text": {
-      "loading": "Loading text"
+      "loading": "Loading text",
+      "label": "Document text"
     }
   }
 }

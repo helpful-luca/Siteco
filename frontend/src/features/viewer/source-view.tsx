@@ -87,6 +87,7 @@ function PdfSource({ source, page, chunk, sentences, store, onMissing }: PdfSour
       )}
       <div className="min-h-0 flex-1">
         <PdfViewer
+          key={`${source.document_id}:${source.id}`}
           url={fileUrl(source.document_id)}
           store={store}
           page={page}

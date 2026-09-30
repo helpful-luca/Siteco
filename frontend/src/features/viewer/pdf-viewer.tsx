@@ -139,7 +139,8 @@ function PageColumn({ store, page, marks, passage }: PdfViewerProps) {
   // Until the first scroll event the column is where the opening jump puts it, so page 1 of a
   // catalog is never loaded just because the first frame started at the top.
   const [scrolled, setScrolled] = useState(false);
-  const [rendered, setRendered] = useState<ReadonlySet<number>>(new Set());
+  // Pages painted at the current width; a zoom repaints them, and marks wait for the new paint.
+  const [rendered, setRendered] = useState<{ width: number; pages: ReadonlySet<number> }>({ width: 0, pages: new Set() });
   const anchor = useRef<Anchor | null>(null);
   const jumped = useRef(false);
 
@@ -217,7 +218,9 @@ function PageColumn({ store, page, marks, passage }: PdfViewerProps) {
     if (Math.abs(top - node.scrollTop) > 1) scrollTo(top);
   }, [layout, ready, scrollTo]);
 
-  const current = ready ? pageAt(layout, top + viewport.height * 0.4) : target;
+  // At the end of the column the last page is the current one, even if it is short.
+  const atEnd = top >= layout.total - viewport.height - 1;
+  const current = !ready ? target : atEnd ? pages - 1 : pageAt(layout, top + viewport.height * 0.4);
   useEffect(() => {
     if (pages) store.set({ page: current + 1, pages });
   }, [store, current, pages]);
@@ -235,9 +238,16 @@ function PageColumn({ store, page, marks, passage }: PdfViewerProps) {
   const measure = useCallback((index: number, ratio: number) => {
     setMeasured((known) => (Math.abs((known.get(index) ?? 0) - ratio) < 0.001 ? known : new Map(known).set(index, ratio)));
   }, []);
-  const markRendered = useCallback((index: number) => {
-    setRendered((done) => (done.has(index) ? done : new Set(done).add(index)));
-  }, []);
+  const markRendered = useCallback(
+    (index: number) => {
+      setRendered((done) => {
+        if (done.width !== width) return { width, pages: new Set([index]) };
+        return done.pages.has(index) ? done : { width, pages: new Set(done.pages).add(index) };
+      });
+    },
+    [width],
+  );
+  const paintedPages = rendered.width === width ? rendered.pages : null;
 
   const [first, last] = ready ? visibleRange(layout, top, viewport.height, OVERSCAN) : [0, -1];
   const indexes = [];
@@ -264,7 +274,7 @@ function PageColumn({ store, page, marks, passage }: PdfViewerProps) {
               width={width}
               marks={index === target ? marks : []}
               passage={index === target ? passage : null}
-              rendered={rendered.has(index)}
+              rendered={paintedPages?.has(index) ?? false}
               onMeasure={measure}
               onRendered={markRendered}
             />
@@ -298,7 +308,9 @@ type SlotProps = {
 };
 
 function PageSlot({ index, label, style, width, marks, passage, rendered, onMeasure, onRendered }: SlotProps) {
-  const [matched, setMatched] = useState<Set<number> | null>(null);
+  // Text items of the page; the match follows the passage, which can change on the same page.
+  const [items, setItems] = useState<string[] | null>(null);
+  const matched = useMemo(() => (items && passage ? matchTextItems(items, passage) : null), [items, passage]);
   const renderText = useMemo(
     () =>
       passage
@@ -334,7 +346,7 @@ function PageSlot({ index, label, style, width, marks, passage, rendered, onMeas
           }}
           onRenderSuccess={() => onRendered(index)}
           onGetTextSuccess={
-            passage ? (content) => setMatched(matchTextItems(content.items.map((item) => ('str' in item ? item.str : '')), passage)) : undefined
+            passage ? (content) => setItems(content.items.map((item) => ('str' in item ? item.str : ''))) : undefined
           }
         />
       </Suspense>
