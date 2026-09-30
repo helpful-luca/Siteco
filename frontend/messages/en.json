@@ -182,5 +182,134 @@
       "placeholder": "First name",
       "privacy": "Your documents stay on this computer. For an answer, only the matching excerpts are sent to Claude by Anthropic (USA). Anthropic does not train on this data."
     }
+  },
+  "shell": {
+    "sidebar": "Sidebar",
+    "navigation": "Navigation",
+    "search": "Search chats",
+    "clearSearch": "Clear search",
+    "newChat": "New chat",
+    "library": "Library",
+    "quality": "Quality",
+    "settings": "Settings",
+    "chats": "Chats",
+    "noChats": "No chats yet",
+    "noChatsFound": "No matching chats",
+    "noChatsHint": "Your conversations appear here.",
+    "openSidebar": "Show sidebar",
+    "closePanel": "Close panel",
+    "skipToContent": "Skip to content"
+  },
+  "chat": {
+    "greeting": "Hello",
+    "prompt": "What would you like to know today?",
+    "dropTitle": "Add documents",
+    "dropText": "Drag files here or choose them. They go into your library.",
+    "hint": "As soon as a document is ready, you can ask questions about it here. Every answer shows where it is in the document."
+  },
+  "library": {
+    "title": "Library",
+    "summary": "{count, plural, =0 {No documents} one {# document, {size}} other {# documents, {size}}}",
+    "upload": "Upload",
+    "search": "Search documents",
+    "clearSearch": "Clear search",
+    "loading": "Loading library",
+    "retry": "Try again",
+    "meta": "{pages, plural, one {# page} other {# pages}}, {size}",
+    "noPages": "no page count",
+    "signature": "Found: {signature}",
+    "filter": {
+      "label": "Status",
+      "all": "All",
+      "ready": "Ready",
+      "working": "In progress",
+      "failed": "Failed"
+    },
+    "columns": {
+      "caption": "Documents in your library",
+      "name": "Name",
+      "status": "Status",
+      "pages": "Pages",
+      "size": "Size",
+      "added": "Added",
+      "actions": "Actions"
+    },
+    "status": {
+      "scanning": "Checking",
+      "queued": "Waiting",
+      "queuedAt": "Waiting, position {position}",
+      "parsing": "Reading, {percent} %",
+      "embedding": "Indexing, {percent} %",
+      "ready": "Ready",
+      "failed": "Failed",
+      "deleting": "Deleting",
+      "uploading": "Uploading, {percent} %",
+      "uploadWaiting": "Waiting to upload",
+      "uploadFailed": "Not uploaded"
+    },
+    "kind": {
+      "pdf": "PDF document",
+      "txt": "Text file",
+      "md": "Markdown file"
+    },
+    "actions": {
+      "preview": "Preview",
+      "previewOf": "Preview of {name}",
+      "delete": "Delete",
+      "deleteOf": "Delete {name}",
+      "retry": "Try again",
+      "retryOf": "Upload {name} again",
+      "dismiss": "Remove",
+      "dismissOf": "Remove {name} from the list",
+      "cancel": "Cancel upload",
+      "cancelOf": "Cancel the upload of {name}"
+    },
+    "empty": {
+      "title": "Your library is empty",
+      "text": "Drag PDFs, text or Markdown files here or choose them. Then you can ask questions about them.",
+      "choose": "Choose files",
+      "hint": "Up to {limit} per file. Every file is checked for malware before it is stored.",
+      "hintNoLimit": "Every file is checked for malware before it is stored."
+    },
+    "noResults": {
+      "title": "No results",
+      "text": "There is no document for “{query}”.",
+      "textFilter": "There are no documents in this view right now.",
+      "reset": "Reset filters"
+    },
+    "delete": {
+      "title": "Delete document?",
+      "text": "“{name}” and all its search data will be removed from the library. This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "drop": {
+      "title": "Release to upload",
+      "text": "PDF, TXT and Markdown go into your library."
+    },
+    "preview": {
+      "title": "Document",
+      "status": "Status",
+      "details": "Information",
+      "kind": "Kind",
+      "pages": "Pages",
+      "noPages": "none",
+      "size": "Size",
+      "added": "Added",
+      "gone": "This document no longer exists.",
+      "soonTitle": "Preview follows",
+      "soon": "The document with highlighted passages will appear here soon."
+    }
+  },
+  "placeholder": {
+    "note": "Follows in one of the next steps.",
+    "quality": {
+      "title": "Quality",
+      "text": "Soon you will see here how reliably the search finds the right passages, measured against a fixed set of questions."
+    },
+    "settings": {
+      "title": "Settings",
+      "text": "Language, appearance, models and your data will soon be set here."
+    }
   }
 }

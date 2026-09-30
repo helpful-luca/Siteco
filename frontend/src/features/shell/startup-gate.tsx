@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { ApiError, fetchJson } from '@/shared/api/client';
 import type { ReadyOut } from '@/shared/api/types';
+import { Button, Spinner } from '@/shared/ui';
 
 /** Holds the app back until search works, and explains calmly why it is waiting. */
 export function StartupGate({ children }: { children: React.ReactNode }) {
@@ -23,18 +24,16 @@ export function StartupGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div role="status" aria-live="polite" className="grid min-h-dvh place-items-center p-8">
-      <div className="max-w-sm text-center">
-        <p className="text-lg font-medium">{unavailable ? t('unavailable') : t('starting')}</p>
-        <p className="mt-2 opacity-70">{unavailable ? t('unavailableHint') : t('startingHint')}</p>
+      <div className="flex max-w-sm flex-col items-center text-center">
+        {!unavailable && <Spinner label={t('starting')} className="mb-5 size-5" />}
+        <p className="text-title-3 font-semibold">{unavailable ? t('unavailable') : t('starting')}</p>
+        <p className="mt-2 text-body text-ink-muted">
+          {unavailable ? t('unavailableHint') : t('startingHint')}
+        </p>
         {unavailable && (
-          <button
-            type="button"
-            className="mt-6 rounded-full px-5 py-2 ring-1 ring-current/20"
-            disabled={isFetching}
-            onClick={() => refetch()}
-          >
+          <Button className="mt-6" disabled={isFetching} onClick={() => refetch()}>
             {t('retry')}
-          </button>
+          </Button>
         )}
       </div>
     </div>

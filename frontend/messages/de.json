@@ -182,5 +182,134 @@
       "placeholder": "Vorname",
       "privacy": "Deine Dokumente bleiben auf diesem Rechner. Für eine Antwort gehen nur die passenden Ausschnitte an Claude von Anthropic (USA). Anthropic trainiert nicht mit diesen Daten."
     }
+  },
+  "shell": {
+    "sidebar": "Seitenleiste",
+    "navigation": "Navigation",
+    "search": "Chats durchsuchen",
+    "clearSearch": "Suche löschen",
+    "newChat": "Neuer Chat",
+    "library": "Bibliothek",
+    "quality": "Qualität",
+    "settings": "Einstellungen",
+    "chats": "Chats",
+    "noChats": "Noch keine Chats",
+    "noChatsFound": "Keine passenden Chats",
+    "noChatsHint": "Deine Unterhaltungen erscheinen hier.",
+    "openSidebar": "Seitenleiste einblenden",
+    "closePanel": "Bereich schließen",
+    "skipToContent": "Zum Inhalt springen"
+  },
+  "chat": {
+    "greeting": "Hallo",
+    "prompt": "Was möchtest du heute wissen?",
+    "dropTitle": "Dokumente hinzufügen",
+    "dropText": "Zieh Dateien hierher oder wähle sie aus. Alles landet in deiner Bibliothek.",
+    "hint": "Sobald ein Dokument bereit ist, kannst du hier Fragen dazu stellen. Jede Antwort zeigt, wo sie im Dokument steht."
+  },
+  "library": {
+    "title": "Bibliothek",
+    "summary": "{count, plural, =0 {Keine Dokumente} one {# Dokument, {size}} other {# Dokumente, {size}}}",
+    "upload": "Hochladen",
+    "search": "Dokumente durchsuchen",
+    "clearSearch": "Suche löschen",
+    "loading": "Bibliothek wird geladen",
+    "retry": "Erneut versuchen",
+    "meta": "{pages, plural, one {# Seite} other {# Seiten}}, {size}",
+    "noPages": "keine Seitenangabe",
+    "signature": "Gefunden: {signature}",
+    "filter": {
+      "label": "Status",
+      "all": "Alle",
+      "ready": "Bereit",
+      "working": "In Arbeit",
+      "failed": "Fehler"
+    },
+    "columns": {
+      "caption": "Dokumente in deiner Bibliothek",
+      "name": "Name",
+      "status": "Status",
+      "pages": "Seiten",
+      "size": "Größe",
+      "added": "Hinzugefügt",
+      "actions": "Aktionen"
+    },
+    "status": {
+      "scanning": "Wird geprüft",
+      "queued": "Wartet",
+      "queuedAt": "Wartet, Platz {position}",
+      "parsing": "Wird gelesen, {percent} %",
+      "embedding": "Wird indexiert, {percent} %",
+      "ready": "Bereit",
+      "failed": "Fehler",
+      "deleting": "Wird gelöscht",
+      "uploading": "Wird hochgeladen, {percent} %",
+      "uploadWaiting": "Wartet auf Upload",
+      "uploadFailed": "Nicht hochgeladen"
+    },
+    "kind": {
+      "pdf": "PDF-Dokument",
+      "txt": "Textdatei",
+      "md": "Markdown-Datei"
+    },
+    "actions": {
+      "preview": "Vorschau",
+      "previewOf": "Vorschau von {name}",
+      "delete": "Löschen",
+      "deleteOf": "{name} löschen",
+      "retry": "Erneut versuchen",
+      "retryOf": "{name} erneut hochladen",
+      "dismiss": "Entfernen",
+      "dismissOf": "{name} aus der Liste entfernen",
+      "cancel": "Upload abbrechen",
+      "cancelOf": "Upload von {name} abbrechen"
+    },
+    "empty": {
+      "title": "Deine Bibliothek ist noch leer",
+      "text": "Zieh PDFs, Text- oder Markdown-Dateien hierher oder wähle sie aus. Danach kannst du Fragen dazu stellen.",
+      "choose": "Dateien auswählen",
+      "hint": "Bis {limit} pro Datei. Jede Datei wird vor dem Speichern auf Schadsoftware geprüft.",
+      "hintNoLimit": "Jede Datei wird vor dem Speichern auf Schadsoftware geprüft."
+    },
+    "noResults": {
+      "title": "Keine Treffer",
+      "text": "Zu „{query}“ gibt es kein Dokument.",
+      "textFilter": "In dieser Ansicht gibt es gerade keine Dokumente.",
+      "reset": "Filter zurücksetzen"
+    },
+    "delete": {
+      "title": "Dokument löschen?",
+      "text": "„{name}“ wird mit allen Suchdaten aus der Bibliothek entfernt. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Löschen",
+      "cancel": "Abbrechen"
+    },
+    "drop": {
+      "title": "Zum Hochladen loslassen",
+      "text": "PDF, TXT und Markdown landen in deiner Bibliothek."
+    },
+    "preview": {
+      "title": "Dokument",
+      "status": "Status",
+      "details": "Informationen",
+      "kind": "Art",
+      "pages": "Seiten",
+      "noPages": "keine",
+      "size": "Größe",
+      "added": "Hinzugefügt",
+      "gone": "Dieses Dokument gibt es nicht mehr.",
+      "soonTitle": "Vorschau folgt",
+      "soon": "Hier erscheint bald das Dokument mit markierten Fundstellen."
+    }
+  },
+  "placeholder": {
+    "note": "Folgt in einem der nächsten Schritte.",
+    "quality": {
+      "title": "Qualität",
+      "text": "Hier siehst du bald, wie zuverlässig die Suche die richtigen Stellen findet, gemessen an einem festen Fragenkatalog."
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "text": "Sprache, Erscheinungsbild, Modelle und deine Daten stellst du bald hier ein."
+    }
   }
 }

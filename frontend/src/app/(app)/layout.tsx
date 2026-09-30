@@ -1,10 +1,13 @@
-import { GlobalBanner, StartupGate } from '@/features/shell';
+import { DropOverlay, UploadProvider } from '@/features/library';
+import { AppShell, StartupGate } from '@/features/shell';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <StartupGate>
-      <GlobalBanner />
-      <main className="mx-auto max-w-3xl px-6 py-16">{children}</main>
+      <UploadProvider>
+        <AppShell>{children}</AppShell>
+        <DropOverlay />
+      </UploadProvider>
     </StartupGate>
   );
 }
