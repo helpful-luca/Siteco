@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
+from docchat.domain.pdf_active_content import LIMIT_REACHED
 from tests.pdf_factory import build_pdf, text_page
 
 
@@ -19,3 +20,9 @@ def test_finds_an_open_action_with_javascript(tmp_path: Path) -> None:
         b" endobj\n"
     )
     assert PdfActiveContentDetector().find(path) == {"OpenAction", "JavaScript", "JS"}
+
+
+def test_a_scan_over_its_time_budget_stops_with_a_conservative_result(tmp_path: Path) -> None:
+    path = tmp_path / "slow.pdf"
+    path.write_bytes(build_pdf([text_page("Hallo")]))
+    assert PdfActiveContentDetector(time_budget_s=-1).find(path) == {LIMIT_REACHED}

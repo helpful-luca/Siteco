@@ -31,7 +31,7 @@ export function DocumentDetails({ documentId }: { documentId: string }) {
       </div>
       <h3 className="mt-7 text-caption font-medium text-ink-muted">{t('status')}</h3>
       <div className="mt-2">
-        <DocumentStatus document={document} />
+        <DocumentStatus document={document} announce={false} />
         <RowDetails document={document} />
       </div>
       <h3 className="mt-7 text-caption font-medium text-ink-muted">{t('details')}</h3>

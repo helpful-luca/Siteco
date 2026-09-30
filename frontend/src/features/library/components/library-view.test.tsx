@@ -96,6 +96,18 @@ describe('LibraryView', () => {
     expect(screen.getByText(/Dieses PDF enthält aktive Inhalte/)).toBeInTheDocument();
   });
 
+  it('announces states politely, without every percent, and leaves unknown cells empty', async () => {
+    setup(MIXED);
+    const table = await screen.findByRole('table');
+    const regions = table.querySelectorAll('[aria-live="polite"]');
+    const texts = Array.from(regions, (r) => r.textContent);
+    expect(texts).toContain('Katalog_2026.pdf: wird gelesen');
+    expect(texts).toContain('Mira_L_Datenblatt.pdf: bereit');
+    expect(texts.join(' ')).not.toMatch(/%/);
+    expect(table.textContent).not.toContain('--');
+    expect(within(table).getAllByText('keine Seitenangabe').length).toBeGreaterThan(0);
+  });
+
   it('filters by status and searches by file name', async () => {
     setup(MIXED);
     await screen.findByRole('table');

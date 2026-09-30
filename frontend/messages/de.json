@@ -299,7 +299,20 @@
       "gone": "Dieses Dokument gibt es nicht mehr.",
       "soonTitle": "Vorschau folgt",
       "soon": "Hier erscheint bald das Dokument mit markierten Fundstellen."
-    }
+    },
+    "announce": {
+      "scanning": "{name}: wird geprüft",
+      "queued": "{name}: wartet",
+      "parsing": "{name}: wird gelesen",
+      "embedding": "{name}: wird indexiert",
+      "ready": "{name}: bereit",
+      "failed": "{name}: fehlgeschlagen",
+      "deleting": "{name}: wird gelöscht",
+      "uploading": "{name}: wird hochgeladen",
+      "uploadWaiting": "{name}: wartet auf Upload",
+      "uploadFailed": "{name}: nicht hochgeladen"
+    },
+    "notAddedYet": "noch nicht hinzugefügt"
   },
   "placeholder": {
     "note": "Folgt in einem der nächsten Schritte.",

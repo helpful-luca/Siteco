@@ -13,6 +13,8 @@ type Options = {
 export function xhrUpload(file: File, { onProgress, signal }: Options): Promise<DocumentOut> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    const abort = () => xhr.abort();
+    xhr.onloadend = () => signal?.removeEventListener('abort', abort);
     xhr.open('POST', '/api/documents');
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('Content-Type', 'application/octet-stream');
@@ -44,7 +46,7 @@ export function xhrUpload(file: File, { onProgress, signal }: Options): Promise<
         xhr.abort();
         return;
       }
-      signal.addEventListener('abort', () => xhr.abort(), { once: true });
+      signal.addEventListener('abort', abort, { once: true });
     }
     xhr.send(file);
   });

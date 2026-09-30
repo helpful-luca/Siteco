@@ -54,14 +54,16 @@ class Container:
         self.llm_status = (
             LlmStatus.UNCHECKED if self.settings.llm_key_configured else LlmStatus.MISSING_KEY
         )
+        # The malware scan needs neither the model nor the index: it runs from the start, so
+        # uploads never wait in `scanning` because the embedder failed or is still loading.
+        await self.scans.recover()
+        self.scans.start()
         await self._load_embedder()
         await self._open_vector_store()
         if self.embedder_status is ComponentStatus.OK and (
             self.vector_store_status is ComponentStatus.OK
         ):
-            await self.scans.recover()
             await self.worker.recover()
-            self.scans.start()
             self.worker.start()
 
     async def _load_embedder(self) -> None:

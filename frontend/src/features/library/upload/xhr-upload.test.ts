@@ -16,6 +16,7 @@ class FakeXhr {
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
   onabort: (() => void) | null = null;
+  onloadend: (() => void) | null = null;
 
   constructor() {
     FakeXhr.last = this;
@@ -41,6 +42,7 @@ class FakeXhr {
     this.responseText = JSON.stringify(body);
     this.responseHeaders['content-type'] = 'application/json';
     this.onload?.();
+    this.onloadend?.();
   }
 }
 
@@ -64,6 +66,15 @@ describe('xhrUpload', () => {
     expect(onProgress).toHaveBeenCalledWith(4, 8);
     xhr.respond(202, { document: doc({ status: 'scanning' }) });
     await expect(result).resolves.toMatchObject({ status: 'scanning' });
+  });
+
+  it('stops listening to the abort signal once the request is over', async () => {
+    const controller = new AbortController();
+    const remove = vi.spyOn(controller.signal, 'removeEventListener');
+    const result = xhrUpload(file, { onProgress: vi.fn(), signal: controller.signal });
+    FakeXhr.last.respond(202, { document: doc() });
+    await result;
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
   });
 
   it('turns an error envelope into an ApiError with its code and params', async () => {

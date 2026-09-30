@@ -6,6 +6,7 @@ describe('statusView', () => {
   it('describes each stage with a tone, a text key and progress', () => {
     expect(statusView(doc({ status: 'scanning', progress: 0 }))).toEqual({
       tone: 'working',
+      stage: 'scanning',
       key: 'scanning',
       values: {},
       progress: null,
@@ -18,6 +19,7 @@ describe('statusView', () => {
     expect(statusView(doc({ status: 'queued', queue_position: null })).key).toBe('queued');
     expect(statusView(doc({ status: 'parsing', progress: 0.404 }))).toEqual({
       tone: 'working',
+      stage: 'parsing',
       key: 'parsing',
       values: { percent: 40 },
       progress: 0.404,
@@ -57,5 +59,6 @@ describe('pollInterval', () => {
     expect(pollInterval([doc(), doc({ status: 'failed' })])).toBe(false);
     expect(pollInterval([doc(), doc({ status: 'scanning' })])).toBe(1000);
     expect(pollInterval([doc({ status: 'embedding' })])).toBe(1000);
+    expect(pollInterval([doc({ status: 'deleting' })])).toBe(1000);
   });
 });

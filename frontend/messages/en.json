@@ -299,7 +299,20 @@
       "gone": "This document no longer exists.",
       "soonTitle": "Preview follows",
       "soon": "The document with highlighted passages will appear here soon."
-    }
+    },
+    "announce": {
+      "scanning": "{name}: checking",
+      "queued": "{name}: waiting",
+      "parsing": "{name}: reading",
+      "embedding": "{name}: indexing",
+      "ready": "{name}: ready",
+      "failed": "{name}: failed",
+      "deleting": "{name}: deleting",
+      "uploading": "{name}: uploading",
+      "uploadWaiting": "{name}: waiting to upload",
+      "uploadFailed": "{name}: not uploaded"
+    },
+    "notAddedYet": "not added yet"
   },
   "placeholder": {
     "note": "Follows in one of the next steps.",

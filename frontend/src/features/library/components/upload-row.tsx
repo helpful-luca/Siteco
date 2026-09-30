@@ -9,6 +9,7 @@ import type { UploadItem } from '../upload/upload-queue';
 import { useFormatSize } from '../use-format-size';
 import { FileIcon } from './file-icon';
 import { FileName } from './file-name';
+import { EmptyValue } from './empty-cell';
 import { UploadStatus } from './status-cell';
 
 const KINDS = { '.pdf': 'pdf', '.txt': 'txt', '.md': 'md', '.markdown': 'md' } as const;
@@ -46,12 +47,14 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
         <UploadStatus item={item} />
       </td>
       <td className="hidden py-3 pr-4 text-right text-footnote text-ink-muted @2xl:table-cell">
-        <span aria-label={t('noPages')}>--</span>
+        <EmptyValue label={t('noPages')} />
       </td>
       <td className="hidden py-3 pr-4 text-right text-footnote text-ink-muted tabular-nums whitespace-nowrap @2xl:table-cell">
         {formatSize(item.file.size)}
       </td>
-      <td className="hidden py-3 pr-3 @4xl:table-cell" />
+      <td className="hidden py-3 pr-3 @4xl:table-cell">
+        <EmptyValue label={t('notAddedYet')} />
+      </td>
       <td className="py-2 pr-2 @lg:pr-3">
         <div className="flex justify-end gap-0.5">
           {failed && item.error?.retryable && (

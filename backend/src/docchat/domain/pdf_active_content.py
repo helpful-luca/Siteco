@@ -10,8 +10,13 @@ Rules that keep it honest:
   otherwise "contain" short names like `/JS` or `/AA`.
 - Object streams (`/Type /ObjStm`) hide dictionaries in compressed data, so they are inflated
   and scanned too, capped to defuse decompression bombs.
+- A stream starts only at `>> stream` (the end of its dictionary), so the word "stream" inside
+  a string does not switch modes. Known limit: a string that itself contains `>> stream` still
+  can; the worst case is a missed hint, never a blocked document.
 
-Only linear regular expressions; memory stays bounded by the read size plus a small tail.
+Every piece of input is looked at once (an offset walks the buffer, which is sliced once per
+feed), and hostile files with millions of streams hit MAX_STREAMS. When a limit stops the scan,
+LIMIT_REACHED is reported: a file too complex to check gets the notice, the conservative side.
 """
 
 import re
@@ -25,10 +30,13 @@ ACTIVE_NAMES = frozenset(
 _DELIMITERS = frozenset(b"\x00\t\n\x0c\r ()<>[]{}/%")
 _NAME = re.compile(rb"/([^\x00\t\n\x0c\r ()<>\[\]{}/%]*)")
 _ESCAPE = re.compile(rb"#([0-9A-Fa-f]{2})")
-_STREAM_START = re.compile(rb"(?<![A-Za-z/])stream(?:\r\n|\n|\r)")
+_STREAM_START = re.compile(rb">>[\x00\t\n\x0c\r ]{0,16}stream(?:\r\n|\n|\r)")
+_STREAM_START_TAIL = 2 + 16 + len(b"stream\r")  # bytes kept back that may start a match
 _STREAM_END = b"endstream"
 _MAX_NAME = 256  # longer names are never one of ours
 _DEFAULT_MAX_INFLATED = 64 * 1024 * 1024
+MAX_STREAMS = 200_000
+LIMIT_REACHED = "LimitReached"  # reported instead of a name when the scan had to stop early
 
 
 def _decode(raw: bytes) -> str:
@@ -61,7 +69,9 @@ class _NameTokens:
 class ActiveContentScan:
     """Feed the file in pieces, then call finish() for the active names that were found."""
 
-    def __init__(self, max_inflated: int = _DEFAULT_MAX_INFLATED) -> None:
+    def __init__(
+        self, max_inflated: int = _DEFAULT_MAX_INFLATED, max_streams: int = MAX_STREAMS
+    ) -> None:
         self._found: set[str] = set()
         self._buffer = b""
         self._in_stream = False
@@ -70,15 +80,31 @@ class ActiveContentScan:
         self._inside = _NameTokens(self._on_name)
         self._inflater: zlib._Decompress | None = None
         self._inflate_budget = max_inflated
+        self._streams_left = max_streams
+        self._stopped = False
+
+    @property
+    def stopped(self) -> bool:
+        return self._stopped
+
+    def stop(self) -> None:
+        """Gives up (a limit was reached); the result then contains LIMIT_REACHED."""
+        self._stopped = True
+        self._found.add(LIMIT_REACHED)
+        self._buffer = b""
+        self._inflater = None
 
     def feed(self, data: bytes) -> None:
+        if self._stopped:
+            return
         self._buffer += data
         self._process(final=False)
 
     def finish(self) -> frozenset[str]:
-        self._process(final=True)
-        self._outside.feed(b"", final=True)
-        self._end_stream()
+        if not self._stopped:
+            self._process(final=True)
+            self._outside.feed(b"", final=True)
+            self._end_stream()
         return frozenset(self._found)
 
     def _on_name(self, name: str) -> None:
@@ -91,44 +117,46 @@ class ActiveContentScan:
         self._on_name(name)
 
     def _process(self, *, final: bool) -> None:
-        while self._buffer:
+        buffer, pos = self._buffer, 0
+        while pos < len(buffer) and not self._stopped:
             if self._in_stream:
-                if not self._consume_stream(final=final):
-                    return
-            elif not self._consume_outside(final=final):
-                return
+                pos, more = self._consume_stream(buffer, pos, final=final)
+            else:
+                pos, more = self._consume_outside(buffer, pos, final=final)
+            if not more:
+                break
+        if not self._stopped:
+            self._buffer = buffer[pos:]  # the only slice of the remainder per feed
 
-    def _consume_outside(self, *, final: bool) -> bool:
-        """Scans names up to the next `stream` keyword. False: needs more data."""
-        buffer = self._buffer
-        match = _STREAM_START.search(buffer)
+    def _consume_outside(self, buffer: bytes, pos: int, *, final: bool) -> tuple[int, bool]:
+        """Scans names up to the next stream start. Returns the new offset and whether to go on."""
+        match = _STREAM_START.search(buffer, pos)
         if match and not final and match.end() == len(buffer) and buffer.endswith(b"\r"):
             match = None  # "\r" may be the first half of "\r\n"
         if match is None:
-            cut = len(buffer) if final else max(0, len(buffer) - len(b"stream\r"))
-            self._outside.feed(buffer[:cut])
-            self._buffer = buffer[cut:]
-            return False
-        self._outside.feed(buffer[: match.start()], final=True)
+            cut = len(buffer) if final else max(pos, len(buffer) - _STREAM_START_TAIL)
+            self._outside.feed(buffer[pos:cut])
+            return cut, False
+        self._outside.feed(buffer[pos : match.start()], final=True)
         self._start_stream()
-        self._buffer = buffer[match.end() :]
-        return True
+        return match.end(), True
 
-    def _consume_stream(self, *, final: bool) -> bool:
-        """Skips (or inflates) stream data up to `endstream`. False: needs more data."""
-        buffer = self._buffer
-        end = buffer.find(_STREAM_END)
+    def _consume_stream(self, buffer: bytes, pos: int, *, final: bool) -> tuple[int, bool]:
+        """Skips (or inflates) stream data up to `endstream`."""
+        end = buffer.find(_STREAM_END, pos)
         if end == -1:
-            cut = len(buffer) if final else max(0, len(buffer) - len(_STREAM_END) + 1)
-            self._inflate(buffer[:cut])
-            self._buffer = buffer[cut:]
-            return False
-        self._inflate(buffer[:end])
+            cut = len(buffer) if final else max(pos, len(buffer) - len(_STREAM_END) + 1)
+            self._inflate(buffer[pos:cut])
+            return cut, False
+        self._inflate(buffer[pos:end])
         self._end_stream()
-        self._buffer = buffer[end + len(_STREAM_END) :]
-        return True
+        return end + len(_STREAM_END), True
 
     def _start_stream(self) -> None:
+        self._streams_left -= 1
+        if self._streams_left < 0:
+            self.stop()
+            return
         self._in_stream = True
         if self._object_stream_ahead and self._inflate_budget > 0:
             self._inflater = zlib.decompressobj()

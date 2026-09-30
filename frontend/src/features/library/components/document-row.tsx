@@ -8,6 +8,7 @@ import { useFormatSize } from '../use-format-size';
 import { FileIcon } from './file-icon';
 import { FileName } from './file-name';
 import { RowDetails } from './row-details';
+import { EmptyValue } from './empty-cell';
 import { DocumentStatus } from './status-cell';
 
 type Props = {
@@ -44,7 +45,7 @@ export function DocumentRow({ document, onPreview, onDelete }: Props) {
         <DocumentStatus document={document} />
       </td>
       <td className="hidden py-3 pr-4 text-right text-footnote text-ink-muted tabular-nums @2xl:table-cell">
-        {pages ?? <span aria-label={t('noPages')}>--</span>}
+        {pages ?? <EmptyValue label={t('noPages')} />}
       </td>
       <td className="hidden py-3 pr-4 text-right text-footnote text-ink-muted tabular-nums whitespace-nowrap @2xl:table-cell">
         {size}

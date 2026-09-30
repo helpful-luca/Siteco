@@ -1,8 +1,9 @@
+import time
 import zlib
 
 import pytest
 
-from docchat.domain.pdf_active_content import ActiveContentScan
+from docchat.domain.pdf_active_content import LIMIT_REACHED, ActiveContentScan
 
 
 def scan(data: bytes, piece: int | None = None, **kwargs: int) -> frozenset[str]:
@@ -95,3 +96,20 @@ def test_the_result_does_not_depend_on_the_read_size() -> None:
     assert scan(data) == expected
     for piece in range(1, 40):
         assert scan(data, piece=piece) == expected, piece
+
+
+def test_many_tiny_streams_are_scanned_in_linear_time() -> None:
+    data = b"<<>>stream\nendstream\n" * 300_000 + b"<< /AA 1 >>"  # about 6 MB
+    started = time.perf_counter()
+    assert scan(data, piece=1024 * 1024, max_streams=10**9) == {"AA"}
+    assert time.perf_counter() - started < 5
+
+
+def test_too_many_streams_stop_the_scan_with_a_conservative_result() -> None:
+    data = b"<<>>stream\nendstream\n" * 50 + b"<< /AA 1 >>"
+    assert scan(data, max_streams=10) == {LIMIT_REACHED}
+
+
+def test_the_word_stream_in_a_string_does_not_start_a_stream() -> None:
+    data = b"<< /Title (a stream\n) /OpenAction 1 0 R >>"
+    assert scan(data) == {"OpenAction"}

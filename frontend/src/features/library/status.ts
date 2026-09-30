@@ -6,6 +6,8 @@ export type Tone = 'neutral' | 'working' | 'ready' | 'failed';
 
 export type StatusView = {
   tone: Tone;
+  /** The stage without numbers, for screen reader announcements (`library.announce`). */
+  stage: string;
   /** Key in the `library.status` messages. */
   key: string;
   values: Record<string, number>;
@@ -13,7 +15,8 @@ export type StatusView = {
   progress: number | null;
 };
 
-const IN_PROGRESS: readonly DocumentStatus[] = ['scanning', 'queued', 'parsing', 'embedding'];
+// `deleting` counts too: polling shows the row leaving once the delete is done.
+const IN_PROGRESS: readonly DocumentStatus[] = ['scanning', 'queued', 'parsing', 'embedding', 'deleting'];
 export const POLL_MS = 1000;
 
 export function isInProgress(status: DocumentStatus): boolean {
@@ -30,20 +33,32 @@ export function statusView(document: DocumentOut): StatusView {
   const percent = Math.round(document.progress * 100);
   switch (document.status) {
     case 'scanning':
-      return { tone: 'working', key: 'scanning', values: {}, progress: null };
+      return { tone: 'working', stage: 'scanning', key: 'scanning', values: {}, progress: null };
     case 'queued':
       return document.queue_position
-        ? { tone: 'neutral', key: 'queuedAt', values: { position: document.queue_position }, progress: null }
-        : { tone: 'neutral', key: 'queued', values: {}, progress: null };
+        ? {
+            tone: 'neutral',
+            stage: 'queued',
+            key: 'queuedAt',
+            values: { position: document.queue_position },
+            progress: null,
+          }
+        : { tone: 'neutral', stage: 'queued', key: 'queued', values: {}, progress: null };
     case 'parsing':
     case 'embedding':
-      return { tone: 'working', key: document.status, values: { percent }, progress: document.progress };
+      return {
+        tone: 'working',
+        stage: document.status,
+        key: document.status,
+        values: { percent },
+        progress: document.progress,
+      };
     case 'ready':
-      return { tone: 'ready', key: 'ready', values: {}, progress: null };
+      return { tone: 'ready', stage: 'ready', key: 'ready', values: {}, progress: null };
     case 'failed':
-      return { tone: 'failed', key: 'failed', values: {}, progress: null };
+      return { tone: 'failed', stage: 'failed', key: 'failed', values: {}, progress: null };
     default:
-      return { tone: 'neutral', key: 'deleting', values: {}, progress: null };
+      return { tone: 'neutral', stage: 'deleting', key: 'deleting', values: {}, progress: null };
   }
 }
 

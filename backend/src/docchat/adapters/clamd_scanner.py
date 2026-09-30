@@ -52,12 +52,11 @@ class ClamdScanner:
         self._max_stream_bytes = max_stream_bytes
 
     async def scan(self, path: Path) -> ScanVerdict:
+        # Opened before connecting: a missing file is the caller's problem, not clamd's.
         with path.open("rb") as file:
             size = os.fstat(file.fileno()).st_size
             if self._max_stream_bytes is not None and size > self._max_stream_bytes:
-                raise ScanFailed(
-                    "file is larger than the scanner's stream limit"
-                )  # a missing file is the caller's problem, not clamd's
+                raise ScanFailed("file is larger than the scanner's stream limit")
             try:
                 reader, writer = await asyncio.wait_for(
                     asyncio.open_connection(self._host, self._port), self._connect_timeout_s
