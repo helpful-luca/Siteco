@@ -25,7 +25,7 @@ export function RowDetails({ document }: { document: DocumentOut }) {
         return (
           message && (
             <p key={notice.code} className="mt-1 flex gap-1.5 text-footnote text-ink-muted">
-              <Info aria-hidden className="mt-[2px] size-3.5 shrink-0" />
+              <Info aria-hidden className="mt-0.5 size-3.5 shrink-0" />
               <span>{message}</span>
             </p>
           )

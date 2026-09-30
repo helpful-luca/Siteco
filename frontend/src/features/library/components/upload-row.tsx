@@ -26,13 +26,17 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
   const failed = item.state === 'failed';
   return (
     <tr className="group align-top">
-      <td className="py-2.5 pr-3 pl-3 @lg:pl-4">
+      <td className="py-2 pr-3 pl-4">
         <div className="flex gap-3">
-          <FileIcon kind={kind} className={failed ? 'opacity-60' : undefined} />
-          <div className="min-w-0 flex-1 pt-[3px]">
-            <FileName name={name} />
-            <p className="text-caption text-ink-muted @2xl:hidden">{formatSize(item.file.size)}</p>
-            <div className="mt-1.5 @lg:hidden">
+          <div className="flex h-(--row-line) shrink-0 items-center">
+            <FileIcon kind={kind} className={failed ? 'opacity-60' : undefined} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex h-(--row-line) items-center">
+              <FileName name={name} />
+            </div>
+            <p className="text-caption text-ink-muted tabular-nums @3xl:hidden">{formatSize(item.file.size)}</p>
+            <div className="mt-0.5 [--row-line:--spacing(7)] @lg:hidden">
               <UploadStatus item={item} />
             </div>
             {failed && item.error && (
@@ -43,20 +47,20 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
           </div>
         </div>
       </td>
-      <td className="hidden py-3 pr-3 @lg:table-cell">
+      <td className="hidden px-3 py-2 @lg:table-cell">
         <UploadStatus item={item} />
       </td>
-      <td className="hidden py-3 pr-4 text-right text-footnote text-ink-muted @2xl:table-cell">
+      <td className="hidden px-3 py-2 text-right text-footnote leading-(--row-line) text-ink-muted @3xl:table-cell">
         <EmptyValue label={t('noPages')} />
       </td>
-      <td className="hidden py-3 pr-4 text-right text-footnote text-ink-muted tabular-nums whitespace-nowrap @2xl:table-cell">
+      <td className="hidden px-3 py-2 text-right text-footnote leading-(--row-line) text-ink-muted tabular-nums whitespace-nowrap @3xl:table-cell">
         {formatSize(item.file.size)}
       </td>
-      <td className="hidden py-3 pr-3 @4xl:table-cell">
+      <td className="hidden px-3 py-2 @4xl:table-cell">
         <EmptyValue label={t('notAddedYet')} />
       </td>
-      <td className="py-2 pr-2 @lg:pr-3">
-        <div className="flex justify-end gap-0.5">
+      <td className="py-2 pr-2 pl-0">
+        <div className="flex h-(--row-line) items-center justify-end gap-1">
           {failed && item.error?.retryable && (
             <Tooltip content={t('actions.retry')}>
               <Button icon size="sm" variant="ghost" aria-label={t('actions.retryOf', { name })} onClick={() => onRetry(item.id)}>

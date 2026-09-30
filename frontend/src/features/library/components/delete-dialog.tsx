@@ -19,7 +19,7 @@ export function DeleteDialog({ document, onConfirm, onClose }: Props) {
       onOpenChange={(open) => !open && onClose()}
       title={t('title')}
       description={document ? t('text', { name: document.filename }) : undefined}
-      className="w-[min(440px,calc(100vw-32px))]"
+      className="w-[min(var(--spacing-panel),calc(100vw-var(--spacing)*8))]"
     >
       <div className="flex justify-end gap-2">
         <DialogClose render={<Button>{t('cancel')}</Button>} />
