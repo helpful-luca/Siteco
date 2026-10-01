@@ -4,7 +4,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
 import { type Locale, NAME_MAX_CODE_POINTS, sanitizeName, type Theme } from '@/shared/preferences/cookies';
-import { Button, ChoiceCards, cn, ThemeThumbnail } from '@/shared/ui';
+import { Button, ChoiceCards, cn, Flag, ThemeThumbnail, Typewriter } from '@/shared/ui';
 
 export type OnboardingResult = { locale: Locale; theme: Theme; name: string };
 
@@ -19,6 +19,8 @@ type Props = {
 
 const STEPS = ['language', 'appearance', 'name'] as const;
 const SPRING = { type: 'spring', duration: 0.45, bounce: 0 } as const;
+/** The greeting alternates between both languages, starting with the current one. */
+const GREETINGS = { de: ['Willkommen', 'Welcome'], en: ['Welcome', 'Willkommen'] } as const;
 
 /** Three-step setup in the spirit of Apple's setup assistant. Choices apply live via callbacks. */
 export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinish, onSkip }: Props) {
@@ -80,9 +82,22 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
               className="flex flex-col items-center text-center"
             >
               <h2 ref={headingRef} tabIndex={-1} className="text-title-1 font-semibold outline-none">
-                {t(`${current}.title`)}
+                {current === 'language' ? (
+                  <Typewriter label={t('language.title')} words={GREETINGS[initial.locale]} />
+                ) : (
+                  t(`${current}.title`)
+                )}
               </h2>
-              <p className="mt-3 max-w-[46ch] text-body text-ink-muted">{t(`${current}.subtitle`)}</p>
+              {/* One or two short lines: each line of the copy is its own balanced block. */}
+              <p className="mt-3 max-w-[56ch] text-body text-ink-muted">
+                {t(`${current}.subtitle`)
+                  .split('\n')
+                  .map((line) => (
+                    <span key={line} className="block text-balance">
+                      {line}
+                    </span>
+                  ))}
+              </p>
 
               <div className="mt-8 w-full">
                 {current === 'language' && (
@@ -94,8 +109,8 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                       onLocaleChange(locale);
                     }}
                     choices={[
-                      { value: 'de', title: 'Deutsch', hint: 'Deutschland, Österreich, Schweiz' },
-                      { value: 'en', title: 'English', hint: 'International' },
+                      { value: 'de', title: 'Deutsch', icon: <Flag country="de" /> },
+                      { value: 'en', title: 'English', icon: <Flag country="us" /> },
                     ]}
                   />
                 )}

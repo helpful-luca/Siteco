@@ -8,6 +8,7 @@ export { DelayedSpinner } from './delayed-spinner';
 export { Dialog, DialogClose } from './dialog';
 export { ErrorBoundary } from './error-boundary';
 export { ErrorId } from './error-id';
+export { Flag } from './flag';
 export { FormGroup, FormRow, FormText } from './grouped-list';
 export { HoverCard } from './hover-card';
 export {
@@ -30,3 +31,5 @@ export { TextInput } from './text-input';
 export { ThemeThumbnail } from './theme-thumbnail';
 export { ToolbarButton } from './toolbar-button';
 export { Tooltip, TooltipProvider } from './tooltip';
+export { Typewriter } from './typewriter';
+export { useReducedMotion } from './use-reduced-motion';

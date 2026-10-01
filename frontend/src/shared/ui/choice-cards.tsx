@@ -5,7 +5,15 @@ import { RadioGroup } from '@base-ui/react/radio-group';
 import type { ReactNode } from 'react';
 import { cn } from './cn';
 
-export type Choice<T extends string> = { value: T; title: string; visual?: ReactNode; hint?: string };
+export type Choice<T extends string> = {
+  value: T;
+  title: string;
+  /** A large picture filling the card's top (a theme thumbnail). */
+  visual?: ReactNode;
+  /** A small mark above the title (a flag). */
+  icon?: ReactNode;
+  hint?: string;
+};
 
 type Props<T extends string> = {
   label: string;
@@ -37,6 +45,7 @@ export function ChoiceCards<T extends string>({ label, choices, value, onValueCh
           )}
         >
           {choice.visual}
+          {choice.icon}
           <span className="flex flex-col gap-1">
             <span className="text-body font-medium">{choice.title}</span>
             {choice.hint && <span className="text-caption text-ink-muted">{choice.hint}</span>}
