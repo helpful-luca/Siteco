@@ -14,7 +14,6 @@ export function PrivacySection() {
 
   return (
     <div className="flex flex-col gap-8">
-      <p className="max-w-[60ch] text-reading text-ink-muted">{t('intro')}</p>
       <FormGroup title={t('local')}>
         <FormText>{t('localDocuments')}</FormText>
         <FormText>{t('localChats')}</FormText>

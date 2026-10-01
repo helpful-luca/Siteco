@@ -34,7 +34,7 @@ export function AboutSection() {
         <FormRow label={t('scan')}>{value(t('scanOn'))}</FormRow>
       </FormGroup>
 
-      <FormGroup title={t('models')} footer={t('modelsFooter')}>
+      <FormGroup title={t('models')}>
         {config.models.map((model) => (
           <FormRow
             key={model.id}

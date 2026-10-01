@@ -78,7 +78,7 @@ describe('SourceView', () => {
     const imprecise = { ...CHUNK, precise_highlight: false, sentences: CHUNK.sentences.map((s) => ({ ...s, rects: [] })) };
     setup(SOURCE, { '/api/documents/d1/chunks/c1': () => Response.json(imprecise) });
     expect(await screen.findByRole('note')).toHaveTextContent(
-      'Die genaue Stelle können wir hier nicht markieren. Du findest sie auf Seite 4.',
+      'Die Stelle lässt sich hier nicht markieren. Du findest sie auf Seite 4.',
     );
     expect(viewer.props).toMatchObject({ marks: [], passage: CHUNK.text });
   });

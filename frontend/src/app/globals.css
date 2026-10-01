@@ -235,6 +235,22 @@ html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
     background-attachment: fixed;
   }
 
+  /*
+   * Line breaks: headings and short centred lines balance their lines, running text avoids a
+   * lone last word (no widows). Utilities (`text-wrap`, `text-nowrap`) still win over this layer.
+   */
+  :where(h1, h2, h3, h4, h5, h6, caption, figcaption, legend, .text-center) {
+    text-wrap: balance;
+  }
+
+  :where(p, li, dd, dt, blockquote, td, th, label) {
+    text-wrap: pretty;
+  }
+
+  :where(.text-center) :where(p, span) {
+    text-wrap: balance;
+  }
+
   /* Everything pressable shows the hand cursor; disabled controls say so. */
   :is(button, [role='button'], [role='radio'], [role='switch'], [role='tab'], [role='option'],
       [role='menuitem'], a[href], summary, select, label:has(input[type='radio'], input[type='checkbox'])) {

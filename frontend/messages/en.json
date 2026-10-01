@@ -6,25 +6,25 @@
   },
   "startup": {
     "starting": "The app is starting.",
-    "startingHint": "The search model is loading. This only takes a moment.",
+    "startingHint": "The search model is loading.",
     "unavailable": "The server is not reachable right now.",
     "unavailableHint": "Start the app with docker compose up, then try again.",
     "retry": "Try again"
   },
   "banner": {
-    "missingKey": "No API key configured. Search and sources work, answers do not yet.",
+    "missingKey": "No API key set. Search and sources work, answers do not.",
     "missingKeyHint": "Add your API key under Settings > Models.",
     "reconnecting": "The connection to the server was lost.",
-    "reconnectingHint": "We'll keep trying automatically. Anything you typed stays here.",
+    "reconnectingHint": "The app keeps trying automatically. Your input stays here.",
     "retryNow": "Try now",
     "reconnected": "The connection is back.",
     "offline": "You're offline.",
-    "offlineHint": "Your library and search keep working. Claude needs an internet connection for answers.",
+    "offlineHint": "Library and search keep working. Answers need an internet connection.",
     "invalidKey": "The Claude API key isn't accepted. Search and sources keep working.",
     "invalidKeyHint": "Check the API key under Settings > Models.",
     "budget": "This demo's daily budget is used up. Your library stays available.",
     "billing": "The API account's credit or spend limit has been reached. Your library stays available.",
-    "billingHint": "Check billing in the Claude Console, then try again.",
+    "billingHint": "Check billing in the Claude Console.",
     "budgetHint": "You can ask again from {time}. The limit is DAILY_BUDGET_USD in the .env file.",
     "keySettings": "Enter key"
   },
@@ -113,12 +113,12 @@
     "SUMMARY_PARTIAL": "There is too much text for a full summary. The answer is based on the most relevant passages.",
     "NO_CITATIONS": "This answer has no citations. Please double-check it.",
     "ANSWER_TRUNCATED": "The answer was very long and got cut off.",
-    "LLM_REFUSED": "Claude can't answer this request. Feel free to rephrase it.",
-    "LLM_NOT_CONFIGURED": "Without an API key we show the matching passages from your documents, but no answer.",
+    "LLM_REFUSED": "Claude can't answer this request. Try rephrasing it.",
+    "LLM_NOT_CONFIGURED": "Without an API key there is no answer, only the matching passages from your documents.",
     "MODEL_SWITCHED": "This answer was written by {new} instead of {old}.",
     "PAGES_OCR": "{count, plural, one {# scanned page was read with text recognition. Highlights there may be less exact.} other {# scanned pages were read with text recognition. Highlights there may be less exact.}}",
-    "OCR_RUNNING": "Recognizing text on scanned pages, now page {page} of {pages}. This takes a little longer.",
-    "HIGHLIGHT_UNAVAILABLE": "We can't highlight the exact spot here. It's on page {page}."
+    "OCR_RUNNING": "Recognizing text on scanned pages, page {page} of {pages}.",
+    "HIGHLIGHT_UNAVAILABLE": "The passage can't be highlighted here. It is on page {page}."
   },
   "styleguide": {
     "title": "Design system",
@@ -223,12 +223,12 @@
     "finish": "Get started",
     "language": {
       "title": "Welcome",
-      "subtitle": "Ask your documents and see right away where the answer comes from. First: which language would you like to work in?",
+      "subtitle": "Sprache / Language",
       "label": "Language"
     },
     "appearance": {
       "title": "Appearance",
-      "subtitle": "Light for the day, dark for the evening, or automatic like your system.",
+      "subtitle": "Light, dark or automatic like your system.",
       "label": "Appearance",
       "light": "Light",
       "dark": "Dark",
@@ -236,10 +236,10 @@
     },
     "name": {
       "title": "What should we call you?",
-      "subtitle": "We use it to greet you. You can change it any time in Settings.",
+      "subtitle": "We use it to greet you.\nYou can change it in Settings at any time.",
       "label": "Your name",
-      "placeholder": "First name",
-      "privacy": "Your documents stay on this computer. For an answer, only the matching excerpts are sent to Claude by Anthropic (USA). Anthropic does not train on this data."
+      "placeholder": "Name",
+      "privacy": "Your documents stay on this computer."
     }
   },
   "shell": {
@@ -260,7 +260,7 @@
     "prompt": "What would you like to know today?",
     "dropTitle": "Add documents",
     "dropText": "Drag files here or choose them. The files belong to this chat, and to your library if you like.",
-    "hint": "As soon as a document is ready, you can ask questions about it here. Every answer shows where it is in the document.",
+    "hint": "As soon as a document is ready, you can ask questions about it here.",
     "untitled": "New chat",
     "suggestionsLabel": "Suggestions",
     "suggestions": {
@@ -376,7 +376,7 @@
       "addDocuments": "Add documents",
       "dismiss": "Dismiss note",
       "attach": "Add documents",
-      "offline": "The server isn't responding right now. Your question stays here, we'll keep trying automatically.",
+      "offline": "The server isn't responding. Your question stays here.",
       "waitOver": "The pause is over. You can send again.",
       "chooseModel": "Choose model",
       "newChat": "New chat"
@@ -393,9 +393,8 @@
       "tier": {
         "fast": "Fast and affordable",
         "balanced": "Balanced",
-        "strongest": "Most thorough, pricier"
+        "strongest": "Most thorough"
       },
-      "price": "${input} input, ${output} output per million tokens",
       "noKey": "Without an API key no model answers, you get the passages.",
       "unavailable": "Not available right now",
       "secondLabel": "Second model",
@@ -488,7 +487,7 @@
     },
     "empty": {
       "title": "Your library is empty",
-      "text": "Drag PDFs, text, Markdown or HTML files here or choose them. Then you can ask questions about them.",
+      "text": "Drag PDFs, text, Markdown or HTML files here or choose them.",
       "choose": "Choose files",
       "hint": "Up to {limit} per file. Every file is checked for malware before it is stored.",
       "hintNoLimit": "Every file is checked for malware before it is stored."
@@ -556,7 +555,7 @@
     },
     "import": {
       "title": "Import from a link",
-      "text": "A PDF, a web page or a text file from the internet. The app downloads it and checks it like any other file.",
+      "text": "PDF, web page or text file. It is downloaded and checked like any other file.",
       "label": "Link",
       "placeholder": "https://",
       "action": "Import",
@@ -615,7 +614,7 @@
   },
   "errorScreen": {
     "title": "This view can't be shown right now.",
-    "text": "Your documents and chats are safe. Try again, it usually works the second time.",
+    "text": "Your documents and chats are safe. Try again.",
     "retry": "Try again",
     "home": "Go to a new chat"
   },
@@ -637,13 +636,13 @@
       "languageFooter": "Answers come in the language of your question. Quotes stay in the language of the document.",
       "name": "Greeting",
       "nameLabel": "Your name",
-      "namePlaceholder": "First name",
-      "nameFooter": "Only for the greeting. Your name stays on this computer and is never sent to Claude.",
+      "namePlaceholder": "Name",
+      "nameFooter": "Only for the greeting. It stays on this computer.",
       "saved": "Saved"
     },
     "appearance": {
       "title": "Appearance",
-      "footer": "Automatic follows your system and switches between light and dark with it."
+      "footer": "Automatic follows your system."
     },
     "models": {
       "default": "Default model",
@@ -701,20 +700,19 @@
       "cancel": "Cancel"
     },
     "privacy": {
-      "intro": "Short and honest: what happens to your data.",
       "local": "Stays on this computer",
       "localDocuments": "Your documents, their text and the search data.",
       "localChats": "Your chats and every answer.",
       "localProcessing": "Text recognition for scans and the virus scan. Both run here, without a cloud service.",
-      "localName": "Your name. It is only used for the greeting.",
+      "localName": "Your name, only for the greeting.",
       "sent": "Goes to Anthropic in the USA",
       "sentQuestion": "For an answer, your question, the latest messages of the chat and the matching passages from your documents go to Claude.",
-      "sentSmall": "If your selection is small, the whole document goes along. The answer's details then say so.",
+      "sentSmall": "If your selection is small, the whole document is sent.",
       "sentNever": "Your name and the files themselves are never sent.",
       "anthropic": "At Anthropic",
       "anthropicText": "According to its policy, Anthropic keeps API requests for up to 30 days, for example to detect abuse, and does not train models on them.",
       "telemetry": "No telemetry",
-      "telemetryText": "The app loads no fonts, scripts or images from other servers and collects no usage data. The built-in telemetry of Next.js, Hugging Face and onnxruntime is switched off.",
+      "telemetryText": "No usage data, no content from other servers. The telemetry of Next.js, Hugging Face and onnxruntime is switched off.",
       "scan": "Virus scan",
       "scanOn": "ClamAV checks every file on this computer before it enters the library.",
       "rights": "Your rights",
@@ -740,7 +738,6 @@
       "scan": "Virus scan",
       "scanOn": "On",
       "models": "Models and prices",
-      "modelsFooter": "Prices in US dollars according to Anthropic. What an answer cost is shown in its details.",
       "more": "More",
       "setup": "Setup",
       "setupText": "Choose language, appearance and name again",

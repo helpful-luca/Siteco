@@ -13,7 +13,7 @@ const TEXT = {
   },
   en: {
     title: "The app can't be shown right now.",
-    text: 'Your documents and chats are safe. Please try again.',
+    text: 'Your documents and chats are safe. Try again.',
     retry: 'Try again',
     id: 'Error ID',
   },
