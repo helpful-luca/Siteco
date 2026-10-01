@@ -16,7 +16,7 @@ cd Siteco
 docker compose up --build
 ```
 
-Open http://localhost:3000. The first build downloads about 3 GB (images, the virus scanner and the local embedding model) and takes a few minutes. Later starts take seconds.
+Open http://localhost:3000, or use the [desktop app](#run-as-a-desktop-app) for a separate window. The first build downloads the images, the virus scanner and the local embedding model (about 3.5 GB on disk) and takes a few minutes. Later starts take seconds.
 
 **Add a Claude API key**, either way works:
 
@@ -27,22 +27,31 @@ Without a key the app still works: upload and search are available, and a questi
 
 If port 3000 is taken, start with `APP_PORT=3001 docker compose up --build`. Stop with `docker compose down`; your documents and chats stay in Docker volumes.
 
-## Run locally with npm
+## Run as a desktop app
 
-For development, the backend and the web app run on your machine with hot reload, inside the desktop window.
+The same Docker stack, opened in its own window instead of a browser tab. You need Docker and Node 22.12 or newer.
 
-You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 24, `make` and Docker (only for the virus scanner). Stop the Docker stack first, since both use port 3000.
+```sh
+npm install
+npm run app
+```
+
+The app starts Docker Desktop if it is not running, runs `docker compose up` in the project folder and opens the window once the app answers. The first start builds the images as above and downloads Electron (about 130 MB). Quitting the window leaves the containers running, so the next start is instant. Building an installer for macOS or Windows is described in [desktop/README.md](desktop/README.md).
+
+## Run for development
+
+The backend and the web app run directly on your machine with hot reload, shown in the desktop window.
+
+You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 22.12 or newer, `make` and Docker (only for the virus scanner). Stop the Docker stack first with `docker compose stop`, since both use port 3000.
 
 ```sh
 npm install
 npm run dev
 ```
 
-This starts the virus scanner in Docker, the FastAPI backend on 127.0.0.1:8000, the Next.js dev server on http://localhost:3000 and the Electron window. The first run downloads the embedding model (about 400 MB) and Electron (about 130 MB).
+This starts the virus scanner in Docker, the FastAPI backend on 127.0.0.1:8000, the Next.js dev server on http://localhost:3000 and the Electron window. The first run downloads the embedding model (about 400 MB) and Electron (about 130 MB). The backend reads the same `.env` as Docker, so a key or `LLM_PROVIDER=fake` set there applies here too.
 
 Scanned PDFs need Tesseract outside Docker: `brew install tesseract tesseract-lang` on macOS. Without it, pages without a text layer are marked as not searchable.
-
-To use the app as a desktop window on top of the Docker stack instead, run `npm run app`. Building an installer for macOS or Windows is described in [desktop/README.md](desktop/README.md).
 
 ## How to use it
 
