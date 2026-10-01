@@ -20,12 +20,15 @@ import { appUrl, loadConfig, saveConfig, type AppConfig } from './config';
 import { dockerRunning, launchDockerApp, waitForDocker } from './docker-engine';
 import { locateDocker, locateDockerApp } from './docker-locator';
 import { MESSAGES, pickLang } from './i18n';
-import { menuTemplate } from './menu';
+import { menuTemplate, popupMenuTemplate } from './menu';
 import { checkProjectDir, firstProjectDir, resolveProjectDir } from './project-dir';
 import { RetryBudget } from './retry-budget';
 import { probeServer, waitForApp } from './server-probe';
 import { isSplashAction, SPLASH_CHANNELS, type SplashAction } from './splash-ipc';
 import { runStartup, type StartupState } from './startup';
+import { splashChrome, windowChrome } from './window-chrome';
+import { isFromAppWindow, WINDOW_CHANNELS } from './window-ipc';
+import { diagnoseThisWindows } from './windows-prereqs';
 import { DEFAULT_WINDOW, restoreBounds } from './window-state';
 import {
   hardenContents,
@@ -44,8 +47,8 @@ import {
 const DOCKER_DOWNLOAD_URL = 'https://www.docker.com/products/docker-desktop/';
 /** Matches the app's canvas token (globals.css), so no white flash before the first paint. */
 const CANVAS = { light: '#f2f2f5', dark: '#000000' } as const;
-/** Aligns the traffic lights with the sidebar's search field (inside the 28 px title bar inset). */
-const TRAFFIC_LIGHTS = { x: 24, y: 22 } as const;
+/** Ink on the canvas, for the splash's native caption buttons on Windows. */
+const INK = { light: '#1d1d1f', dark: '#f5f5f7' } as const;
 const SPLASH_SIZE = { width: 520, height: 380 } as const;
 /** The only files the splash scheme serves, with their types. */
 const SPLASH_FILES = new Map([
@@ -90,6 +93,10 @@ function canvasColor(): string {
   return nativeTheme.shouldUseDarkColors ? CANVAS.dark : CANVAS.light;
 }
 
+function inkColor(): string {
+  return nativeTheme.shouldUseDarkColors ? INK.dark : INK.light;
+}
+
 function updateConfig(patch: Partial<AppConfig>): void {
   config = { ...config, ...patch };
   saveConfig(configFile, config);
@@ -117,21 +124,57 @@ const secureWebPreferences = {
 
 // Menu ------------------------------------------------------------------------------------------
 
+function menuActions() {
+  return {
+    dev: DEV,
+    appReady: Boolean(mainWindow),
+    openSettings: () => {
+      if (!mainWindow) return;
+      void mainWindow.loadURL(`${APP_URL}/settings`);
+      mainWindow.show();
+    },
+    stopServices: () => void stopServices(),
+  };
+}
+
 function buildMenu(): void {
-  Menu.setApplicationMenu(
-    Menu.buildFromTemplate(
-      menuTemplate(t, {
-        dev: DEV,
-        appReady: Boolean(mainWindow),
-        openSettings: () => {
-          if (!mainWindow) return;
-          void mainWindow.loadURL(`${APP_URL}/settings`);
-          mainWindow.show();
-        },
-        stopServices: () => void stopServices(),
-      }),
-    ),
-  );
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(t, menuActions())));
+}
+
+// Window controls (the app's own title bar on Windows, double click on the drag strip) ------
+
+function registerWindowIpc(): void {
+  const fromApp = (event: Electron.IpcMainInvokeEvent) =>
+    isFromAppWindow(
+      {
+        sender: event.sender,
+        frameUrl: event.senderFrame?.url,
+        mainFrame: event.senderFrame !== null && event.senderFrame === event.sender.mainFrame,
+      },
+      mainWindow?.webContents,
+      APP_ORIGIN,
+    );
+  ipcMain.handle(WINDOW_CHANNELS.minimize, (event) => {
+    if (fromApp(event)) mainWindow?.minimize();
+  });
+  ipcMain.handle(WINDOW_CHANNELS.toggleMaximize, (event) => {
+    if (!fromApp(event) || !mainWindow) return false;
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+    return mainWindow.isMaximized();
+  });
+  ipcMain.handle(WINDOW_CHANNELS.close, (event) => {
+    if (fromApp(event)) mainWindow?.close();
+  });
+  ipcMain.handle(WINDOW_CHANNELS.isMaximized, (event) => fromApp(event) && Boolean(mainWindow?.isMaximized()));
+  ipcMain.handle(WINDOW_CHANNELS.menu, (event) => {
+    if (!fromApp(event) || !mainWindow) return;
+    Menu.buildFromTemplate(popupMenuTemplate(t, menuActions())).popup({ window: mainWindow });
+  });
+}
+
+function sendMaximized(win: BrowserWindow): void {
+  if (!win.isDestroyed()) win.webContents.send(WINDOW_CHANNELS.maximized, win.isMaximized());
 }
 
 // Splash ----------------------------------------------------------------------------------------
@@ -153,7 +196,7 @@ function showSplash(): BrowserWindow {
     maximizable: false,
     fullscreenable: false,
     title: t.appName,
-    titleBarStyle: 'hiddenInset',
+    ...splashChrome(process.platform, canvasColor(), inkColor()),
     backgroundColor: canvasColor(),
     webPreferences: { ...secureWebPreferences, spellcheck: false, preload: join(__dirname, 'splash-preload.js') },
   });
@@ -259,12 +302,15 @@ function openMainWindow(): void {
     minHeight: DEFAULT_WINDOW.minHeight,
     show: false,
     title: t.appName,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: TRAFFIC_LIGHTS,
+    ...windowChrome(process.platform),
     backgroundColor: canvasColor(),
     webPreferences: { ...secureWebPreferences, preload: join(__dirname, 'preload.js') },
   });
   if (bounds.maximized) win.maximize();
+  for (const name of ['maximize', 'unmaximize', 'enter-full-screen', 'leave-full-screen'] as const) {
+    win.on(name as 'maximize', () => sendMaximized(win));
+  }
+  win.webContents.on('did-finish-load', () => sendMaximized(win));
   win.once('ready-to-show', () => {
     loadRetries.reset();
     win.show();
@@ -308,6 +354,7 @@ async function startApp(): Promise<void> {
       locateDocker: () => locateDocker(home),
       dockerRunning: (docker) => dockerRunning(docker, port),
       launchDocker: async () => launchDockerApp(await locateDockerApp(home)),
+      ...(process.platform === 'win32' ? { diagnose: diagnoseThisWindows } : {}),
       waitForDocker: (docker) => waitForDocker(docker, port),
       resolveProject: () =>
         resolveProjectDir({
@@ -369,6 +416,9 @@ if (!app.requestSingleInstanceLock()) {
 
   nativeTheme.on('updated', () => {
     for (const win of BrowserWindow.getAllWindows()) win.setBackgroundColor(canvasColor());
+    if (process.platform === 'win32' && splash && !splash.isDestroyed()) {
+      splash.setTitleBarOverlay({ color: canvasColor(), symbolColor: inkColor() });
+    }
   });
 
   app.on('before-quit', () => {
@@ -393,6 +443,7 @@ if (!app.requestSingleInstanceLock()) {
     hardenSession(session.defaultSession, APP_ORIGIN);
     serveSplashFiles();
     registerSplashIpc();
+    registerWindowIpc();
     buildMenu();
     void startApp();
   });

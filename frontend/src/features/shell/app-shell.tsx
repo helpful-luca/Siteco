@@ -24,7 +24,8 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
   const t = useTranslations('shell');
   const { sidebarOpen, setSidebarOpen } = useUI();
   return (
-    <div className="flex h-dvh gap-3 lg:p-3">
+    // On Windows the title bar with the window buttons sits above (--window-bar).
+    <div className="flex h-dvh gap-3 pt-(--window-bar) lg:p-3 lg:pt-[calc(var(--spacing)*3+var(--window-bar))]">
       <a
         href="#main"
         className="sr-only z-50 rounded-control bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

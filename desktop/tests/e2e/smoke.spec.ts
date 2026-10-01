@@ -29,21 +29,84 @@ test('splash, then the app in a native window', async () => {
     const page = await app.waitForEvent('window', { predicate: (page) => page.url().startsWith(URL) });
     await page.waitForLoadState('domcontentloaded');
 
-    // The preload bridge is all the page gets: no Node, no IPC.
-    expect(await page.evaluate(() => (window as unknown as { desktop: unknown }).desktop)).toEqual({
+    // The preload bridge is all the page gets: a few window commands, no Node, no generic IPC.
+    const bridge = await page.evaluate(() => {
+      const desktop = (window as unknown as { desktop: Record<string, unknown> }).desktop;
+      const controls = desktop.window as Record<string, unknown>;
+      return {
+        isDesktop: desktop.isDesktop,
+        platform: desktop.platform,
+        keys: Object.keys(desktop).sort(),
+        window: Object.keys(controls).sort(),
+        frozen: Object.isFrozen(desktop) && Object.isFrozen(controls),
+      };
+    });
+    expect(bridge).toEqual({
       isDesktop: true,
       platform: process.platform,
+      keys: ['isDesktop', 'platform', 'window'],
+      window: ['close', 'isMaximized', 'minimize', 'onMaximizedChange', 'openMenu', 'toggleMaximize'],
+      frozen: true,
     });
     expect(await page.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined');
     expect(await page.evaluate(() => typeof (globalThis as { process?: unknown }).process)).toBe('undefined');
 
-    // The UI leaves room for the traffic lights and drags the window by its title bar.
+    // The UI leaves room for the traffic lights and drags the window by its top strip.
     await expect(page.locator('html')).toHaveAttribute('data-desktop', '');
+    await expect(page.locator('html')).toHaveAttribute('data-platform', process.platform);
     const inset = await page.evaluate(() =>
       getComputedStyle(document.documentElement).getPropertyValue('--titlebar-inset').trim(),
     );
-    expect(inset).toBe('28px');
-    await expect(page.locator('.drag-region').first()).toBeAttached();
+    expect(inset).toBe(process.platform === 'darwin' ? '28px' : '0px');
+    const strip = await page.evaluate(() => {
+      const element = document.querySelector<HTMLElement>('.window-drag-strip')!;
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      // Before every control in the document, so Electron cuts the controls out of it.
+      const controls = Array.from(document.querySelectorAll('button, a[href], input, [role]'));
+      return {
+        first: controls.every((control) => element.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING),
+        region: style.getPropertyValue('app-region') || style.getPropertyValue('-webkit-app-region'),
+        zIndex: style.zIndex,
+        top: box.top,
+        height: box.height,
+        width: box.width,
+      };
+    });
+    expect(strip).toMatchObject({ first: true, region: 'drag', zIndex: '-1', top: 0, height: process.platform === 'win32' ? 84 : 52 });
+    expect(strip.width).toBe(await page.evaluate(() => window.innerWidth));
+
+    // Every control in the strip is cut out of the drag area: search, new chat, pickers, links.
+    await page.locator('aside input').first().waitFor();
+    const draggableControls = await page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>('button, a[href], input, textarea, [role="combobox"]'))
+        .filter((element) => {
+          const box = element.getBoundingClientRect();
+          return box.width > 0 && box.top < 52;
+        })
+        .map((element) => {
+          const style = getComputedStyle(element);
+          return { name: element.getAttribute('aria-label') ?? element.textContent, region: style.getPropertyValue('app-region') || style.getPropertyValue('-webkit-app-region') };
+        })
+        .filter((control) => control.region !== 'no-drag'),
+    );
+    expect(draggableControls).toEqual([]);
+
+    // Window commands from the page reach the window (double click and the Windows buttons).
+    const maximizedBefore = await page.evaluate(() =>
+      (window as unknown as { desktop: { window: { isMaximized(): Promise<boolean> } } }).desktop.window.isMaximized(),
+    );
+    expect(typeof maximizedBefore).toBe('boolean');
+    const toggled = await page.evaluate(() =>
+      (window as unknown as { desktop: { window: { toggleMaximize(): Promise<boolean> } } }).desktop.window.toggleMaximize(),
+    );
+    expect(toggled).toBe(!maximizedBefore);
+    expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().some((win) => win.isMaximized()))).toBe(
+      toggled,
+    );
+    await page.evaluate(() =>
+      (window as unknown as { desktop: { window: { toggleMaximize(): Promise<boolean> } } }).desktop.window.toggleMaximize(),
+    );
 
     // Window rules: popups are denied.
     expect(await page.evaluate(() => window.open('https://example.com') === null)).toBe(true);

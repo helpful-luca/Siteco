@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { WindowControls, WindowDragStrip } from '@/features/shell';
 import { QueryProvider } from '@/shared/api/query-provider';
 import { DESKTOP_SCRIPT } from '@/shared/desktop/desktop-script';
 import { PreferencesProvider } from '@/shared/preferences/preferences';
@@ -33,10 +34,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: DESKTOP_SCRIPT }} />
       </head>
       <body>
+        {/* First in the document: controls that follow are cut out of its drag area. */}
+        <WindowDragStrip />
         <NextIntlClientProvider>
           <QueryProvider>
             <PreferencesProvider initial={preferences}>{children}</PreferencesProvider>
           </QueryProvider>
+          <WindowControls />
         </NextIntlClientProvider>
       </body>
     </html>

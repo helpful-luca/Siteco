@@ -8,7 +8,10 @@ vi.mock('next/headers', () => ({
 }));
 vi.mock('next/font/google', () => ({ Inter: () => ({ variable: 'font-inter' }) }));
 vi.mock('next-intl/server', () => ({ getTranslations: async () => (key: string) => key }));
-vi.mock('next-intl', () => ({ NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children }));
+vi.mock('next-intl', () => ({
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  useTranslations: () => (key: string) => key,
+}));
 
 const { default: RootLayout } = await import('./layout');
 
@@ -61,5 +64,11 @@ describe('root layout: first HTML without a flash', () => {
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))));
     const html = await renderLayout();
     expect(html).toMatch(/<html lang="de" class="font-inter"/);
+  });
+
+  it('puts the window drag strip at the start of the body, before any control', async () => {
+    cookieJar = { locale: 'de', theme: 'dark', onboarded: '1' };
+    const html = await renderLayout();
+    expect(html).toMatch(/<body><div aria-hidden="true" class="window-drag-strip"><\/div>/);
   });
 });

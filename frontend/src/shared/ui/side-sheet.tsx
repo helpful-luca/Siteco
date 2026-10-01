@@ -26,7 +26,8 @@ export function SideSheet({ side, label, open, onOpenChange, className, children
           initialFocus={popup}
           aria-label={label}
           className={cn(
-            'fixed top-2 bottom-2 flex outline-none',
+            // Below the Windows title bar (--window-bar, 0 elsewhere), so its buttons stay usable.
+            'fixed top-[calc(var(--spacing)*2+var(--window-bar))] bottom-2 flex outline-none',
             'transition-[translate,opacity] duration-300 ease-out-soft',
             'data-starting-style:opacity-0 data-ending-style:opacity-0',
             side === 'left'

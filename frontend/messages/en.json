@@ -253,7 +253,14 @@
     "chats": "Chats",
     "openSidebar": "Show sidebar",
     "closePanel": "Close panel",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "window": {
+      "menu": "Menu",
+      "minimize": "Minimize",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "close": "Close"
+    }
   },
   "chat": {
     "greeting": "Hello",

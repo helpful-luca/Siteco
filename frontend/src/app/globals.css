@@ -59,11 +59,13 @@
 }
 
 /*
- * Electron (phase 12) marks <html data-desktop> before first paint (shared/desktop). The title
- * bar then leaves room for the traffic lights and drags the window.
+ * Electron marks <html data-desktop data-platform> before first paint (shared/desktop). macOS:
+ * the title bar leaves room for the traffic lights. Windows: a 32 px title bar above the app
+ * with the app's own window buttons (shell/window-chrome.tsx).
  */
 :root {
   --titlebar-inset: 0px;
+  --window-bar: 0px;
   /* Page gutter: the one left edge for banner, title, toolbar and content (`px-gutter`). */
   --gutter: 16px;
 }
@@ -84,12 +86,42 @@ html[data-desktop] {
   --titlebar-inset: 28px;
 }
 
+html[data-desktop][data-platform='win32'] {
+  --titlebar-inset: 0px;
+  --window-bar: 32px;
+}
+
+/*
+ * The top strip moves the window (about 52 px: over the sidebar next to the traffic lights,
+ * the chat header and the side panel header). One fixed element, first in <body> and painted
+ * first (z-index -1, under the page): however Chromium orders the regions (document or paint
+ * order), the strip is added to the drag area first and every control cut out after it. The
+ * page lies above it, so it never receives a click itself.
+ */
+.window-drag-strip {
+  display: none;
+}
+
+html[data-desktop] .window-drag-strip {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: calc(var(--spacing) * 13 + var(--window-bar));
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
 html[data-desktop] .drag-region {
   -webkit-app-region: drag;
   app-region: drag;
 }
 
-html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
+/* Every control stays clickable inside a drag area: buttons, fields, links, pickers, menus. */
+html[data-desktop]
+  :is(button, a[href], input, textarea, select, label, summary, [contenteditable='true'], [data-no-drag],
+    [role='button'], [role='radio'], [role='switch'], [role='tab'], [role='combobox'], [role='menuitem'],
+    [role='option'], [role='slider'], [role='checkbox'], [role='searchbox'], [role='textbox']) {
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -107,6 +139,8 @@ html[data-desktop] .drag-region :is(button, a, input, label, [role]) {
   --color-sodium-ink: var(--c-sodium-ink);
   --color-danger: var(--c-danger);
   --color-success: var(--c-success);
+  /* The Windows close button's hover red, the same in light and dark (Windows 11 convention). */
+  --color-caption-close: #c42b1c;
   --color-hairline: var(--c-hairline);
   --color-hairline-strong: var(--c-hairline-strong);
   --color-fill: var(--c-fill);
