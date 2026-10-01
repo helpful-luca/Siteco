@@ -55,13 +55,15 @@ export function ChatFrame({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      {header}
-      {/* Outside the scrolling list, so it stays put; an outage is told in the composer note instead. */}
-      <div className="shrink-0 px-gutter">
-        <div className="mx-auto max-w-reading">
-          <GlobalBanner className="mt-2 mb-2" omit={[RECONNECTING_BANNER]} />
-        </div>
+      {/*
+        The banner looks and sits as on every other page (Page): at the top, page wide, 24 px above
+        what follows (12 here plus the header's own 12). Outside the scrolling list, so it stays put;
+        an outage is told in the composer note instead.
+      */}
+      <div className="mx-auto w-full max-w-[calc(var(--container-page)+2*var(--gutter))] shrink-0 px-gutter pt-3 pb-3 empty:hidden">
+        <GlobalBanner omit={[RECONNECTING_BANNER]} />
       </div>
+      {header}
       {/*
         `relative` keeps absolutely positioned children (screen reader text) inside this scroller;
         without it they belonged to the frame and made <main> scroll with a visible bar.
