@@ -32,6 +32,8 @@
   --c-glass-edge: rgb(255 255 255 / 0.9);
   --c-glass-dense: rgb(250 250 252 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.12);
+  /* Reaches 12 px below its layer: for glass that floats close to an edge (the composer). */
+  --c-shadow-tight: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 14px -6px rgb(0 0 0 / 0.12);
   --c-light-key: rgb(150 160 180 / 0.16);
   --c-light-fill: rgb(150 165 190 / 0.1);
 }
@@ -61,6 +63,7 @@
   --c-glass-edge: rgb(255 255 255 / 0.06);
   --c-glass-dense: rgb(32 32 36 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --c-shadow-tight: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 14px -6px rgb(0 0 0 / 0.6);
   --c-light-key: rgb(120 135 160 / 0.14);
   --c-light-fill: rgb(80 95 120 / 0.1);
 }
@@ -210,7 +213,12 @@ html[data-desktop]
   border: 1px solid var(--c-hairline);
   box-shadow:
     inset 0 1px 0 0 var(--c-glass-edge),
-    var(--c-shadow);
+    var(--glass-shadow, var(--c-shadow));
+}
+
+/* Glass close to the edge of its scroll area: the soft shadow would be cut off there. */
+@utility glass-tight {
+  --glass-shadow: var(--c-shadow-tight);
 }
 
 /* Denser glass for layers that sit above text (dialogs, tooltips): stays readable. */
