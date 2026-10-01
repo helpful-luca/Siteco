@@ -1,13 +1,13 @@
 'use client';
 
 import { PanelLeft, SquarePen } from 'lucide-react';
-import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import { MotionConfig, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useMediaQuery } from '@/shared/lib/use-media-query';
 import { isApplePlatform, isModShortcut } from '@/shared/lib/shortcut';
-import { Button, buttonStyles, SideSheet, TooltipProvider } from '@/shared/ui';
+import { Button, buttonStyles, cn, SideSheet, TooltipProvider } from '@/shared/ui';
 import { RightPanel } from './right-panel';
 import { Sidebar, SidebarRail } from './sidebar';
 import { SIDEBAR_RAIL, type SidebarLayout } from './sidebar-layout';
@@ -82,35 +82,34 @@ function Frame({ chatList, libraryBadge, palette, children }: Slots & { children
         transition={resizing ? { duration: 0 } : SPRING}
         className="glass specular relative hidden shrink-0 rounded-panel lg:block"
       >
-        {/* Clips the content while the width moves; the glass rim stays outside on the aside. */}
-        <div className="h-full overflow-hidden rounded-[inherit]">
-          <AnimatePresence initial={false} mode="popLayout">
-            {sidebarCollapsed ? (
-              <motion.div
-                key="rail"
-                className="h-full"
-                style={{ width: SIDEBAR_RAIL }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-              >
-                <SidebarRail />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="panel"
-                className="h-full"
-                style={{ width: sidebarWidth }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-              >
-                <Sidebar chatList={chatList} libraryBadge={libraryBadge} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/*
+          Clips the content while the width moves; the glass rim stays outside on the aside. Both
+          states stay mounted and only cross-fade: remounting the chat list on every toggle cost a
+          frame at the start of the animation. The hidden one is inert for keyboard and readers.
+        */}
+        <div className="relative h-full overflow-hidden rounded-[inherit]">
+          <motion.div
+            className="h-full"
+            style={{ width: sidebarWidth }}
+            initial={false}
+            animate={{ opacity: sidebarCollapsed ? 0 : 1 }}
+            transition={{ duration: 0.18 }}
+            inert={sidebarCollapsed}
+            aria-hidden={sidebarCollapsed || undefined}
+          >
+            <Sidebar chatList={chatList} libraryBadge={libraryBadge} />
+          </motion.div>
+          <motion.div
+            className={cn('absolute inset-y-0 left-0', !sidebarCollapsed && 'pointer-events-none')}
+            style={{ width: SIDEBAR_RAIL }}
+            initial={false}
+            animate={{ opacity: sidebarCollapsed ? 1 : 0 }}
+            transition={{ duration: 0.18 }}
+            inert={!sidebarCollapsed}
+            aria-hidden={!sidebarCollapsed || undefined}
+          >
+            <SidebarRail />
+          </motion.div>
         </div>
         {!sidebarCollapsed && <SidebarResizer onResizingChange={setResizing} />}
       </motion.aside>
