@@ -4,6 +4,7 @@ import { BookOpen, Settings, SquarePen } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { useShortcutLabel } from '@/shared/lib/shortcut';
 import { buttonStyles, SearchField, Tooltip } from '@/shared/ui';
 import { NavItem } from './nav-item';
 import { useUI } from './ui-context';
@@ -15,6 +16,7 @@ import { useUI } from './ui-context';
 export function Sidebar({ chatList, onNavigate }: { chatList?: ReactNode; onNavigate?: () => void }) {
   const t = useTranslations('shell');
   const { chatQuery, setChatQuery } = useUI();
+  const shortcut = useShortcutLabel('k');
   return (
     // 12 px from the glass's outer edge (its 1 px border included), so the first row shares its
     // axis with the chat header and the side panel header.
@@ -25,6 +27,9 @@ export function Sidebar({ chatList, onNavigate }: { chatList?: ReactNode; onNavi
           clearLabel={t('clearSearch')}
           value={chatQuery}
           onValueChange={setChatQuery}
+          shortcut={shortcut}
+          aria-keyshortcuts="Meta+K Control+K"
+          data-chat-search=""
           className="flex-1"
         />
         <Tooltip content={t('newChat')}>

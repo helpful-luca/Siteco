@@ -1,16 +1,18 @@
 'use client';
 
-import { FileUp } from 'lucide-react';
+import { CornerDownRight, FileUp } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ImportLinkDialog, useUploads } from '@/features/library';
 import { ApiError, toApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
 import { useBackendDown } from '@/shared/api/use-connection';
 import { usePreferences } from '@/shared/preferences/preferences';
+import { cn } from '@/shared/ui';
 import { useChatSettings } from '../chat-settings';
+import { greetingFor } from '../greeting';
 import { CHATS_KEY, useCreateChat, useDeleteChat } from '../queries';
 import { useStreamActions } from '../stream/stream-provider';
 import { sendQuestion } from '../send-question';
@@ -28,6 +30,12 @@ import { ScopePicker, type ScopeValue } from './scope-picker';
 const NOTICE_ID = 'composer-notice';
 const NEW = 'new';
 const SUGGESTIONS = ['summary', 'specs', 'norms'] as const;
+const noSubscription = () => () => undefined;
+
+/** The time of day greeting, from the viewer's clock; null on the server (its clock may differ). */
+function useGreeting() {
+  return useSyncExternalStore(noSubscription, () => greetingFor(new Date()), () => null);
+}
 
 /**
  * Start of a new chat: a left-aligned greeting (design plan: no card trio). The chat is created on
@@ -44,6 +52,7 @@ export function NewChatView() {
   const settings = useChatSettings();
   // Only for this greeting; the name never goes to the model (annex 11, 5.4).
   const { name } = usePreferences();
+  const greeting = useGreeting();
   const streams = useStreamActions();
   const createChat = useCreateChat();
   const queryClient = useQueryClient();
@@ -173,29 +182,41 @@ export function NewChatView() {
     >
       <div className="flex min-h-[calc(100dvh-var(--spacing)*72)] flex-col">
         <div aria-hidden className="min-h-6 flex-2" />
-        <h2 className="text-title-1 font-semibold wrap-anywhere">
-          {t('greeting')}
+        {/* Fades in once the viewer's clock is known, so the server's greeting never flips. */}
+        <h2
+          className={cn(
+            'text-title-1 font-semibold wrap-anywhere transition-opacity duration-500 ease-out-soft',
+            greeting === null && 'opacity-0',
+          )}
+        >
+          {t(`greeting.${greeting ?? 'day'}`)}
           {name && (
             <>
-              {' '}
+              {', '}
               <bdi>{name}</bdi>
             </>
           )}
         </h2>
-        {readyCount > 0 && <p className="mt-2 text-reading text-ink-muted">{t('ready', { count: readyCount })}</p>}
+        {readyCount > 0 && <p className="mt-1 text-reading text-ink-muted">{t('ready', { count: readyCount })}</p>}
 
         {hasDocuments ? (
           readyCount > 0 && (
-            <ul aria-label={t('suggestionsLabel')} className="mt-8 flex flex-col items-start gap-1">
+            // Plain rows like Spotlight suggestions: a quiet glyph on the text edge, the question,
+            // a fill on hover. The glyph turns to ink with the row.
+            <ul aria-label={t('suggestionsLabel')} className="-mx-3 mt-8 flex flex-col gap-0.5 sm:max-w-md">
               {SUGGESTIONS.map((key) => (
                 <li key={key}>
                   <button
                     type="button"
                     disabled={sending || block !== null || down || waiting}
                     onClick={() => void submit(t(`suggestions.${key}`))}
-                    className="-mx-3 flex h-8 items-center rounded-control px-3 text-body text-ink/85 transition-colors hover:bg-fill hover:text-ink disabled:opacity-50 pointer-coarse:h-11"
+                    className="group flex h-10 w-full items-center gap-3 rounded-control px-3 text-left text-body text-ink/85 transition-colors hover:bg-fill hover:text-ink disabled:opacity-50 pointer-coarse:h-11"
                   >
-                    {t(`suggestions.${key}`)}
+                    <CornerDownRight
+                      aria-hidden
+                      className="size-4 shrink-0 text-ink-muted/70 transition-colors group-hover:text-ink"
+                    />
+                    <span className="min-w-0 truncate">{t(`suggestions.${key}`)}</span>
                   </button>
                 </li>
               ))}

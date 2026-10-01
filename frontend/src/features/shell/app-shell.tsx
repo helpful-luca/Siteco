@@ -3,7 +3,8 @@
 import { PanelLeft, SquarePen } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
+import { isApplePlatform, isModShortcut } from '@/shared/lib/shortcut';
 import { Button, buttonStyles, SideSheet, TooltipProvider } from '@/shared/ui';
 import { RightPanel } from './right-panel';
 import { Sidebar } from './sidebar';
@@ -23,6 +24,29 @@ export function AppShell({ chatList, children }: { chatList?: ReactNode; childre
 function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNode }) {
   const t = useTranslations('shell');
   const { sidebarOpen, setSidebarOpen } = useUI();
+
+  // Command+K (Control+K) searches the chats, like Spotlight: on narrow windows the drawer opens
+  // first and the field is focused once it is there.
+  useEffect(() => {
+    const apple = isApplePlatform();
+    const visibleField = () =>
+      [...document.querySelectorAll<HTMLInputElement>('[data-chat-search]')].find((field) => field.offsetParent !== null);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || !isModShortcut(event, 'k', apple)) return;
+      event.preventDefault();
+      const field = visibleField();
+      if (field) {
+        field.focus();
+        field.select();
+        return;
+      }
+      setSidebarOpen(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => visibleField()?.focus()));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [setSidebarOpen]);
+
   return (
     // In the frameless desktop window the panels start below the window buttons (--window-top).
     <div className="flex h-dvh gap-3 lg:p-3 lg:pt-[calc(var(--spacing)*3+var(--window-top))]">
@@ -32,11 +56,11 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
       >
         {t('skipToContent')}
       </a>
-      <aside aria-label={t('sidebar')} className="glass hidden w-sidebar shrink-0 rounded-panel lg:block">
+      <aside aria-label={t('sidebar')} className="glass specular hidden w-sidebar shrink-0 rounded-panel lg:block">
         <Sidebar chatList={chatList} />
       </aside>
       <SideSheet side="left" label={t('sidebar')} open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <div className="glass-dense w-sidebar max-w-[calc(100vw-var(--spacing)*12)] rounded-panel">
+        <div className="glass-dense specular w-sidebar max-w-[calc(100vw-var(--spacing)*12)] rounded-panel">
           <Sidebar chatList={chatList} onNavigate={() => setSidebarOpen(false)} />
         </div>
       </SideSheet>

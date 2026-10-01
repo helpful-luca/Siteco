@@ -14,10 +14,11 @@ describe('groupChats', () => {
     chat({ id: 'week', updated_at: at(6) }),
   ];
 
-  it('groups into today, this week and older, newest first', () => {
+  it('groups into today, yesterday, this week and older, newest first', () => {
     expect(groupChats(chats, now).map((g) => [g.key, g.chats.map((c) => c.id)])).toEqual([
       ['today', ['today', 'early']],
-      ['week', ['yesterday', 'week']],
+      ['yesterday', ['yesterday']],
+      ['week', ['week']],
       ['older', ['old']],
     ]);
   });

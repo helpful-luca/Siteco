@@ -9,14 +9,16 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> & 
   value: string;
   onValueChange: (value: string) => void;
   clearLabel?: string;
+  /** Key hint shown while the field is empty and unfocused ("⌘K"); hidden on touch screens. */
+  shortcut?: string | null;
 };
 
 /** Search input in the macOS style: a quiet filled field with a leading glass icon. */
-export function SearchField({ label, value, onValueChange, clearLabel, className, ...rest }: Props) {
+export function SearchField({ label, value, onValueChange, clearLabel, shortcut, className, ...rest }: Props) {
   return (
     <label
       className={cn(
-        'flex h-8 min-w-0 cursor-text items-center gap-2 rounded-control bg-fill px-2 text-ink-muted pointer-coarse:h-11',
+        'group flex h-8 min-w-0 cursor-text items-center gap-2 rounded-control bg-fill px-2 text-ink-muted pointer-coarse:h-11',
         'focus-within:ring-2 focus-within:ring-accent/60',
         className,
       )}
@@ -31,6 +33,14 @@ export function SearchField({ label, value, onValueChange, clearLabel, className
         className="w-full min-w-0 bg-transparent text-body text-ink outline-none placeholder:text-ink-muted [&::-webkit-search-cancel-button]:hidden"
         {...rest}
       />
+      {shortcut && !value && (
+        <kbd
+          aria-hidden
+          className="shrink-0 font-sans text-caption text-ink-muted/80 tabular-nums group-focus-within:hidden pointer-coarse:hidden"
+        >
+          {shortcut}
+        </kbd>
+      )}
       {value && clearLabel && (
         <button
           type="button"

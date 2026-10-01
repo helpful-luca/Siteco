@@ -265,7 +265,11 @@
     }
   },
   "chat": {
-    "greeting": "Hello",
+    "greeting": {
+      "morning": "Good morning",
+      "day": "Hello",
+      "evening": "Good evening"
+    },
     "dropTitle": "Add documents",
     "dropText": "Drag files here or choose them.",
     "hint": "As soon as a document is ready, you can ask questions about it here.",
@@ -278,6 +282,7 @@
     },
     "list": {
       "today": "Today",
+      "yesterday": "Yesterday",
       "week": "This week",
       "older": "Older",
       "empty": "No chats yet",
