@@ -76,7 +76,7 @@ test('splash, then the app in a native window', async () => {
     expect(strip.width).toBe(await page.evaluate(() => window.innerWidth));
 
     // Every control in the strip is cut out of the drag area: search, new chat, pickers, links.
-    await page.locator('aside input').first().waitFor();
+    await page.locator('aside a[href="/chat"]').first().waitFor();
     const draggableControls = await page.evaluate(() =>
       Array.from(document.querySelectorAll<HTMLElement>('button, a[href], input, textarea, [role="combobox"]'))
         .filter((element) => {
