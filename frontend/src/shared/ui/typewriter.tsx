@@ -14,27 +14,44 @@ export type TypewriterTiming = {
   gap: number;
 };
 
-export type Frame = { text: string; wait: number };
+export type Phase = 'hold' | 'erase' | 'gap' | 'type' | 'settled';
+export type Frame = { text: string; wait: number; phase: Phase };
 
-const CALM: TypewriterTiming = { type: 110, erase: 55, hold: 2600, gap: 320 };
+const CALM: TypewriterTiming = { type: 95, erase: 42, hold: 2400, gap: 420 };
+/** The settled word keeps a blinking caret this long, then the caret fades out. */
+const SETTLE_BLINK_MS = 3200;
 
 /**
- * Every frame of the animation, computed up front: the first word stays, is erased, the next
- * one is typed, and so on for `switches` changes. The last frame stays (wait Infinity).
+ * A hand types unevenly: each keystroke takes 75 to 125 % of `type`. Derived from the character
+ * and its position, not from Math.random, so the rhythm is the same on every render and in tests.
+ */
+function keystroke(word: string, length: number, type: number): number {
+  const seed = (word.charCodeAt(length - 1) * 37 + length * 101) % 51;
+  return Math.round(type * (0.75 + seed / 100));
+}
+
+/**
+ * Every frame of the animation, computed up front: the first word stays, is erased (faster and
+ * evenly, like a held backspace), a short pause, the next one is typed, and so on for `switches`
+ * changes. The last frame stays (wait Infinity).
  */
 export function typewriterScript(words: readonly string[], switches: number, timing: TypewriterTiming): Frame[] {
   const first = words[0] ?? '';
-  if (words.length < 2 || switches < 1) return [{ text: first, wait: Infinity }];
+  if (words.length < 2 || switches < 1) return [{ text: first, wait: Infinity, phase: 'settled' }];
   const frames: Frame[] = [];
   for (let index = 0; index < switches; index++) {
     const from = words[index % words.length]!;
     const to = words[(index + 1) % words.length]!;
-    frames.push({ text: from, wait: timing.hold });
-    for (let length = from.length - 1; length > 0; length--) frames.push({ text: from.slice(0, length), wait: timing.erase });
-    frames.push({ text: '', wait: timing.gap });
-    for (let length = 1; length < to.length; length++) frames.push({ text: to.slice(0, length), wait: timing.type });
+    frames.push({ text: from, wait: timing.hold, phase: 'hold' });
+    for (let length = from.length - 1; length > 0; length--) {
+      frames.push({ text: from.slice(0, length), wait: timing.erase, phase: 'erase' });
+    }
+    frames.push({ text: '', wait: timing.gap, phase: 'gap' });
+    for (let length = 1; length < to.length; length++) {
+      frames.push({ text: to.slice(0, length), wait: keystroke(to, length, timing.type), phase: 'type' });
+    }
   }
-  frames.push({ text: words[switches % words.length]!, wait: Infinity });
+  frames.push({ text: words[switches % words.length]!, wait: Infinity, phase: 'settled' });
   return frames;
 }
 
@@ -55,24 +72,30 @@ export function Typewriter({ label, words, switches = 4, timing = CALM }: Props)
   const reduced = useReducedMotion();
   const [frames] = useState(() => typewriterScript(words, switches, timing));
   const [index, setIndex] = useState(0);
+  const [caretGone, setCaretGone] = useState(false);
   const frame = frames[index]!;
+  const settled = frame.phase === 'settled';
 
   useEffect(() => {
-    if (reduced || frame.wait === Infinity) return;
-    const timer = setTimeout(() => setIndex((current) => current + 1), frame.wait);
+    if (reduced) return;
+    const timer = settled
+      ? setTimeout(() => setCaretGone(true), SETTLE_BLINK_MS)
+      : setTimeout(() => setIndex((current) => current + 1), frame.wait);
     return () => clearTimeout(timer);
-  }, [reduced, frame.wait, index]);
+  }, [reduced, settled, frame.wait, index]);
 
   if (reduced) return <>{label}</>;
-  const settled = frame.wait === Infinity;
+  // Solid while keys are pressed (typing, erasing, the short pause), blinking while a word rests.
+  const caret = caretGone ? 'off' : frame.phase === 'hold' || settled ? 'blink' : 'solid';
   return (
     <>
       <span className="sr-only">{label}</span>
       <span aria-hidden className="inline-flex items-baseline">
         {/* A zero-width space keeps the line height while the word is empty. */}
-        <span>{frame.text || '​'}</span>
+        <span>{frame.text || '\u200b'}</span>
         <span
-          className={`ml-0.5 inline-block h-[0.9em] w-0.5 translate-y-[0.1em] self-baseline rounded-full bg-accent transition-opacity duration-500 ${settled ? 'opacity-0' : 'opacity-100'}`}
+          data-caret={caret}
+          className="typewriter-caret ml-0.5 inline-block h-[0.9em] w-0.5 translate-y-[0.1em] self-baseline rounded-full bg-accent"
         />
       </span>
     </>

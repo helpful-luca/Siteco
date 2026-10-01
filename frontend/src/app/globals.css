@@ -349,6 +349,36 @@ html[data-desktop]
   }
 }
 
+/*
+ * The typewriter's caret (shared/ui/typewriter.tsx): solid while typing, a soft macOS-like blink
+ * (about 1 s, fading rather than switching) while a word rests, then it fades out.
+ */
+@keyframes caret-blink {
+  0%,
+  42% {
+    opacity: 1;
+  }
+  58%,
+  92% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.typewriter-caret {
+  transition: opacity 400ms var(--ease-out-soft);
+}
+
+.typewriter-caret[data-caret='blink'] {
+  animation: caret-blink 1060ms ease-in-out infinite;
+}
+
+.typewriter-caret[data-caret='off'] {
+  opacity: 0;
+}
+
 @keyframes progress-sweep {
   from {
     transform: translateX(-100%);
