@@ -6,7 +6,7 @@ Needs Node 22.12 or newer and Docker Desktop.
 
 ## Run from the repository root
 
-    npm install       # root scripts, then `npm ci` in desktop/
+    npm install       # root scripts, then `npm ci` in frontend/ and desktop/
     npm run app       # builds desktop/ and opens the window
 
 `npm install` does not download Electron itself: the `electron` package has no install script in version 44. The binary (about 130 MB on macOS, about 160 MB on Windows) is downloaded the first time Electron runs, so on the first `npm run app`, and kept in Electron's cache (`~/Library/Caches/electron` on macOS, `%LOCALAPPDATA%\electron\Cache` on Windows).
