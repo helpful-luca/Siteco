@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { type KeyboardEvent, useId, useRef, useState } from 'react';
+import { type KeyboardEvent, useRef, useState } from 'react';
+import { API_KEY_FIELD_ID, WORKSPACE_FIELD_ID } from '@/features/shell';
 import { toApiError } from '@/shared/api/errors';
 import { useCodeText } from '@/shared/i18n/use-code-text';
 import { Button, cn, FormGroup, FormRow, TextInput } from '@/shared/ui';
@@ -16,8 +17,8 @@ export function ApiKeyGroup() {
   const t = useTranslations('settings.apiKey');
   const text = useCodeText();
   const cost = useCostFormat();
-  const fieldId = useId();
-  const workspaceFieldId = useId();
+  const fieldId = API_KEY_FIELD_ID;
+  const workspaceFieldId = WORKSPACE_FIELD_ID;
   const workspaceField = useRef<HTMLInputElement>(null);
   const { data: key } = useApiKey();
   const { data: workspace } = useWorkspace();

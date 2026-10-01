@@ -12,8 +12,6 @@ type Props = {
   className?: string;
   /** Banners this page shows in its own words (see GlobalBanner `omit`). */
   omitBanners?: readonly string[];
-  /** Banners shown without their button, because it would lead to this page (GlobalBanner `withoutAction`). */
-  bannersWithoutAction?: readonly string[];
   children: ReactNode;
 };
 
@@ -21,7 +19,7 @@ type Props = {
  * The page column inside <main>. Banner, title, toolbar and content share one left edge
  * (`px-gutter`), and the first line starts 12 px below the top like the sidebar's first row.
  */
-export function Page({ width = 'page', center = false, className, omitBanners, bannersWithoutAction, children }: Props) {
+export function Page({ width = 'page', center = false, className, omitBanners, children }: Props) {
   // The banner stays on top while the page scrolls, on a band of the app's own backdrop that
   // reaches from the window edge to the gap under it, so content disappears behind it. The band's
   // height is --banner-offset: sticky columns under it (the settings list) start and stay below.
@@ -47,7 +45,7 @@ export function Page({ width = 'page', center = false, className, omitBanners, b
       )}
     >
       <div ref={banner} className="app-backdrop sticky top-0 z-20 -mt-3 pt-3 pb-6 empty:hidden">
-        <GlobalBanner omit={omitBanners} withoutAction={bannersWithoutAction} />
+        <GlobalBanner omit={omitBanners} />
       </div>
       {center ? (
         <>

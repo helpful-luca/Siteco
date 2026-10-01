@@ -1,7 +1,7 @@
 export { AppShell } from './app-shell';
 export { ConnectionWatcher } from './connection-watcher';
 export { ErrorScreen } from './error-screen';
-export { GlobalBanner, KEY_BANNERS, RECONNECTING_BANNER } from './global-banner';
+export { API_KEY_FIELD_ID, GlobalBanner, RECONNECTING_BANNER, WORKSPACE_FIELD_ID } from './global-banner';
 export { Page } from './page';
 export { RightPanel } from './right-panel';
 export { parseSidebarLayout, SIDEBAR_COOKIE, SIDEBAR_WIDTH_COOKIE } from './sidebar-layout';

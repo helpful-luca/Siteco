@@ -291,7 +291,7 @@ describe('SettingsView', () => {
     expect(screen.queryByText(/Console|Restguthaben/)).not.toBeInTheDocument();
   });
 
-  it('names a missing key on every section, on Models without a button to itself', async () => {
+  it('names a missing key with the same banner and button on every section', async () => {
     llmStatus = 'missing_key';
     setup('general');
     expect(await screen.findByText(de.banner.missingKey)).toBeInTheDocument();
@@ -300,7 +300,7 @@ describe('SettingsView', () => {
     setup('models');
     await screen.findByLabelText('API-Key');
     expect(await screen.findByText(de.banner.missingKey)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: de.banner.keySettings })).toBeNull();
+    expect(screen.getByRole('link', { name: de.banner.keySettings })).toBeInTheDocument();
   });
 
   it('asks for the workspace id when Anthropic needs one, and sends it with the key', async () => {

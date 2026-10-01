@@ -17,11 +17,32 @@ type Banner = { key: string; icon: ReactNode; title: string; hint?: string; live
 
 const ICON = 'mt-px size-4 shrink-0';
 const KEY_SETTINGS_HREF = '/settings?section=models';
+/** The key and workspace fields in Settings > Models: on that page the banner button goes there. */
+export const API_KEY_FIELD_ID = 'api-key';
+export const WORKSPACE_FIELD_ID = 'api-key-workspace';
+
+/** A link to the key settings; already there, it moves to the field instead of reloading the page. */
+function KeySettingsLink({ field, children }: { field: string; children: ReactNode }) {
+  return (
+    <Link
+      href={KEY_SETTINGS_HREF}
+      onClick={(event) => {
+        const here = window.location.pathname === '/settings' && new URLSearchParams(window.location.search).get('section') === 'models';
+        const target = here ? document.getElementById(field) : null;
+        if (!target) return;
+        event.preventDefault();
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.focus({ preventScroll: true });
+      }}
+      className={buttonStyles({ size: 'sm', variant: 'secondary' })}
+    >
+      {children}
+    </Link>
+  );
+}
 
 /** The key of the reconnecting banner, for views that show the outage where you act instead. */
 export const RECONNECTING_BANNER = 'reconnecting';
-/** The banners about the Claude key, for the place where the key is entered (it says it there). */
-export const KEY_BANNERS = ['invalidKey', 'missingKey', 'needsWorkspace'] as const;
 
 /**
  * One calm banner for a state of the whole app (annex 10, 3.3: banner, not toast), the most
@@ -32,11 +53,9 @@ type BannerProps = {
   className?: string;
   /** Banners this page does not show at all. */
   omit?: readonly string[];
-  /** Banners shown without their button, on the page the button would lead to. */
-  withoutAction?: readonly string[];
 };
 
-export function GlobalBanner({ className, omit = [], withoutAction = [] }: BannerProps) {
+export function GlobalBanner({ className, omit = [] }: BannerProps) {
   const t = useTranslations('banner');
   const locale = useLocale();
   const { data: config } = useConfig();
@@ -63,11 +82,7 @@ export function GlobalBanner({ className, omit = [], withoutAction = [] }: Banne
     banners.push({ key: 'offline', icon: <WifiOff aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('offline'), hint: t('offlineHint'), live: true });
   }
   // The key is entered in Settings > Models (no restart needed).
-  const keyAction = (
-    <Link href={KEY_SETTINGS_HREF} className={buttonStyles({ size: 'sm', variant: 'secondary' })}>
-      {t('keySettings')}
-    </Link>
-  );
+  const keyAction = <KeySettingsLink field={API_KEY_FIELD_ID}>{t('keySettings')}</KeySettingsLink>;
   if (config?.llm_status === 'invalid_key') {
     banners.push({ key: 'invalidKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('invalidKey'), live: true, action: keyAction });
   }
@@ -77,11 +92,7 @@ export function GlobalBanner({ className, omit = [], withoutAction = [] }: Banne
       icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />,
       title: t('needsWorkspace'),
       live: true,
-      action: (
-        <Link href={KEY_SETTINGS_HREF} className={buttonStyles({ size: 'sm', variant: 'secondary' })}>
-          {t('workspaceSettings')}
-        </Link>
-      ),
+      action: <KeySettingsLink field={WORKSPACE_FIELD_ID}>{t('workspaceSettings')}</KeySettingsLink>,
     });
   }
   if (config?.llm_status === 'missing_key') {
@@ -95,9 +106,8 @@ export function GlobalBanner({ className, omit = [], withoutAction = [] }: Banne
     banners.push({ key: 'billing', icon: <CreditCard aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('billing'), hint: t('billingHint'), live: true });
   }
 
-  const found = banners.find((b) => !omit.includes(b.key));
-  if (!found) return null;
-  const banner = withoutAction.includes(found.key) ? { ...found, action: undefined } : found;
+  const banner = banners.find((b) => !omit.includes(b.key));
+  if (!banner) return null;
   return (
     <div
       role={banner.live ? 'status' : 'note'}

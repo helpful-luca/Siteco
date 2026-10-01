@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Cpu, HardDrive, Keyboard, Paintbrush, Shield
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { KEY_BANNERS, Page } from '@/features/shell';
+import { Page } from '@/features/shell';
 import { cn } from '@/shared/ui';
 import { type Section, SECTIONS, sectionHref } from './sections';
 import { AppearanceSection } from './sections/appearance-section';
@@ -43,8 +43,8 @@ export function SettingsView({ section }: { section: Section | null }) {
   const Content = CONTENT[active];
 
   return (
-    // Models is where the key is entered: the key notice stays, its button would point at itself.
-    <Page bannersWithoutAction={active === 'models' ? KEY_BANNERS : undefined}>
+    // On Models the key banner keeps its button (same height everywhere); it moves to the field.
+    <Page>
       <div className="@container">
         <div className="grid gap-x-10 @2xl:grid-cols-[13rem_minmax(0,1fr)]">
           <nav

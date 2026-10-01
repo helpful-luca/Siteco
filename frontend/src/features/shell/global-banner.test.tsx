@@ -1,14 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
-import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { accountStatus } from '@/shared/api/account-status';
 import { connection } from '@/shared/api/connection';
 import type { ConfigOut } from '@/shared/api/types';
 import de from '../../../messages/de.json';
 import { ConnectionWatcher } from './connection-watcher';
-import { GlobalBanner, KEY_BANNERS } from './global-banner';
+import { API_KEY_FIELD_ID, GlobalBanner } from './global-banner';
 
 function config(patch: Partial<ConfigOut> = {}): ConfigOut {
   return {
@@ -33,14 +33,14 @@ function config(patch: Partial<ConfigOut> = {}): ConfigOut {
   };
 }
 
-function setup(cfg: ConfigOut = config(), banner: ComponentProps<typeof GlobalBanner> = {}) {
+function setup(cfg: ConfigOut = config()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
   client.setQueryData(['config'], cfg);
   const invalidate = vi.spyOn(client, 'invalidateQueries');
   render(
     <NextIntlClientProvider locale="de" messages={de} timeZone="Europe/Berlin">
       <QueryClientProvider client={client}>
-        <GlobalBanner {...banner} />
+        <GlobalBanner />
         <ConnectionWatcher />
       </QueryClientProvider>
     </NextIntlClientProvider>,
@@ -75,10 +75,18 @@ describe('GlobalBanner', () => {
     expect(screen.getByRole('note')).toHaveTextContent(de.banner.missingKey);
   });
 
-  it('still names a missing key on the page where it is entered, without a button to itself', () => {
-    setup(config({ llm_status: 'missing_key' }), { withoutAction: KEY_BANNERS });
-    expect(screen.getByRole('note')).toHaveTextContent(de.banner.missingKey);
-    expect(screen.queryByRole('link', { name: 'API-Key eintragen' })).toBeNull();
+  it('on the key settings page, its button moves to the key field instead of reloading', async () => {
+    window.history.pushState({}, '', '/settings?section=models');
+    const field = document.createElement('input');
+    field.id = API_KEY_FIELD_ID;
+    field.scrollIntoView = vi.fn();
+    document.body.append(field);
+    setup(config({ llm_status: 'missing_key' }));
+    await userEvent.setup().click(screen.getByRole('link', { name: 'API-Key eintragen' }));
+    expect(document.activeElement).toBe(field);
+    expect(field.scrollIntoView).toHaveBeenCalled();
+    field.remove();
+    window.history.pushState({}, '', '/');
   });
 
   it('tells how to fix a key that was rejected at runtime', () => {
