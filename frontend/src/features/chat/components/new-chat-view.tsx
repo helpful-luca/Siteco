@@ -3,6 +3,7 @@
 import { FileUp } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useUploads } from '@/features/library';
 import { ApiError, toApiError } from '@/shared/api/errors';
@@ -10,7 +11,7 @@ import { useConfig } from '@/shared/api/use-config';
 import { useBackendDown } from '@/shared/api/use-connection';
 import { usePreferences } from '@/shared/preferences/preferences';
 import { useChatSettings } from '../chat-settings';
-import { useCreateChat, useDeleteChat } from '../queries';
+import { CHATS_KEY, useCreateChat, useDeleteChat } from '../queries';
 import { useStreamActions } from '../stream/stream-provider';
 import { sendQuestion } from '../send-question';
 import { useComposerBlock } from '../use-composer-state';
@@ -31,7 +32,8 @@ const SUGGESTIONS = ['summary', 'specs', 'norms'] as const;
 /**
  * Start of a new chat: a left-aligned greeting (design plan: no card trio). The chat is created on
  * the first send; once the server confirms the question the URL becomes /chat/<id> while the
- * answer keeps streaming in the provider (annex 11, 8.1).
+ * answer keeps streaming in the provider (annex 11, 8.1). Attaching a file creates the chat at
+ * once, so the file has a chat to belong to, and opens it with the draft.
  */
 export function NewChatView() {
   const t = useTranslations('chat');
@@ -44,6 +46,7 @@ export function NewChatView() {
   const { name } = usePreferences();
   const streams = useStreamActions();
   const createChat = useCreateChat();
+  const queryClient = useQueryClient();
   const deleteChat = useDeleteChat();
   const { block, readyCount } = useComposerBlock();
   const down = useBackendDown();
@@ -69,6 +72,37 @@ export function NewChatView() {
     settings.setDraft(NEW, value);
   };
 
+  const scopeBody = () =>
+    scope.scope === 'all' ? { scope: 'all' as const } : { scope: 'selected' as const, document_ids: scope.documentIds };
+
+  const { addFiles, setDropTarget, openPicker } = uploads;
+  const attachFiles = async (files: File[]) => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    clearRefusal();
+    try {
+      const { chat } = await createChat.mutateAsync(scopeBody());
+      addFiles(files, chat.id);
+      void queryClient.invalidateQueries({ queryKey: CHATS_KEY }); // listed before its first question
+      settings.setDraft(chat.id, draft);
+      setDraft('');
+      if (mounted.current) router.replace(`/chat/${chat.id}`);
+    } catch (error) {
+      if (mounted.current) refuse(toApiError(error));
+    } finally {
+      sendingRef.current = false;
+    }
+  };
+  const attachRef = useRef(attachFiles);
+  useEffect(() => {
+    attachRef.current = attachFiles;
+  });
+  useEffect(() => {
+    setDropTarget({ onFiles: (files) => void attachRef.current(files) });
+    return () => setDropTarget(null);
+  }, [setDropTarget]);
+  const attach = () => openPicker({ onFiles: (files) => void attachRef.current(files) });
+
   const submit = async (question: string) => {
     if (!settings.model || sendingRef.current) return;
     sendingRef.current = true;
@@ -76,9 +110,7 @@ export function NewChatView() {
     clearRefusal();
     let chatId: string | null = null;
     try {
-      const { chat } = await createChat.mutateAsync(
-        scope.scope === 'all' ? { scope: 'all' } : { scope: 'selected', document_ids: scope.documentIds },
-      );
+      const { chat } = await createChat.mutateAsync(scopeBody());
       chatId = chat.id;
       if (!(await sendQuestion(streams, settings, { chatId, question, locale }))) {
         throw new ApiError('STREAM_INTERRUPTED', 0);
@@ -124,7 +156,7 @@ export function NewChatView() {
             onChange={setDraft}
             onSubmit={submit}
             onStop={() => undefined}
-            onAttach={uploads.openPicker}
+            onAttach={attach}
             busy={false}
             sending={sending}
             blocked={block !== null || !settings.model || down || waiting}
@@ -169,7 +201,7 @@ export function NewChatView() {
           <>
             <button
               type="button"
-              onClick={uploads.openPicker}
+              onClick={attach}
               className="group mt-8 flex w-full items-center gap-4 rounded-card border border-dashed border-hairline-strong p-4 text-left transition-colors hover:border-sodium/70 hover:bg-fill"
             >
               <span className="grid size-11 shrink-0 place-items-center rounded-full bg-highlight text-sodium-ink">

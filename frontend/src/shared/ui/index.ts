@@ -19,6 +19,7 @@ export {
   MenuRadioItem,
   MenuSeparator,
 } from './menu';
+export { Popover } from './popover';
 export { ProgressBar } from './progress-bar';
 export { SearchField } from './search-field';
 export { SegmentedControl, type SegmentOption } from './segmented-control';

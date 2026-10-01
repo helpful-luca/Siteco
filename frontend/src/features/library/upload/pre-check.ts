@@ -19,6 +19,13 @@ export function extensionOf(name: string): string {
   return dot < 0 ? '' : name.slice(dot).toLowerCase();
 }
 
+const KINDS = { '.pdf': 'pdf', '.txt': 'txt', '.md': 'md', '.markdown': 'md' } as const;
+
+/** The document kind a file name will get on the server, for the icon before it is there. */
+export function kindOfFileName(name: string): (typeof KINDS)[keyof typeof KINDS] | null {
+  return KINDS[extensionOf(name) as keyof typeof KINDS] ?? null;
+}
+
 export function preCheck(
   file: { name: string; size: number },
   maxUploadMb: number | undefined,

@@ -38,10 +38,12 @@ export function LibraryView() {
   const shownDocuments = documents.filter(
     (d) => matchesQuery(d.filename, query) && matchesFilter(statusGroup(d.status), filter),
   );
-  const shownUploads = uploads.items.filter(
+  // Uploads into a chat show in that chat, not here.
+  const libraryUploads = uploads.items.filter((i) => i.chatId === null);
+  const shownUploads = libraryUploads.filter(
     (i) => matchesQuery(i.file.name, query) && matchesFilter(i.state === 'failed' ? 'failed' : 'working', filter),
   );
-  const empty = documents.length === 0 && uploads.items.length === 0;
+  const empty = documents.length === 0 && libraryUploads.length === 0;
   const totalBytes = documents.reduce((sum, d) => sum + d.size_bytes, 0);
 
   const openDocument = useOpenDocument();
@@ -71,7 +73,7 @@ export function LibraryView() {
           </p>
         </div>
         {!empty && (
-          <Button variant="primary" onClick={uploads.openPicker}>
+          <Button variant="primary" onClick={() => uploads.openPicker()}>
             <Upload aria-hidden />
             {t('upload')}
           </Button>
@@ -97,7 +99,7 @@ export function LibraryView() {
         </div>
       ) : empty ? (
         <div className="mt-6">
-          <LibraryEmpty maxUploadMb={config?.limits.max_upload_mb} onChoose={uploads.openPicker} />
+          <LibraryEmpty maxUploadMb={config?.limits.max_upload_mb} onChoose={() => uploads.openPicker()} />
         </div>
       ) : (
         <>

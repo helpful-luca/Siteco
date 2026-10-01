@@ -11,12 +11,13 @@ function carriesFiles(event: DragEvent): boolean {
 }
 
 /**
- * Full-window drop target. Dropped files always land in the library (annex 11, 8.7), so a drop
- * elsewhere opens the library to show the progress. Never the only way to upload.
+ * Full-window drop target. In a chat, dropped files become that chat's attachments (the chat
+ * registers itself as the drop target); elsewhere they land in the library, and a drop outside
+ * the library opens it to show the progress. Never the only way to upload.
  */
 export function DropOverlay() {
   const t = useTranslations('library.drop');
-  const { addFiles } = useUploads();
+  const { addFiles, dropTarget } = useUploads();
   const router = useRouter();
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
@@ -45,6 +46,10 @@ export function DropOverlay() {
       setVisible(false);
       const files = Array.from(event.dataTransfer?.files ?? []);
       if (files.length === 0) return;
+      if (dropTarget) {
+        dropTarget.onFiles(files);
+        return;
+      }
       addFiles(files);
       if (pathname !== '/library') router.push('/library');
     };
@@ -58,7 +63,7 @@ export function DropOverlay() {
       window.removeEventListener('dragleave', leave);
       window.removeEventListener('drop', drop);
     };
-  }, [addFiles, pathname, router]);
+  }, [addFiles, dropTarget, pathname, router]);
 
   if (!visible) return null;
   return (
@@ -71,8 +76,10 @@ export function DropOverlay() {
           <div className="grid size-16 place-items-center rounded-full bg-highlight text-sodium-ink">
             <FileUp className="size-7" />
           </div>
-          <p className="mt-4 text-title-3 font-semibold">{t('title')}</p>
-          <p className="mt-2 max-w-96 px-6 text-center text-body text-ink-muted">{t('text')}</p>
+          <p className="mt-4 text-title-3 font-semibold">{dropTarget ? t('chatTitle') : t('title')}</p>
+          <p className="mt-2 max-w-96 px-6 text-center text-body text-ink-muted">
+            {dropTarget ? t('chatText') : t('text')}
+          </p>
         </div>
       </div>
     </div>

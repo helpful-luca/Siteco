@@ -251,7 +251,7 @@
     "greeting": "Hallo",
     "prompt": "Was möchtest du heute wissen?",
     "dropTitle": "Dokumente hinzufügen",
-    "dropText": "Zieh Dateien hierher oder wähle sie aus. Alles landet in deiner Bibliothek.",
+    "dropText": "Zieh Dateien hierher oder wähle sie aus. Die Dateien gehören zu diesem Chat, auf Wunsch auch in deine Bibliothek.",
     "hint": "Sobald ein Dokument bereit ist, kannst du hier Fragen dazu stellen. Jede Antwort zeigt, wo sie im Dokument steht.",
     "untitled": "Neuer Chat",
     "suggestionsLabel": "Vorschläge",
@@ -277,7 +277,7 @@
     },
     "delete": {
       "title": "Chat löschen?",
-      "text": "„{title}“ wird mit allen Nachrichten gelöscht. Das lässt sich nicht rückgängig machen.",
+      "text": "„{title}“ wird mit allen Nachrichten und den Dateien gelöscht, die nur in diesem Chat liegen. Das lässt sich nicht rückgängig machen.",
       "running": "Die Antwort, die gerade entsteht, wird dabei gestoppt.",
       "confirm": "Löschen",
       "cancel": "Abbrechen"
@@ -413,7 +413,8 @@
       "tokens": "Tokens",
       "tokensValue": "{input} rein, {output} raus",
       "cost": "Kosten"
-    }
+    },
+    "emptyChat": "Frag etwas zu deinen Dokumenten. Die Anhänge dieses Chats sind immer dabei."
   },
   "library": {
     "title": "Bibliothek",
@@ -495,7 +496,9 @@
     },
     "drop": {
       "title": "Zum Hochladen loslassen",
-      "text": "PDF, TXT und Markdown landen in deiner Bibliothek."
+      "text": "PDF, TXT und Markdown landen in deiner Bibliothek.",
+      "chatTitle": "Zum Anhängen loslassen",
+      "chatText": "Die Dateien gehören zu diesem Chat. Ob sie auch in die Bibliothek sollen, fragen wir gleich."
     },
     "preview": {
       "title": "Dokument",
@@ -524,7 +527,21 @@
       "uploadPaused": "{name}: Upload pausiert"
     },
     "notAddedYet": "noch nicht hinzugefügt",
-    "pauseOver": "Die Pause ist vorbei. Versuch es jetzt noch einmal."
+    "pauseOver": "Die Pause ist vorbei. Versuch es jetzt noch einmal.",
+    "attachments": {
+      "title": "Anhänge dieses Chats",
+      "button": "Anhänge: {count}",
+      "ask": "Auch in die Bibliothek aufnehmen?",
+      "chatOnly": "Nur in diesem Chat",
+      "toLibrary": "In Bibliothek",
+      "willAdd": "Kommt in die Bibliothek",
+      "inLibrary": "In der Bibliothek",
+      "addToLibrary": "Zur Bibliothek hinzufügen",
+      "addToLibraryOf": "{name} zur Bibliothek hinzufügen",
+      "remove": "Aus diesem Chat entfernen",
+      "removeOf": "{name} aus diesem Chat entfernen",
+      "footer": "Was nur in diesem Chat liegt, wird mit dem Chat gelöscht."
+    }
   },
   "markdown": {
     "code": "Code",

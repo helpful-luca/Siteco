@@ -8,7 +8,7 @@ import type { UploadItem } from '../upload/upload-queue';
 import { UploadRow } from './upload-row';
 
 function item(error: UploadItem['error']): UploadItem {
-  return { id: 'u1', file: new File(['x'], 'Datenblatt.pdf'), state: 'failed', loaded: 0, error };
+  return { id: 'u1', file: new File(['x'], 'Datenblatt.pdf'), state: 'failed', loaded: 0, error, chatId: null, toLibrary: null };
 }
 
 function setup(upload: UploadItem) {

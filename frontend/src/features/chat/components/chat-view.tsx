@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { useUploads } from '@/features/library';
+import { AttachmentsButton, AttachmentTray, useUploads } from '@/features/library';
 import { Page } from '@/features/shell';
 import { toApiError } from '@/shared/api/errors';
 import type { Lane } from '@/shared/api/types';
@@ -49,7 +49,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   const updateChat = useUpdateChat();
   const preferAnswer = usePreferAnswer();
   const uploads = useUploads();
-  const { block } = useComposerBlock();
+  const { block } = useComposerBlock(chatId);
   const down = useBackendDown();
 
   const { scrollRef, contentRef, atEnd, scrolled, scrollToEnd, scrollToTop } = useFollowScroll();
@@ -64,6 +64,14 @@ export function ChatView({ chatId }: { chatId: string }) {
     setDraftState(value);
     settings.setDraft(chatId, value);
   };
+
+  // Files dropped on the window while this chat is open become its attachments.
+  const { addFiles, setDropTarget, openPicker } = uploads;
+  useEffect(() => {
+    setDropTarget({ onFiles: (files) => addFiles(files, chatId) });
+    return () => setDropTarget(null);
+  }, [addFiles, setDropTarget, chatId]);
+  const attach = () => openPicker({ chatId });
 
   const list = messages.data?.messages;
   const turns = buildTurns(list ?? [], [runA, runB]);
@@ -228,7 +236,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       tone="info"
       action={
         block === 'noDocuments' ? (
-          <Button size="sm" onClick={uploads.openPicker}>
+          <Button size="sm" onClick={attach}>
             {t('composer.addDocuments')}
           </Button>
         ) : undefined
@@ -248,19 +256,21 @@ export function ChatView({ chatId }: { chatId: string }) {
       onViewHeight={setViewHeight}
       header={
         <ChatHeader title={current ? (current.title ?? t('untitled')) : ''}>
+          <AttachmentsButton chatId={chatId} />
           <ScopePicker value={scope} onChange={changeScope} disabled={!current} />
           <ModelControls />
         </ChatHeader>
       }
       dock={
         <>
+          <AttachmentTray chatId={chatId} />
           {notice}
           <Composer
             value={draft}
             onChange={setDraft}
             onSubmit={submit}
             onStop={() => void streams.stop(chatId)}
-            onAttach={uploads.openPicker}
+            onAttach={attach}
             busy={running}
             sending={sending}
             blocked={block !== null || !settings.model || down || waiting}
@@ -282,6 +292,8 @@ export function ChatView({ chatId }: { chatId: string }) {
             <DelayedSpinner label={t('loading')} className="size-5" />
           </div>
         )
+      ) : list.length === 0 ? (
+        <p className="pt-16 text-reading text-ink-muted">{t('emptyChat')}</p>
       ) : (
         <ol className="flex flex-col gap-12">
           {turns.map((turn) => {

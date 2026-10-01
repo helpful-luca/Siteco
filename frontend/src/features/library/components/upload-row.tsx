@@ -5,15 +5,13 @@ import { useTranslations } from 'next-intl';
 import { useCodeText } from '@/shared/i18n/use-code-text';
 import { useCountdown } from '@/shared/lib/use-countdown';
 import { Button, Countdown, ErrorId, Tooltip } from '@/shared/ui';
-import { extensionOf } from '../upload/pre-check';
+import { kindOfFileName } from '../upload/pre-check';
 import type { UploadItem } from '../upload/upload-queue';
 import { useFormatSize } from '../use-format-size';
 import { FileIcon } from './file-icon';
 import { FileName } from './file-name';
 import { EmptyValue } from './empty-cell';
 import { UploadStatus } from './status-cell';
-
-const KINDS = { '.pdf': 'pdf', '.txt': 'txt', '.md': 'md', '.markdown': 'md' } as const;
 
 type Props = { item: UploadItem; onRetry: (id: string) => void; onDismiss: (id: string) => void };
 
@@ -24,7 +22,7 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
   const text = useCodeText();
   const formatSize = useFormatSize();
   const name = item.file.name;
-  const kind = KINDS[extensionOf(name) as keyof typeof KINDS] ?? null;
+  const kind = kindOfFileName(name);
   const failed = item.state === 'failed';
   const error = failed ? item.error : null;
   const retryAt = error?.retryAt ?? null;

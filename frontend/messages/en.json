@@ -251,7 +251,7 @@
     "greeting": "Hello",
     "prompt": "What would you like to know today?",
     "dropTitle": "Add documents",
-    "dropText": "Drag files here or choose them. They go into your library.",
+    "dropText": "Drag files here or choose them. The files belong to this chat, and to your library if you like.",
     "hint": "As soon as a document is ready, you can ask questions about it here. Every answer shows where it is in the document.",
     "untitled": "New chat",
     "suggestionsLabel": "Suggestions",
@@ -277,7 +277,7 @@
     },
     "delete": {
       "title": "Delete chat?",
-      "text": "“{title}” and all its messages will be deleted. This cannot be undone.",
+      "text": "“{title}”, all its messages and the files that are only in this chat will be deleted. This cannot be undone.",
       "running": "The answer being written right now will be stopped.",
       "confirm": "Delete",
       "cancel": "Cancel"
@@ -413,7 +413,8 @@
       "tokens": "Tokens",
       "tokensValue": "{input} in, {output} out",
       "cost": "Cost"
-    }
+    },
+    "emptyChat": "Ask about your documents. This chat's attachments are always included."
   },
   "library": {
     "title": "Library",
@@ -495,7 +496,9 @@
     },
     "drop": {
       "title": "Release to upload",
-      "text": "PDF, TXT and Markdown go into your library."
+      "text": "PDF, TXT and Markdown go into your library.",
+      "chatTitle": "Release to attach",
+      "chatText": "The files belong to this chat. We will ask whether they should go into the library too."
     },
     "preview": {
       "title": "Document",
@@ -524,7 +527,21 @@
       "uploadPaused": "{name}: upload paused"
     },
     "notAddedYet": "not added yet",
-    "pauseOver": "The pause is over. Try again now."
+    "pauseOver": "The pause is over. Try again now.",
+    "attachments": {
+      "title": "Attachments of this chat",
+      "button": "Attachments: {count}",
+      "ask": "Also add to the library?",
+      "chatOnly": "Only in this chat",
+      "toLibrary": "To library",
+      "willAdd": "Goes into the library",
+      "inLibrary": "In the library",
+      "addToLibrary": "Add to library",
+      "addToLibraryOf": "Add {name} to the library",
+      "remove": "Remove from this chat",
+      "removeOf": "Remove {name} from this chat",
+      "footer": "Files that are only in this chat are deleted with the chat."
+    }
   },
   "markdown": {
     "code": "Code",
