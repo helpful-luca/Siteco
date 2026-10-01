@@ -17,7 +17,7 @@ export function SearchField({ label, value, onValueChange, clearLabel, className
     <label
       className={cn(
         'flex h-8 min-w-0 cursor-text items-center gap-2 rounded-control bg-fill px-2 text-ink-muted pointer-coarse:h-11',
-        'focus-within:ring-2 focus-within:ring-sodium/60',
+        'focus-within:ring-2 focus-within:ring-accent/60',
         className,
       )}
     >

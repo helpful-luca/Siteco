@@ -25,7 +25,7 @@ export function SourcesOnlyCard({ sources, onOpen }: Props) {
             .sort((a, b) => a.index - b.index)
             .map((source) => (
               <li key={source.id} className="flex items-start gap-3 py-3 last:pb-0">
-                <span className="mt-0.5 inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-highlight text-[11px] font-semibold text-sodium-ink tabular-nums">
+                <span className="mt-0.5 inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-fill-strong text-[11px] font-semibold text-ink tabular-nums">
                   {source.index}
                 </span>
                 <div className="min-w-0 flex-1">

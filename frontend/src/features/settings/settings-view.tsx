@@ -1,13 +1,12 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Cpu, HardDrive, Info, Paintbrush, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Cpu, HardDrive, Paintbrush, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Page } from '@/features/shell';
 import { cn } from '@/shared/ui';
 import { type Section, SECTIONS, sectionHref } from './sections';
-import { AboutSection } from './sections/about-section';
 import { AppearanceSection } from './sections/appearance-section';
 import { DataSection } from './sections/data-section';
 import { GeneralSection } from './sections/general-section';
@@ -20,7 +19,6 @@ const ICONS: Record<Section, ReactNode> = {
   models: <Cpu aria-hidden />,
   data: <HardDrive aria-hidden />,
   privacy: <ShieldCheck aria-hidden />,
-  about: <Info aria-hidden />,
 };
 
 const CONTENT: Record<Section, () => ReactNode> = {
@@ -29,7 +27,6 @@ const CONTENT: Record<Section, () => ReactNode> = {
   models: ModelsSection,
   data: DataSection,
   privacy: PrivacySection,
-  about: AboutSection,
 };
 
 /**
@@ -83,7 +80,7 @@ export function SettingsView({ section }: { section: Section | null }) {
                         className={cn(
                           'grid size-7 shrink-0 place-items-center rounded-inner bg-fill-strong text-ink [&_svg]:size-4',
                           '@2xl:size-6 @2xl:bg-transparent @2xl:[&_svg]:opacity-60',
-                          current && '@2xl:text-sodium-ink @2xl:[&_svg]:opacity-100',
+                          current && '@2xl:text-ink @2xl:[&_svg]:opacity-100',
                         )}
                       >
                         {ICONS[id]}
@@ -100,7 +97,7 @@ export function SettingsView({ section }: { section: Section | null }) {
           <div className={cn('min-w-0', section ? 'block' : 'hidden @2xl:block')}>
             <Link
               href="/settings"
-              className="-ml-2 mb-2 inline-flex h-8 items-center gap-1 rounded-control pr-2 text-body text-sodium-ink hover:bg-fill @2xl:hidden pointer-coarse:h-11"
+              className="-ml-2 mb-2 inline-flex h-8 items-center gap-1 rounded-control pr-2 text-body text-accent-ink hover:bg-fill @2xl:hidden pointer-coarse:h-11"
             >
               <ChevronLeft aria-hidden className="size-5" />
               {t('back')}

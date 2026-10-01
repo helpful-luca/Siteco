@@ -21,7 +21,7 @@ const BASE =
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-sodium text-on-sodium shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_1px_2px_rgb(0_0_0/0.15)] hover:brightness-[1.06]',
+    'bg-accent text-on-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_1px_2px_rgb(0_0_0/0.15)] hover:brightness-[1.06]',
   secondary: 'bg-fill text-ink ring-1 ring-inset ring-hairline hover:bg-fill-strong',
   ghost: 'text-ink hover:bg-fill',
   danger: 'text-danger ring-1 ring-inset ring-hairline hover:bg-fill',

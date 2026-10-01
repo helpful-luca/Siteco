@@ -206,9 +206,9 @@ export function NewChatView() {
             <button
               type="button"
               onClick={attach}
-              className="group mt-8 flex w-full items-center gap-4 rounded-card border border-dashed border-hairline-strong p-4 text-left transition-colors hover:border-sodium/70 hover:bg-fill"
+              className="group mt-8 flex w-full items-center gap-4 rounded-card border border-dashed border-hairline-strong p-4 text-left transition-colors hover:border-accent/70 hover:bg-fill"
             >
-              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-highlight text-sodium-ink">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-fill-strong text-ink">
                 <FileUp aria-hidden className="size-5" />
               </span>
               <span className="min-w-0">

@@ -24,7 +24,7 @@ export function Switch({ label, checked, onCheckedChange, disabled, hideLabel, c
         disabled={disabled}
         className={cn(
           'relative inline-flex h-7 w-12 shrink-0 rounded-full bg-fill-strong p-0.5',
-          'transition-colors duration-200 ease-out-soft data-checked:bg-sodium',
+          'transition-colors duration-200 ease-out-soft data-checked:bg-accent',
           // Hit area 64 x 44 on touch, the track stays 48 x 28.
           'pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-2',
           'data-disabled:opacity-40',

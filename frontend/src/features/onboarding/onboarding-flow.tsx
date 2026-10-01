@@ -143,7 +143,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                       maxLength={NAME_MAX_CODE_POINTS}
                       autoComplete="given-name"
                       placeholder={t('name.placeholder')}
-                      className="h-12 rounded-control bg-fill px-4 text-center text-title-3 ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium"
+                      className="h-12 rounded-control bg-fill px-4 text-center text-title-3 ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-accent"
                     />
                     <p className="text-caption text-ink-muted">{t('name.privacy')}</p>
                   </div>

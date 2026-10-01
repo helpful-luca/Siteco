@@ -15,8 +15,8 @@ export function CitationChip({ n, label, active = false, onClick }: Props) {
         'align-middle text-[11px] font-semibold leading-none tabular-nums',
         'transition-[background-color,color,box-shadow] duration-200 ease-out-soft',
         active
-          ? 'bg-sodium text-on-sodium'
-          : 'bg-highlight text-sodium-ink hover:bg-sodium hover:text-on-sodium',
+          ? 'bg-accent text-on-accent'
+          : 'bg-fill-strong text-ink hover:bg-accent hover:text-on-accent',
       )}
     >
       {n}

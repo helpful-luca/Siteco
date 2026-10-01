@@ -72,7 +72,7 @@ export function Typewriter({ label, words, switches = 4, timing = CALM }: Props)
         {/* A zero-width space keeps the line height while the word is empty. */}
         <span>{frame.text || '​'}</span>
         <span
-          className={`ml-0.5 inline-block h-[0.9em] w-0.5 translate-y-[0.1em] self-baseline rounded-full bg-sodium transition-opacity duration-500 ${settled ? 'opacity-0' : 'opacity-100'}`}
+          className={`ml-0.5 inline-block h-[0.9em] w-0.5 translate-y-[0.1em] self-baseline rounded-full bg-accent transition-opacity duration-500 ${settled ? 'opacity-0' : 'opacity-100'}`}
         />
       </span>
     </>

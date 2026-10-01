@@ -40,7 +40,7 @@ export function ChoiceCards<T extends string>({ label, choices, value, onValueCh
             'group flex flex-col items-center gap-3 rounded-card text-center',
             choice.visual ? 'p-2 pb-3' : 'px-4 py-5',
             'bg-fill ring-1 ring-inset ring-hairline transition-[background-color,box-shadow] duration-200 ease-out-soft',
-            'hover:bg-fill-strong data-checked:bg-surface data-checked:ring-2 data-checked:ring-sodium',
+            'hover:bg-fill-strong data-checked:bg-surface data-checked:ring-2 data-checked:ring-accent',
             'dark:data-checked:bg-surface-raised',
           )}
         >

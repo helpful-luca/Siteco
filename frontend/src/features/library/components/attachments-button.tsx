@@ -63,7 +63,7 @@ function AttachmentRow({ chatId, document }: { chatId: string; document: Documen
             aria-label={t('addToLibraryOf', { name })}
             disabled={addToLibrary.isPending}
             onClick={() => addToLibrary.mutate(document.id)}
-            className="-ml-3 text-sodium-ink"
+            className="-ml-3 text-accent-ink"
           >
             {t('addToLibrary')}
           </Button>

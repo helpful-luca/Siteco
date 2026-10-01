@@ -5,7 +5,7 @@
 
 /*
  * Design tokens. Concept: the app shines light on the passage.
- * One warm accent ("sodium", after sodium street lamps), everything else neutral.
+ * One accent (Siteco red), everything else graphite neutral.
  * Contrast pairs are verified by src/shared/ui/tokens.test.ts.
  */
 :root {
@@ -15,22 +15,23 @@
   --c-surface-raised: #ffffff;
   --c-ink: #1d1d1f;
   --c-ink-muted: #6e6e73;
-  --c-sodium: #f0a030;
-  --c-on-sodium: #1d1d1f;
-  --c-sodium-ink: #8a5300;
-  --c-danger: #c4331f;
+  --c-accent: #b61918;
+  --c-on-accent: #ffffff;
+  --c-accent-ink: #b61918;
+  --c-danger: #a84a08;
   --c-success: #1f7a45;
   --c-hairline: rgb(0 0 0 / 0.08);
   --c-hairline-strong: rgb(0 0 0 / 0.14);
   --c-fill: rgb(0 0 0 / 0.045);
   --c-fill-strong: rgb(0 0 0 / 0.08);
-  --c-highlight: rgb(240 160 48 / 0.28);
+  --c-highlight: rgb(250 204 21 / 0.34);
+  --c-mark: #f5d547;
   --c-glass: rgb(255 255 255 / 0.62);
   --c-glass-edge: rgb(255 255 255 / 0.9);
   --c-glass-dense: rgb(250 250 252 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.12);
-  --c-light-key: rgb(255 196 110 / 0.34);
-  --c-light-fill: rgb(170 190 220 / 0.2);
+  --c-light-key: rgb(150 160 180 / 0.16);
+  --c-light-fill: rgb(150 165 190 / 0.1);
 }
 
 .dark {
@@ -40,22 +41,23 @@
   --c-surface-raised: #2c2c2e;
   --c-ink: #f5f5f7;
   --c-ink-muted: #98989d;
-  --c-sodium: #ffb547;
-  --c-on-sodium: #1d1d1f;
-  --c-sodium-ink: #ffc266;
-  --c-danger: #ff6b5e;
+  --c-accent: #d63030;
+  --c-on-accent: #ffffff;
+  --c-accent-ink: #ff7a73;
+  --c-danger: #ffa54c;
   --c-success: #4cd27a;
   --c-hairline: rgb(255 255 255 / 0.09);
   --c-hairline-strong: rgb(255 255 255 / 0.16);
   --c-fill: rgb(255 255 255 / 0.06);
   --c-fill-strong: rgb(255 255 255 / 0.1);
-  --c-highlight: rgb(255 181 71 / 0.3);
+  --c-highlight: rgb(250 204 21 / 0.26);
+  --c-mark: #e8c53a;
   --c-glass: rgb(36 36 40 / 0.55);
   --c-glass-edge: rgb(255 255 255 / 0.12);
   --c-glass-dense: rgb(32 32 36 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 40px -12px rgb(0 0 0 / 0.7);
-  --c-light-key: rgb(255 170 60 / 0.26);
-  --c-light-fill: rgb(90 110 150 / 0.12);
+  --c-light-key: rgb(120 135 160 / 0.14);
+  --c-light-fill: rgb(80 95 120 / 0.1);
 }
 
 /*
@@ -134,9 +136,9 @@ html[data-desktop]
   --color-surface-raised: var(--c-surface-raised);
   --color-ink: var(--c-ink);
   --color-ink-muted: var(--c-ink-muted);
-  --color-sodium: var(--c-sodium);
-  --color-on-sodium: var(--c-on-sodium);
-  --color-sodium-ink: var(--c-sodium-ink);
+  --color-accent: var(--c-accent);
+  --color-on-accent: var(--c-on-accent);
+  --color-accent-ink: var(--c-accent-ink);
   --color-danger: var(--c-danger);
   --color-success: var(--c-success);
   /* The Windows close button's hover red, the same in light and dark (Windows 11 convention). */
@@ -248,6 +250,15 @@ html[data-desktop]
     overscroll-behavior: none;
   }
 
+  /* Chat scrolls without a visible bar (trackpad, wheel and keyboard still work). */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   html {
     background: var(--c-canvas);
     color: var(--c-ink);
@@ -256,7 +267,7 @@ html[data-desktop]
     text-rendering: optimizeLegibility;
   }
 
-  /* The light pool: the one gradient in the product, a warm key light from above. */
+  /* The light pool: the one gradient in the product, a cool, very faint key light from above. */
   body {
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
@@ -296,7 +307,7 @@ html[data-desktop]
   }
 
   :focus-visible {
-    outline: 2px solid var(--c-sodium);
+    outline: 2px solid var(--c-accent);
     outline-offset: 2px;
   }
 
@@ -360,7 +371,7 @@ html[data-desktop]
 
 .lamp-on-mark {
   border-radius: 2px;
-  background: color-mix(in srgb, var(--c-sodium) 55%, transparent);
+  background: color-mix(in srgb, var(--c-mark) 60%, transparent);
   mix-blend-mode: multiply;
   transform-origin: left center;
   animation: mark-warm-up 320ms var(--ease-out-soft) both;
@@ -390,12 +401,12 @@ html[data-desktop]
 .pdf-page .textLayer mark {
   color: transparent;
   border-radius: 2px;
-  background: color-mix(in srgb, var(--c-sodium) 55%, transparent);
+  background: color-mix(in srgb, var(--c-mark) 60%, transparent);
   animation: mark-warm-up 320ms var(--ease-out-soft) both;
 }
 
 .pdf-page .textLayer ::selection {
-  background: color-mix(in srgb, var(--c-sodium) 35%, transparent);
+  background: color-mix(in srgb, var(--c-mark) 40%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -475,14 +486,14 @@ html[data-desktop]
 
   .markdown input[type='checkbox'] {
     margin-right: 8px;
-    accent-color: var(--c-sodium);
+    accent-color: var(--c-accent);
     vertical-align: -1px;
   }
 
   .markdown a {
-    color: var(--c-sodium-ink);
+    color: var(--c-accent-ink);
     text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--c-sodium-ink) 40%, transparent);
+    text-decoration-color: color-mix(in srgb, var(--c-accent-ink) 40%, transparent);
     text-underline-offset: 2px;
   }
 

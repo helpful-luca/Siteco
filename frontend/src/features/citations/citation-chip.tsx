@@ -56,8 +56,8 @@ export function CitationChip({ n, source, citedText, active = false, onOpen }: P
           deleted
             ? cn('text-ink-muted line-through', active ? 'bg-hairline-strong' : 'bg-fill-strong hover:bg-hairline-strong')
             : active
-              ? 'bg-sodium text-on-sodium'
-              : 'bg-highlight text-sodium-ink hover:bg-sodium hover:text-on-sodium',
+              ? 'bg-accent text-on-accent'
+              : 'bg-fill-strong text-ink hover:bg-accent hover:text-on-accent',
         )}
       >
         {n}

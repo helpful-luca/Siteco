@@ -37,7 +37,7 @@ export function ModelControls() {
           aria-disabled={!possible || undefined}
           onClick={() => possible && settings.setCompare(!on)}
           className={cn(
-            on && 'bg-highlight text-sodium-ink hover:bg-highlight hover:text-sodium-ink',
+            on && 'bg-fill-strong text-ink hover:bg-fill-strong hover:text-ink',
             !possible && 'opacity-50 hover:bg-transparent',
           )}
         >

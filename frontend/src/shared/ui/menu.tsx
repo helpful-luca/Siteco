@@ -90,7 +90,7 @@ export function MenuRadioItem({ value, disabled, children }: { value: string; di
     <BaseMenu.RadioItem value={value} disabled={disabled} className={cn(ITEM, 'items-start')}>
       <span className="mt-0.5 grid size-4 shrink-0 place-items-center">
         <BaseMenu.RadioItemIndicator>
-          <Check aria-hidden className="text-sodium-ink" />
+          <Check aria-hidden className="text-accent-ink" />
         </BaseMenu.RadioItemIndicator>
       </span>
       <span className="min-w-0 flex-1">{children}</span>
@@ -116,7 +116,7 @@ export function MenuCheckboxItem({
     >
       <span className="grid size-4 shrink-0 place-items-center">
         <BaseMenu.CheckboxItemIndicator>
-          <Check aria-hidden className="text-sodium-ink" />
+          <Check aria-hidden className="text-accent-ink" />
         </BaseMenu.CheckboxItemIndicator>
       </span>
       <span className="min-w-0 flex-1 truncate">{children}</span>

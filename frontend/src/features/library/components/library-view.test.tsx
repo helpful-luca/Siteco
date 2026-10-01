@@ -131,10 +131,10 @@ describe('LibraryView', () => {
       expect(within(table).getAllByText(text).length).toBeGreaterThan(0);
     }
     expect(within(table).getAllByRole('progressbar').length).toBeGreaterThan(0);
-    expect(screen.getByText(/Die Virenprüfung startet noch/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Die Virenprüfung startet noch/)).toBeInTheDocument();
     expect(screen.getByText(/Die Virenprüfung hat in dieser Datei Schadsoftware gefunden/)).toBeInTheDocument();
     expect(screen.getByText('Gefunden: Eicar-Test-Signature')).toBeInTheDocument();
-    expect(screen.getByText(/Dieses PDF enthält aktive Inhalte/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Dieses PDF enthält aktive Inhalte/)).toBeInTheDocument();
   });
 
   it('announces states politely, without every percent, and leaves unknown cells empty', async () => {

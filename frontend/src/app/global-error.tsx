@@ -20,8 +20,8 @@ const TEXT = {
 } as const;
 
 const STYLE = `
-  :root { color-scheme: light dark; --canvas: #f2f2f5; --ink: #1d1d1f; --muted: #6e6e73; --accent: #f0a030; }
-  @media (prefers-color-scheme: dark) { :root { --canvas: #000; --ink: #f5f5f7; --muted: #98989d; --accent: #ffb547; } }
+  :root { color-scheme: light dark; --canvas: #f2f2f5; --ink: #1d1d1f; --muted: #6e6e73; --accent: #b61918; }
+  @media (prefers-color-scheme: dark) { :root { --canvas: #000; --ink: #f5f5f7; --muted: #98989d; --accent: #d63030; } }
   html, body { margin: 0; background: var(--canvas); color: var(--ink); overscroll-behavior: none;
     font: 15px/1.47 -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
   main { min-height: 100dvh; display: grid; place-items: center; padding: 0 16px; }

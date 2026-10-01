@@ -12,8 +12,8 @@ const SWATCHES = [
   'surface',
   'ink',
   'ink-muted',
-  'sodium',
-  'sodium-ink',
+  'accent',
+  'accent-ink',
   'highlight',
   'success',
   'danger',
@@ -143,7 +143,7 @@ function NameField({ label, placeholder }: { label: string; placeholder: string 
       <input
         placeholder={placeholder}
         maxLength={40}
-        className="h-10 rounded-control bg-fill px-3 text-body ring-1 pointer-coarse:h-11 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium"
+        className="h-10 rounded-control bg-fill px-3 text-body ring-1 pointer-coarse:h-11 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-accent"
       />
     </label>
   );

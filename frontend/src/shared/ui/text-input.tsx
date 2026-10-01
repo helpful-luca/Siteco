@@ -7,7 +7,7 @@ export function TextInput({ className, ...rest }: InputHTMLAttributes<HTMLInputE
     <input
       className={cn(
         'h-8 rounded-control bg-fill px-3 text-body ring-1 ring-inset ring-hairline outline-none',
-        'transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-sodium pointer-coarse:h-11',
+        'transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-accent pointer-coarse:h-11',
         className,
       )}
       {...rest}

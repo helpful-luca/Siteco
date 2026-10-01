@@ -1,8 +1,8 @@
 import type { Theme } from '@/shared/preferences/cookies';
 
 const PALETTES = {
-  light: { canvas: '#f2f2f5', panel: '#ffffff', line: '#d9d9de', accent: '#f0a030' },
-  dark: { canvas: '#000000', panel: '#1c1c1e', line: '#3a3a3e', accent: '#ffb547' },
+  light: { canvas: '#f2f2f5', panel: '#ffffff', line: '#d9d9de', accent: '#b61918' },
+  dark: { canvas: '#000000', panel: '#1c1c1e', line: '#3a3a3e', accent: '#d63030' },
 } as const;
 
 function Window({ mode }: { mode: 'light' | 'dark' }) {

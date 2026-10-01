@@ -123,7 +123,7 @@ function CompareColumn({ lane, title, answer, hiddenWhenNarrow, kept, chatTitle,
               {t('stop')}
             </Button>
           ) : kept ? (
-            <span className="inline-flex items-center gap-1 text-caption font-medium text-sodium-ink">
+            <span className="inline-flex items-center gap-1 text-caption font-medium text-ink">
               <Check aria-hidden className="size-3.5" />
               {t('kept')}
             </span>

@@ -79,7 +79,9 @@ export function DataSection() {
 
   const { stats, usage_today: today } = data;
   const retention = stored?.retention_days ?? data.retention_days ?? 0;
-  const choices = RETENTION_CHOICES.includes(retention) ? RETENTION_CHOICES : [...RETENTION_CHOICES, retention].sort((a, b) => a - b);
+  const choices = RETENTION_CHOICES.includes(retention)
+    ? RETENTION_CHOICES
+    : [...RETENTION_CHOICES, retention].sort((a, b) => a - b);
   const chooseRetention = async (value: string) => {
     if (await retentionSave.save({ retention_days: Number(value) })) {
       void queryClient.invalidateQueries({ queryKey: WORKSPACE_KEY });
@@ -99,7 +101,7 @@ export function DataSection() {
         </FormRow>
       </FormGroup>
 
-      <FormGroup title={t('today')} footer={t('todayFooter')}>
+      <FormGroup title={t('today')}>
         <FormRow label={t('cost')} description={t('requests', { count: today.requests })}>
           <span className="text-body text-ink-muted tabular-nums">{format.cost(today.cost_usd)}</span>
         </FormRow>
@@ -111,14 +113,17 @@ export function DataSection() {
       </FormGroup>
 
       <div>
-        <FormGroup title={t('retention')} footer={t('retentionFooter')}>
+        <FormGroup title={t('retention')}>
           <FormRow stretch label={t('retentionChoice')}>
             <SegmentedControl
               className="w-full sm:w-auto [&>*]:min-w-0 [&>*]:flex-1 sm:[&>*]:min-w-16 sm:[&>*]:flex-none"
               label={t('retention')}
               value={String(retention)}
               onValueChange={(value) => void chooseRetention(value)}
-              options={choices.map((days) => ({ value: String(days), label: t('retentionOption', { days }) }))}
+              options={choices.map((days) => ({
+                value: String(days),
+                label: t('retentionOption', { days }),
+              }))}
             />
           </FormRow>
         </FormGroup>

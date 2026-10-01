@@ -17,7 +17,12 @@ const STYLES: AnswerStyle[] = ['concise', 'detailed'];
 function usePrice() {
   const format = useFormatter();
   return (usd: number) =>
-    format.number(usd, { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    format.number(usd, {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
 }
 
 /** Price per million tokens, for the model list here and in Info. */
@@ -25,7 +30,10 @@ export function useModelPrice() {
   const t = useTranslations('settings.models');
   const price = usePrice();
   return (model: ModelInfo) =>
-    t('price', { input: price(model.input_usd_per_mtok), output: price(model.output_usd_per_mtok) });
+    t('price', {
+      input: price(model.input_usd_per_mtok),
+      output: price(model.output_usd_per_mtok),
+    });
 }
 
 export function ModelsSection() {
@@ -46,10 +54,7 @@ export function ModelsSection() {
     <div className="flex flex-col gap-8">
       <ApiKeyGroup />
       <div>
-        <FormGroup
-          title={t('default')}
-          footer={config.features.retrieval_only ? t('noKey') : t('defaultFooter')}
-        >
+        <FormGroup title={t('default')} footer={config.features.retrieval_only ? t('noKey') : t('defaultFooter')}>
           <RadioGroup
             aria-label={t('default')}
             value={prefs.default_model}
@@ -63,7 +68,7 @@ export function ModelsSection() {
                 className={cn(
                   'group relative flex w-full items-center gap-3 px-4 py-3 text-left outline-none',
                   'first:rounded-t-card last:rounded-b-card hover:bg-fill data-disabled:opacity-50',
-                  'focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sodium',
+                  'focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent',
                   'not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-4',
                   'not-first:before:h-px not-first:before:bg-hairline',
                 )}
@@ -75,7 +80,10 @@ export function ModelsSection() {
                     <span className="block">{modelPrice(model)}</span>
                   </span>
                 </span>
-                <Check aria-hidden className="size-4 shrink-0 text-sodium-ink opacity-0 group-data-checked:opacity-100" />
+                <Check
+                  aria-hidden
+                  className="size-4 shrink-0 text-accent-ink opacity-0 group-data-checked:opacity-100"
+                />
               </Radio.Root>
             ))}
           </RadioGroup>
@@ -95,7 +103,10 @@ export function ModelsSection() {
                 label={t('mode')}
                 value={prefs.effort}
                 onValueChange={(effort) => void answers.save({ effort })}
-                options={EFFORTS.map((value) => ({ value, label: t(`modes.${value}`) }))}
+                options={EFFORTS.map((value) => ({
+                  value,
+                  label: t(`modes.${value}`),
+                }))}
               />
             </FormRow>
           )}
@@ -105,7 +116,10 @@ export function ModelsSection() {
               label={t('length')}
               value={prefs.style}
               onValueChange={(style) => void answers.save({ style })}
-              options={STYLES.map((value) => ({ value, label: t(`lengths.${value}`) }))}
+              options={STYLES.map((value) => ({
+                value,
+                label: t(`lengths.${value}`),
+              }))}
             />
           </FormRow>
         </FormGroup>

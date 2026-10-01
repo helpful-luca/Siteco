@@ -16,12 +16,13 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/settings',
 }));
 
-const MODEL: Pick<ConfigOut['models'][number], 'cache_read_usd_per_mtok' | 'efforts' | 'default_effort' | 'available'> = {
-  cache_read_usd_per_mtok: 0.2,
-  efforts: ['low', 'medium', 'high'],
-  default_effort: 'low',
-  available: true,
-};
+const MODEL: Pick<ConfigOut['models'][number], 'cache_read_usd_per_mtok' | 'efforts' | 'default_effort' | 'available'> =
+  {
+    cache_read_usd_per_mtok: 0.2,
+    efforts: ['low', 'medium', 'high'],
+    default_effort: 'low',
+    available: true,
+  };
 
 const CONFIG: ConfigOut = {
   version: '1.0.0',
@@ -40,9 +41,32 @@ const CONFIG: ConfigOut = {
   budget: null,
   features: { retrieval_only: false },
   models: [
-    { ...MODEL, id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5', tier: 'fast', input_usd_per_mtok: 1, output_usd_per_mtok: 5, efforts: [], default_effort: null },
-    { ...MODEL, id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', tier: 'balanced', input_usd_per_mtok: 2, output_usd_per_mtok: 10 },
-    { ...MODEL, id: 'claude-opus-5-5', label: 'Claude Opus 5.5', tier: 'strongest', input_usd_per_mtok: 4, output_usd_per_mtok: 20 },
+    {
+      ...MODEL,
+      id: 'claude-haiku-4-5',
+      label: 'Claude Haiku 4.5',
+      tier: 'fast',
+      input_usd_per_mtok: 1,
+      output_usd_per_mtok: 5,
+      efforts: [],
+      default_effort: null,
+    },
+    {
+      ...MODEL,
+      id: 'claude-sonnet-5-5',
+      label: 'Claude Sonnet 5.5',
+      tier: 'balanced',
+      input_usd_per_mtok: 2,
+      output_usd_per_mtok: 10,
+    },
+    {
+      ...MODEL,
+      id: 'claude-opus-5-5',
+      label: 'Claude Opus 5.5',
+      tier: 'strongest',
+      input_usd_per_mtok: 4,
+      output_usd_per_mtok: 20,
+    },
   ],
   default_model: 'claude-sonnet-5-5',
 };
@@ -60,8 +84,19 @@ const PREFS: PreferencesBody = {
 };
 
 const WORKSPACE: WorkspaceOut = {
-  stats: { documents: 3, chats: 2, documents_bytes: 2_400_000, storage_bytes: 5_300_000 },
-  usage_today: { cost_usd: 0.0123, requests: 4, input_tokens: 9000, output_tokens: 800, budget_usd: null },
+  stats: {
+    documents: 3,
+    chats: 2,
+    documents_bytes: 2_400_000,
+    storage_bytes: 5_300_000,
+  },
+  usage_today: {
+    cost_usd: 0.0123,
+    requests: 4,
+    input_tokens: 9000,
+    output_tokens: 800,
+    budget_usd: null,
+  },
   usage_month: { cost_usd: 1.5, requests: 120 },
   retention_days: 30,
 };
@@ -76,7 +111,11 @@ beforeEach(() => {
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET';
-      calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      calls.push({
+        method,
+        url,
+        body: init?.body ? JSON.parse(String(init.body)) : undefined,
+      });
       if (url === '/api/config') return Response.json(CONFIG);
       if (url === '/api/preferences' && method === 'PUT') {
         prefs = JSON.parse(String(init?.body)) as PreferencesBody;
@@ -88,14 +127,31 @@ beforeEach(() => {
         const { key } = JSON.parse(String(init?.body)) as { key: string };
         if (key.endsWith('Bad1')) {
           return Response.json(
-            { error: { code: 'API_KEY_INVALID', retryable: false, request_id: 'r', params: {} } },
+            {
+              error: {
+                code: 'API_KEY_INVALID',
+                retryable: false,
+                request_id: 'r',
+                params: {},
+              },
+            },
             { status: 422 },
           );
         }
-        return Response.json({ configured: true, source: 'settings', suffix: key.slice(-4), status: 'ok' });
+        return Response.json({
+          configured: true,
+          source: 'settings',
+          suffix: key.slice(-4),
+          status: 'ok',
+        });
       }
       if (url === '/api/settings/api-key') {
-        return Response.json({ configured: false, source: null, suffix: null, status: 'missing_key' });
+        return Response.json({
+          configured: false,
+          source: null,
+          suffix: null,
+          status: 'missing_key',
+        });
       }
       if (url.startsWith('/api/workspace') && method === 'DELETE') return new Response(null, { status: 204 });
       if (url === '/api/health/ready') return Response.json({ ready: true, checks: {} });
@@ -107,11 +163,21 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 function setup(section: Section | null) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   render(
     <NextIntlClientProvider locale="de" messages={de} timeZone="Europe/Berlin">
       <QueryClientProvider client={client}>
-        <PreferencesProvider initial={{ locale: 'de', theme: 'system', name: 'Luca', onboarded: true, mirrored: true }}>
+        <PreferencesProvider
+          initial={{
+            locale: 'de',
+            theme: 'system',
+            name: 'Luca',
+            onboarded: true,
+            mirrored: true,
+          }}
+        >
           <OnboardingHost>
             <UIProvider>
               <SettingsView section={section} />
@@ -128,7 +194,7 @@ describe('SettingsView', () => {
     setup(null);
     const nav = screen.getByRole('navigation', { name: 'Bereiche' });
     const links = within(nav).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual(['Allgemein', 'Darstellung', 'Modelle', 'Daten', 'Datenschutz', 'Info']);
+    expect(links.map((l) => l.textContent)).toEqual(['Allgemein', 'Darstellung', 'Modelle', 'Daten', 'Datenschutz']);
     expect(links[3]).toHaveAttribute('href', '/settings?section=data');
   });
 
@@ -143,7 +209,10 @@ describe('SettingsView', () => {
     setup('general');
     await userEvent.click(screen.getByRole('radio', { name: 'English' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ ...PREFS, locale: 'en' });
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({
+      ...PREFS,
+      locale: 'en',
+    });
   });
 
   it('saves a cleaned name when the field is left', async () => {
@@ -158,12 +227,14 @@ describe('SettingsView', () => {
 
   it('shows prices and hides the answer mode for Haiku', async () => {
     setup('models');
-    expect(await screen.findByRole('radio', { name: /Claude Opus 5.5/ })).toHaveTextContent('4 $ Eingabe, 20 $ Ausgabe');
+    expect(await screen.findByRole('radio', { name: /Claude Opus 5.5/ })).toHaveTextContent(
+      '4 $ Eingabe, 20 $ Ausgabe',
+    );
     expect(screen.getByRole('radiogroup', { name: 'Antwortmodus' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('radio', { name: /Claude Haiku 4.5/ }));
     await waitFor(() => expect(prefs.default_model).toBe('claude-haiku-4-5'));
     expect(screen.queryByRole('radiogroup', { name: 'Antwortmodus' })).toBeNull();
-    expect(screen.getByText(/antwortet immer im schnellen Modus/)).toBeInTheDocument();
+    expect(screen.getByText(/antwortet immer schnell/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('radio', { name: 'Ausführlich' }));
     await waitFor(() => expect(prefs.style).toBe('detailed'));
   });
@@ -172,11 +243,17 @@ describe('SettingsView', () => {
     setup('data');
     expect(await screen.findByText('4 Anfragen an Claude')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Löschen …' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Alle Daten löschen?' });
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Alle Daten löschen?',
+    });
     expect(dialog).toHaveTextContent('Das entfernt 3 Dokumente und 2 Chats samt allen Suchdaten');
     expect(dialog).toHaveTextContent('nicht rückgängig');
     expect(within(dialog).getByRole('button', { name: 'Abbrechen' })).toHaveFocus();
-    await userEvent.click(within(dialog).getByRole('switch', { name: 'Auch Name und Einstellungen zurücksetzen' }));
+    await userEvent.click(
+      within(dialog).getByRole('switch', {
+        name: 'Auch Name und Einstellungen zurücksetzen',
+      }),
+    );
     await userEvent.click(within(dialog).getByRole('button', { name: 'Alles löschen' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(calls.find((c) => c.method === 'DELETE')?.url).toBe('/api/workspace?reset_preferences=true');
@@ -185,45 +262,44 @@ describe('SettingsView', () => {
 
   it('checks and saves an API key without ever showing it, and shows the spending', async () => {
     setup('models');
-    expect(await screen.findByText('Noch keiner eingetragen')).toBeInTheDocument();
-    const field = screen.getByLabelText('Neuer Schlüssel');
+    await screen.findByLabelText('API-Key');
+    const field = screen.getByLabelText('API-Key');
     expect(field).toHaveAttribute('type', 'password');
     await userEvent.type(field, 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxBad1');
-    await userEvent.click(screen.getByRole('button', { name: 'Prüfen und speichern' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
     expect(await screen.findByText(/Anthropic akzeptiert diesen Schlüssel nicht/)).toBeInTheDocument();
     await userEvent.clear(field);
     await userEvent.type(field, 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxGood');
-    await userEvent.click(screen.getByRole('button', { name: 'Prüfen und speichern' }));
-    expect(await screen.findByText('Gültig')).toBeInTheDocument();
-    expect(screen.getByText('Endet auf Good, hier eingetragen')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(await screen.findByText(/Gespeichert/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Entfernen' })).toBeInTheDocument();
+    expect(screen.getByText('Der API-Key wird lokal auf diesem Rechner gespeichert.')).toBeInTheDocument();
     expect(field).toHaveValue('');
     expect(screen.getByText('120 Anfragen')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /In der Console öffnen/ })).toHaveAttribute('target', '_blank');
+    expect(screen.queryByText(/Console|Restguthaben/)).not.toBeInTheDocument();
   });
 
   it('chooses automatic deletion in the app, without any word about .env', async () => {
     setup('data');
-    const choice = await screen.findByRole('radiogroup', { name: 'Automatisch löschen' });
+    const choice = await screen.findByRole('radiogroup', {
+      name: 'Automatisch löschen',
+    });
     await waitFor(() => expect(within(choice).getByRole('radio', { name: '30 Tage' })).toBeChecked());
     await userEvent.click(within(choice).getByRole('radio', { name: '90 Tage' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ ...PREFS, retention_days: 90 });
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({
+      ...PREFS,
+      retention_days: 90,
+    });
     expect(screen.queryByText(/RETENTION_DAYS|\.env/)).not.toBeInTheDocument();
   });
 
   it('explains privacy in plain words, with the scan status', async () => {
     setup('privacy');
-    expect(screen.getByText('Geht an Anthropic in den USA')).toBeInTheDocument();
-    expect(screen.getByText(/Nie gesendet werden dein Name/)).toBeInTheDocument();
+    expect(screen.getByText('Geht an Anthropic')).toBeInTheDocument();
+    expect(screen.getByText(/Nie gesendet: dein Name/)).toBeInTheDocument();
     expect(await screen.findByText(/ClamAV prüft jede Datei/)).toBeInTheDocument();
-    expect(await screen.findByText(/nach 30 Tagen automatisch gelöscht/)).toBeInTheDocument();
-  });
-
-  it('shows version, key status and can run the setup again', async () => {
-    setup('about');
-    expect(await screen.findByText('abc123def456')).toBeInTheDocument();
-    expect(screen.getByText('Verbunden')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Erneut starten' }));
-    expect(await screen.findByRole('heading', { name: 'Willkommen' })).toBeInTheDocument();
+    expect(screen.getByText(/bis zu 30 Tage/)).toBeInTheDocument();
+    expect(screen.queryByText('Deine Rechte')).not.toBeInTheDocument();
   });
 });

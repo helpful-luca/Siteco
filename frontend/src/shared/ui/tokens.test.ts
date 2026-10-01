@@ -21,10 +21,13 @@ const PAIRS: Array<[fg: string, bg: string, min: number]> = [
   ['ink', 'surface', 7],
   ['ink-muted', 'surface', 4.5],
   ['ink-muted', 'canvas', 4.5],
-  ['sodium-ink', 'surface', 4.5],
-  ['sodium-ink', 'canvas', 4.5],
-  ['on-sodium', 'sodium', 4.5],
+  ['accent-ink', 'surface', 4.5],
+  ['accent-ink', 'canvas', 4.5],
+  ['on-accent', 'accent', 4.5],
   ['danger', 'surface', 4.5],
+  ['danger', 'canvas', 4.5],
+  ['accent', 'surface', 3],
+  ['on-accent', 'accent', 4.5],
   ['success', 'surface', 4.5],
 ];
 
@@ -43,5 +46,5 @@ describe.each([
 describe('contrastRatio', () => {
   it('is 21 for black on white', () => expect(contrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5));
   it('is symmetric', () =>
-    expect(contrastRatio('#8a5300', '#ffffff')).toBeCloseTo(contrastRatio('#ffffff', '#8a5300'), 10));
+    expect(contrastRatio('#b61918', '#ffffff')).toBeCloseTo(contrastRatio('#ffffff', '#b61918'), 10));
 });

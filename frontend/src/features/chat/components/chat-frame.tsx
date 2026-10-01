@@ -62,7 +62,7 @@ export function ChatFrame({
       <div
         ref={scrollRef}
         data-scrolled={scrolled || undefined}
-        className="@container min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter data-scrolled:[mask-image:linear-gradient(to_bottom,transparent,black_calc(var(--spacing)*10))]"
+        className="@container no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter data-scrolled:[mask-image:linear-gradient(to_bottom,transparent,black_calc(var(--spacing)*10))]"
       >
         <div ref={contentRef} className="mx-auto max-w-reading pt-6" style={{ paddingBottom: dockHeight + 24 }}>
           {/* An outage is told once, in the composer note where the question waits. */}

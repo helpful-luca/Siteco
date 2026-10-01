@@ -55,7 +55,7 @@ export function ChatListItem({ chat, active, onNavigate, onRename, onDelete }: P
         <span className="min-w-0 flex-1 truncate">{title}</span>
         {answering && (
           <span className="flex shrink-0 items-center">
-            <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-sodium" />
+            <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-accent" />
             <span className="sr-only">{t('list.answering')}</span>
           </span>
         )}
@@ -117,7 +117,7 @@ function RenameField({ initial, label, onDone }: { initial: string; label: strin
           finish(false);
         }
       }}
-      className="h-8 w-full rounded-control bg-surface px-2 text-body shadow-[inset_0_0_0_1px_var(--c-hairline)] outline-2 outline-sodium pointer-coarse:h-11"
+      className="h-8 w-full rounded-control bg-surface px-2 text-body shadow-[inset_0_0_0_1px_var(--c-hairline)] outline-2 outline-accent pointer-coarse:h-11"
     />
   );
 }

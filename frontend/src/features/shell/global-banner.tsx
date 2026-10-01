@@ -58,17 +58,17 @@ export function GlobalBanner({ className, omit = [] }: { className?: string; omi
     </Link>
   );
   if (config?.llm_status === 'invalid_key') {
-    banners.push({ key: 'invalidKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('invalidKey'), hint: t('invalidKeyHint'), live: true, action: keyAction });
+    banners.push({ key: 'invalidKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('invalidKey'), hint: t('invalidKeyHint'), live: true, action: keyAction });
   }
   if (config?.llm_status === 'missing_key') {
-    banners.push({ key: 'missingKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('missingKey'), hint: t('missingKeyHint'), action: keyAction });
+    banners.push({ key: 'missingKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('missingKey'), hint: t('missingKeyHint'), action: keyAction });
   }
   if (config?.budget?.exceeded) {
     const { time } = codeParams({ reset_time: config.budget.reset_time }, { locale });
-    banners.push({ key: 'budget', icon: <Gauge aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('budget'), hint: t('budgetHint', { time }), live: true });
+    banners.push({ key: 'budget', icon: <Gauge aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('budget'), hint: t('budgetHint', { time }), live: true });
   }
   if (billing) {
-    banners.push({ key: 'billing', icon: <CreditCard aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('billing'), hint: t('billingHint'), live: true });
+    banners.push({ key: 'billing', icon: <CreditCard aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('billing'), hint: t('billingHint'), live: true });
   }
 
   const banner = banners.find((b) => !omit.includes(b.key));

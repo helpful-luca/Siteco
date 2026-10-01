@@ -20,7 +20,7 @@ export function NavItem({ href, icon, onNavigate, children }: Props) {
         'flex h-8 items-center gap-2 rounded-control px-2 text-body transition-colors pointer-coarse:h-11',
         '[&_svg]:size-4 [&_svg]:shrink-0',
         active
-          ? 'bg-fill-strong font-medium text-ink [&_svg]:text-sodium-ink'
+          ? 'bg-fill-strong font-medium text-ink [&_svg]:text-ink'
           : 'text-ink/85 hover:bg-fill [&_svg]:opacity-60',
       )}
     >

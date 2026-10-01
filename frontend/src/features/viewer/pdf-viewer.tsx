@@ -328,7 +328,7 @@ function PageSlot({ index, label, style, width, marks, passage, rendered, onMeas
       aria-label={label}
       className={cn(
         'pdf-page absolute overflow-hidden bg-white shadow-[0_1px_3px_rgb(0_0_0/0.12)] ring-1 ring-hairline',
-        wholePage && rendered && 'ring-2 ring-sodium',
+        wholePage && rendered && 'ring-2 ring-accent',
       )}
       style={style}
     >

@@ -7,7 +7,7 @@ import { Button, Tooltip } from '@/shared/ui';
 import { useFormatSize } from '../use-format-size';
 import { FileIcon } from './file-icon';
 import { FileName } from './file-name';
-import { RowDetails } from './row-details';
+import { RowDetails, RowNotices } from './row-details';
 import { EmptyValue } from './empty-cell';
 import { DocumentStatus } from './status-cell';
 
@@ -32,8 +32,9 @@ export function DocumentRow({ document, onPreview, onDelete }: Props) {
             <FileIcon kind={document.kind} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex h-(--row-line) items-center">
+            <div className="flex h-(--row-line) items-center gap-1">
               <FileName name={document.filename} />
+              <RowNotices document={document} />
             </div>
             <p className="text-caption text-ink-muted tabular-nums @3xl:hidden">
               {pages === null ? size : t('meta', { pages: document.page_count ?? 0, size })}

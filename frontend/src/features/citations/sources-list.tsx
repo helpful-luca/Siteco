@@ -62,7 +62,7 @@ export function SourcesList({ sources, citations, activeSourceId = null, onOpenS
                   <span
                     className={cn(
                       'inline-flex size-[18px] shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums',
-                      source.deleted ? 'bg-fill-strong text-ink-muted' : 'bg-highlight text-sodium-ink',
+                      source.deleted ? 'bg-fill-strong text-ink-muted' : 'bg-highlight text-accent-ink',
                     )}
                   >
                     {source.index}

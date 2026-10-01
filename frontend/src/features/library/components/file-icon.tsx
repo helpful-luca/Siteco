@@ -18,7 +18,7 @@ export function FileIcon({ kind, className }: { kind: DocumentKind | null; class
           x="12"
           y="23.5"
           textAnchor="middle"
-          className={cn('fill-ink-muted font-semibold', kind === 'pdf' && 'fill-sodium-ink')}
+          className={cn('fill-ink-muted font-semibold', kind === 'pdf' && 'fill-accent-ink')}
           style={{ fontSize: 6.5, letterSpacing: 0.2 }}
         >
           {LABELS[kind]}

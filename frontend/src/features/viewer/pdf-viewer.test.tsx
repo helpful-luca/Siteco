@@ -157,7 +157,7 @@ describe('PdfViewer', () => {
     setup({ page: 3, passage: 'Die Mira L hat die Schutzart IP66.' });
     const slot = await screen.findByLabelText('Seite 3');
     await waitFor(() => expect(within(slot).getAllByText(/Schutz-|IP66/, { selector: 'mark' })).toHaveLength(2));
-    expect(slot).not.toHaveClass('ring-sodium');
+    expect(slot).not.toHaveClass('ring-accent');
   });
 
   it('follows a new passage on the same page', async () => {
@@ -185,7 +185,7 @@ describe('PdfViewer', () => {
   it('frames the whole page when the passage is not in the text layer either', async () => {
     setup({ page: 3, passage: 'Ein Satz, der auf dieser Seite nicht vorkommt.' });
     const slot = await screen.findByLabelText('Seite 3');
-    await waitFor(() => expect(slot).toHaveClass('ring-sodium'));
+    await waitFor(() => expect(slot).toHaveClass('ring-accent'));
     expect(within(slot).queryByText(/IP66/, { selector: 'mark' })).toBeNull();
   });
 
