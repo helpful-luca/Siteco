@@ -5,14 +5,14 @@ type Tone = 'neutral' | 'working' | 'ready' | 'failed';
 
 const TONES: Record<Tone, string> = {
   neutral: 'text-ink-muted bg-fill',
-  working: 'text-accent-ink bg-highlight',
+  working: 'text-ink bg-fill',
   ready: 'text-success bg-fill',
   failed: 'text-danger bg-fill',
 };
 
 const DOTS: Record<Tone, string> = {
   neutral: 'bg-ink-muted',
-  working: 'bg-accent animate-pulse',
+  working: 'bg-ink-muted animate-pulse',
   ready: 'bg-success',
   failed: 'bg-danger',
 };

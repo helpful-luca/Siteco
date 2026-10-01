@@ -9,7 +9,7 @@
   --fill: rgb(0 0 0 / 0.045);
   --fill-strong: rgb(0 0 0 / 0.08);
   --hairline: rgb(0 0 0 / 0.08);
-  --light-key: rgb(255 196 110 / 0.34);
+  --light-key: rgb(150 160 180 / 0.16);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,7 +21,7 @@
     --fill: rgb(255 255 255 / 0.06);
     --fill-strong: rgb(255 255 255 / 0.1);
     --hairline: rgb(255 255 255 / 0.09);
-    --light-key: rgb(255 170 60 / 0.2);
+    --light-key: rgb(120 135 160 / 0.14);
   }
 }
 

@@ -23,7 +23,7 @@ export function LibraryEmpty({
   const tImport = useTranslations('library.import');
   return (
     <div className="flex flex-col items-center rounded-panel border border-dashed border-hairline-strong px-6 py-16 text-center sm:py-20">
-      <div className="grid size-14 place-items-center rounded-full bg-highlight text-accent-ink">
+      <div className="grid size-14 place-items-center rounded-full bg-fill-strong text-ink-muted">
         <FileUp aria-hidden className="size-6" />
       </div>
       <h2 className="mt-4 text-title-3 font-semibold">{t('title')}</h2>

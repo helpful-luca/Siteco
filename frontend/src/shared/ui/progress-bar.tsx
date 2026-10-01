@@ -22,7 +22,7 @@ export function ProgressBar({
       <Progress.Track className="block h-full w-full">
         <Progress.Indicator
           className={cn(
-            'block h-full rounded-full bg-accent transition-[width] duration-500 ease-out-soft',
+            'block h-full rounded-full bg-ink-muted transition-[width] duration-500 ease-out-soft',
             value === null && 'w-1/3 animate-[progress-sweep_1.4s_ease-in-out_infinite]',
           )}
         />

@@ -125,7 +125,7 @@ export function AppPreview() {
                       activeSource === n && 'bg-fill text-ink',
                     )}
                   >
-                    <span className="inline-flex size-[18px] items-center justify-center rounded-full bg-highlight text-[11px] font-semibold text-accent-ink tabular-nums">
+                    <span className="inline-flex size-[18px] items-center justify-center rounded-full bg-fill-strong text-[11px] font-semibold text-ink tabular-nums">
                       {n}
                     </span>
                     {t(n === 1 ? 'source1' : 'source2')}

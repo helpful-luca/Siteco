@@ -26,10 +26,10 @@ const STYLE = `
     font: 15px/1.47 -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
   main { min-height: 100dvh; display: grid; place-items: center; padding: 0 16px; }
   div { max-width: 60ch; }
-  h1 { font-size: 22px; line-height: 28px; font-weight: 600; margin: 0; }
+  h1 { font-size: 24px; line-height: 30px; text-wrap: balance; font-weight: 600; margin: 0; }
   p { margin: 8px 0 0; color: var(--muted); }
   button { margin-top: 24px; height: 32px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer;
-    background: var(--accent); color: #1d1d1f; font: inherit; font-weight: 500; }
+    background: var(--accent); color: #fff; font: inherit; font-weight: 500; }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   small { display: block; margin-top: 16px; color: var(--muted); font-size: 12px; }
 `;

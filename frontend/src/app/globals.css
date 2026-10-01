@@ -18,14 +18,15 @@
   --c-accent: #b61918;
   --c-on-accent: #ffffff;
   --c-accent-ink: #b61918;
-  --c-danger: #a84a08;
+  --c-danger: #c8301f;
   --c-success: #1f7a45;
   --c-hairline: rgb(0 0 0 / 0.08);
   --c-hairline-strong: rgb(0 0 0 / 0.14);
   --c-fill: rgb(0 0 0 / 0.045);
   --c-fill-strong: rgb(0 0 0 / 0.08);
-  --c-highlight: rgb(250 204 21 / 0.34);
-  --c-mark: #f5d547;
+  --c-highlight: rgb(255 214 10 / 0.34);
+  --c-mark: #ffd60a;
+  --c-selection: rgb(110 120 140 / 0.24);
   --c-glass: rgb(255 255 255 / 0.62);
   --c-glass-edge: rgb(255 255 255 / 0.9);
   --c-glass-dense: rgb(250 250 252 / 0.86);
@@ -44,16 +45,17 @@
   --c-accent: #d63030;
   --c-on-accent: #ffffff;
   --c-accent-ink: #ff7a73;
-  --c-danger: #ffa54c;
+  --c-danger: #ff6b5e;
   --c-success: #4cd27a;
   --c-hairline: rgb(255 255 255 / 0.09);
   --c-hairline-strong: rgb(255 255 255 / 0.16);
   --c-fill: rgb(255 255 255 / 0.06);
   --c-fill-strong: rgb(255 255 255 / 0.1);
-  --c-highlight: rgb(250 204 21 / 0.26);
-  --c-mark: #e8c53a;
+  --c-highlight: rgb(255 214 10 / 0.24);
+  --c-mark: #ffd60a;
+  --c-selection: rgb(150 160 180 / 0.34);
   --c-glass: rgb(36 36 40 / 0.55);
-  --c-glass-edge: rgb(255 255 255 / 0.12);
+  --c-glass-edge: rgb(255 255 255 / 0.06);
   --c-glass-dense: rgb(32 32 36 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 40px -12px rgb(0 0 0 / 0.7);
   --c-light-key: rgb(120 135 160 / 0.14);
@@ -311,8 +313,9 @@ html[data-desktop]
     outline-offset: 2px;
   }
 
+  /* Selection stays neutral: yellow is the cited passage, red is the accent. */
   ::selection {
-    background: var(--c-highlight);
+    background: var(--c-selection);
   }
 }
 
@@ -332,11 +335,9 @@ html[data-desktop]
 @keyframes lamp-warm-up {
   from {
     background-color: transparent;
-    box-shadow: 0 0 18px 2px var(--c-highlight);
   }
   to {
     background-color: var(--c-highlight);
-    box-shadow: 0 0 0 0 transparent;
   }
 }
 
@@ -354,8 +355,8 @@ html[data-desktop]
 }
 
 /*
- * The same moment inside a PDF page: a highlighter stroke over each cited line, in the colour of
- * the active chip. Paper stays white in both themes, and multiply keeps the ink black under the
+ * The same moment inside a PDF page: a highlighter stroke over each cited line, in the soft
+ * yellow of a text marker. Paper stays white in both themes, and multiply keeps the ink black under the
  * stroke. It warms up line by line (--mark-delay) without the glow: a marker, not a light source.
  */
 @keyframes mark-warm-up {
