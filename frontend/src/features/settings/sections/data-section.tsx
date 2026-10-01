@@ -1,14 +1,20 @@
 'use client';
 
 import { useFormatter, useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useFormatSize } from '@/features/library';
 import { useUI } from '@/features/shell';
 import { ApiError, toApiError } from '@/shared/api/errors';
 import { useCodeText } from '@/shared/i18n/use-code-text';
-import { Button, DelayedSpinner, FormGroup, FormRow } from '@/shared/ui';
+import { usePreferences } from '@/shared/preferences/preferences';
+import { Button, DelayedSpinner, FormGroup, FormRow, SegmentedControl } from '@/shared/ui';
 import { DeleteAllDialog } from '../delete-all-dialog';
-import { downloadExport, useDeleteEverything, useWorkspace } from '../queries';
+import { downloadExport, useDeleteEverything, useWorkspace, WORKSPACE_KEY } from '../queries';
+import { SaveError, useSettingSave } from '../use-setting-save';
+
+/** What the app offers; a different installation default (RETENTION_DAYS) is shown as well. */
+const RETENTION_CHOICES = [0, 30, 90, 365];
 
 function useFormat() {
   const format = useFormatter();
@@ -31,6 +37,9 @@ export function DataSection() {
   const text = useCodeText();
   const format = useFormat();
   const { closePanel } = useUI();
+  const queryClient = useQueryClient();
+  const { stored } = usePreferences();
+  const retentionSave = useSettingSave();
   const workspace = useWorkspace();
   const wipe = useDeleteEverything();
   const [confirming, setConfirming] = useState(false);
@@ -76,7 +85,14 @@ export function DataSection() {
     );
   }
 
-  const { stats, usage_today: today, retention_days: retention } = data;
+  const { stats, usage_today: today } = data;
+  const retention = stored?.retention_days ?? data.retention_days ?? 0;
+  const choices = RETENTION_CHOICES.includes(retention) ? RETENTION_CHOICES : [...RETENTION_CHOICES, retention].sort((a, b) => a - b);
+  const chooseRetention = async (value: string) => {
+    if (await retentionSave.save({ retention_days: Number(value) })) {
+      void queryClient.invalidateQueries({ queryKey: WORKSPACE_KEY });
+    }
+  };
   return (
     <div className="flex flex-col gap-8">
       <FormGroup title={t('storage')}>
@@ -102,13 +118,20 @@ export function DataSection() {
         )}
       </FormGroup>
 
-      <FormGroup title={t('retention')} footer={t('retentionFooter')}>
-        <FormRow label={t('retentionLabel')}>
-          <span className="text-body text-ink-muted">
-            {retention === null ? t('retentionOff') : t('retentionDays', { days: retention })}
-          </span>
-        </FormRow>
-      </FormGroup>
+      <div>
+        <FormGroup title={t('retention')} footer={t('retentionFooter')}>
+          <FormRow stretch label={t('retentionChoice')}>
+            <SegmentedControl
+              className="w-full sm:w-auto [&>*]:min-w-0 [&>*]:flex-1 sm:[&>*]:min-w-16 sm:[&>*]:flex-none"
+              label={t('retention')}
+              value={String(retention)}
+              onValueChange={(value) => void chooseRetention(value)}
+              options={choices.map((days) => ({ value: String(days), label: t('retentionOption', { days }) }))}
+            />
+          </FormRow>
+        </FormGroup>
+        <SaveError error={retentionSave.error} />
+      </div>
 
       <div>
         <FormGroup title={t('yours')}>

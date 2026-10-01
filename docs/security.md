@@ -37,7 +37,7 @@ Software is not "GDPR compliant" by itself; it can be built so that compliant op
 - Transparency (Art. 13): privacy notice in onboarding and in Settings (what data, where it goes, how long, purpose).
 - Erasure (Art. 17): deleting a document removes the file, chunks and vectors and redacts the cited snippets in all chats; deleting a chat removes its messages; "Delete all data" also resets the profile; `VACUUM` after mass deletes.
 - Portability (Art. 20): Settings, Data, export: a ZIP with chats (JSON and Markdown), settings and the document list.
-- Storage limitation: optional automatic deletion after `RETENTION_DAYS` (off by default, visible in the UI).
+- Storage limitation: optional automatic deletion after 30, 90 or 365 days, chosen in Settings > Data (off by default; `RETENTION_DAYS` is only the installation default).
 - Security (Art. 32): the measures above, content-free logs, backend not reachable from the network.
 
 Known limit: if the model quoted a document in an answer, that wording is part of the answer text and stays until the chat is deleted. Deleting the document does not rewrite answers. The privacy page says so. Anthropic keeps API data for up to 30 days and does not train on it.

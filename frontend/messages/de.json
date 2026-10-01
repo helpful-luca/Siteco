@@ -655,10 +655,6 @@
       "budget": "Tagesbudget",
       "todayFooter": "Gezählt ab Mitternacht (UTC), auch für inzwischen gelöschte Chats.",
       "retention": "Automatisch löschen",
-      "retentionLabel": "Chats und Dokumente",
-      "retentionOff": "Nie",
-      "retentionDays": "{days, plural, one {Nach # Tag} other {Nach # Tagen}}",
-      "retentionFooter": "Einstellbar über RETENTION_DAYS in der Datei .env. Die App prüft das jede Stunde.",
       "yours": "Deine Daten",
       "export": "Daten exportieren",
       "exportText": "ZIP mit allen Chats als JSON und Markdown, deinen Einstellungen und der Dokumentliste",
@@ -668,7 +664,10 @@
       "deleteAllText": "Dokumente, Chats und Suchdaten von diesem Rechner entfernen",
       "deleteAllAction": "Löschen …",
       "deleted": "Alle Daten wurden gelöscht.",
-      "loading": "Lädt"
+      "loading": "Lädt",
+      "retentionFooter": "Gilt für Chats ab ihrer letzten Änderung und für Dokumente ab dem Hochladen. Die App prüft das jede Stunde.",
+      "retentionChoice": "Chats und Dokumente löschen nach",
+      "retentionOption": "{days, plural, =0 {Aus} one {# Tag} other {# Tage}}"
     },
     "deleteDialog": {
       "title": "Alle Daten löschen?",

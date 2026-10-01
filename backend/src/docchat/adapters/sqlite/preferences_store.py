@@ -10,6 +10,14 @@ from docchat.domain.enums import AnswerStyle, Effort, Locale, Theme
 from docchat.domain.preferences import Preferences
 
 
+def _optional_int(value: object) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError("retention_days must be an integer")
+    return value
+
+
 class SqlitePreferencesStore:
     def __init__(self, database: Database) -> None:
         self._db = database
@@ -32,6 +40,8 @@ class SqlitePreferencesStore:
                 style=AnswerStyle(data["style"]),
                 compare_models=(str(first), str(second)),
                 onboarded=bool(data["onboarded"]),
+                # Rows saved before the setting existed have none: the default applies.
+                retention_days=_optional_int(data.get("retention_days")),
             )
         except (ValueError, KeyError, TypeError):
             return None

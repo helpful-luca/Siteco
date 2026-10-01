@@ -289,7 +289,11 @@ def build_container(
         chats, repository, runs, clock, erasure, documents, max_chats=settings.max_chats
     )
     preferences = PreferencesService(
-        SqlitePreferencesStore(database), clock, settings.enabled_models, settings.default_model
+        SqlitePreferencesStore(database),
+        clock,
+        settings.enabled_models,
+        settings.default_model,
+        retention_days=settings.retention_days,
     )
     return Container(
         settings=settings,
@@ -346,7 +350,6 @@ def build_container(
                 budget=budget,
                 clock=clock,
             ),
-            retention_days=settings.retention_days,
         ),
         export=WorkspaceExport(
             chats, repository, preferences, clock, tmp_dir=settings.data_dir / "tmp"
@@ -358,7 +361,7 @@ def build_container(
             documents,
             erasure,
             clock,
-            days=settings.retention_days,
+            days=lambda: preferences.get().retention_days,
             interval_s=settings.retention_sweep_interval_s,
         ),
         erasure=erasure,

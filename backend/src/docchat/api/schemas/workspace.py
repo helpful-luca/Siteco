@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 from docchat.domain.enums import AnswerStyle, Effort, Locale, Theme
-from docchat.domain.preferences import NAME_MAX_CHARS, Preferences
+from docchat.domain.preferences import NAME_MAX_CHARS, RETENTION_MAX_DAYS, Preferences
 from docchat.services.workspace_service import WorkspaceStats
 
 
@@ -21,6 +21,12 @@ class PreferencesBody(BaseModel):
     style: AnswerStyle
     compare_models: list[str] = Field(min_length=2, max_length=2)
     onboarded: bool
+    retention_days: int = Field(
+        ge=0,
+        le=RETENTION_MAX_DAYS,
+        description="Delete chats and documents after this many days; 0 is off. Until chosen, "
+        "the installation default (RETENTION_DAYS).",
+    )
 
     def to_domain(self) -> Preferences:
         first, second = self.compare_models
@@ -33,6 +39,7 @@ class PreferencesBody(BaseModel):
             style=self.style,
             compare_models=(first, second),
             onboarded=self.onboarded,
+            retention_days=self.retention_days,
         )
 
     @classmethod
@@ -46,6 +53,7 @@ class PreferencesBody(BaseModel):
             style=prefs.style,
             compare_models=list(prefs.compare_models),
             onboarded=prefs.onboarded,
+            retention_days=prefs.retention_days or 0,
         )
 
 
@@ -67,7 +75,9 @@ class UsageTodayOut(BaseModel):
 class WorkspaceOut(BaseModel):
     stats: WorkspaceStatsOut
     usage_today: UsageTodayOut = Field(description="The current UTC day.")
-    retention_days: int | None = Field(description="RETENTION_DAYS; null: nothing is deleted.")
+    retention_days: int | None = Field(
+        description="From the preferences; null: nothing is deleted automatically."
+    )
 
     @classmethod
     def from_stats(cls, stats: WorkspaceStats) -> "WorkspaceOut":

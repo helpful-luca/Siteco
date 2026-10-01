@@ -21,6 +21,7 @@ const STORED: PreferencesBody = {
   style: 'concise',
   compare_models: ['claude-sonnet-5-5', 'claude-haiku-4-5'],
   onboarded: false,
+  retention_days: 0,
 };
 
 let stored: PreferencesBody;

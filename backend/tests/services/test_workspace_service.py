@@ -37,7 +37,11 @@ class World:
         self.runs = RunRegistry(3)
         self.ledger = SqliteUsageLedger(harness.database)
         self.preferences = PreferencesService(
-            SqlitePreferencesStore(harness.database), harness.clock, MODELS, "claude-sonnet-5-5"
+            SqlitePreferencesStore(harness.database),
+            harness.clock,
+            MODELS,
+            "claude-sonnet-5-5",
+            retention_days=retention_days,
         )
         self.erasure = DiskErasure(harness.vectors, harness.database)
         self.chat_service = ChatService(
@@ -64,11 +68,10 @@ class World:
                 budget=DailyBudget(self.ledger, harness.clock, None),
                 clock=harness.clock,
             ),
-            retention_days=retention_days,
         )
         self.sweeper = RetentionSweeper(
             self.chat_service, harness.chats, harness.repository, harness.documents,
-            self.erasure, harness.clock, days=retention_days,
+            self.erasure, harness.clock, days=lambda: self.preferences.get().retention_days,
         )  # fmt: skip
         self.export = WorkspaceExport(
             harness.chats,
@@ -310,3 +313,12 @@ async def test_an_aborted_export_leaves_nothing_behind(world: World) -> None:
     next(chunks)  # the download started, then the client went away
     handle.close()
     assert [p for p in (world.h.root / "tmp").iterdir()] == []
+
+
+async def test_retention_chosen_in_the_app_applies_at_the_next_sweep(harness: Harness) -> None:
+    world = World(harness, retention_days=0)
+    world.chat_citing(world.document(), age_days=40)
+    assert (await world.sweeper.sweep_once()).chats == 0
+    world.preferences.update(replace(world.preferences.get(), retention_days=30))
+    assert (await world.workspace.stats()).retention_days == 30
+    assert (await world.sweeper.sweep_once()).chats == 1

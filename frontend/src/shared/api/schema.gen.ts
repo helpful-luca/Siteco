@@ -921,6 +921,11 @@ export interface components {
             name: string;
             /** Onboarded */
             onboarded: boolean;
+            /**
+             * Retention Days
+             * @description Delete chats and documents after this many days; 0 is off. Until chosen, the installation default (RETENTION_DAYS).
+             */
+            retention_days: number;
             style: components["schemas"]["AnswerStyle"];
             theme: components["schemas"]["Theme"];
         };
@@ -1189,7 +1194,7 @@ export interface components {
         WorkspaceOut: {
             /**
              * Retention Days
-             * @description RETENTION_DAYS; null: nothing is deleted.
+             * @description From the preferences; null: nothing is deleted automatically.
              */
             retention_days: number | null;
             stats: components["schemas"]["WorkspaceStatsOut"];

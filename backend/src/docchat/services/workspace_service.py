@@ -58,9 +58,8 @@ class WorkspaceStats:
 
 
 class WorkspaceService:
-    def __init__(self, parts: WorkspaceParts, *, retention_days: int) -> None:
+    def __init__(self, parts: WorkspaceParts) -> None:
         self._p = parts
-        self._retention_days = retention_days if retention_days > 0 else None
 
     async def stats(self) -> WorkspaceStats:
         p = self._p
@@ -73,7 +72,7 @@ class WorkspaceService:
             storage_bytes=await asyncio.to_thread(p.meter.used_bytes),
             usage_today=await asyncio.to_thread(p.ledger.usage_on, today),
             budget_usd=p.budget.limit_usd,
-            retention_days=self._retention_days,
+            retention_days=p.preferences.get().retention_days or None,
         )
 
     async def recover(self) -> None:

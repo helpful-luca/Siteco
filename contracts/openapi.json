@@ -1527,6 +1527,13 @@
             "title": "Onboarded",
             "type": "boolean"
           },
+          "retention_days": {
+            "description": "Delete chats and documents after this many days; 0 is off. Until chosen, the installation default (RETENTION_DAYS).",
+            "maximum": 3650.0,
+            "minimum": 0.0,
+            "title": "Retention Days",
+            "type": "integer"
+          },
           "style": {
             "$ref": "#/components/schemas/AnswerStyle"
           },
@@ -1542,7 +1549,8 @@
           "effort",
           "style",
           "compare_models",
-          "onboarded"
+          "onboarded",
+          "retention_days"
         ],
         "title": "PreferencesBody",
         "type": "object"
@@ -2193,7 +2201,7 @@
                 "type": "null"
               }
             ],
-            "description": "RETENTION_DAYS; null: nothing is deleted.",
+            "description": "From the preferences; null: nothing is deleted automatically.",
             "title": "Retention Days"
           },
           "stats": {

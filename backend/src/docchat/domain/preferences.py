@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from docchat.domain.enums import AnswerStyle, Effort, Locale, Theme
 
 NAME_MAX_CHARS = 40
+# Automatic deletion (master spec 10b, 6): 0 is off. The UI offers off, 30, 90 and 365 days.
+RETENTION_MAX_DAYS = 3650
 DEFAULT_COMPARE_MODELS = ("claude-sonnet-5-5", "claude-haiku-4-5")
 
 # C0 and C1 controls, zero width space, bidi marks, overrides and isolates, invisible operators,
@@ -28,6 +30,9 @@ class Preferences:
     style: AnswerStyle
     compare_models: tuple[str, str]
     onboarded: bool
+    # Days after which chats and documents are deleted; 0 is off. None: not chosen in the app,
+    # the installation default (RETENTION_DAYS) applies.
+    retention_days: int | None = None
 
 
 def default_preferences(default_model: str) -> Preferences:

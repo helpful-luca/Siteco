@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     max_json_body_kb: int = 64
 
     # Automatic deletion of chats and documents older than this many days (master spec 10b, 6).
-    # 0 is off, the default.
+    # Only the default until chosen in Settings > Data. 0 is off, the default.
     retention_days: int = Field(default=0, ge=0)
     retention_sweep_interval_s: int = Field(default=3600, ge=60)
 

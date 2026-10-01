@@ -72,3 +72,29 @@ def test_reset_brings_back_the_setup(service: PreferencesService) -> None:
     service.update(replace(service.get(), onboarded=True))
     service.reset()
     assert not service.get().onboarded
+
+
+def test_retention_follows_the_installation_default_until_chosen(
+    store: SqlitePreferencesStore,
+) -> None:
+    service = PreferencesService(store, FakeClock(), MODELS, "claude-sonnet-5-5", retention_days=14)
+    assert service.get().retention_days == 14
+    saved = service.update(replace(service.get(), retention_days=90))
+    assert service.get().retention_days == saved.retention_days == 90
+    service.reset()
+    assert service.get().retention_days == 14
+
+
+def test_retention_must_be_a_sensible_number_of_days(service: PreferencesService) -> None:
+    with pytest.raises(AppError) as caught:
+        service.update(replace(service.get(), retention_days=-1))
+    assert caught.value.code is ErrorCode.VALIDATION_ERROR
+
+
+def test_a_row_saved_before_retention_existed_still_loads(store: SqlitePreferencesStore) -> None:
+    service = PreferencesService(store, FakeClock(), MODELS, "claude-sonnet-5-5", retention_days=7)
+    service.update(replace(service.get(), name="Luca", onboarded=True))
+    with store._db.connect() as conn:
+        conn.execute("UPDATE preferences SET data = json_remove(data, '$.retention_days')")
+    prefs = service.get()
+    assert (prefs.name, prefs.retention_days) == ("Luca", 7)

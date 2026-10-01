@@ -7,7 +7,12 @@ from dataclasses import replace
 
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.ports import Clock, PreferencesStore
-from docchat.domain.preferences import Preferences, clean_name, default_preferences
+from docchat.domain.preferences import (
+    RETENTION_MAX_DAYS,
+    Preferences,
+    clean_name,
+    default_preferences,
+)
 
 log = logging.getLogger("docchat.preferences")
 
@@ -19,18 +24,21 @@ class PreferencesService:
         clock: Clock,
         enabled_models: Sequence[str],
         default_model: str,
+        *,
+        retention_days: int = 0,
     ) -> None:
         self._store = store
         self._clock = clock
         self._models = tuple(enabled_models)
         self._defaults = default_preferences(default_model)
+        self._retention_days = retention_days  # RETENTION_DAYS, until chosen in the app
 
     def get(self) -> Preferences:
         """Stored values, with models that are no longer offered replaced by the defaults."""
         stored = self._store.load()
-        if stored is None:
-            return self._defaults
-        prefs = stored
+        prefs = stored or self._defaults
+        if prefs.retention_days is None:
+            prefs = replace(prefs, retention_days=self._retention_days)
         if prefs.default_model not in self._models:
             prefs = replace(prefs, default_model=self._defaults.default_model)
         if any(m not in self._models for m in prefs.compare_models):
@@ -42,6 +50,13 @@ class PreferencesService:
             raise AppError(ErrorCode.MODEL_NOT_ALLOWED, params={"model": model})
 
     def update(self, preferences: Preferences) -> Preferences:
+        days = preferences.retention_days
+        if days is not None and not 0 <= days <= RETENTION_MAX_DAYS:
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                f"retention_days must be 0 to {RETENTION_MAX_DAYS}.",
+                details=[{"loc": ["body", "retention_days"], "type": "value_error"}],
+            )
         self._check_model(preferences.default_model)
         for model in preferences.compare_models:
             self._check_model(model)

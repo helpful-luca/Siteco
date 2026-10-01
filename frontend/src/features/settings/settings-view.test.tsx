@@ -56,6 +56,7 @@ const PREFS: PreferencesBody = {
   style: 'concise',
   compare_models: ['claude-sonnet-5-5', 'claude-haiku-4-5'],
   onboarded: true,
+  retention_days: 30,
 };
 
 const WORKSPACE: WorkspaceOut = {
@@ -155,8 +156,7 @@ describe('SettingsView', () => {
 
   it('shows storage, cost today and retention, and deletes everything after a clear confirmation', async () => {
     setup('data');
-    expect(await screen.findByText('Nach 30 Tagen')).toBeInTheDocument();
-    expect(screen.getByText('4 Anfragen an Claude')).toBeInTheDocument();
+    expect(await screen.findByText('4 Anfragen an Claude')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Löschen …' }));
     const dialog = await screen.findByRole('dialog', { name: 'Alle Daten löschen?' });
     expect(dialog).toHaveTextContent('Das entfernt 3 Dokumente und 2 Chats samt allen Suchdaten');
@@ -167,6 +167,16 @@ describe('SettingsView', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(calls.find((c) => c.method === 'DELETE')?.url).toBe('/api/workspace?reset_preferences=true');
     expect(await screen.findByText('Alle Daten wurden gelöscht.')).toBeInTheDocument();
+  });
+
+  it('chooses automatic deletion in the app, without any word about .env', async () => {
+    setup('data');
+    const choice = await screen.findByRole('radiogroup', { name: 'Automatisch löschen' });
+    await waitFor(() => expect(within(choice).getByRole('radio', { name: '30 Tage' })).toBeChecked());
+    await userEvent.click(within(choice).getByRole('radio', { name: '90 Tage' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ ...PREFS, retention_days: 90 });
+    expect(screen.queryByText(/RETENTION_DAYS|\.env/)).not.toBeInTheDocument();
   });
 
   it('explains privacy in plain words, with the scan status', async () => {

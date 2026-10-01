@@ -23,6 +23,7 @@ VALID: dict[str, Any] = {
     "style": "detailed",
     "compare_models": ["claude-sonnet-5-5", "claude-haiku-4-5"],
     "onboarded": True,
+    "retention_days": 30,
 }
 
 
@@ -68,6 +69,8 @@ def test_name_is_cleaned(client: TestClient) -> None:
         ({"default_model": "gpt-5"}, "MODEL_NOT_ALLOWED"),
         ({"compare_models": ["claude-opus-5-5", "gpt-5"]}, "MODEL_NOT_ALLOWED"),
         ({"extra": 1}, "VALIDATION_ERROR"),
+        ({"retention_days": -1}, "VALIDATION_ERROR"),
+        ({"retention_days": 99999}, "VALIDATION_ERROR"),
     ],
 )
 def test_preferences_validation(client: TestClient, change: dict[str, Any], code: str) -> None:
@@ -162,3 +165,11 @@ def test_the_name_never_reaches_the_model(settings: Settings) -> None:
         ask(c, new_chat(c))
     assert llm.requests
     assert all("Zacharias" not in repr(request) for request in llm.requests)
+
+
+def test_retention_is_chosen_in_the_app(client: TestClient) -> None:
+    assert client.get("/api/workspace").json()["retention_days"] is None
+    assert client.put("/api/preferences", json=VALID | {"retention_days": 90}).status_code == 200
+    assert client.get("/api/workspace").json()["retention_days"] == 90
+    assert client.delete("/api/workspace?reset_preferences=true").status_code == 204
+    assert client.get("/api/preferences").json()["retention_days"] == 0

@@ -1,10 +1,12 @@
-"""Automatic deletion after `RETENTION_DAYS` (master spec 10b, 6). Off by default.
+"""Automatic deletion (master spec 10b, 6), chosen in Settings > Data; RETENTION_DAYS is only
+the default until then. Off by default. The setting is read at every sweep.
 
 Chats count from their last change, documents from their upload. A chat with a running
 answer waits for the next sweep."""
 
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -34,7 +36,7 @@ class RetentionSweeper:
         erasure: DiskErasure,
         clock: Clock,
         *,
-        days: int,
+        days: Callable[[], int | None],
         interval_s: float = 3600,
     ) -> None:
         self._chat_service = chat_service
@@ -47,14 +49,11 @@ class RetentionSweeper:
         self._interval_s = interval_s
         self._task: asyncio.Task[None] | None = None
 
-    @property
-    def enabled(self) -> bool:
-        return self._days > 0
-
     async def sweep_once(self) -> SweepResult:
-        if not self.enabled:
+        days = await asyncio.to_thread(self._days)
+        if not days:
             return SweepResult(0, 0)
-        cutoff = self._clock.now() - timedelta(days=self._days)
+        cutoff = self._clock.now() - timedelta(days=days)
         chats = 0
         for chat_id in await asyncio.to_thread(self._chats.chats_idle_since, cutoff):
             # A chat with a running answer waits for the next sweep.
@@ -76,7 +75,7 @@ class RetentionSweeper:
         return SweepResult(chats, documents)
 
     def start(self) -> None:
-        if self.enabled and self._task is None:
+        if self._task is None:  # always: the setting may be switched on at any time
             self._task = asyncio.create_task(self._loop(), name="retention-sweeper")
 
     async def stop(self) -> None:
