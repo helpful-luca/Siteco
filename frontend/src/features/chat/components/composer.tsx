@@ -149,7 +149,6 @@ export function Composer({
           aria-label={busy ? t('stop') : t('send')}
           aria-disabled={!busy && !canSend ? true : undefined}
           onClick={busy ? onStop : undefined}
-          className="aria-disabled:opacity-40 aria-disabled:hover:brightness-100 aria-disabled:active:scale-100"
         >
           {busy ? <Square className="fill-current" /> : <ArrowUp />}
         </Button>

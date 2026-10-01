@@ -17,14 +17,20 @@ export type ButtonProps =
 const BASE =
   'inline-flex shrink-0 select-none items-center justify-center gap-1.5 rounded-full font-medium ' +
   'transition-[background-color,box-shadow,transform,filter] duration-150 ease-out-soft ' +
-  'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4';
+  'active:scale-[0.97] disabled:pointer-events-none [&_svg]:size-4';
+
+/** A disabled primary turns grey: a faded red reads as brown on dark, and as an error elsewhere. */
+const PRIMARY_OFF =
+  'disabled:bg-fill-strong disabled:text-ink-muted disabled:shadow-none ' +
+  'aria-disabled:bg-fill-strong aria-disabled:text-ink-muted aria-disabled:shadow-none ' +
+  'aria-disabled:hover:brightness-100 aria-disabled:active:scale-100';
+const FADED_OFF = 'disabled:opacity-40';
 
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    'bg-accent text-on-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_1px_2px_rgb(0_0_0/0.15)] hover:brightness-[1.06]',
-  secondary: 'bg-fill text-ink ring-1 ring-inset ring-hairline hover:bg-fill-strong',
-  ghost: 'text-ink hover:bg-fill',
-  danger: 'text-danger ring-1 ring-inset ring-hairline hover:bg-fill',
+  primary: `bg-accent text-on-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_1px_2px_rgb(0_0_0/0.15)] hover:brightness-[1.06] ${PRIMARY_OFF}`,
+  secondary: `bg-fill text-ink ring-1 ring-inset ring-hairline hover:bg-fill-strong ${FADED_OFF}`,
+  ghost: `text-ink hover:bg-fill ${FADED_OFF}`,
+  danger: `text-danger ring-1 ring-inset ring-hairline hover:bg-fill ${FADED_OFF}`,
 };
 
 /**

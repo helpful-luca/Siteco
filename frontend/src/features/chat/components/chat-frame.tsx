@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { GlobalBanner, RECONNECTING_BANNER } from '@/features/shell';
 import { Button } from '@/shared/ui';
+import { BOTTOM_FADE, scrollEdgeMask } from '../scroll-edge';
 
 type Props = {
   header: ReactNode;
@@ -44,8 +45,8 @@ export function ChatFrame({
     const observer = new ResizeObserver(() => {
       const height = dockElement.offsetHeight;
       setDockHeight(height);
-      // 24 px on top of the list, the dock plus 24 px below it.
-      onViewHeight?.(scroller.clientHeight - 24 - height - 24);
+      // 24 px on top of the list, the dock plus the bottom fade below it.
+      onViewHeight?.(scroller.clientHeight - 24 - height - BOTTOM_FADE);
     });
     observer.observe(dockElement);
     observer.observe(scroller);
@@ -56,15 +57,17 @@ export function ChatFrame({
     <div className="relative flex h-full min-h-0 flex-col">
       {header}
       {/*
-        macOS scroll edge: once the list is scrolled, its top edge fades out over 40 px, so text
-        never runs into the title and toolbar. At rest nothing fades (the list starts 24 px lower).
+        macOS scroll edges: once the list is scrolled, its top edge fades out under the title and
+        toolbar; at the bottom it always fades out just above the composer, so no text runs behind
+        the glass (where the blur turned it into a bright haze) or shows below the pill.
       */}
       <div
         ref={scrollRef}
         data-scrolled={scrolled || undefined}
-        className="@container no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter data-scrolled:[mask-image:linear-gradient(to_bottom,transparent,black_calc(var(--spacing)*10))]"
+        style={{ maskImage: scrollEdgeMask({ scrolled, dockHeight }) }}
+        className="@container no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter"
       >
-        <div ref={contentRef} className="mx-auto max-w-reading pt-6" style={{ paddingBottom: dockHeight + 24 }}>
+        <div ref={contentRef} className="mx-auto max-w-reading pt-6" style={{ paddingBottom: dockHeight + BOTTOM_FADE }}>
           {/* An outage is told once, in the composer note where the question waits. */}
           <GlobalBanner className="mb-6" omit={[RECONNECTING_BANNER]} />
           {children}
