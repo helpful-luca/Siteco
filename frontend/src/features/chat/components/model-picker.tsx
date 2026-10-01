@@ -17,7 +17,7 @@ type Props = {
   second?: boolean;
 };
 
-/** Model for the next question with a quiet price level (master spec 6.4). Off without a key. */
+/** Model for the next question: name, a quiet $ level and one line on what it is for. Off without a key. */
 export function ModelPicker({ value, onChange, exclude = null, second = false }: Props) {
   const t = useTranslations('chat.model');
   const { data: config } = useConfig();
@@ -77,9 +77,6 @@ export function ModelPicker({ value, onChange, exclude = null, second = false }:
                     : t.has(`tier.${model.tier}`)
                       ? t(`tier.${model.tier}`)
                       : model.tier}
-              </span>
-              <span className="block text-caption text-ink-muted">
-                {t('price', { input: model.input_usd_per_mtok, output: model.output_usd_per_mtok })}
               </span>
             </MenuRadioItem>
           );
