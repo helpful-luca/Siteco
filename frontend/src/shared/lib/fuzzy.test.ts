@@ -25,3 +25,11 @@ describe('fuzzyMatch', () => {
     expect(fuzzyMatch('ip66', 'Inhalt der IP66 Leuchte')?.indices).toEqual([11, 12, 13, 14]);
   });
 });
+
+describe('fuzzyMatch with emoji and other astral characters', () => {
+  it('finds a title with an emoji and counts indices per character, like the highlight', () => {
+    expect(fuzzyMatch('plan', 'Plan 🚀 Q3')?.indices).toEqual([0, 1, 2, 3]);
+    expect(fuzzyMatch('plan', '🚀 Plan')?.indices).toEqual([2, 3, 4, 5]);
+    expect(fuzzyMatch('q3', 'Plan 🚀 Q3')?.indices).toEqual([7, 8]);
+  });
+});

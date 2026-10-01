@@ -16,6 +16,8 @@ import { useCommands } from './use-commands';
  */
 export function CommandPalette() {
   const { paletteOpen, setPaletteOpen } = useUI();
+  // Stable: the command list is memoised on it, a new function would rebuild it on every key.
+  const close = useCallback(() => setPaletteOpen(false), [setPaletteOpen]);
   const t = useTranslations('command');
   return (
     <Dialog.Root open={paletteOpen} onOpenChange={(open) => setPaletteOpen(open)}>
@@ -31,7 +33,7 @@ export function CommandPalette() {
             'data-ending-style:opacity-0 data-ending-style:duration-100',
           )}
         >
-          {paletteOpen && <PaletteBody onClose={() => setPaletteOpen(false)} />}
+          {paletteOpen && <PaletteBody onClose={close} />}
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
