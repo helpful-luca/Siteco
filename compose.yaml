@@ -14,7 +14,7 @@ services:
       # Compose fills this from the shell or from .env, whichever is set.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_WORKSPACE_ID: ${ANTHROPIC_WORKSPACE_ID:-}   # only for keys that ask for one
-      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}   # `fake`: answers without Claude (tests, demo)
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}   # `fake` is the test double used by the E2E suite
       OCR: ${OCR:-on}      # Tesseract for scanned pages; `off` leaves them unsearchable
       CLAMD_HOST: clamav
     expose: ["8000"]      # no host port: only the frontend container can reach the backend

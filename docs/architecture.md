@@ -27,7 +27,7 @@ Guiding rules:
 api        thin HTTP: routes, request and response schemas, error envelope
 services   use cases: upload, ingestion worker, retrieval, answer run, chats, export, purge
 domain     pure rules and ports: chunking, sentences, citations, prompt, limits, error codes
-adapters   implementations of the ports: SQLite, LanceDB, pdfium, Tesseract, clamd, Anthropic, fake LLM
+adapters   implementations of the ports: SQLite, LanceDB, pdfium, Tesseract, clamd, Anthropic, and a test double for the model
 core       config and container.py, the only place that wires concrete adapters
 ```
 
@@ -52,7 +52,7 @@ A file uploaded in a chat is an attachment of that chat (`documents.in_library =
 5. The SSE stream (`meta`, `status`, `sources`, text deltas, `citation`, `done` or `error`) is persisted as it goes. Stop cancels the task and saves the partial answer as `stopped`; a vanished client marks it `interrupted`.
 6. Without a key the same path ends after `sources` with status `sources_only`.
 
-`LLM_PROVIDER=fake` swaps the Claude client for a deterministic one behind the same port, with scenarios for every error path (`#fake:slow`, `#fake:overloaded`, and so on in the question).
+For tests, `LLM_PROVIDER=fake` swaps the Claude client for a deterministic double behind the same port, with scenarios for every error path, so CI never calls the paid API.
 
 ## Frontend
 

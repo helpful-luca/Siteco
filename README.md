@@ -18,12 +18,9 @@ docker compose up --build
 
 Open http://localhost:3000, or use the [desktop app](#run-as-a-desktop-app) for a separate window. The first build downloads the images, the virus scanner and the local embedding model (about 3.5 GB on disk) and takes a few minutes. Later starts take seconds.
 
-**Add a Claude API key**, either way works:
+On first start a short onboarding asks for language, appearance and your name. Then add your Claude API key in Settings > Models; it is checked and used from the next question, no restart needed. Alternatively put it in a `.env` file (`cp .env.example .env`, set `ANTHROPIC_API_KEY`) and run `docker compose up -d`.
 
-- In the app: Settings > Models. The key is checked and used from the next question, no restart.
-- In a file: `cp .env.example .env`, set `ANTHROPIC_API_KEY`, then run `docker compose up -d`.
-
-Without a key the app still works: upload and search are available, and a question returns the matching passages instead of an answer. With `LLM_PROVIDER=fake` in `.env`, a built-in stand-in answers with real citations, so the whole flow can be tried without any key.
+Until a key is set, upload and search already work, and a question shows the matching passages instead of an answer.
 
 If port 3000 is taken, start with `APP_PORT=3001 docker compose up --build`. Stop with `docker compose down`; your documents and chats stay in Docker volumes.
 
@@ -49,7 +46,7 @@ npm install
 npm run dev
 ```
 
-This starts the virus scanner in Docker, the FastAPI backend on 127.0.0.1:8000, the Next.js dev server on http://localhost:3000 and the Electron window. The first run downloads the embedding model (about 400 MB) and Electron (about 130 MB). The backend reads the same `.env` as Docker, so a key or `LLM_PROVIDER=fake` set there applies here too.
+This starts the virus scanner in Docker, the FastAPI backend on 127.0.0.1:8000, the Next.js dev server on http://localhost:3000 and the Electron window. The first run downloads the embedding model (about 400 MB) and Electron (about 130 MB). The backend reads the same `.env` as Docker, so a key set there applies here too.
 
 Scanned PDFs need Tesseract outside Docker: `brew install tesseract tesseract-lang` on macOS. Without it, pages without a text layer are marked as not searchable.
 
@@ -125,10 +122,10 @@ make e2e    # browser tests against the Docker stack (needs: cd frontend && npx 
 
 | Area | Tool | Tests |
 |---|---|---|
-| Backend: domain, adapters, services, API | pytest with real SQLite and LanceDB, a fake embedder and a fake model | 944 |
+| Backend: domain, adapters, services, API | pytest with real SQLite and LanceDB; the embedder and Claude are replaced by test doubles | 944 |
 | Frontend: streaming, citations, markdown safety, components | Vitest and Testing Library | 491 |
 | Desktop app | Vitest | 113 |
-| End to end | Playwright against the Docker stack, with the fake model and without a key | 2 runs |
+| End to end | Playwright against the Docker stack, with a test double for Claude and without a key | 2 runs |
 
 CI runs all of the above plus the Docker build on amd64 and arm64. No test calls the paid API. Two opt-in suites exist: `RUN_SLOW=1` parses a 1500-page PDF, `RUN_LIVE=1` makes one real Claude call.
 
@@ -140,7 +137,6 @@ Nothing is required. All variables are listed in [.env.example](.env.example); t
 |---|---|---|
 | `ANTHROPIC_API_KEY` | empty | Claude API key, read only by the backend. A key set in the app takes precedence |
 | `APP_PORT` | `3000` | Port of the web app |
-| `LLM_PROVIDER` | `anthropic` | `fake` answers without Claude, for tests and demos |
 | `OCR` | `on` | Read scanned pages with Tesseract; `off` skips them |
 | `LOG_LEVEL` | `INFO` | Backend log level |
 

@@ -96,6 +96,6 @@ The design choices behind Document Chat, each with the option that was turned do
 
 | Topic | Picked | Rejected | Why |
 |---|---|---|---|
-| Fake model | `LLM_PROVIDER=fake` cites a real sentence of the best passage; error scenarios by marker | Mocks per test; calling Claude in CI | The whole path runs offline and deterministically in tests, CI and demos |
+| Model in tests | A deterministic test double behind the LLM port that cites a real sentence of the best passage, with error scenarios | Mocks per test; calling Claude in CI | The whole path runs offline and deterministically in CI, without API costs |
 | Streaming tests | Stop, disconnect and busy lanes run against a real uvicorn server in a thread | Starlette `TestClient` only | The TestClient buffers the whole response, so it cannot observe streaming or a disconnect |
-| Browser E2E | Playwright against the real Compose stack, run twice (fake model, then no key) | A mocked backend | The tested thing is the image that reviewers run |
+| Browser E2E | Playwright against the real Compose stack, run twice (test double, then no key) | A mocked backend | The tested thing is the image that reviewers run |
