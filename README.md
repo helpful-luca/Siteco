@@ -1,9 +1,7 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/banner-dark.svg">
-  <img src="docs/images/banner-light.svg" alt="Document Chat" width="100%">
-</picture>
+![Document Chat](docs/images/banner-light.svg#gh-light-mode-only)
+![Document Chat](docs/images/banner-dark.svg#gh-dark-mode-only)
 
 <br>
 
