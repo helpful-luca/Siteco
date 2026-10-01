@@ -1,6 +1,6 @@
 """The eval results file (`eval/results/latest.json`, written by `docchat.cli.run_eval`) and the
 optional generation results (`generation.json`, `docchat.cli.run_generation_eval`). The same
-models write and read them, so the file and `GET /api/eval` cannot drift apart."""
+models write and read them, so the runner and the CI gate cannot drift apart."""
 
 from datetime import datetime
 from typing import Literal

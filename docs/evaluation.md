@@ -1,7 +1,7 @@
 # Retrieval evaluation
 
 Draft of the README section. The numbers are what `make eval` measured on 2026-10-01 at commit 0e8ef49
-(`eval/results/latest.json`); latencies vary by a millisecond or two between runs; the app shows the same file on its Quality page.
+(`eval/results/latest.json`); latencies vary by a millisecond or two between runs.
 
 ## What is measured
 
@@ -83,7 +83,7 @@ By kind of question, default configuration against each retriever alone (in sour
 all 32 questions through the app's own answer path with Haiku 4.5, Sonnet 5.5 and Opus 5.5 and
 lets Claude Opus judge each answer against the labelled pages: correctness, citations on a
 right page, honest refusals on the 4 unanswerable questions, cost and response time. It writes
-`eval/results/generation.json`; the Quality page shows it once the file exists. It never runs
+`eval/results/generation.json`. It never runs
 in CI.
 
 ## Reproduce

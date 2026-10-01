@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { cn } from '@/shared/ui';
 
-type Props = { href: '/library' | '/quality' | '/settings'; icon: ReactNode; onNavigate?: () => void; children: ReactNode };
+type Props = { href: '/library' | '/settings'; icon: ReactNode; onNavigate?: () => void; children: ReactNode };
 
 /** Sidebar row in the Finder and Mail style. The current page is marked, not only colored. */
 export function NavItem({ href, icon, onNavigate, children }: Props) {

@@ -6,14 +6,12 @@ import os
 import random
 import shutil
 from dataclasses import dataclass
-from pathlib import Path
 
 from docchat.adapters.anthropic.client import AnthropicLLMClient
 from docchat.adapters.clamd_scanner import ClamdScanner
 from docchat.adapters.directory_size_meter import DirectorySizeMeter
 from docchat.adapters.fake_llm import FakeLLMClient
 from docchat.adapters.fastembed_embedder import FastEmbedEmbedder
-from docchat.adapters.json_eval_results import JsonEvalResults
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.lancedb_vector_store import LanceVectorStore
 from docchat.adapters.local_file_storage import LocalFileStorage
@@ -32,9 +30,7 @@ from docchat.adapters.system_clock import SystemClock
 from docchat.adapters.tesseract_ocr import TesseractPageOcr
 from docchat.adapters.text_parser import TextFileParser
 from docchat.core.config import Settings
-from docchat.core.retrieval_fingerprint import retrieval_fingerprint
 from docchat.domain.enums import ComponentStatus, LlmStatus
-from docchat.domain.eval_config import config_hash
 from docchat.domain.ports import (
     Embedder,
     LLMClient,
@@ -50,7 +46,6 @@ from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
-from docchat.services.eval_report import EvalReportService
 from docchat.services.ingestion_worker import IngestionWorker
 from docchat.services.library_search import LibrarySearch
 from docchat.services.limits import DailyBudget, LimitScope, RateLimit
@@ -69,9 +64,6 @@ from docchat.services.workspace_service import WorkspaceParts, WorkspaceService
 log = logging.getLogger("docchat.container")
 
 _MB = 1024 * 1024
-# Where `make eval` writes in a checkout; the image has the files in /app/eval instead.
-_IMAGE_EVAL_DIR = Path("/app/eval")
-_CHECKOUT_EVAL_DIR = Path(__file__).resolve().parents[4] / "eval" / "results"
 
 
 @dataclass
@@ -96,7 +88,6 @@ class Container:
     export: WorkspaceExport
     retention: RetentionSweeper
     erasure: DiskErasure
-    evaluation: EvalReportService
     library: LibrarySearch
     embedder_status: ComponentStatus = ComponentStatus.LOADING
     vector_store_status: ComponentStatus = ComponentStatus.LOADING
@@ -179,12 +170,6 @@ def _ocr(settings: Settings, process: IsolatedProcess) -> PageOcr:
         return NoPageOcr()
     options = OcrOptions(languages=settings.ocr_languages, timeout_s=settings.ocr_page_timeout_s)
     return TesseractPageOcr(process, options)
-
-
-def _eval_results_dir(settings: Settings) -> Path:
-    if settings.eval_results_dir is not None:
-        return settings.eval_results_dir
-    return _IMAGE_EVAL_DIR if _IMAGE_EVAL_DIR.exists() else _CHECKOUT_EVAL_DIR
 
 
 def _llm(settings: Settings) -> tuple[LLMClient | None, LlmStatus]:
@@ -381,8 +366,4 @@ def build_container(
         ),
         erasure=erasure,
         library=LibrarySearch(repository, retrieval),
-        evaluation=EvalReportService(
-            JsonEvalResults(_eval_results_dir(settings)),
-            config_hash(retrieval_fingerprint(settings)),
-        ),
     )

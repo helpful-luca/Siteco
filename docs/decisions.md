@@ -255,3 +255,9 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 168 | ClamAV container | Drop all capabilities, add back five, writable root filesystem, signatures in a volume | `read_only` for clamd | The image generates its configuration into `/etc/clamav` and drops privileges itself |
 | 169 | `/api/mcp` and CSP review | No change | Tightening further | The loopback Host plus Origin rules cover DNS rebinding and cross-site POST; the CSP exceptions are required by the App Router and PDF.js |
 | 170 | Fresh clone | Two modes: no `.env`, and `FRESH_ENV=fake` with a `.env` | Only one | Both ways a reviewer can start the app must be proven |
+
+## Luca feedback 1 (phase 13)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 171 | Quality page | Removed with `GET /api/eval` and the results baked into the image; runner, CI gate and evaluation.md stay | Keeping the page | Luca: the numbers belong in the README and CI, not in the product |

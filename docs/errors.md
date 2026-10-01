@@ -35,7 +35,6 @@ HTTP errors: the document ends `failed` with the code.
 | `DOCUMENT_FILE_MISSING` | 410 | no | backend | source panel | Die Originaldatei ist nicht mehr da. Lade das Dokument erneut hoch. |
 | `DELETE_FAILED` | 500 | yes | backend | library row, next to the control | Das Löschen hat nicht ganz geklappt. Versuch es noch einmal, bereits Gelöschtes bleibt gelöscht. |
 | `RANGE_NOT_SATISFIABLE` | 416 | no | backend | source panel | Dieser Teil der Datei existiert nicht. Lade die Ansicht neu. |
-| `EVAL_RESULTS_MISSING` | 404 | no | backend | whole view | Es gibt noch keine Auswertung. Führe make eval aus, um sie zu erzeugen. |
 | `PDF_ENCRYPTED` | 422 | no | backend | library row | Dieses PDF ist passwortgeschützt. Speichere eine Kopie ohne Passwort und lade sie hoch. |
 | `PDF_CORRUPT` | 422 | no | backend | library row | Dieses PDF lässt sich nicht öffnen, vielleicht ist es beschädigt. Exportiere es neu und versuch es erneut. |
 | `PDF_NO_TEXT` | 422 | no | backend | library row | In diesem PDF haben wir keinen lesbaren Text gefunden, vermutlich ist es ein Scan. Nimm eine Version mit Textebene oder eine schärfere Kopie. |

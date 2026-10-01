@@ -28,7 +28,7 @@ Open http://localhost:3000. The first build downloads dependencies, the web font
 3. Click a chip. The PDF opens on the cited page with the cited sentence highlighted. Esc closes it.
 4. Ask a follow-up ("and its weight?"). It is rewritten for search using the chat history.
 5. Open the details under the answer: model, tokens, cost, timings, the passages that were sent.
-6. Try Compare (two models side by side), then the Quality page with the retrieval numbers.
+6. Try Compare (two models side by side).
 7. Optional: `claude mcp add --transport http docchat http://localhost:3000/api/mcp` and search the library from Claude Code.
 
 ![Library with statuses, errors and notes](docs/images/library.png)
@@ -44,7 +44,7 @@ Open http://localhost:3000. The first build downloads dependencies, the web font
 | Optional: rich rendering and artifacts | Markdown with tables and code, safe by construction (no HTML, no images); tables and code open in a side panel |
 | Optional: citation highlighting | Chips open the PDF on the page with line rectangles around the cited sentence; text files highlight the passage; scans use OCR word positions |
 | Optional: multi-model | Model per message, side by side compare with timings and cost, server side fallbacks shown openly |
-| Optional: retrieval evaluation | 32 questions, 7 configurations, numbers below, CI gate, Quality page in the app |
+| Optional: retrieval evaluation | 32 questions, 7 configurations, numbers below, CI gate |
 | Beyond the brief | German and English UI, settings, onboarding, a catalog of stable error codes, GDPR tools (export, delete, retention), MCP server, macOS desktop app |
 
 ## Architecture
@@ -96,7 +96,7 @@ Generation quality (Haiku vs Sonnet vs Opus, judged by Claude) is prepared but n
 
     RUN_LIVE=1 ANTHROPIC_API_KEY=... make eval-generation
 
-The Quality page shows the result once `eval/results/generation.json` exists.
+It writes `eval/results/generation.json`.
 
 ## Testing
 

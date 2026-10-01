@@ -262,27 +262,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/eval": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Evaluation
-         * @description `eval/results/latest.json` from the image, `stale` when the retrieval settings changed
-         *     since, and the generation results when someone ran that eval too.
-         */
-        get: operations["evaluation_api_eval_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/health/live": {
         parameters: {
             query?: never;
@@ -672,7 +651,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "EVAL_RESULTS_MISSING" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
+        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
@@ -682,121 +661,6 @@ export interface components {
          * @enum {string}
          */
         ErrorStage: "retrieval" | "llm" | "persist";
-        /** EvalConfigOut */
-        EvalConfigOut: {
-            /** By Category */
-            by_category: {
-                [key: string]: components["schemas"]["EvalMetricsOut"];
-            };
-            /**
-             * Default
-             * @description What the app answers with.
-             */
-            default: boolean;
-            /** Id */
-            id: string;
-            metrics: components["schemas"]["EvalMetricsOut"];
-            search: components["schemas"]["SearchMode"];
-            /**
-             * Stemming
-             * @description BM25 stemmer; none for dense search.
-             */
-            stemming: ("german" | "english" | "none") | null;
-        };
-        /** EvalDatasetOut */
-        EvalDatasetOut: {
-            /** Answerable */
-            answerable: number;
-            /** By Category */
-            by_category: {
-                [key: string]: number;
-            };
-            /** By Language */
-            by_language: {
-                [key: string]: number;
-            };
-            /** Chunks */
-            chunks: number;
-            /** Documents */
-            documents: number;
-            /** Pages */
-            pages: number;
-            /** Questions */
-            questions: number;
-        };
-        /** EvalMetricsOut */
-        EvalMetricsOut: {
-            /**
-             * Hit At 1
-             * @description Share of questions whose first result is on a right page.
-             */
-            hit_at_1: number;
-            /** Hit At 5 */
-            hit_at_5: number;
-            /**
-             * In Sources
-             * @description Share with a right page among the passages an answer gets.
-             */
-            in_sources: number;
-            /** Latency P50 Ms */
-            latency_p50_ms: number;
-            /** Latency P95 Ms */
-            latency_p95_ms: number;
-            /**
-             * Mrr At 10
-             * @description Mean of 1/rank of the first right page, 0 beyond 10.
-             */
-            mrr_at_10: number;
-            /** Questions */
-            questions: number;
-        };
-        /**
-         * EvalMissOut
-         * @description A question whose right page the default configuration does not put among the sources.
-         */
-        EvalMissOut: {
-            category: components["schemas"]["QuestionCategory"];
-            /** Question */
-            question: string;
-            /** Question Id */
-            question_id: string;
-            /** Rank */
-            rank: number | null;
-        };
-        /** EvalOut */
-        EvalOut: {
-            /** Commit */
-            commit: string;
-            /** Config Hash */
-            config_hash: string;
-            /** Configs */
-            configs: components["schemas"]["EvalConfigOut"][];
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            dataset: components["schemas"]["EvalDatasetOut"];
-            full_context: components["schemas"]["FullContextOut"];
-            generation?: components["schemas"]["GenerationResultsFile"] | null;
-            /** Misses */
-            misses: components["schemas"]["EvalMissOut"][];
-            /**
-             * Schema Version
-             * @default 1
-             * @constant
-             */
-            schema_version: 1;
-            /** Settings */
-            settings: {
-                [key: string]: string | number | null;
-            };
-            /**
-             * Stale
-             * @description The results belong to other retrieval settings.
-             */
-            stale: boolean;
-        };
         /** Features */
         Features: {
             /**
@@ -806,73 +670,6 @@ export interface components {
             malware_scan: "required" | "off";
             /** Retrieval Only */
             retrieval_only: boolean;
-        };
-        /**
-         * FullContextOut
-         * @description Questions about one small document: the top passages against the whole document.
-         */
-        FullContextOut: {
-            /** Full Context In Sources */
-            full_context_in_sources: number;
-            /** Full Context Tokens */
-            full_context_tokens: number;
-            /** Questions */
-            questions: number;
-            /** Retrieval In Sources */
-            retrieval_in_sources: number;
-            /** Retrieval Tokens */
-            retrieval_tokens: number;
-        };
-        /** GenerationModelOut */
-        GenerationModelOut: {
-            /**
-             * Abstention
-             * @description Share of unanswerable questions declined honestly.
-             */
-            abstention: number;
-            /**
-             * Citation Accuracy
-             * @description Share of citations on a right page.
-             */
-            citation_accuracy: number;
-            /**
-             * Correct
-             * @description Share of answerable questions the judge marked correct.
-             */
-            correct: number;
-            /**
-             * Cost Usd
-             * @description All answers together, judge excluded.
-             */
-            cost_usd: number;
-            /** Latency P50 Ms */
-            latency_p50_ms: number;
-            /** Model */
-            model: string;
-            /** Questions */
-            questions: number;
-            /** Ttft P50 Ms */
-            ttft_p50_ms: number;
-        };
-        /** GenerationResultsFile */
-        GenerationResultsFile: {
-            /** Commit */
-            commit: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Judge Model */
-            judge_model: string;
-            /** Models */
-            models: components["schemas"]["GenerationModelOut"][];
-            /**
-             * Schema Version
-             * @default 1
-             * @constant
-             */
-            schema_version: 1;
         };
         /**
          * Lane
@@ -1062,11 +859,6 @@ export interface components {
             style: components["schemas"]["AnswerStyle"];
             theme: components["schemas"]["Theme"];
         };
-        /**
-         * QuestionCategory
-         * @enum {string}
-         */
-        QuestionCategory: "factual" | "exact_code" | "cross_lingual" | "follow_up" | "unanswerable";
         /** ReadyChecks */
         ReadyChecks: {
             /**
@@ -1101,12 +893,6 @@ export interface components {
          * @enum {string}
          */
         RunPhase: "retrieving" | "generating" | "retrying";
-        /**
-         * SearchMode
-         * @description How chunks are ranked. Answers always use hybrid; the eval compares all three.
-         * @enum {string}
-         */
-        SearchMode: "hybrid" | "dense" | "bm25";
         /** SentenceOut */
         SentenceOut: {
             /** Char End */
@@ -2212,35 +1998,6 @@ export interface operations {
                 };
                 content: {
                     "text/plain": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    evaluation_api_eval_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvalOut"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

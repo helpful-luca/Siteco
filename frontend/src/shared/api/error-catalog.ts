@@ -38,7 +38,6 @@ export const ERROR_SURFACES: Record<AnyErrorCode, readonly ErrorSurface[]> = {
   DOCUMENT_FILE_MISSING: ['viewer'],
   DELETE_FAILED: ['library', 'form'],
   RANGE_NOT_SATISFIABLE: ['viewer'],
-  EVAL_RESULTS_MISSING: ['page'],
   PDF_ENCRYPTED: ['library'],
   PDF_CORRUPT: ['library'],
   PDF_NO_TEXT: ['library'],

@@ -50,7 +50,7 @@ Upload (raw body, size, quota and disk checks, magic bytes while streaming) writ
 
 ## Frontend
 
-`src/app` holds routes and layouts only. Features live in `src/features/<name>` behind `index.ts` (chat, library, citations, viewer, settings, quality, onboarding, shell). `src/shared` never imports features: API client and generated types, markdown, i18n, preferences, UI primitives on Base UI. Server state is TanStack Query. The theme and language come from cookies mirrored from the backend so nothing flashes. The PDF viewer is react-pdf with an own highlight overlay, loading by range requests so a large catalog opens on the cited page at once.
+`src/app` holds routes and layouts only. Features live in `src/features/<name>` behind `index.ts` (chat, library, citations, viewer, settings, onboarding, shell). `src/shared` never imports features: API client and generated types, markdown, i18n, preferences, UI primitives on Base UI. Server state is TanStack Query. The theme and language come from cookies mirrored from the backend so nothing flashes. The PDF viewer is react-pdf with an own highlight overlay, loading by range requests so a large catalog opens on the cited page at once.
 
 ## Contract
 

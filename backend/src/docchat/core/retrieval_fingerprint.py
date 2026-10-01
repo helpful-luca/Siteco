@@ -1,5 +1,5 @@
 """The settings that change what retrieval finds. The eval runner stores their hash with the
-results; `GET /api/eval` compares it with the running configuration."""
+results, so a result file says which configuration it measured."""
 
 from docchat.core.config import Settings
 from docchat.domain.chunking import TARGET_TOKENS

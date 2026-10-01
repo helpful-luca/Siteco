@@ -46,7 +46,6 @@
     "DOCUMENT_FILE_MISSING": "The original file is gone. Please add the document again.",
     "DELETE_FAILED": "Deleting didn't fully work. Try again, anything already removed stays removed.",
     "RANGE_NOT_SATISFIABLE": "This part of the file doesn't exist. Reload the view.",
-    "EVAL_RESULTS_MISSING": "There are no evaluation results yet. Run make eval to create them.",
     "PDF_ENCRYPTED": "This PDF is password protected. Save a copy without a password and add it again.",
     "PDF_CORRUPT": "This PDF can't be opened and may be damaged. Export it again and retry.",
     "PDF_NO_TEXT": "We couldn't find readable text in this PDF, it's probably a scan. Use a version with a text layer or a sharper copy.",
@@ -124,7 +123,6 @@
     "today": "Today",
     "thisWeek": "This week",
     "library": "Library",
-    "quality": "Quality",
     "settings": "Settings",
     "chats": {
       "a": "Protection rating of the Mira L",
@@ -243,7 +241,6 @@
     "clearSearch": "Clear search",
     "newChat": "New chat",
     "library": "Library",
-    "quality": "Quality",
     "settings": "Settings",
     "chats": "Chats",
     "openSidebar": "Show sidebar",
@@ -707,167 +704,9 @@
       "models": "Models and prices",
       "modelsFooter": "Prices in US dollars according to Anthropic. What an answer cost is shown in its details.",
       "more": "More",
-      "quality": "Search quality",
-      "qualityText": "How reliably the search finds the right passages",
-      "open": "Open",
       "setup": "Setup",
       "setupText": "Choose language, appearance and name again",
       "setupAction": "Start again"
-    }
-  },
-  "quality": {
-    "title": "Quality",
-    "loading": "Loading the evaluation",
-    "loadError": "The evaluation could not be loaded.",
-    "retry": "Try again",
-    "empty": {
-      "title": "No evaluation yet",
-      "text": "Run <code>make eval</code> in the project folder. Afterwards this page shows how reliably search finds the right passage."
-    },
-    "lead": "How reliably search finds the right passage, measured with {questions} questions on {documents} documents with {pages} pages in total.",
-    "measured": "Measured on {date}, commit {commit}",
-    "stale": {
-      "badge": "Out of date",
-      "text": "These results no longer match the current search configuration. Run make eval to measure again."
-    },
-    "summary": {
-      "title": "Default: hybrid search",
-      "latency": "Search time per question {p50} ms median, {p95} ms for the slowest 5 %. Measured with {questions} answerable questions."
-    },
-    "metric": {
-      "inSources": {
-        "label": "Right page in the sources",
-        "hint": "among the {k} passages Claude reads"
-      },
-      "hit5": {
-        "label": "Within the first 5",
-        "hint": "right page within the first 5 results"
-      },
-      "hit1": {
-        "label": "In first place",
-        "hint": "the best result already is the right page"
-      },
-      "mrr": {
-        "label": "MRR@10",
-        "hint": "1 means always first, 0.5 second place on average"
-      }
-    },
-    "column": {
-      "hit_at_1": "First",
-      "hit_at_5": "Top 5",
-      "in_sources": "In sources",
-      "mrr_at_10": "MRR@10",
-      "latency": "Search time p50 / p95"
-    },
-    "configs": {
-      "title": "Configurations",
-      "caption": "Each configuration with its measurements",
-      "config": "Configuration",
-      "default": "Default",
-      "ms": "{p50} / {p95} ms"
-    },
-    "search": {
-      "hybrid": "Hybrid",
-      "dense": "Vectors only",
-      "bm25": "BM25 only"
-    },
-    "stemming": {
-      "german": "German stemmer",
-      "english": "English stemmer",
-      "none": "no stemming"
-    },
-    "categories": {
-      "title": "By kind of question",
-      "choose": "Choose search",
-      "count": "{count, plural, one {# question} other {# questions}}",
-      "unanswerable": "Not measurable for search: what counts here is that the answer honestly says it is not in the documents."
-    },
-    "category": {
-      "factual": {
-        "name": "Facts",
-        "text": "Values and statements as written in the text"
-      },
-      "exact_code": {
-        "name": "Exact codes",
-        "text": "IP66, EN 13201-2, article numbers, limit values"
-      },
-      "cross_lingual": {
-        "name": "Cross-lingual",
-        "text": "German question on English text and the other way round"
-      },
-      "follow_up": {
-        "name": "Follow-ups",
-        "text": "Short question that only makes sense with the one before"
-      },
-      "unanswerable": {
-        "name": "Unanswerable",
-        "text": "Not in any of the documents"
-      }
-    },
-    "fullContext": {
-      "title": "Whole documents instead of a selection",
-      "retrieval": "Best passages",
-      "whole": "Whole document",
-      "tokens": "{tokens} tokens to Claude on average",
-      "footer": "A chat with small documents (up to {limit} tokens together) gives Claude everything. Measured with {questions} questions about one datasheet each: share with the right page.",
-      "same": "With datasheets this small, the best passages already are the whole document: the mode changes nothing here."
-    },
-    "misses": {
-      "title": "Where search misses",
-      "footer": "Questions whose right page is not among the sources of the default search.",
-      "none": "No question.",
-      "rank": "right page only at rank {rank}",
-      "notFound": "right page not within the first 20",
-      "category": {
-        "factual": "Facts",
-        "exact_code": "Exact codes",
-        "cross_lingual": "Cross-lingual",
-        "follow_up": "Follow-ups",
-        "unanswerable": "Unanswerable"
-      }
-    },
-    "generation": {
-      "title": "Answers of the models",
-      "missing": "Not measured yet. With an API key, <code>make eval-generation</code> compares Haiku, Sonnet and Opus on the same questions: correctness, citation accuracy, honest refusals, cost and response time.",
-      "footer": "Correctness judged by {judge} against a reference answer per question. Cost without the judging.",
-      "model": "Model",
-      "correct": "Correct",
-      "citations": "Citations on the right page",
-      "abstention": "Honest refusals",
-      "cost": "Total cost",
-      "latency": "Response time",
-      "seconds": "{seconds} s"
-    },
-    "explain": {
-      "title": "What the numbers mean",
-      "inSources": {
-        "term": "Right page in the sources",
-        "text": "The most important number: for this share of questions, at least one of the {k} passages Claude gets for its answer comes from the page with the answer. Without it, even the best model can only guess or decline."
-      },
-      "hit": {
-        "term": "First place and top 5",
-        "text": "How often the first result, or one of the first five, comes from the right page. Counted by page, not by text chunk, so different splits stay comparable."
-      },
-      "mrr": {
-        "term": "MRR@10",
-        "text": "The mean of 1 divided by the rank of the first right result: first place counts 1, second 0.5, from rank 11 on 0. One number for how high the right page lands on average."
-      },
-      "latency": {
-        "term": "Search time",
-        "text": "Time to embed the question and search the index, without Claude. Median and the value 95 % of the questions stay below."
-      },
-      "hybrid": {
-        "term": "Hybrid, vectors, BM25",
-        "text": "Vectors find meaning, also across languages. BM25 finds exact words and codes like IP66. Hybrid takes the {candidates} best results of both and merges them by rank. This is how the app works."
-      },
-      "stemming": {
-        "term": "Stemmer",
-        "text": "BM25 cuts words to their stem, so “lights” also finds “light”. One index has one stemmer for all documents; measured are German, English and none."
-      },
-      "limits": {
-        "term": "How solid this is",
-        "text": "A small, hand-checked question set: one question is worth several percentage points. The numbers show a direction and guard against regressions; they are no general benchmark."
-      }
     }
   }
 }

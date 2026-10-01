@@ -52,11 +52,3 @@ export type AnswerStreamEvents = {
   done: Schemas['SseDone'];
   error: Schemas['SseError'];
 };
-
-export type EvalOut = Schemas['EvalOut'];
-export type EvalConfigOut = Schemas['EvalConfigOut'];
-export type EvalMetricsOut = Schemas['EvalMetricsOut'];
-export type EvalMissOut = Schemas['EvalMissOut'];
-export type QuestionCategory = Schemas['QuestionCategory'];
-export type SearchMode = Schemas['SearchMode'];
-export type GenerationModelOut = Schemas['GenerationModelOut'];

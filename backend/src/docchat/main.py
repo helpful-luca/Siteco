@@ -12,7 +12,7 @@ from docchat.api.middleware import (
     InternalTokenMiddleware,
     RequestContextMiddleware,
 )
-from docchat.api.routes import chats, documents, evaluation, system, workspace
+from docchat.api.routes import chats, documents, system, workspace
 from docchat.core.config import Settings, get_settings
 from docchat.core.container import Container, build_container
 from docchat.core.logging import configure_logging
@@ -39,7 +39,6 @@ def create_app(settings: Settings | None = None, container: Container | None = N
     app.include_router(documents.router)
     app.include_router(chats.router)
     app.include_router(workspace.router)
-    app.include_router(evaluation.router)
     token = settings.internal_token.get_secret_value() if settings.internal_token else None
     mcp_token = settings.mcp_token.get_secret_value() if settings.mcp_token else None
     app.add_middleware(McpGateway, mcp_app=mcp_app, token=mcp_token)  # innermost

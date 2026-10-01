@@ -1,10 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useOnboarding } from '@/features/onboarding';
 import { useConfig } from '@/shared/api/use-config';
-import { Button, buttonStyles, FormGroup, FormRow } from '@/shared/ui';
+import { Button, FormGroup, FormRow } from '@/shared/ui';
 import { useReady } from '../queries';
 import { useModelPrice } from './models-section';
 
@@ -47,11 +46,6 @@ export function AboutSection() {
       </FormGroup>
 
       <FormGroup title={t('more')}>
-        <FormRow label={t('quality')} description={t('qualityText')}>
-          <Link href="/quality" className={buttonStyles()}>
-            {t('open')}
-          </Link>
-        </FormRow>
         <FormRow label={t('setup')} description={t('setupText')}>
           <Button onClick={onboarding.open}>{t('setupAction')}</Button>
         </FormRow>

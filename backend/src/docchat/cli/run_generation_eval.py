@@ -15,7 +15,7 @@ from pathlib import Path
 from pydantic import SecretStr
 
 from docchat.adapters.anthropic.answer_judge import JUDGE_MODEL, ClaudeAnswerJudge
-from docchat.api.schemas.evaluation import GenerationModelOut, GenerationResultsFile
+from docchat.cli.eval_results_file import GenerationModelOut, GenerationResultsFile
 from docchat.cli.run_eval import EVAL_DIR, commit, ingest, load_eval_set
 from docchat.core.config import Settings
 from docchat.core.container import build_container

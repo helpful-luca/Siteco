@@ -21,7 +21,7 @@ from pathlib import Path
 
 from docchat.adapters.lancedb_vector_store import LanceVectorStore
 from docchat.adapters.system_clock import SystemClock
-from docchat.api.schemas.evaluation import (
+from docchat.cli.eval_results_file import (
     EvalConfigOut,
     EvalDatasetOut,
     EvalMetricsOut,

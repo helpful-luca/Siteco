@@ -7,7 +7,7 @@ their own worker process are async.
 from collections.abc import AsyncIterator, Collection, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Protocol
 
 from docchat.domain.chat_models import Chat, ChatSummary, Message
 from docchat.domain.enums import DocumentKind, DocumentStatus, Lane, SearchMode
@@ -396,14 +396,6 @@ class LLMClient(Protocol):
     Raises LLMError; thinking blocks never leave the adapter."""
 
     def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]: ...
-
-
-class EvalResultsReader(Protocol):
-    """The eval runner's result files, baked into the image (annex 11, 9.1)."""
-
-    def read(self, name: str) -> Mapping[str, Any] | None:
-        """The JSON object in `<name>.json`; None when it is missing or not a JSON object."""
-        ...
 
 
 class AnswerJudge(Protocol):

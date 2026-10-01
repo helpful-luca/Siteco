@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from docchat.api.schemas.evaluation import EvalResultsFile
+from docchat.cli.eval_results_file import EvalResultsFile
 from docchat.cli.run_eval import EVAL_DIR, run
 from docchat.domain.eval_set import QuestionCategory
 

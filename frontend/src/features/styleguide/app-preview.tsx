@@ -5,7 +5,6 @@ import {
   BookOpen,
   ChevronDown,
   FileText,
-  Gauge,
   Paperclip,
   Search,
   Settings,
@@ -49,7 +48,6 @@ export function AppPreview() {
         </div>
         <div className="mt-3 flex flex-col gap-0.5">
           <NavItem icon={<BookOpen aria-hidden />}>{t('library')}</NavItem>
-          <NavItem icon={<Gauge aria-hidden />}>{t('quality')}</NavItem>
         </div>
         <nav className="mt-6 flex-1 overflow-hidden" aria-label="Chats">
           <ChatGroup label={t('today')}>

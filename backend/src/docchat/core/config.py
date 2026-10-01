@@ -87,10 +87,6 @@ class Settings(BaseSettings):
     # Must match StreamMaxLength of the clamav service in compose.yaml.
     clamd_stream_max_mb: int = 1100
 
-    # Results of `make eval` for the Quality page. Unset: `/app/eval` in the image, else the
-    # checkout's `eval/results`.
-    eval_results_dir: Path | None = None
-
     internal_token: SecretStr | None = None
     app_version: str = "dev"
     git_sha: str = "unknown"
