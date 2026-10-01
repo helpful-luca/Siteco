@@ -213,3 +213,29 @@ async def test_a_replaced_client_closes_once_its_running_answers_are_done() -> N
     idle = FakeSdk(FakeStream([]))
     await AnthropicLLMClient("key", sdk=idle).aclose()
     assert idle.closed is True
+
+
+async def test_count_tokens_uses_the_free_counting_endpoint() -> None:
+    from types import SimpleNamespace
+
+    from docchat.adapters.anthropic.client import AnthropicLLMClient
+    from docchat.domain.enums import AnswerStyle, Locale
+    from docchat.domain.llm import LLMRequest, SearchResult
+
+    seen: dict[str, object] = {}
+
+    async def count_tokens(**body: object) -> object:
+        seen.update(body)
+        return SimpleNamespace(input_tokens=1234)
+
+    client = AnthropicLLMClient(
+        "k", sdk=SimpleNamespace(messages=SimpleNamespace(count_tokens=count_tokens))
+    )
+    request = LLMRequest(
+        model="claude-haiku-4-5", effort=None, history=(),
+        search_results=(SearchResult("a", "T", ("Satz.",)),), question="?",
+        ui_language=Locale.DE, answer_style=AnswerStyle.CONCISE, max_tokens=10,
+        documents_first=True,
+    )  # fmt: skip
+    assert await client.count_tokens(request) == 1234
+    assert seen["model"] == "claude-haiku-4-5" and "max_tokens" not in seen

@@ -110,6 +110,7 @@
     "SCANNER_STARTING": "The virus check is still starting. The file will be checked in a moment.",
     "SCANNER_UNAVAILABLE": "The virus check is not reachable right now. The file waits until it is back.",
     "SOURCES_PARTIAL": "{count, plural, one {# document is still processing and isn't included in this answer.} other {# documents are still processing and aren't included in this answer.}}",
+    "CONTEXT_REDUCED": "The documents are too large for this model. The answer is based on the most relevant passages.",
     "SUMMARY_PARTIAL": "There is too much text for a full summary. The answer is based on the most relevant passages.",
     "NO_CITATIONS": "This answer has no citations. Please double-check it.",
     "ANSWER_TRUNCATED": "The answer was very long and got cut off.",

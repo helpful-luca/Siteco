@@ -438,6 +438,10 @@ class LLMClient(Protocol):
 
     def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]: ...
 
+    async def count_tokens(self, request: LLMRequest) -> int | None:
+        """Input tokens of the request (free token counting API), None if unknown."""
+        ...
+
 
 class HostResolver(Protocol):
     async def resolve(self, host: str, port: int) -> list[str]:

@@ -20,6 +20,7 @@ from docchat.domain.sentences import split_sentences
 from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerOptions, AnswerService, AskCommand
 from docchat.services.chat_service import ChatService
+from docchat.services.context_budget import ContextBudget
 from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
@@ -180,6 +181,7 @@ def build_chat_harness(
     ticker = FakeTicker()
     models = ModelAvailability(MODELS, "claude-sonnet-5-5", ticker)
     deps = RunDeps(
+        budget=ContextBudget(full_context_max_tokens),
         chats=chats_repo,
         retrieval=retrieval,
         llm=llm_port,

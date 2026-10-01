@@ -57,3 +57,17 @@ def test_snippet_is_one_line_and_short() -> None:
     assert snippet("a\n b") == "a b"
     long = snippet("wort " * 100)
     assert len(long) <= 240 and long.endswith("…")
+
+
+def test_full_context_limit_respects_the_model_window() -> None:
+    from docchat.domain.context_budget import conservative_tokens, full_context_limit
+
+    haiku = full_context_limit(
+        configured=500_000, model="claude-haiku-4-5", max_output_tokens=4096, history_margin=8000
+    )
+    assert haiku == 200_000 - 4096 - 8000
+    sonnet = full_context_limit(
+        configured=150_000, model="claude-sonnet-5-5", max_output_tokens=4096, history_margin=8000
+    )
+    assert sonnet == 150_000
+    assert conservative_tokens(1000) == 400

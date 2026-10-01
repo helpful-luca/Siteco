@@ -27,3 +27,7 @@ class SwappableLLM:
         if client is None:  # the health check keeps answers from getting here without a key
             raise LLMError(ErrorCode.LLM_AUTH)
         return client.stream(request)
+
+    async def count_tokens(self, request: LLMRequest) -> int | None:
+        client = self.current
+        return None if client is None else await client.count_tokens(request)

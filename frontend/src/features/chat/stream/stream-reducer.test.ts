@@ -147,4 +147,20 @@ describe('streamReducer', () => {
     expect(next[other]).toBe(state[other]);
     expect(next[key].text).toBe('A');
   });
+
+  it('adds cited sources in full-context mode and starts over when the mode changes', () => {
+    const a = source();
+    const b = { ...source(), id: 'other', index: 2 };
+    const added = run([
+      { type: 'sources', key, data: { mode: 'full_context', sources: [], notices: [] } },
+      { type: 'sources', key, data: { mode: 'full_context', sources: [a], notices: [] } },
+      { type: 'sources', key, data: { mode: 'full_context', sources: [a, b], notices: [] } },
+    ]);
+    expect(added.sources.map((s) => s.id)).toEqual([a.id, 'other']);
+    const switched = run([
+      { type: 'sources', key, data: { mode: 'full_context', sources: [a], notices: [] } },
+      { type: 'sources', key, data: { mode: 'retrieval', sources: [b], notices: [] } },
+    ]);
+    expect(switched.sources.map((s) => s.id)).toEqual(['other']);
+  });
 });

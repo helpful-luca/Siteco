@@ -50,6 +50,7 @@ from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerService
 from docchat.services.api_key_service import ApiKeyService
 from docchat.services.chat_service import ChatService
+from docchat.services.context_budget import ContextBudget
 from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_purge import DocumentPurge
 from docchat.services.document_service import DocumentService
@@ -291,6 +292,7 @@ def build_container(
         ),
     )
     run_deps = RunDeps(
+        budget=ContextBudget(settings.full_context_max_tokens, settings.history_max_tokens + 2000),
         chats=chats,
         retrieval=retrieval,
         llm=llm_handle,

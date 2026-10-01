@@ -80,6 +80,11 @@ function mergeNotices(current: NoticeOut[], next: NoticeOut[]): NoticeOut[] {
   return [...current, ...next.filter((n) => !seen.has(n.code))];
 }
 
+function mergeSources(current: SourceOut[], next: SourceOut[]): SourceOut[] {
+  const seen = new Set(current.map((s) => s.id));
+  return [...current, ...next.filter((s) => !seen.has(s.id))];
+}
+
 function apply(run: RunState, action: StreamAction): RunState {
   switch (action.type) {
     case 'meta':
@@ -90,7 +95,12 @@ function apply(run: RunState, action: StreamAction): RunState {
       return {
         ...run,
         sourcesMode: action.data.mode,
-        sources: action.data.sources,
+        // Full-context mode adds each cited source as it is cited; another mode starts over
+        // (the answer switched to search after the documents were too large).
+        sources:
+          run.sourcesMode === action.data.mode
+            ? mergeSources(run.sources, action.data.sources)
+            : action.data.sources,
         notices: mergeNotices(run.notices, action.data.notices),
       };
     case 'delta':

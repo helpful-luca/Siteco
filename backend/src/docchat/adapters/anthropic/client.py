@@ -49,6 +49,21 @@ class AnthropicLLMClient:
         if self._running == 0:
             await self._sdk.close()
 
+    async def count_tokens(self, request: LLMRequest) -> int | None:
+        """The exact input size from the free counting endpoint; None if it cannot say."""
+        profile = MODEL_PROFILES.get(request.model)
+        if profile is None:
+            return None
+        body = build_request(request, profile, sonnet_thinking=self._sonnet_thinking)
+        try:
+            result = await self._sdk.messages.count_tokens(
+                model=body["model"], system=body["system"], messages=body["messages"]
+            )
+        except (anthropic.APIError, httpx2.TransportError):
+            log.warning("count_tokens_failed", extra={"model": request.model})
+            return None
+        return int(result.input_tokens)
+
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]:
         profile = MODEL_PROFILES.get(request.model)
         if profile is None:

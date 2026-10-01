@@ -148,8 +148,14 @@ class FakeLLMClient:
         self.default = default
         self.delay_s = delay_s
         self.slow_delay_s = slow_delay_s
+        self.token_count: int | None = None  # what `count_tokens` answers; None: unknown
         self.requests: list[LLMRequest] = []
+        self.counted: list[LLMRequest] = []
         self.cancelled = 0  # streams closed before they finished (stop, disconnect)
+
+    async def count_tokens(self, request: LLMRequest) -> int | None:
+        self.counted.append(request)
+        return self.token_count
 
     def _scenario(self, request: LLMRequest) -> FakeScenario:
         if self.script:

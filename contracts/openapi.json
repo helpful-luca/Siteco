@@ -1713,6 +1713,7 @@
           "SCANNER_UNAVAILABLE",
           "SOURCES_PARTIAL",
           "SUMMARY_PARTIAL",
+          "CONTEXT_REDUCED",
           "NO_CITATIONS",
           "ANSWER_TRUNCATED",
           "LLM_REFUSED",

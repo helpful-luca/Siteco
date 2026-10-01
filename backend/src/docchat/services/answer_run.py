@@ -10,7 +10,7 @@ cancelled generator.
 import asyncio
 import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from docchat.domain.chat_models import Chat, Message, SourceSnapshot
@@ -43,6 +43,7 @@ from docchat.domain.models import Chunk, Document, Notice
 from docchat.domain.ports import ChatRepository, Clock, LLMClient, UsageLedger
 from docchat.domain.retrieval import snippet
 from docchat.domain.usage import ModelUsage, total_usage
+from docchat.services.context_budget import ContextBudget
 from docchat.services.llm_health import LlmHealth
 from docchat.services.model_availability import ModelAvailability
 from docchat.services.retrieval_service import RetrievalPlan, RetrievalService, Retrieved
@@ -85,6 +86,7 @@ class RunDeps:
     registry: RunRegistry
     timings: RunTimings
     models: ModelAvailability
+    budget: ContextBudget = field(default_factory=ContextBudget)
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep
     jitter: Callable[[], float] = lambda: 0.0  # 0..1, share of the delay added on top
 
@@ -103,6 +105,9 @@ class RunInput:
     max_tokens: int
     allow_fallbacks: bool
     request_id: str | None = None
+
+
+MAX_PAGE_SOURCES = 12  # full-context mode: chunks of the asked page shown up front
 
 
 def _title(document: Document, page: int | None) -> str:
@@ -144,6 +149,10 @@ class AnswerRun:
         self._closed = False
         # Progress so far, read when the run is stopped or fails midway.
         self._sources: tuple[SourceSnapshot, ...] = ()
+        # Full-context mode sends every chunk to the model but only shows (and saves) the
+        # asked page's chunks and the cited ones; `_catalog` resolves a citation to its source.
+        self._catalog: dict[str, SourceSnapshot] = {}
+        self._known: frozenset[str] = frozenset()
         self._mode: SourcesMode | None = None
         self._notices: list[Notice] = []
         self._assembler = AnswerAssembler(())
@@ -217,18 +226,43 @@ class AnswerRun:
             log.exception("answer_failed", extra=self._log_fields())
             return self._failed(ErrorCode.INTERNAL_ERROR, ErrorStage.LLM)
 
+    async def _retrieve(self, plan: RetrievalPlan, *, reduced: bool = False) -> Retrieved:
+        spec = self._spec
+        retrieved = await self._deps.retrieval.retrieve(plan, spec.query, spec.question.content)
+        if reduced:
+            notices = (*retrieved.notices, Notice(NoticeCode.CONTEXT_REDUCED))
+            retrieved = replace(retrieved, notices=notices)
+        return retrieved
+
+    def _adopt(self, retrieved: Retrieved) -> tuple[SearchResult, ...]:
+        """Takes the retrieved chunks as this run's sources; returns what the model gets."""
+        snapshots, results = _sources(retrieved)
+        self._known = frozenset(s.id for s in snapshots)
+        if retrieved.mode is SourcesMode.FULL_CONTEXT:
+            self._catalog = {s.id: s for s in snapshots}
+            asked = [s for s in snapshots if s.page in retrieved.requested_pages]
+            shown = asked[:MAX_PAGE_SOURCES]
+            self._sources = tuple(replace(s, index=n) for n, s in enumerate(shown, start=1))
+        else:
+            self._catalog = {}
+            self._sources = snapshots
+        return results
+
     async def _run(self) -> tuple[Message, RunEvent]:
         spec = self._spec
         self._emit(StatusEvent(RunPhase.RETRIEVING, 1))
+        llm = self._deps.llm if self._deps.health.available else None
         try:
-            retrieved = await self._deps.retrieval.retrieve(
-                spec.plan, spec.query, spec.question.content
-            )
+            retrieved = await self._retrieve(spec.plan)
+            if retrieved.mode is SourcesMode.FULL_CONTEXT:
+                fits = llm is not None and await self._fits(llm, retrieved)
+                if not fits:  # too large for this model, or nothing to generate: search
+                    retrieval_plan = replace(spec.plan, mode=SourcesMode.RETRIEVAL)
+                    retrieved = await self._retrieve(retrieval_plan, reduced=llm is not None)
         except Exception:
             log.exception("retrieval_failed", extra=self._log_fields())
             return self._failed(ErrorCode.INTERNAL_ERROR, ErrorStage.RETRIEVAL)
-        self._sources, search_results = _sources(retrieved)
-        llm = self._deps.llm if self._deps.health.available else None
+        search_results = self._adopt(retrieved)
         self._mode = SourcesMode.RETRIEVAL_ONLY if llm is None else retrieved.mode
         self._notices = list(retrieved.notices)
         self._emit(SourcesEvent(self._mode, self._sources, retrieved.notices))
@@ -236,15 +270,17 @@ class AnswerRun:
             return self._sources_only()
         return await self._generate(llm, search_results, retrieved)
 
-    async def _generate(
-        self, llm: LLMClient, search_results: tuple[SearchResult, ...], retrieved: Retrieved
-    ) -> tuple[Message, RunEvent]:
+    async def _fits(self, llm: LLMClient, retrieved: Retrieved) -> bool:
+        _, results = _sources(retrieved)
+        return await self._deps.budget.fits(llm, self._requested, results, self._spec.max_tokens)
+
+    def _request(self, retrieved: Retrieved, results: tuple[SearchResult, ...]) -> LLMRequest:
         spec = self._spec
-        request = LLMRequest(
+        return LLMRequest(
             model=self._requested,
             effort=spec.effort,
             history=spec.history,
-            search_results=search_results,
+            search_results=results,
             question=spec.question.content,
             ui_language=spec.locale,
             answer_style=spec.style,
@@ -253,6 +289,11 @@ class AnswerRun:
             requested_pages=retrieved.requested_pages,
             documents_first=retrieved.mode is SourcesMode.FULL_CONTEXT,
         )
+
+    async def _generate(
+        self, llm: LLMClient, search_results: tuple[SearchResult, ...], retrieved: Retrieved
+    ) -> tuple[Message, RunEvent]:
+        request = self._request(retrieved, search_results)
         timings = self._deps.timings
         deadline = self._started + timings.total_timeout_s
         attempt = 1
@@ -262,6 +303,20 @@ class AnswerRun:
                 stop_reason = await self._attempt(llm, request, deadline)
                 break
             except LLMError as error:
+                if self._too_large_for_full_context(error, request):
+                    try:
+                        retrieval_plan = replace(self._spec.plan, mode=SourcesMode.RETRIEVAL)
+                        retrieved = await self._retrieve(retrieval_plan, reduced=True)
+                    except Exception:
+                        log.exception("retrieval_failed", extra=self._log_fields())
+                        return self._failed(ErrorCode.INTERNAL_ERROR, ErrorStage.RETRIEVAL)
+                    request = self._request(retrieved, self._adopt(retrieved))
+                    self._mode = retrieved.mode
+                    self._notices = list(retrieved.notices)
+                    attempt += 1
+                    self._emit(SourcesEvent(self._mode, self._sources, retrieved.notices))
+                    self._emit(StatusEvent(RunPhase.RETRYING, attempt))
+                    continue
                 delay = self._retry_delay(error, attempt, deadline)
                 if delay is None:
                     return self._llm_failed(error)
@@ -275,9 +330,16 @@ class AnswerRun:
         self._deps.health.mark_ok()
         return self._completed(stop_reason)
 
+    def _too_large_for_full_context(self, error: LLMError, request: LLMRequest) -> bool:
+        """The model refused the complete documents before any text: search instead."""
+        return (
+            error.code is ErrorCode.LLM_CONTEXT_TOO_LARGE
+            and request.documents_first
+            and not self._got_delta
+        )
+
     async def _attempt(self, llm: LLMClient, request: LLMRequest, deadline: float) -> str:
-        known = {s.id for s in self._sources}
-        self._assembler = AnswerAssembler(known)
+        self._assembler = AnswerAssembler(self._known)
         self._parts = ()
         self._served = self._requested
         stop_reason = "end_turn"
@@ -312,7 +374,18 @@ class AnswerRun:
 
     def _emit_citations(self) -> None:
         for citation in self._assembler.end_block():
+            self._register_cited(citation.source_id)
             self._emit(CitationEvent(citation))
+
+    def _register_cited(self, source_id: str) -> None:
+        """Full-context mode: a cited chunk becomes a visible, saved source when it is cited
+        (the `sources` event comes before the citation that needs it)."""
+        if source_id in {s.id for s in self._sources} or source_id not in self._catalog:
+            return
+        added = replace(self._catalog[source_id], index=len(self._sources) + 1)
+        self._sources = (*self._sources, added)
+        assert self._mode is not None
+        self._emit(SourcesEvent(self._mode, (added,), ()))
 
     def _retry_delay(self, error: LLMError, attempt: int, deadline: float) -> float | None:
         """Seconds to wait before the next attempt, or None if this error is final."""

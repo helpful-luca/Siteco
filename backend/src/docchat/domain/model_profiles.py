@@ -39,6 +39,7 @@ class ModelProfile:
     supports_between_tools: bool
     # Server-side refusal fallbacks (`fallbacks: "default"`).
     supports_fallbacks: bool
+    context_window: int  # input tokens the model accepts (Models API `max_input_tokens`)
 
 
 _EFFORTS = (Effort.LOW, Effort.MEDIUM, Effort.HIGH)
@@ -55,6 +56,7 @@ MODEL_PROFILES: dict[str, ModelProfile] = {
             default_effort=None,
             supports_between_tools=False,
             supports_fallbacks=False,
+            context_window=200_000,
         ),
         ModelProfile(
             id="claude-sonnet-5-5",
@@ -65,6 +67,7 @@ MODEL_PROFILES: dict[str, ModelProfile] = {
             default_effort=Effort.LOW,
             supports_between_tools=True,
             supports_fallbacks=True,
+            context_window=1_000_000,
         ),
         ModelProfile(
             id="claude-opus-5-5",
@@ -75,6 +78,7 @@ MODEL_PROFILES: dict[str, ModelProfile] = {
             default_effort=Effort.LOW,
             supports_between_tools=False,
             supports_fallbacks=True,
+            context_window=1_000_000,
         ),
     )
 }

@@ -72,11 +72,13 @@ async def test_normal_answer_streams_cites_and_is_saved(h: ChatHarness) -> None:
     assert [e.phase for e in of(events, StatusEvent)] == [RunPhase.RETRIEVING, RunPhase.GENERATING]
     sources = of(events, SourcesEvent)[0]
     assert sources.mode is SourcesMode.FULL_CONTEXT
-    assert [s.index for s in sources.sources] == [1, 2]
+    assert sources.sources == ()  # nothing shown up front: only what is cited
+    [added] = of(events, SourcesEvent)[1].sources
+    assert added.index == 1
 
     text = "".join(e.text for e in of(events, DeltaEvent))
     [citation] = [e.citation for e in of(events, CitationEvent)]
-    assert citation.source_id == sources.sources[0].id
+    assert citation.source_id == added.id
     assert text[: citation.char_offset].endswith("Die Leuchte Mira hat die Schutzart IP66.")
 
     done = terminal(events)
@@ -89,7 +91,7 @@ async def test_normal_answer_streams_cites_and_is_saved(h: ChatHarness) -> None:
     assert saved.status is MessageStatus.COMPLETE
     assert saved.content == text
     assert saved.citations == (citation,)
-    assert saved.sources == sources.sources
+    assert saved.sources == (added,)
     assert saved.sources_mode is SourcesMode.FULL_CONTEXT
     assert saved.model == "claude-sonnet-5-5" and saved.ttft_ms is not None
     assert h.ledger.cost_on(h.clock.now().date().isoformat()) == pytest.approx(saved.cost_usd)
@@ -256,7 +258,9 @@ async def test_scope_selection_and_ready_filter(h: ChatHarness) -> None:
     chat = h.new_chat(ChatScope.SELECTED, [chosen.id, busy.id])
     events = await h.ask(chat)
     sources = of(events, SourcesEvent)[0]
-    assert {s.document_id for s in sources.sources} == {chosen.id}
+    assert h.llm is not None
+    sent = {r.title.split(",")[0] for r in h.llm.requests[0].search_results}
+    assert sent == {"Datenblatt Mira.pdf"}  # the chosen document, not Luna
     assert [(n.code, dict(n.params)) for n in sources.notices] == [
         (NoticeCode.SOURCES_PARTIAL, {"count": 1})
     ]
@@ -699,3 +703,81 @@ async def test_full_context_request_sends_the_documents_first(h: ChatHarness) ->
         "Datenblatt Mira.pdf, S. 1",
         "Datenblatt Mira.pdf, S. 2",
     ]
+
+
+MANY_PAGES = tuple(
+    f"Seite {n}: Die Leuchte Modell{n} hat die Schutzart IP{n}." for n in range(1, 61)
+)
+
+
+async def test_full_context_shows_and_saves_only_the_cited_chunks(h: ChatHarness) -> None:
+    h.add_document(MANY_PAGES)
+    events = await h.ask(h.new_chat(), "Welche Schutzart hat Modell7?")
+    shown = [s for e in of(events, SourcesEvent) for s in e.sources]
+    assert h.llm is not None
+    assert len(h.llm.requests[0].search_results) == 60  # the model got everything
+    assert len(shown) == 1 and shown[0].page == 7  # the user sees what was cited
+    assert answer_of(h, events).sources == tuple(shown)
+
+
+async def test_a_page_question_shows_that_page_up_front_capped(h: ChatHarness) -> None:
+    h.add_document(MANY_PAGES)
+    events = await h.ask(h.new_chat(), "Was steht auf Seiten 1 bis 20?")
+    first = of(events, SourcesEvent)[0]
+    assert 0 < len(first.sources) <= 12
+    assert [s.index for s in first.sources] == list(range(1, len(first.sources) + 1))
+    assert len(answer_of(h, events).sources) <= 13  # the page chunks plus a cited one
+
+
+async def test_a_scope_too_large_for_the_model_is_searched_and_says_so(h: ChatHarness) -> None:
+    h.add_document(MANY_PAGES)
+    assert h.llm is not None
+    h.llm.token_count = 9_999_999  # what the counting API reports
+    events = await h.ask(h.new_chat(), "Welche Schutzart hat Modell7?")
+    first = of(events, SourcesEvent)[0]
+    assert first.mode is SourcesMode.RETRIEVAL
+    assert [n.code for n in first.notices] == [NoticeCode.CONTEXT_REDUCED]
+    assert h.llm.requests[0].documents_first is False
+    assert len(h.llm.requests[0].search_results) <= 8
+    assert answer_of(h, events).sources_mode is SourcesMode.RETRIEVAL
+
+
+async def test_counted_tokens_are_cached_per_scope_and_model(h: ChatHarness) -> None:
+    h.add_document(MANY_PAGES)
+    assert h.llm is not None
+    h.llm.token_count = 1_000
+    chat = h.new_chat()
+    await h.ask(chat)
+    await h.ask(chat, "Und Modell9?")
+    assert len(h.llm.counted) == 1
+    assert h.llm.requests[1].documents_first is True
+
+
+async def test_without_a_count_the_estimate_is_conservative(tmp_path: Path) -> None:
+    small = build_chat_harness(tmp_path, full_context_max_tokens=100)
+    # 380 characters: 95 tokens at four per token, 152 at two and a half.
+    small.add_document(("x" * 190, "y" * 190))
+    events = await small.ask(small.new_chat())
+    assert of(events, SourcesEvent)[0].mode is SourcesMode.RETRIEVAL
+
+
+async def test_context_too_large_before_the_first_delta_retries_with_search(
+    tmp_path: Path,
+) -> None:
+    llm = FakeLLMClient([FakeScenario.CONTEXT_TOO_LARGE])
+    h = build_chat_harness(tmp_path, llm=llm)
+    h.add_document(MANY_PAGES)
+    events = await h.ask(h.new_chat(), "Welche Schutzart hat Modell7?")
+    assert [e.phase for e in of(events, StatusEvent)] == [
+        RunPhase.RETRIEVING,
+        RunPhase.GENERATING,
+        RunPhase.RETRYING,
+    ]
+    modes = [e.mode for e in of(events, SourcesEvent)]
+    assert modes[0] is SourcesMode.FULL_CONTEXT and SourcesMode.RETRIEVAL in modes
+    assert [r.documents_first for r in llm.requests] == [True, False]
+    done = terminal(events)
+    assert isinstance(done, DoneEvent) and done.status is MessageStatus.COMPLETE
+    saved = answer_of(h, events)
+    assert NoticeCode.CONTEXT_REDUCED in [n.code for n in saved.notices]
+    assert saved.sources_mode is SourcesMode.RETRIEVAL

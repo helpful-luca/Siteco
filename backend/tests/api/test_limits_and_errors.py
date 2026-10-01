@@ -97,7 +97,7 @@ def test_every_claude_error_ends_the_stream_with_one_error_event(
     settings: Settings, scenario: FakeScenario, code: str, retryable: bool, retry_after: int | None
 ) -> None:
     fast = limited(settings, llm_max_retries=0, llm_ttft_timeout_s=0.2)
-    with app_client(fast, FakeLLMClient([scenario])) as client:
+    with app_client(fast, FakeLLMClient([scenario, scenario])) as client:
         add_document(client)
         chat_id = new_chat(client)
         r, events = ask(client, chat_id)

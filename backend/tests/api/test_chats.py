@@ -158,7 +158,7 @@ def test_answer_stream_follows_the_protocol(client: TestClient) -> None:
     assert r.headers["x-request-id"]
     names = [e.name for e in events]
     assert names[:4] == ["meta", "status", "sources", "status"]
-    assert set(names[4:-1]) == {"delta", "citation"}
+    assert set(names[4:-1]) == {"delta", "citation", "sources"}
 
     meta = events[0].data
     assert meta["chat_id"] == chat_id and meta["lane"] == "a"
@@ -167,14 +167,16 @@ def test_answer_stream_follows_the_protocol(client: TestClient) -> None:
         {"phase": "retrieving", "attempt": 1},
         {"phase": "generating", "attempt": 1},
     ]
-    sources = events[2].data
-    assert sources["mode"] == "full_context" and sources["notices"] == []
-    assert {s["document_id"] for s in sources["sources"]} == {doc_id}
-    assert all(s["deleted"] is False for s in sources["sources"])
+    first = events[2].data
+    assert first["mode"] == "full_context" and first["notices"] == []
+    assert first["sources"] == []  # full-context mode shows only what gets cited
+    cited = [s for e in events if e.name == "sources" for s in e.data["sources"]]
+    assert {s["document_id"] for s in cited} == {doc_id}
+    assert all(s["deleted"] is False for s in cited)
 
     text = "".join(e.data["text"] for e in events if e.name == "delta")
     [citation] = [e.data for e in events if e.name == "citation"]
-    assert citation["source_id"] == sources["sources"][0]["id"]
+    assert citation["source_id"] == cited[0]["id"]
     assert text[: citation["char_offset"]].endswith(citation["cited_text"])
 
     done = terminal(events).data
@@ -188,7 +190,7 @@ def test_answer_stream_follows_the_protocol(client: TestClient) -> None:
     assert answer["status"] == "complete" and answer["content"] == text
     assert answer["parent_id"] == user["id"] and answer["id"] == meta["assistant_message_id"]
     assert answer["citations"] == [citation]
-    assert answer["sources"] == sources["sources"]
+    assert answer["sources"] == cited
     assert answer["sources_mode"] == "full_context"
     assert (answer["model"], answer["effort"], answer["lane"]) == ("claude-sonnet-5-5", "low", "a")
     assert answer["usage"] == done["usage"] and answer["cost_usd"] == done["cost_usd"]
