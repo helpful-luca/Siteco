@@ -49,7 +49,7 @@ export function SettingsView({ section }: { section: Section | null }) {
         <div className="grid gap-x-10 @2xl:grid-cols-[13rem_minmax(0,1fr)]">
           <nav
             aria-label={t('sectionsLabel')}
-            className={cn('@2xl:sticky @2xl:top-3 @2xl:self-start', section ? 'hidden @2xl:block' : 'block')}
+            className={cn('@2xl:sticky @2xl:top-[max(calc(var(--spacing)*3),var(--banner-offset,0px))] @2xl:self-start', section ? 'hidden @2xl:block' : 'block')}
           >
             <h1 className="text-title-2 font-semibold @2xl:sr-only">{t('title')}</h1>
             <ul

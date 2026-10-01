@@ -133,7 +133,7 @@ function Frame({ chatList, libraryBadge, palette, children }: Slots & { children
             <SquarePen aria-hidden />
           </Link>
         </div>
-        <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none">
+        <main id="main" tabIndex={-1} className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none">
           {children}
         </main>
       </div>

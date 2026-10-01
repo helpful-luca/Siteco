@@ -77,6 +77,14 @@
   --c-light-fill: rgb(90 105 135 / 0.14);
 }
 
+/* The app's canvas with its light pool: the body and bands that cover scrolling content. */
+:root {
+  --app-backdrop:
+    radial-gradient(75% 60% at 32% -14%, var(--c-light-key), transparent 72%),
+    radial-gradient(45% 45% at 0% 100%, var(--c-light-fill), transparent 70%),
+    var(--c-canvas);
+}
+
 /*
  * Electron marks <html data-desktop data-platform> before first paint (shared/desktop). On macOS
  * and Windows the window is frameless: no title bar, the page draws its own window buttons in the
@@ -324,7 +332,7 @@ html[data-desktop]
     overscroll-behavior: none;
   }
 
-  /* Chat scrolls without a visible bar (trackpad, wheel and keyboard still work). */
+  /* Content scrolls without a visible bar: chat, pages, side panel (trackpad, wheel and keyboard still work). */
   .no-scrollbar {
     scrollbar-width: none;
   }
@@ -332,6 +340,7 @@ html[data-desktop]
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
 
   html {
     background: var(--c-canvas);
@@ -347,10 +356,16 @@ html[data-desktop]
     line-height: var(--text-body--line-height);
     letter-spacing: var(--text-body--letter-spacing);
     min-height: 100dvh;
-    background:
-      radial-gradient(75% 60% at 32% -14%, var(--c-light-key), transparent 72%),
-      radial-gradient(45% 45% at 0% 100%, var(--c-light-fill), transparent 70%),
-      var(--c-canvas);
+    background: var(--app-backdrop);
+    background-attachment: fixed;
+  }
+
+  /*
+   * The same canvas and light pool for a band that covers scrolling content (the sticky banner
+   * band): fixed to the window like the body's, so it is invisible until something passes under it.
+   */
+  .app-backdrop {
+    background: var(--app-backdrop);
     background-attachment: fixed;
   }
 

@@ -112,7 +112,7 @@ function PanelBody({ panel, onClose }: { panel: PanelContent; onClose: () => voi
         </Button>
       </header>
       {/* Keyed by the panel: another source or document starts with fresh viewer state. */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <Fragment key={panel.id}>{panel.body}</Fragment>
       </div>
     </>

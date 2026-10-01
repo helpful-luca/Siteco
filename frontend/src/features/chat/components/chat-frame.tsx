@@ -56,6 +56,12 @@ export function ChatFrame({
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {header}
+      {/* Outside the scrolling list, so it stays put; an outage is told in the composer note instead. */}
+      <div className="shrink-0 px-gutter">
+        <div className="mx-auto max-w-reading">
+          <GlobalBanner className="mt-2 mb-2" omit={[RECONNECTING_BANNER]} />
+        </div>
+      </div>
       {/*
         `relative` keeps absolutely positioned children (screen reader text) inside this scroller;
         without it they belonged to the frame and made <main> scroll with a visible bar.
@@ -70,8 +76,6 @@ export function ChatFrame({
         className="@container no-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter"
       >
         <div ref={contentRef} className="mx-auto max-w-reading pt-6" style={{ paddingBottom: dockHeight + BOTTOM_FADE }}>
-          {/* An outage is told once, in the composer note where the question waits. */}
-          <GlobalBanner className="mb-6" omit={[RECONNECTING_BANNER]} />
           {children}
         </div>
       </div>

@@ -262,7 +262,7 @@ function PageColumn({ store, page, marks, passage }: PdfViewerProps) {
         onScroll={onScroll}
         tabIndex={0}
         aria-label={t('pages')}
-        className="h-full overflow-auto overscroll-contain bg-fill outline-none"
+        className="no-scrollbar h-full overflow-auto overscroll-contain bg-fill outline-none"
       >
         <div className="relative" style={{ height: layout.total, width: contentWidth }}>
           {indexes.map((index) => (
