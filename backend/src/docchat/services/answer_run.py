@@ -39,7 +39,7 @@ from docchat.domain.llm import (
     TextDelta,
     UsageReported,
 )
-from docchat.domain.model_profiles import cost_usd
+from docchat.domain.model_profiles import cost_usd, model_alias
 from docchat.domain.models import Chunk, Document, Notice
 from docchat.domain.ports import ChatRepository, Clock, LLMClient, UsageLedger
 from docchat.domain.prompt import one_line
@@ -372,7 +372,7 @@ class AnswerRun:
                     elif isinstance(event, TextBlockEnd):
                         self._emit_citations()
                     elif isinstance(event, ModelResolved):
-                        self._served = event.model
+                        self._served = model_alias(event.model)  # a dated id is no switch
                     elif isinstance(event, UsageReported):
                         self._parts = event.parts
                     elif isinstance(event, Completed):

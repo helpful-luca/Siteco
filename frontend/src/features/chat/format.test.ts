@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ModelInfo } from '@/shared/api/types';
-import { alternateModel, formatCost, formatListTime, formatSeconds, modelLabel, priceLevel } from './format';
+import { alternateModel, formatCost, formatListTime, formatSeconds, isMeaningfulNotice, modelLabel, priceLevel } from './format';
 
 const model = (id: string, output: number): ModelInfo => ({
   id,
@@ -60,5 +60,21 @@ describe('formatListTime', () => {
     expect(formatListTime(at(3), now, 'de')).toBe('Mo');
     expect(formatListTime(at(12), now, 'de')).toBe('19. Sept.');
     expect(formatListTime(at(3), now, 'en')).toBe('Mon');
+  });
+});
+
+
+describe('dated model ids', () => {
+  const models = [{ id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' }] as Parameters<typeof modelLabel>[0];
+
+  it('labels a dated id like its alias', () => {
+    expect(modelLabel(models, 'claude-haiku-4-5-20251001')).toBe('Claude Haiku 4.5');
+  });
+
+  it('hides a model switch that only names the same model with its date', () => {
+    const notice = (served: string) => ({ code: 'MODEL_SWITCHED', params: { old: 'claude-haiku-4-5', new: served } });
+    expect(isMeaningfulNotice(notice('claude-haiku-4-5-20251001'))).toBe(false);
+    expect(isMeaningfulNotice(notice('claude-sonnet-5'))).toBe(true);
+    expect(isMeaningfulNotice({ code: 'NO_CITATIONS', params: {} })).toBe(true);
   });
 });

@@ -9,6 +9,7 @@ import type { NoticeOut, SourceOut } from '@/shared/api/types';
 import type { MarkdownBlock } from '@/shared/markdown';
 import { Button, Tooltip } from '@/shared/ui';
 import type { Answer } from '../answer';
+import { isMeaningfulNotice } from '../format';
 import { AnswerError } from './answer-error';
 import { AnswerFooter } from './answer-footer';
 import { AnswerNotices } from './answer-notices';
@@ -93,7 +94,10 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate, inComparison
 
   const leading: NoticeOut[] = answer.notices.filter((n) => LEADING_NOTICES.has(n.code));
   const trailing: NoticeOut[] = answer.notices.filter(
-    (n) => !LEADING_NOTICES.has(n.code) && !(answer.status === 'sources_only' && n.code === 'LLM_NOT_CONFIGURED'),
+    (n) =>
+      !LEADING_NOTICES.has(n.code) &&
+      !(answer.status === 'sources_only' && n.code === 'LLM_NOT_CONFIGURED') &&
+      isMeaningfulNotice(n),
   );
   const label =
     answer.status === 'stopped'

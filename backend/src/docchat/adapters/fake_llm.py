@@ -40,6 +40,7 @@ class FakeScenario(StrEnum):
     MAX_TOKENS = "max_tokens"  # stop_reason max_tokens
     SLOW = "slow"  # many small deltas with a pause each, for stop tests
     FALLBACK = "fallback"  # server-side fallback to another model mid-stream
+    DATED_MODEL = "dated_model"  # the API names the requested model with its date suffix
     EMPTY = "empty"  # end_turn without any text
     NO_CITATIONS = "no_citations"  # an answer without citations
     HANG = "hang"  # never sends a token (first-token timeout)
@@ -191,7 +192,7 @@ class FakeLLMClient:
             )
         if scenario is FakeScenario.HANG:
             await asyncio.sleep(3600)
-        model = request.model
+        model = request.model + ("-20260101" if scenario is FakeScenario.DATED_MODEL else "")
         usage = TokenUsage(
             input_tokens=estimate_tokens(
                 request.question + "".join(s for r in request.search_results for s in r.sentences)

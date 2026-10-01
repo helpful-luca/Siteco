@@ -5,6 +5,7 @@ immediate 400 (annex 12, 1a point 4). There is no pricing API, so prices are con
 their source and date.
 """
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -92,9 +93,19 @@ FALLBACK_PRICES: dict[str, Prices] = {
 }
 
 
+_DATE_SUFFIX = re.compile(r"-\d{8}$")
+
+
+def model_alias(model: str) -> str:
+    """The API names the model it served with a date ("claude-haiku-4-5-20251001"); the alias
+    without it is the same model, the one we requested and price."""
+    return _DATE_SUFFIX.sub("", model)
+
+
 def prices_for(model: str) -> Prices | None:
-    profile = MODEL_PROFILES.get(model)
-    return profile.prices if profile else FALLBACK_PRICES.get(model)
+    alias = model_alias(model)
+    profile = MODEL_PROFILES.get(alias)
+    return profile.prices if profile else FALLBACK_PRICES.get(alias)
 
 
 def resolve_effort(profile: ModelProfile, requested: Effort | None) -> Effort | None:

@@ -18,9 +18,21 @@ export function formatCount(value: number, locale: string): string {
   return new Intl.NumberFormat(locale).format(value);
 }
 
+/** The API names a served model with a date ("claude-haiku-4-5-20251001"); the alias is the same model. */
+export function modelAlias(id: string): string {
+  return id.replace(/-\d{8}$/, '');
+}
+
 export function modelLabel(models: ModelInfo[] | undefined, id: string | null): string {
   if (!id) return '';
-  return models?.find((m) => m.id === id)?.label ?? id;
+  return models?.find((m) => m.id === modelAlias(id))?.label ?? id;
+}
+
+/** A MODEL_SWITCHED notice that only names the same model with its date says nothing (older answers). */
+export function isMeaningfulNotice(notice: { code: string; params?: Record<string, unknown> }): boolean {
+  if (notice.code !== 'MODEL_SWITCHED') return true;
+  const { old: requested, new: served } = notice.params ?? {};
+  return !(typeof requested === 'string' && typeof served === 'string' && modelAlias(served) === requested);
 }
 
 /** 1 to 3: how expensive a model is compared with the others, by output price. */

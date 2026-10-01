@@ -55,3 +55,11 @@ def test_unknown_models_are_estimated_at_the_requested_price() -> None:
     assert prices_for("claude-future-9") is None
     part = ModelUsage("claude-future-9", TokenUsage(input_tokens=1_000_000))
     assert cost_usd([part], requested_model="claude-haiku-4-5") == pytest.approx(1.0)
+
+
+def test_model_alias_drops_only_a_date_suffix() -> None:
+    from docchat.domain.model_profiles import model_alias
+
+    assert model_alias("claude-haiku-4-5-20251001") == "claude-haiku-4-5"
+    assert model_alias("claude-sonnet-5-5") == "claude-sonnet-5-5"
+    assert model_alias("claude-sonnet-5") == "claude-sonnet-5"  # a version, not a date

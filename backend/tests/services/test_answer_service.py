@@ -845,3 +845,16 @@ async def test_titles_keep_file_names_and_headings_on_one_line_without_tags(h: C
     title = h.llm.requests[0].search_results[0].title
     assert "\n" not in title and "<" not in title and ">" not in title
     assert title.endswith("S. 1")  # the page stays last for page questions
+
+
+async def test_a_dated_model_id_from_the_api_is_the_same_model_not_a_switch(tmp_path: Path) -> None:
+    # The API reports "claude-sonnet-5-5-20260101" for a request with "claude-sonnet-5-5".
+    h = build_chat_harness(tmp_path, llm=FakeLLMClient([FakeScenario.DATED_MODEL]))
+    h.add_document(MIRA)
+    events = await h.ask(h.new_chat())
+    done = terminal(events)
+    assert isinstance(done, DoneEvent)
+    assert NoticeCode.MODEL_SWITCHED not in [n.code for n in done.notices]
+    saved = answer_of(h, events)
+    assert saved.model == "claude-sonnet-5-5"
+    assert saved.cost_usd is not None and saved.cost_usd > 0
