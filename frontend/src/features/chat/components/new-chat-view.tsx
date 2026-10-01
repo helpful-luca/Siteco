@@ -204,7 +204,7 @@ export function NewChatView() {
           suggestions.length > 0 && (
             // Plain rows like Spotlight suggestions: a quiet glyph on the text edge, the question,
             // a fill on hover. The glyph turns to ink with the row.
-            <ul aria-label={t('suggestionsLabel')} className="-mx-3 mt-8 flex flex-col gap-0.5 sm:max-w-md">
+            <ul aria-label={t('suggestionsLabel')} className="-mx-3 mt-8 flex flex-col gap-0.5 sm:max-w-xl">
               {suggestions.map(({ key, name }) => (
                 <li key={key}>
                   <button

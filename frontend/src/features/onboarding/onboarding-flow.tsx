@@ -1,5 +1,6 @@
 'use client';
 
+import { Languages, SunMoon, UserRound } from 'lucide-react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
@@ -18,6 +19,9 @@ type Props = {
 };
 
 const STEPS = ['language', 'appearance', 'name'] as const;
+const GLYPHS = { language: Languages, appearance: SunMoon, name: UserRound } as const;
+/** The light pool travels across the window with the steps, left to right, like a lamp panning. */
+const POOL_X = ['-18%', '0%', '18%'] as const;
 const SPRING = { type: 'spring', duration: 0.45, bounce: 0 } as const;
 /** The greeting alternates between both languages, starting with the current one. */
 const GREETINGS = { de: ['Willkommen', 'Welcome'], en: ['Welcome', 'Willkommen'] } as const;
@@ -57,6 +61,14 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
         56 px stay free for the window buttons and the drag strip of the desktop app.
       */}
       <form onSubmit={submit} className="flex min-h-0 w-full flex-1 flex-col pt-[calc(var(--spacing)*14+var(--window-top))]">
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[70dvh] transition-transform duration-1000 ease-out-soft"
+          style={{
+            transform: `translateX(${POOL_X[step]})`,
+            background: 'radial-gradient(50% 60% at 50% 0%, var(--c-light-key), transparent 75%)',
+          }}
+        />
         <p className="sr-only" aria-live="polite">
           {t('progress', { current: step + 1, total: STEPS.length })}
         </p>
@@ -78,6 +90,10 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
               transition={SPRING}
               className="mx-auto flex w-full max-w-xl flex-col items-center text-center"
             >
+              {/* A glass tile with the step's glyph, like the symbols of Apple's setup screens. */}
+              <span aria-hidden className="glass specular mb-6 grid size-16 place-items-center rounded-card [--glass-shadow:var(--c-shadow-tight)]">
+                <StepGlyph step={current} />
+              </span>
               <h2
                 ref={headingRef}
                 tabIndex={-1}
@@ -187,4 +203,9 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
       </form>
     </MotionConfig>
   );
+}
+
+function StepGlyph({ step }: { step: (typeof STEPS)[number] }) {
+  const Glyph = GLYPHS[step];
+  return <Glyph className="size-8 text-ink" strokeWidth={1.25} />;
 }
