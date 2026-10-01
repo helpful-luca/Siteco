@@ -214,3 +214,10 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 138 | Results in the image | `eval/results` as the named build context `eval`, `eval/.dockerignore` keeps the documents out | Mounting the folder | The image is self-contained; the backend build context stays `./backend` |
 | 139 | Lance warnings | `LANCEDB_LOG=error` by default | Selecting `_score` and `_distance` | Every hybrid search logged two deprecation warnings; selecting the columns breaks the hybrid query |
 | 140 | Default stemmer after the eval | German stays | Switching to no stemming (one question more in the sources) | One question is 3.6 points on 28; German matches compounds like "Straßenleuchten" (spike 12); revisit with a larger set |
+| 141 | Desktop splash | Separate splash window with its own preload, served from a privileged `docchat://` scheme | Splash and app in one window; `file://` | The app origin never sees the splash IPC; the fuse that drops extra `file://` privileges stays on |
+| 142 | Compose on start | `docker compose up --detach --build` with fixed argument arrays via `execFile`, APP_PORT from the app config | `up` without `--build`; a shell command | Containers always run the checked-out code, the cached build takes seconds; no shell, no interpolation |
+| 143 | Quit | Containers keep running; "Dienste beenden" stops them and quits | Stopping on every quit | The next start opens the window at once |
+| 144 | Project folder | Repository root recorded at build time, otherwise one folder picker; a folder counts only with `name: siteco-docchat` in compose.yaml | Asking on first start | Zero questions for the person who built the app; never runs a foreign compose file |
+| 145 | Signing | Ad-hoc signature, no quarantine because built locally | Developer ID and notarization | Enough for this Mac; distribution is the next step |
+| 146 | Desktop permissions | Deny all, except `clipboard-sanitized-write` from the app origin | Deny all | The copy buttons would fail otherwise |
+| 147 | Help menu | Omitted | Link to the README on GitHub | The repository is private; the app explains itself |
