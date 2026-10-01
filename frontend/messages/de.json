@@ -11,20 +11,20 @@
     "retry": "Erneut versuchen"
   },
   "banner": {
-    "missingKey": "Kein API-Key hinterlegt. Suche und Fundstellen funktionieren, Antworten nicht.",
+    "missingKey": "Ohne API-Key zeigt die App passende Stellen, aber keine Antworten.",
     "reconnecting": "Die Verbindung zum Server ist unterbrochen.",
     "reconnectingHint": "Die App versucht es automatisch weiter. Deine Eingabe bleibt erhalten.",
     "retryNow": "Jetzt versuchen",
     "reconnected": "Die Verbindung ist wieder da.",
     "offline": "Du bist offline.",
     "offlineHint": "Bibliothek und Suche funktionieren weiter. Antworten brauchen eine Internetverbindung.",
-    "invalidKey": "Der API-Key wird nicht akzeptiert. Suche und Fundstellen funktionieren weiter.",
-    "budget": "Das Tagesbudget ist aufgebraucht. Deine Bibliothek bleibt nutzbar.",
-    "billing": "Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Deine Bibliothek bleibt nutzbar.",
+    "invalidKey": "Der API-Key wird nicht akzeptiert, deshalb zeigt die App nur passende Stellen.",
+    "budget": "Das Tagesbudget ist aufgebraucht, deine Bibliothek bleibt nutzbar.",
+    "billing": "Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht, deine Bibliothek bleibt nutzbar.",
     "billingHint": "Prüf die Abrechnung in der Claude Console.",
     "budgetHint": "Ab {time} Uhr kannst du wieder fragen.",
     "keySettings": "API-Key eintragen",
-    "needsWorkspace": "Dieser API-Key braucht eine Workspace-ID. Suche und Fundstellen funktionieren weiter.",
+    "needsWorkspace": "Dieser API-Key braucht eine Workspace-ID, bevor die App antworten kann.",
     "workspaceSettings": "Workspace-ID eintragen"
   },
   "errors": {

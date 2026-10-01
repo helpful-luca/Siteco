@@ -11,20 +11,20 @@
     "retry": "Try again"
   },
   "banner": {
-    "missingKey": "No API key set. Search and sources work, answers do not.",
+    "missingKey": "Without an API key the app shows matching passages, but no answers.",
     "reconnecting": "The connection to the server was lost.",
     "reconnectingHint": "The app keeps trying automatically. Your input stays here.",
     "retryNow": "Try now",
     "reconnected": "The connection is back.",
     "offline": "You're offline.",
     "offlineHint": "Library and search keep working. Answers need an internet connection.",
-    "invalidKey": "The API key isn't accepted. Search and sources keep working.",
-    "budget": "The daily budget is used up. Your library stays available.",
-    "billing": "The API account's credit or spend limit has been reached. Your library stays available.",
+    "invalidKey": "The API key isn't accepted, so the app shows matching passages only.",
+    "budget": "The daily budget is used up, but your library stays available.",
+    "billing": "The API account's credit or spend limit is reached, but your library stays available.",
     "billingHint": "Check billing in the Claude Console.",
     "budgetHint": "You can ask again from {time}.",
     "keySettings": "Enter API key",
-    "needsWorkspace": "This API key needs a workspace ID. Search and sources keep working.",
+    "needsWorkspace": "This API key needs a workspace ID before the app can answer.",
     "workspaceSettings": "Enter workspace ID"
   },
   "errors": {
