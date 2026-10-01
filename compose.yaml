@@ -24,6 +24,14 @@ services:
     volumes:
       - appdata:/data
     mem_limit: 2g
+    pids_limit: 256
+    # Hardening (master spec 10): no capabilities, no privilege escalation, immutable root
+    # filesystem. Writable: the data volume and a small tmpfs for temporary files.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health/ready', timeout=3).status == 200 else 1)"]
       interval: 5s
@@ -51,6 +59,14 @@ services:
     volumes:
       - clamav-db:/var/lib/clamav
     mem_limit: 2g
+    pids_limit: 256
+    # The image starts as root, writes its configuration from the variables above into
+    # /etc/clamav and drops to the clamav user itself, so the root filesystem stays writable and
+    # five capabilities stay: CHOWN, FOWNER and DAC_OVERRIDE for the config and database directories,
+    # SETUID and SETGID for the privilege drop. Everything else is gone.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
+    security_opt: ["no-new-privileges:true"]
     healthcheck:
       test: ["CMD", "clamdcheck.sh"]
       interval: 10s
@@ -70,6 +86,13 @@ services:
       backend:
         condition: service_started   # UI comes up at once and explains the loading phase
     mem_limit: 512m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/.next/cache:size=256m,uid=1001,gid=1001   # Next.js writes its fetch and image cache here
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s

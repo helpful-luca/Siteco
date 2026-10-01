@@ -1,4 +1,4 @@
-.PHONY: up down dev-api dev-web test lint api-types fresh-clone eval eval-gate eval-generation
+.PHONY: up down dev-api dev-web test lint api-types fresh-clone eval eval-gate eval-generation e2e
 
 up:
 	docker compose up --build
@@ -39,3 +39,7 @@ eval-gate:
 # Answers by Haiku, Sonnet and Opus judged by Claude (costs money, needs ANTHROPIC_API_KEY).
 eval-generation:
 	cd backend && RUN_LIVE=1 EMBEDDING_CACHE_DIR=$${EMBEDDING_CACHE_DIR:-.models} uv run python -m docchat.cli.run_generation_eval
+
+# Browser E2E against the Docker stack, with the fake model and without a key (needs Docker and Chrome or Chromium).
+e2e:
+	./scripts/e2e.sh
