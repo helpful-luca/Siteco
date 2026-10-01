@@ -72,3 +72,31 @@ def test_text_is_nfc_normalized() -> None:
 def test_rejects_an_empty_image() -> None:
     with pytest.raises(ValueError):
         ocr_section([], width=0, height=10, page=1)
+
+
+def test_lumen_read_as_im_after_a_number_is_corrected() -> None:
+    def word(text: str, n: int) -> OcrWord:
+        return OcrWord(text, n * 100, 0, 90, 40, (1, 1, 1))
+
+    words = [
+        word(w, i)
+        for i, w in enumerate(
+            ["Lichtstrom", "12.000", "Im,", "150", "Im/W", "9", "Im.", "Im", "Büro"]
+        )
+    ]
+    section = ocr_section(words, width=2000, height=1000, page=1)
+    assert section.text == "Lichtstrom 12.000 lm, 150 lm/W 9 lm. Im Büro"
+
+
+def test_words_tesseract_is_unsure_about_are_dropped() -> None:
+    # A photo page: Tesseract reads shapes as letters, with low confidence.
+    noise = "\n".join(
+        [
+            _HEADER,
+            _row(5, 1, 1, 1, 1, "10\t10\t50\t40", "13.0", "a"),
+            _row(5, 1, 1, 1, 2, "70\t10\t50\t40", "22.4", "ar"),
+            _row(5, 1, 1, 1, 3, "130\t10\t50\t40", "75.0", "af"),
+            _row(5, 1, 1, 1, 4, "190\t10\t50\t40", "49.9", "DEREN"),
+        ]
+    )
+    assert [w.text for w in parse_tesseract_tsv(noise)] == ["af"]
