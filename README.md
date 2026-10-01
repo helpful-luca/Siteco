@@ -176,15 +176,3 @@ Nothing is required. All options are in [.env.example](.env.example).
 - Deleting a document removes the file, its vectors and quoted snippets. Automatic deletion after 30, 90 or 365 days can be turned on.
 
 Details and known limits: [docs/security.md](docs/security.md).
-
-## Next steps
-
-1. A retrieval evaluation with numbers, then a reranker if needed.
-2. Summaries of whole large documents.
-3. Login with a library per user, then a server deployment.
-4. EU-hosted inference, for example Claude on AWS Bedrock in Frankfurt.
-5. Signed desktop builds with automatic updates.
-
-## How I worked with AI
-
-I built this with Claude Code as pair programmer and reviewer, and it wrote most of the code, test first. The decisions, the scope and the checks were mine: I picked the stack and the trade-offs, dropped what did not work (for example `rewrites()` for streaming, PyMuPDF, a fixed model) and tested the app by running it and reading the logs.
