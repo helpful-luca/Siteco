@@ -27,7 +27,8 @@ const PRIMARY_OFF =
 const FADED_OFF = 'disabled:opacity-40';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: `bg-accent text-on-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.2),0_1px_2px_rgb(0_0_0/0.15)] hover:brightness-[1.06] ${PRIMARY_OFF}`,
+  // Tinted Liquid Glass: the red stays, slightly translucent over a blur, with a light rim on top.
+  primary: `bg-accent/85 text-on-accent backdrop-blur-md backdrop-saturate-150 shadow-[inset_0_1px_0_rgb(255_255_255/0.32),inset_0_0_0_1px_rgb(255_255_255/0.1),0_1px_2px_rgb(0_0_0/0.12),0_4px_12px_-6px_rgb(0_0_0/0.25)] hover:bg-accent/92 ${PRIMARY_OFF}`,
   secondary: `bg-fill text-ink ring-1 ring-inset ring-hairline hover:bg-fill-strong ${FADED_OFF}`,
   ghost: `text-ink hover:bg-fill ${FADED_OFF}`,
   danger: `text-danger ring-1 ring-inset ring-hairline hover:bg-fill ${FADED_OFF}`,
