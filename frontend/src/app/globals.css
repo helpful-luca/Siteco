@@ -25,6 +25,7 @@
   --c-fill: rgb(0 0 0 / 0.045);
   --c-fill-strong: rgb(0 0 0 / 0.08);
   --c-highlight: rgb(255 214 10 / 0.34);
+  --c-on-highlight: #1d1d1f;
   --c-mark: #ffd60a;
   --c-selection: rgb(110 120 140 / 0.24);
   --c-glass: rgb(255 255 255 / 0.62);
@@ -51,7 +52,9 @@
   --c-hairline-strong: rgb(255 255 255 / 0.16);
   --c-fill: rgb(255 255 255 / 0.06);
   --c-fill-strong: rgb(255 255 255 / 0.1);
-  --c-highlight: rgb(255 214 10 / 0.24);
+  /* Yellow mixed into the dark surface turns olive; dark mode marks like a real marker instead. */
+  --c-highlight: #e3c43a;
+  --c-on-highlight: #1d1d1f;
   --c-mark: #ffd60a;
   --c-selection: rgb(150 160 180 / 0.34);
   --c-glass: rgb(36 36 40 / 0.55);
@@ -158,6 +161,7 @@ html[data-desktop]
   --color-fill: var(--c-fill);
   --color-fill-strong: var(--c-fill-strong);
   --color-highlight: var(--c-highlight);
+  --color-on-highlight: var(--c-on-highlight);
 
   /*
    * Concentric radii: inner radius = outer radius - padding between them.
@@ -389,6 +393,7 @@ html[data-desktop]
 }
 
 .lamp-on {
+  color: var(--c-on-highlight);
   animation: lamp-warm-up 320ms var(--ease-out-soft) both;
 }
 
@@ -429,6 +434,7 @@ html[data-desktop]
 
 .text-mark {
   background-color: var(--c-highlight);
+  color: var(--c-on-highlight);
   animation: text-mark-warm-up 320ms var(--ease-out-soft) both;
 }
 

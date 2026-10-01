@@ -191,7 +191,7 @@ export function AppPreview() {
                     row === highlightedRow && 'lamp-on bg-highlight',
                   )}
                 >
-                  <dt className="text-ink-muted">{t(`rows.${row}.label`)}</dt>
+                  <dt className={row === highlightedRow ? undefined : 'text-ink-muted'}>{t(`rows.${row}.label`)}</dt>
                   <dd className="font-medium">{t(`rows.${row}.value`)}</dd>
                 </div>
               ))}

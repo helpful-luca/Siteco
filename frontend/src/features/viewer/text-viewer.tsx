@@ -87,7 +87,7 @@ export function TextViewer({ documentId, span, onMissing }: { documentId: string
               if (!piece.marked) return piece.text;
               const ref = firstMark?.[0] === index && firstMark[1] === n ? mark : undefined;
               return (
-                <mark key={n} ref={ref} className="text-mark rounded-xs text-ink">
+                <mark key={n} ref={ref} className="text-mark rounded-xs">
                   {piece.text}
                 </mark>
               );
