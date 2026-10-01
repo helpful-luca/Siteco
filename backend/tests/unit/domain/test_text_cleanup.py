@@ -80,8 +80,8 @@ def _positions(raw: str, word: str) -> range:
 
 
 def test_every_unicode_space_becomes_a_plain_space() -> None:
-    # Catalogs set "50 %" with a thin space; the question types "50 %".
-    raw = "50 % und 105 W, 3 K x y"
+    # Catalogs set "50\u2009%" with a thin space; the question types "50 %".
+    raw = "50\u2009% und 105\u200aW, 3\u2002K\u205fx\u1680y"
     assert clean_page_text(raw).text == "50 % und 105 W, 3 K x y"
     assert normalize_text(raw) == clean_page_text(raw).text
 
