@@ -173,3 +173,12 @@ def test_retention_is_chosen_in_the_app(client: TestClient) -> None:
     assert client.get("/api/workspace").json()["retention_days"] == 90
     assert client.delete("/api/workspace?reset_preferences=true").status_code == 204
     assert client.get("/api/preferences").json()["retention_days"] == 0
+
+
+def test_a_client_that_does_not_send_retention_keeps_the_choice(client: TestClient) -> None:
+    """Regression: older clients (the E2E reset, a desktop app) send the object without it."""
+    assert client.put("/api/preferences", json=VALID | {"retention_days": 90}).status_code == 200
+    older = {k: v for k, v in VALID.items() if k != "retention_days"}
+    r = client.put("/api/preferences", json=older | {"name": "Anna"})
+    assert r.status_code == 200, r.text
+    assert (r.json()["name"], r.json()["retention_days"]) == ("Anna", 90)

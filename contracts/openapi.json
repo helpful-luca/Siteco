@@ -1600,11 +1600,18 @@
             "type": "boolean"
           },
           "retention_days": {
-            "description": "Delete chats and documents after this many days; 0 is off. Until chosen, the installation default (RETENTION_DAYS).",
-            "maximum": 3650.0,
-            "minimum": 0.0,
-            "title": "Retention Days",
-            "type": "integer"
+            "anyOf": [
+              {
+                "maximum": 3650.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Delete chats and documents after this many days; 0 is off. Until chosen, the installation default (RETENTION_DAYS). Omitted on PUT: stays as it is (clients written before this field existed).",
+            "title": "Retention Days"
           },
           "style": {
             "$ref": "#/components/schemas/AnswerStyle"
@@ -1621,8 +1628,7 @@
           "effort",
           "style",
           "compare_models",
-          "onboarded",
-          "retention_days"
+          "onboarded"
         ],
         "title": "PreferencesBody",
         "type": "object"

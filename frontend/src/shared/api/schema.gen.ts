@@ -981,9 +981,9 @@ export interface components {
             onboarded: boolean;
             /**
              * Retention Days
-             * @description Delete chats and documents after this many days; 0 is off. Until chosen, the installation default (RETENTION_DAYS).
+             * @description Delete chats and documents after this many days; 0 is off. Until chosen, the installation default (RETENTION_DAYS). Omitted on PUT: stays as it is (clients written before this field existed).
              */
-            retention_days: number;
+            retention_days?: number | null;
             style: components["schemas"]["AnswerStyle"];
             theme: components["schemas"]["Theme"];
         };

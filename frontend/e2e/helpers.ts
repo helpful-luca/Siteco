@@ -22,13 +22,15 @@ export async function requireMode(request: APIRequestContext, wanted: Mode) {
 export async function resetStack(request: APIRequestContext) {
   const docs = (await (await request.get('/api/documents')).json()).documents as { id: string }[];
   for (const { id } of docs) await request.delete(`/api/documents/${id}`, { headers: CSRF });
-  await request.put('/api/preferences', {
+  // Checked: a refused reset (a contract change) would leave the setup overlay over the app.
+  const preferences = await request.put('/api/preferences', {
     headers: CSRF,
     data: {
       locale: 'en', theme: 'light', name: '', default_model: 'claude-sonnet-5-5', effort: 'low', style: 'concise',
       compare_models: ['claude-sonnet-5-5', 'claude-haiku-4-5'], onboarded: true,
     },
   });
+  expect(preferences.ok(), await preferences.text()).toBe(true);
   const chats = (await (await request.get('/api/chats')).json()).chats as { id: string }[];
   for (const { id } of chats) await request.delete(`/api/chats/${id}`, { headers: CSRF });
 }
@@ -41,7 +43,10 @@ export async function uploadAndWaitReady(page: Page, file = pdfFile()) {
   await page.goto('/library');
   await page.locator('input[type="file"]').setInputFiles(file);
   await expect(page.getByText(file.name).first()).toBeVisible();
-  await expect(page.getByText('Ready', { exact: true }).first()).toBeVisible({ timeout: 60_000 });
+  // The file's own row: the status filter above the table also reads "Ready", and leaving the
+  // page before the upload finished would cancel it.
+  const row = page.getByRole('row').filter({ hasText: file.name });
+  await expect(row.getByText('Ready', { exact: true }).filter({ visible: true })).toBeVisible({ timeout: 60_000 });
 }
 
 export async function ask(page: Page, question: string) {

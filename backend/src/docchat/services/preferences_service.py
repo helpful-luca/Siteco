@@ -66,6 +66,10 @@ class PreferencesService:
                 "The comparison needs two different models.",
                 details=[{"loc": ["body", "compare_models"], "type": "value_error"}],
             )
+        if days is None:  # a client that does not know the field keeps the stored choice
+            stored = self._store.load()
+            kept = stored.retention_days if stored is not None else None
+            preferences = replace(preferences, retention_days=kept)
         cleaned = replace(preferences, name=clean_name(preferences.name))
         self._store.save(cleaned, self._clock.now())
         log.info("preferences_saved")  # never the values: the name is personal data

@@ -21,11 +21,13 @@ class PreferencesBody(BaseModel):
     style: AnswerStyle
     compare_models: list[str] = Field(min_length=2, max_length=2)
     onboarded: bool
-    retention_days: int = Field(
+    retention_days: int | None = Field(
+        default=None,
         ge=0,
         le=RETENTION_MAX_DAYS,
         description="Delete chats and documents after this many days; 0 is off. Until chosen, "
-        "the installation default (RETENTION_DAYS).",
+        "the installation default (RETENTION_DAYS). Omitted on PUT: stays as it is (clients "
+        "written before this field existed).",
     )
 
     def to_domain(self) -> Preferences:
