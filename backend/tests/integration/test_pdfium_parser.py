@@ -190,3 +190,16 @@ def test_text_outside_the_crop_box_is_not_part_of_the_page(tmp_path: Path) -> No
         "Unten sichtbar.",
     ]
     assert all(0 <= x <= 0.5 for s in section.sentences for x, _, _, _ in s.rects)
+
+
+def test_a_paragraph_continues_after_a_hyphenated_line_break(tmp_path: Path) -> None:
+    lines = (
+        "Die Leuchte erreicht eine Schutz-",
+        "art von IP66 und eine sehr hohe",
+        "Schlagfestigkeit von IK09 bei Wind.",
+    )
+    section = _only_section(_write(tmp_path, build_pdf([text_page(*lines)])))
+    assert [section.text[s.start : s.end] for s in section.sentences] == [
+        "Die Leuchte erreicht eine Schutzart von IP66 und eine sehr hohe\n"
+        "Schlagfestigkeit von IK09 bei Wind."
+    ]

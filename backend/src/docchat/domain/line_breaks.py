@@ -29,8 +29,9 @@ _SPARE = 0.15
 @dataclass(frozen=True)
 class PageLine:
     """One non-empty line of a page's text: [start, end) offsets, the x ranges of its text runs
-    from left to right, its top (growing downwards), its font size and the width of its first
-    word, all in points."""
+    in text order, its top (growing downwards), its font size and the width of its first
+    word, all in points. pdfium joins a hyphenated word into one line, so a line may cover two
+    printed lines: `left` is where it starts, `right` and `last_top` where it ends."""
 
     start: int
     end: int
@@ -38,6 +39,11 @@ class PageLine:
     top: float
     size: float
     first_word: float
+    last_top: float | None = None
+
+    @property
+    def end_top(self) -> float:
+        return self.top if self.last_top is None else self.last_top
 
     @property
     def left(self) -> float:
@@ -59,7 +65,7 @@ def _continues(line: PageLine, nxt: PageLine) -> bool:
         return False
     if abs(nxt.size - line.size) > line.size * _SIZE_TOLERANCE:
         return False
-    if not 0 < nxt.top - line.top <= line.size * _MAX_LEADING:
+    if not 0 < nxt.top - line.end_top <= line.size * _MAX_LEADING:
         return False
     # The same left edge, or a hanging indent under the text after a bullet.
     return any(abs(nxt.left - x0) <= line.size * _ALIGN for x0, _ in line.spans)

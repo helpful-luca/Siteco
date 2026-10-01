@@ -77,3 +77,17 @@ def test_hidden_characters_lines_and_their_spaces_are_left_out() -> None:
 def _positions(raw: str, word: str) -> range:
     start = raw.index(word)
     return range(start, start + len(word))
+
+
+def test_every_unicode_space_becomes_a_plain_space() -> None:
+    # Catalogs set "50 %" with a thin space; the question types "50 %".
+    raw = "50 % und 105 W, 3 K x y"
+    assert clean_page_text(raw).text == "50 % und 105 W, 3 K x y"
+    assert normalize_text(raw) == clean_page_text(raw).text
+
+
+def test_a_white_bullet_before_c_is_the_degree_sign() -> None:
+    raw = "-25..+50◦C und ◦ Punkt"
+    cleaned = clean_page_text(raw)
+    assert cleaned.text == "-25..+50°C und ◦ Punkt"
+    assert normalize_text(raw) == cleaned.text

@@ -92,8 +92,9 @@ def _page_lines(
                     PageLine(
                         start=first,
                         end=first + len(stripped),
-                        spans=tuple(sorted((box[0], box[2]) for box in boxes)),
-                        top=crop_top - max(box[3] for box in boxes),
+                        spans=tuple((box[0], box[2]) for box in boxes),
+                        top=crop_top - boxes[0][3],
+                        last_top=crop_top - boxes[-1][3],
                         # Mid-line: the first character may be a bullet from a symbol font.
                         size=_font_size(textpage, raw_start + raw_count // 2),
                         first_word=max(b[2] for b in word) - min(b[0] for b in word),

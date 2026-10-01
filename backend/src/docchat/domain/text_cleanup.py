@@ -25,7 +25,13 @@ _LIGATURES = {
     "\ufb05": "st",
     "\ufb06": "st",
 }
-_SPACES = frozenset({"\t", "\u00a0", "\u2007", "\u202f", "\u3000", "\f", "\v"})
+# Tab, form feed and every Unicode space separator (no-break, thin, hair, en, em, ...).
+_SPACES = frozenset(
+    {"\t", "\f", "\v", "\u00a0", "\u1680", "\u202f", "\u205f", "\u3000"}
+    | {chr(c) for c in range(0x2000, 0x200B)}
+)
+# Some fonts map the degree sign to WHITE BULLET: "+50\u25e6C" is "+50°C".
+_DEGREE = re.compile("\u25e6(?=[CF]\\b)")
 
 
 def _replacement(char: str) -> str:
@@ -96,7 +102,8 @@ def clean_page_text(raw: str, hidden: Collection[int] = frozenset()) -> CleanTex
     if line_hidden and not line_shown and chars and chars[-1] == "\n":
         chars.pop()
         index.pop()
-    return CleanText("".join(chars), tuple(index))
+    # One character for one: the offset map stays valid.
+    return CleanText(_DEGREE.sub("°", "".join(chars)), tuple(index))
 
 
 _TRANSLATION = str.maketrans(
@@ -118,5 +125,5 @@ _SPACES_AROUND_NEWLINE = re.compile(r" *\n *")
 def normalize_text(raw: str) -> str:
     """Same rules as clean_page_text, fast enough for text files with millions of characters."""
     text = raw.replace("\r\n", "\n").replace("\r", "\n").translate(_TRANSLATION)
-    text = unicodedata.normalize("NFC", text)
+    text = _DEGREE.sub("°", unicodedata.normalize("NFC", text))
     return _SPACES_AROUND_NEWLINE.sub("\n", _SPACE_RUNS.sub(" ", text)).lstrip(" ")
