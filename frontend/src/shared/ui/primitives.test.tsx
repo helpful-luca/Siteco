@@ -50,6 +50,18 @@ describe('SegmentedControl', () => {
     await userEvent.keyboard('{ArrowRight}');
     expect(onValueChange).toHaveBeenCalledWith('dark');
   });
+
+  it('draws one shared indicator inside the chosen segment', () => {
+    const { container, rerender } = render(
+      <SegmentedControl label="Erscheinungsbild" options={options} value="light" onValueChange={() => {}} />,
+    );
+    const indicators = () => container.querySelectorAll('[data-segment-indicator]');
+    expect(indicators()).toHaveLength(1);
+    expect(screen.getByRole('radio', { name: 'Hell' })).toContainElement(indicators()[0] as HTMLElement);
+    rerender(<SegmentedControl label="Erscheinungsbild" options={options} value="system" onValueChange={() => {}} />);
+    expect(indicators()).toHaveLength(1);
+    expect(screen.getByRole('radio', { name: 'Automatisch' })).toContainElement(indicators()[0] as HTMLElement);
+  });
 });
 
 describe('Switch', () => {
