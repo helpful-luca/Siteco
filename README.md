@@ -45,7 +45,7 @@ Open http://localhost:3000. The first build downloads dependencies, the web font
 | Optional: citation highlighting | Chips open the PDF on the page with line rectangles around the cited sentence; text files highlight the passage; scans use OCR word positions |
 | Optional: multi-model | Model per message, side by side compare with timings and cost, server side fallbacks shown openly |
 | Optional: retrieval evaluation | 32 questions, 7 configurations, numbers below, CI gate |
-| Beyond the brief | German and English UI, settings, onboarding, a catalog of stable error codes, GDPR tools (export, delete, retention), MCP server, macOS desktop app |
+| Beyond the brief | German and English UI, settings, onboarding, a catalog of stable error codes, GDPR tools (export, delete, retention), MCP server, desktop app for macOS and Windows |
 
 ## Architecture
 
@@ -151,13 +151,14 @@ Claude Code and Claude Desktop can search your library: `claude mcp add --transp
     make fresh-clone # prove a clean clone starts without .env
     make e2e         # browser E2E against the Docker stack (fake model, then no key)
 
-## Desktop app (macOS)
+## Desktop app (macOS and Windows)
 
 A native window instead of a browser tab: double-click the app, it starts what it needs and opens Siteco Document Chat. Optional; the official way stays `docker compose up`. Needs Node 22.12 or newer to build and Docker Desktop to run.
 
     npm install            # root scripts plus desktop/ (downloads Electron, about 130 MB)
     npm run app:build      # unsigned .app for arm64 and x64 in desktop/release
     npm run app:install    # copies it to ~/Applications/Siteco Document Chat.app
+    npm run app:build:win  # Windows installers (NSIS) for x64 and arm64 in desktop/release
 
 What happens on a double-click:
 
@@ -171,7 +172,21 @@ The project folder is the repository the app was built from. If it moves, the ap
 
 The app is built and opened on the same Mac, so it carries no quarantine flag and Gatekeeper opens it without a prompt. It is only ad-hoc signed; handing it to others would need a Developer ID signature and notarization.
 
-Security: context isolation, sandbox and no Node.js in the page; the page sees only `{ isDesktop, platform }`. Navigation stays on the app origin, popups are denied, http(s) links open in the default browser after validation, permission requests are denied (except clipboard writes for the copy buttons), and requests to any other origin are blocked. Electron fuses are hardened (no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, encrypted cookies, code only from the integrity-checked `app.asar`). Crash reports stay on the Mac; there is no telemetry. Docker is called with `execFile` and fixed argument lists, never through a shell.
+The window moves by its top strip (about 52 px across sidebar, chat header and side panel); every control in it stays clickable, and a double click maximizes the window (macOS follows the Dock setting for double clicks on a title bar).
+
+Security: context isolation, sandbox and no Node.js in the page; the page sees only `{ isDesktop, platform, window }`, where `window` holds five window commands (minimize, maximize or restore, close, maximized state, app menu). The main process accepts them only from the app window's main frame on the app origin. Navigation stays on the app origin, popups are denied, http(s) links open in the default browser after validation, permission requests are denied (except clipboard writes for the copy buttons), and requests to any other origin are blocked. Electron fuses are hardened (no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, encrypted cookies, code only from the integrity-checked `app.asar`). Crash reports stay on the Mac; there is no telemetry. Docker is called with `execFile` and fixed argument lists, never through a shell.
+
+### Windows 10 and 11
+
+`npm run app:build:win` builds a per-user installer (`Siteco-Document-Chat-Setup-<version>-x64.exe`, an arm64 one and one for both) that installs without admin rights to `%LOCALAPPDATA%\Programs` and adds Start menu and desktop shortcuts. It builds on a Mac too. Settings live in `%APPDATA%\Siteco Document Chat\config.json`.
+
+- Needs Windows 10 22H2 (build 19045) or Windows 11, and Docker Desktop with WSL 2. The splash checks this when Docker is missing or does not start and says what to do: update Windows, turn on virtualization (Intel VT-x or AMD-V) in the BIOS or UEFI, or run `wsl --install` as administrator.
+- The app finds `docker.exe` in Docker Desktop's folder under Program Files (also on another drive) or `%LOCALAPPDATA%\Programs`, starts `Docker Desktop.exe` when the engine is off and runs the same `docker compose` command as on a Mac.
+- The window has no Windows title bar: the app draws its own buttons (menu, minimize, maximize or restore, close) in its 32 px title bar, which also moves the window, snaps and maximizes on double click. Windows 11 rounds the corners natively; Windows 10 keeps square corners with the normal shadow, snap and edge resizing.
+- Windows has no app menu bar: settings, view, about, "Dienste beenden" and quit are in the menu button next to the window buttons; the shortcuts (Ctrl+, Ctrl+R, Ctrl+plus and minus) work as usual.
+- Not signed: SmartScreen asks once ("More info", "Run anyway").
+
+Honest limit: the Windows build, its platform logic and the title bar are covered by unit tests and checked in a Chrome simulation of the Windows shell; I could not run the app on a real Windows 10 or 11 machine.
 
 For development:
 

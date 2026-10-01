@@ -1,4 +1,5 @@
-// Renders assets/icon.svg to build/icon.icns (iconutil, macOS) for electron-builder.
+// Renders assets/icon.svg to build/icon.png (all platforms; Windows makes its .ico from it) and,
+// on a Mac, build/icon.icns (iconutil) for electron-builder.
 // resvg is pinned in package.json, so the output is the same on every machine.
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -25,9 +26,11 @@ try {
     writeFileSync(join(iconset, `icon_${size}x${size}@2x.png`), render(size * 2));
   }
   mkdirSync(join(root, 'build'), { recursive: true });
-  execFileSync('/usr/bin/iconutil', ['-c', 'icns', iconset, '-o', join(root, 'build/icon.icns')]);
   writeFileSync(join(root, 'build/icon.png'), render(1024));
-  console.log('icon: build/icon.icns, build/icon.png');
+  if (process.platform === 'darwin') {
+    execFileSync('/usr/bin/iconutil', ['-c', 'icns', iconset, '-o', join(root, 'build/icon.icns')]);
+  }
+  console.log(process.platform === 'darwin' ? 'icon: build/icon.icns, build/icon.png' : 'icon: build/icon.png');
 } finally {
   rmSync(work, { recursive: true, force: true });
 }

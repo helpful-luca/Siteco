@@ -1,4 +1,5 @@
-# Unsigned local build (ad-hoc signature only): `npm run app:build` in the repository root.
+# Unsigned local builds: `npm run app:build` (macOS, ad-hoc signature) and `npm run app:build:win`
+# (Windows 10 and 11, NSIS installer for x64 and arm64) in the repository root.
 appId: local.siteco.document-chat
 productName: Siteco Document Chat
 copyright: Luca
@@ -26,6 +27,26 @@ mac:
   extendInfo:
     LSMinimumSystemVersion: "12.0"
     NSHumanReadableCopyright: ""
+win:
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+  # electron-builder turns the 1024 px PNG into the .ico.
+  icon: build/icon.png
+  # No code signing certificate: SmartScreen asks once ("More info", "Run anyway").
+  signAndEditExecutable: true
+# makensis 3.12 bundle: the legacy one has only an Intel makensis for macOS (needs Rosetta).
+toolsets:
+  nsis: "1.2.1"
+nsis:
+  # Per-user install under %LOCALAPPDATA%\Programs, no admin rights; settings live in %APPDATA%.
+  oneClick: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Siteco Document Chat
+  artifactName: Siteco-Document-Chat-Setup-${version}-${arch}.${ext}
+  deleteAppDataOnUninstall: false
 # Electron fuses (annex 11, 8.13): no Node mode, no NODE_OPTIONS or inspector flags,
 # encrypted cookies, app code only from the integrity-checked app.asar.
 electronFuses:

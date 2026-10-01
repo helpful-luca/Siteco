@@ -2,7 +2,7 @@
   "name": "siteco-docchat-desktop",
   "productName": "Siteco Document Chat",
   "version": "1.0.0",
-  "description": "Native macOS window for Siteco Document Chat",
+  "description": "Native window for Siteco Document Chat (macOS, Windows 10 and 11)",
   "private": true,
   "license": "MIT",
   "author": "Luca",
@@ -20,7 +20,8 @@
     "test:e2e": "npm run build && playwright test",
     "icon": "node scripts/make-icon.mjs",
     "dist": "npm run build && node scripts/make-icon.mjs && electron-builder --publish never",
-    "install-app": "node scripts/install-app.mjs"
+    "install-app": "node scripts/install-app.mjs",
+    "dist:win": "npm run build && node scripts/make-icon.mjs && electron-builder --win --publish never"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
