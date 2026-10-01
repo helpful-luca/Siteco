@@ -86,8 +86,8 @@ Retrieval, measured with the production pipeline on 71 pages (two EU regulations
 
 | Configuration | Hit@1 | Hit@5 | In sources | p50 |
 |---|---|---|---|---|
-| **Hybrid, German stemmer (default)** | 0.46 | 0.89 | **0.93** | 10 ms |
-| Vectors only | 0.46 | 0.86 | 0.89 | 10 ms |
+| **Hybrid, German stemmer (default)** | 0.46 | 0.89 | **0.93** | 11 ms |
+| Vectors only | 0.46 | 0.82 | 0.89 | 11 ms |
 | BM25 only, German stemmer | 0.57 | 0.79 | 0.86 | 2 ms |
 
 "In sources" means a right page is among the 8 passages Claude actually receives. Honest reading: hybrid is the only configuration without a blind spot (BM25 collapses on cross-language questions, vectors lose exact codes), but it does not put the right page first more often than BM25 does. The set is small and built as a regression guard, not a benchmark; CI fails if the default drops below the measured numbers. A reranker is the measured next step for the first place.
@@ -201,7 +201,7 @@ For development:
 
 ## Next steps
 
-1. A cross-encoder reranker for the first place (hybrid reaches 0.46 Hit@1, BM25 alone 0.57).
+1. A cross-encoder reranker for the first place (hybrid reaches 0.46 Hit@1, BM25 alone 0.54).
 2. Contextual retrieval (a short document summary in each chunk) and a measured long-context baseline against retrieval for small libraries.
 3. Map-reduce summaries of whole large documents (today the answer says when it only saw the relevant parts).
 4. Run the generation eval with a key and publish the model comparison.

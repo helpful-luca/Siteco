@@ -1,13 +1,13 @@
 # Retrieval evaluation
 
-Draft of the README section. The numbers are what `make eval` measured on 2026-10-01 at commit 0e8ef49
+Draft of the README section. The numbers are what `make eval` measured on 2026-10-01 at commit 54c7dae
 (`eval/results/latest.json`); latencies vary by a millisecond or two between runs.
 
 ## What is measured
 
 - **Data:** Commission Regulation (EU) 2019/2020 on ecodesign for light sources in German and
   English (Official Journal PDFs, 32 pages each) and three fictional datasheets of a made up
-  manufacturer (2 to 3 pages each, one English, two German). 71 pages, 176 chunks. Sources,
+  manufacturer (2 to 3 pages each, one English, two German). 71 pages, 173 chunks. Sources,
   licence and checksums: `eval/README.md`.
 - **Questions:** 32, hand-checked, 17 German and 15 English: 9 facts, 8 exact codes (IP66,
   EN 13201-2, article numbers, limit values), 6 cross-lingual (German question on English text
@@ -26,13 +26,13 @@ Draft of the README section. The numbers are what `make eval` measured on 2026-1
 
 | Configuration | Hit@1 | Hit@5 | MRR@10 | In sources | p50 / p95 |
 |---|---|---|---|---|---|
-| **Hybrid, German stemmer (default)** | 0.46 | 0.89 | 0.66 | **0.93** | 10 / 12 ms |
-| Hybrid, English stemmer | 0.50 | 0.89 | 0.69 | 0.93 | 11 / 13 ms |
-| Hybrid, no stemming | 0.50 | 0.89 | 0.68 | 0.96 | 11 / 12 ms |
-| Vectors only | 0.46 | 0.86 | 0.67 | 0.89 | 10 / 14 ms |
-| BM25 only, German stemmer | 0.57 | 0.79 | 0.68 | 0.86 | 2 / 3 ms |
-| BM25 only, English stemmer | 0.46 | 0.75 | 0.61 | 0.86 | 2 / 3 ms |
-| BM25 only, no stemming | 0.50 | 0.79 | 0.64 | 0.82 | 2 / 2 ms |
+| **Hybrid, German stemmer (default)** | 0.46 | 0.89 | 0.66 | **0.93** | 11 / 13 ms |
+| Hybrid, English stemmer | 0.54 | 0.93 | 0.73 | 0.93 | 11 / 13 ms |
+| Hybrid, no stemming | 0.50 | 0.89 | 0.69 | 0.96 | 11 / 14 ms |
+| Vectors only | 0.46 | 0.82 | 0.65 | 0.89 | 11 / 13 ms |
+| BM25 only, German stemmer | 0.54 | 0.75 | 0.65 | 0.86 | 3 / 4 ms |
+| BM25 only, English stemmer | 0.46 | 0.79 | 0.62 | 0.86 | 2 / 3 ms |
+| BM25 only, no stemming | 0.50 | 0.82 | 0.64 | 0.89 | 2 / 3 ms |
 
 By kind of question, default configuration against each retriever alone (in sources):
 
@@ -52,7 +52,7 @@ By kind of question, default configuration against each retriever alone (in sour
   That is the reason the app pays for two retrievers; the gate asserts that hybrid finds at
   least what each of them finds alone.
 - **Where hybrid loses: the first place.** BM25 with the German stemmer puts the right page
-  first more often (0.57 against 0.46). Reciprocal rank fusion mixes in pages that are only
+  first more often (0.54 against 0.46). Reciprocal rank fusion mixes in pages that are only
   similar in meaning: the other language version of the regulation, a sister datasheet with the
   same vocabulary. Cross-lingual questions never get the right page first (Hit@1 0), although 5
   of 6 have it within the first five. For an answer this matters less than it looks, because
@@ -77,9 +77,25 @@ By kind of question, default configuration against each retriever alone (in sour
   guard, not as a benchmark. Unanswerable questions are not scored by retrieval (there is no
   page to find and RRF scores are not calibrated); refusing is the model's job.
 
+## Real catalog (local check)
+
+The Siteco catalog "Beleuchtungslösungen 2026" (280 pages, 16 MB, not in the repository) with 25
+local questions (pages, specs, prices, exact codes, comparisons across pages, English questions,
+three unanswerable), through the app's own retrieval:
+
+| | Before the audit | After |
+|---|---|---|
+| Text indexed | 573,000 characters | 327,000 (44 % was the facing page of a spread, beyond the page edge) |
+| Chunks | 538 | 356 |
+| "Sentences" over 300 characters (whole tables) | 897 | 17 (one per table row) |
+| Answerable questions with a right page in the sources | 20 of 22 | 22 of 22 |
+
+Before, several hits were on the wrong page: the Siluette 21 dimensions were found on page 190,
+where they are not visible (they are on 191).
+
 ## Generation eval (prepared, not run yet)
 
-`make eval-generation` (needs `RUN_LIVE=1` and `ANTHROPIC_API_KEY`, costs a few dollars) asks
+`make eval-generation` (needs `RUN_LIVE=1` and `ANTHROPIC_API_KEY`, plus `ANTHROPIC_WORKSPACE_ID` for keys that ask for one; costs a few dollars) asks
 all 32 questions through the app's own answer path with Haiku 4.5, Sonnet 5.5 and Opus 5.5 and
 lets Claude Opus judge each answer against the labelled pages: correctness, citations on a
 right page, honest refusals on the 4 unanswerable questions, cost and response time. It writes
