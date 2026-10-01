@@ -69,6 +69,13 @@ def _font_size(textpage: pdfium.PdfTextPage, index: int) -> float:
     return nominal * math.hypot(matrix.c, matrix.d)
 
 
+def _middle_char(cleaned: CleanText, start: int, line: str) -> int:
+    """Raw index of a visible character mid-line: the first may be a bullet from a symbol font,
+    and the spaces pdfium inserts have no font at all."""
+    visible = [i for i, char in enumerate(line) if not char.isspace()]
+    return cleaned.raw_index[start + visible[len(visible) // 2]]
+
+
 def _page_lines(
     textpage: pdfium.PdfTextPage, cleaned: CleanText, crop_top: float
 ) -> list[PageLine]:
@@ -95,8 +102,7 @@ def _page_lines(
                         spans=tuple((box[0], box[2]) for box in boxes),
                         top=crop_top - boxes[0][3],
                         last_top=crop_top - boxes[-1][3],
-                        # Mid-line: the first character may be a bullet from a symbol font.
-                        size=_font_size(textpage, raw_start + raw_count // 2),
+                        size=_font_size(textpage, _middle_char(cleaned, first, stripped)),
                         first_word=max(b[2] for b in word) - min(b[0] for b in word),
                     )
                 )

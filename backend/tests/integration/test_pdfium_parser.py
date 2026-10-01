@@ -203,3 +203,14 @@ def test_a_paragraph_continues_after_a_hyphenated_line_break(tmp_path: Path) -> 
         "Die Leuchte erreicht eine Schutzart von IP66 und eine sehr hohe\n"
         "Schlagfestigkeit von IK09 bei Wind."
     ]
+
+
+def test_the_size_of_a_line_comes_from_a_visible_character() -> None:
+    # pdfium inserts spaces between text runs; they have no font, so their size reads as 1.
+    # The middle of "ab cd" is such a space.
+    from docchat.adapters.pdfium_pages import _middle_char
+    from docchat.domain.text_cleanup import clean_page_text
+
+    assert _middle_char(clean_page_text("ab cd"), 0, "ab cd") == 3
+    row = "4000 80 11500 64 180"
+    assert not row[_middle_char(clean_page_text(row), 0, row)].isspace()
