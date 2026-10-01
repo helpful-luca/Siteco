@@ -6,6 +6,7 @@ LanceDB is just the index. Small scopes go to the model completely (full-context
 """
 
 import asyncio
+from collections.abc import Collection
 from dataclasses import dataclass
 
 from docchat.domain.chat_models import Chat
@@ -97,19 +98,39 @@ class RetrievalService:
         if plan.mode is SourcesMode.FULL_CONTEXT:
             chunks = await asyncio.to_thread(self._vectors.chunks_of, ids)
         else:
-            vector = await asyncio.to_thread(self._embedder.embed_query, query)
-            ranked = await asyncio.to_thread(
-                self._vectors.search, query, vector, ids, self._settings.candidates
-            )
-            chunks = select_sources(
-                ranked,
-                top_k=self._settings.top_k,
-                per_document_cap=self._settings.per_document_cap,
-                multiple_documents=len(ids) > 1,
-            )
+            chunks = await self._rank(ids, query, self._settings.top_k)
             if is_summary_request(question):
                 notices.append(Notice(NoticeCode.SUMMARY_PARTIAL))
         allowed = {d.id: d for d in documents}
         # The index may still hold chunks of a document deleted a moment ago: SQLite wins.
         kept = tuple(c for c in chunks if c.document_id in allowed)
         return Retrieved(plan.mode, kept, allowed, tuple(notices))
+
+    async def search(
+        self, query: str, top_k: int, document_ids: Collection[str] | None = None
+    ) -> Retrieved:
+        """The chat's hybrid search without a chat, for other interfaces (the MCP server).
+        Always ranked, never full-context. Only ready documents, optionally narrowed to
+        `document_ids`; unknown or not ready ids are ignored."""
+        documents = await asyncio.to_thread(self._ready_documents, document_ids)
+        ids = [d.id for d in documents]
+        allowed = {d.id: d for d in documents}
+        chunks = await self._rank(ids, query, top_k) if ids else []
+        kept = tuple(c for c in chunks if c.document_id in allowed)
+        return Retrieved(SourcesMode.RETRIEVAL, kept, allowed, ())
+
+    def _ready_documents(self, only: Collection[str] | None) -> list[Document]:
+        ready = [d for d in self._documents.list_visible() if d.status is DocumentStatus.READY]
+        return ready if only is None else [d for d in ready if d.id in set(only)]
+
+    async def _rank(self, ids: list[str], query: str, top_k: int) -> list[Chunk]:
+        vector = await asyncio.to_thread(self._embedder.embed_query, query)
+        ranked = await asyncio.to_thread(
+            self._vectors.search, query, vector, ids, self._settings.candidates
+        )
+        return select_sources(
+            ranked,
+            top_k=top_k,
+            per_document_cap=self._settings.per_document_cap,
+            multiple_documents=len(ids) > 1,
+        )

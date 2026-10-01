@@ -52,6 +52,7 @@ from docchat.services.document_service import DocumentService
 from docchat.services.embed_stage import EmbedBatching, EmbedStage
 from docchat.services.eval_report import EvalReportService
 from docchat.services.ingestion_worker import IngestionWorker
+from docchat.services.library_search import LibrarySearch
 from docchat.services.limits import DailyBudget, LimitScope, RateLimit
 from docchat.services.llm_health import LlmHealth
 from docchat.services.malware_scan_worker import MalwareScanWorker, ScanRetry
@@ -96,6 +97,7 @@ class Container:
     retention: RetentionSweeper
     erasure: DiskErasure
     evaluation: EvalReportService
+    library: LibrarySearch
     embedder_status: ComponentStatus = ComponentStatus.LOADING
     vector_store_status: ComponentStatus = ComponentStatus.LOADING
 
@@ -378,6 +380,7 @@ def build_container(
             interval_s=settings.retention_sweep_interval_s,
         ),
         erasure=erasure,
+        library=LibrarySearch(repository, retrieval),
         evaluation=EvalReportService(
             JsonEvalResults(_eval_results_dir(settings)),
             config_hash(retrieval_fingerprint(settings)),

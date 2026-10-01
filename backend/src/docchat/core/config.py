@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     # Own rate limits per minute, global for the workspace (annex 11, 6.1). 0 turns one off.
     rate_chat_per_min: int = 20
     rate_upload_per_min: int = 30
+    # Optional bearer token for the MCP endpoint (/api/mcp). Off by default: the app is local and
+    # single user. When set, MCP clients must send `Authorization: Bearer <token>`.
+    mcp_token: SecretStr | None = None
     # JSON bodies of every route except the raw upload (annex 10, P5)
     max_json_body_kb: int = 64
 
@@ -93,7 +96,9 @@ class Settings(BaseSettings):
     git_sha: str = "unknown"
     log_level: str = "INFO"
 
-    @field_validator("anthropic_api_key", "internal_token", "daily_budget_usd", mode="before")
+    @field_validator(
+        "anthropic_api_key", "internal_token", "mcp_token", "daily_budget_usd", mode="before"
+    )
     @classmethod
     def _blank_is_none(cls, value: object) -> object:
         return None if isinstance(value, str) and not value.strip() else value
