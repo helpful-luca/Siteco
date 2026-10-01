@@ -8,6 +8,7 @@ export { DelayedSpinner } from './delayed-spinner';
 export { Dialog, DialogClose } from './dialog';
 export { ErrorBoundary } from './error-boundary';
 export { ErrorId } from './error-id';
+export { FileLabel } from './file-label';
 export { Flag } from './flag';
 export { FormGroup, FormRow, FormText } from './grouped-list';
 export { HoverCard } from './hover-card';

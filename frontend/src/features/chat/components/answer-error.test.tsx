@@ -69,6 +69,12 @@ describe('AnswerError', () => {
     expect(screen.getByTestId('picker')).toHaveTextContent('open');
   });
 
+  it('never says "in 0 seconds" for a rate limit without a known wait (an answer from history)', () => {
+    setup({ code: 'LLM_RATE_LIMITED', retryAfter: null, params: {} });
+    expect(screen.getByRole('alert')).toHaveTextContent('Versuch es gleich noch einmal.');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('0 Sekunden');
+  });
+
   it('waits for the countdown of Claude’s own rate limit before trying again', () => {
     vi.useFakeTimers();
     const { onRetry } = setup({ code: 'LLM_RATE_LIMITED', retryAfter: 30, params: { seconds: 30 } });

@@ -57,7 +57,8 @@ export function CitationChip({ n, source, citedText, active = false, onOpen }: P
             ? cn('text-ink-muted line-through', active ? 'bg-hairline-strong' : 'bg-fill-strong hover:bg-hairline-strong')
             : active
               ? 'bg-accent text-on-accent'
-              : 'bg-fill-strong text-ink hover:bg-accent hover:text-on-accent',
+              : // Red only for the open source; hovering darkens the chip like any other control.
+                'bg-fill-strong text-ink hover:bg-ink/20',
         )}
       >
         {n}

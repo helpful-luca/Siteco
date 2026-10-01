@@ -3,7 +3,7 @@
 import { ChevronDown, FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useDocuments } from '@/features/library';
-import { Menu, MenuCheckboxItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator, ToolbarButton } from '@/shared/ui';
+import { FileLabel, Menu, MenuCheckboxItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator, ToolbarButton } from '@/shared/ui';
 
 export type ScopeValue = { scope: 'all' } | { scope: 'selected'; documentIds: string[] };
 
@@ -48,7 +48,7 @@ export function ScopePicker({ value, onChange, disabled = false }: Props) {
             checked={selected.includes(document.id)}
             onCheckedChange={(checked) => toggle(document.id, checked)}
           >
-            {document.filename}
+            <FileLabel name={document.filename} />
           </MenuCheckboxItem>
         ))
       )}

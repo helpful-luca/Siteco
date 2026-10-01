@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { CitationOut, SourceOut } from '@/shared/api/types';
-import { cn } from '@/shared/ui';
+import { cn, FileLabel } from '@/shared/ui';
 
 type Props = {
   sources: SourceOut[];
@@ -67,8 +67,10 @@ export function SourcesList({ sources, citations, activeSourceId = null, onOpenS
                   >
                     {source.index}
                   </span>
-                  <span className={cn('min-w-0 truncate', source.deleted && 'line-through')}>
-                    {i === 0 ? `${group.filename}, ${page}` : page}
+                  {/* A long name gives way inside its stem; extension and page stay readable. */}
+                  <span className={cn('flex min-w-0', source.deleted && 'line-through')}>
+                    {i === 0 && <FileLabel name={group.filename} />}
+                    <span className="shrink-0 whitespace-pre">{i === 0 ? `, ${page}` : page}</span>
                   </span>
                   {source.deleted && i === 0 && <span className="shrink-0">{t('deleted')}</span>}
                 </button>

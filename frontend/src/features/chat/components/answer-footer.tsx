@@ -48,7 +48,8 @@ export function AnswerFooter({ answer, onRegenerate, onOpenArtifact, showDetails
 
   return (
     <div>
-      <div className="-ml-2 flex flex-wrap items-center gap-x-1 gap-y-1">
+      {/* The first glyph sits on the text edge: 28 px buttons pull back 6 px, 44 px touch ones 14 px. */}
+      <div className="-ml-1.5 flex flex-wrap items-center gap-x-1 gap-y-1 pointer-coarse:-ml-3.5">
         {answer.text && <CopyButton text={answer.text} label={t('answer.copy')} copiedLabel={t('answer.copied')} />}
         {onRegenerate && (
           <Tooltip content={t('answer.regenerate')}>

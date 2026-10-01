@@ -16,7 +16,7 @@ export function CitationChip({ n, label, active = false, onClick }: Props) {
         'transition-[background-color,color,box-shadow] duration-200 ease-out-soft',
         active
           ? 'bg-accent text-on-accent'
-          : 'bg-fill-strong text-ink hover:bg-accent hover:text-on-accent',
+          : 'bg-fill-strong text-ink hover:bg-ink/20',
       )}
     >
       {n}
