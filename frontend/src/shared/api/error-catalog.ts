@@ -62,6 +62,7 @@ export const ERROR_SURFACES: Record<AnyErrorCode, readonly ErrorSurface[]> = {
   QUESTION_EMPTY: ['composer'],
   QUESTION_TOO_LONG: ['composer'],
   MODEL_NOT_ALLOWED: ['composer'],
+  COMPARE_SAME_MODEL: ['answer'],
   TOKEN_BUDGET_EXCEEDED: ['banner', 'composer'],
   LLM_AUTH: ['banner', 'answer'],
   LLM_BILLING: ['banner', 'answer'],

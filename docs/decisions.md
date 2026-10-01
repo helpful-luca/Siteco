@@ -186,3 +186,14 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 107 | Startup gate | "Die App startet" for the first 30 s without an answer, only then "nicht erreichbar" | Unreachable at once | The backend loads the search model before it listens; the proxy cannot reach it meanwhile |
 | 108 | Route errors | `(app)/error.tsx` keeps the shell and shows the calm screen with retry and the digest as error id; `global-error.tsx` has the same look with inline styles and the locale cookie | Next's default screens | No stack traces, a way back, both themes |
 | 109 | Flaky backend test | `test_deleting_a_chat_during_preparation_waits_for_it` slept 50 ms and assumed the preparation thread had reserved the lane; now events hold the preparation, polls use a 10 s hang guard, TTFT and slow-stream windows are wider | Retrying flaky tests | Reproduced by a 60 ms slower SQLite lookup; 45 loops green after the fix (20 under full CPU load) |
+
+## Model comparison (phase 8)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 123 | Where a comparison lives | Two assistant rows on one question (`lane` a and b, one `comparison_id`, `is_preferred`); only the kept answer goes into later history | A separate `comparisons` table outside the chat (annex 10, F11) | Annex 11 wins; the same endpoint, reducer and history rules serve both modes |
+| 124 | Starting two lanes | The client starts lane a, waits for its `meta`, then starts lane b with the same `client_message_id`; the lane that saves the question needs two free answer slots and counts twice against the rate limit, the second lane counts nothing | Two requests at the same moment; a half comparison when only one slot is left | Annex 10, F7 and F8: refused as a whole, never half; one lane's start delay is a few milliseconds and both columns time from their own start |
+| 125 | Same model twice | The second lane compares its model with the sibling's (`COMPARE_SAME_MODEL`, also on regenerate) | A second model field in the request | The contract keeps `comparison: {id, lane}` |
+| 126 | Sources of both columns | Each lane runs its own retrieval | A 60 s cache per `comparison_id` (annex 10, F4) | Retrieval is local and deterministic, 20 to 100 ms; annex 11, 3.3 |
+| 127 | Keep this answer | `POST .../prefer` sets `is_preferred` of both rows in one statement; saving a finished lane never writes `is_preferred` | Saving the flag with the answer | A lane that ends after the click must not undo the choice |
+| 128 | One failing lane in tests and demos | `#fake:<scenario>@<model>` limits a fake scenario to one model | One scenario for the whole question | Both lanes get the same question, but never the same model |

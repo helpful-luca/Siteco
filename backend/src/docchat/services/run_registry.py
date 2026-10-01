@@ -50,13 +50,15 @@ class RunRegistry:
     def active(self) -> int:
         return len(self._runs)
 
-    def reserve(self, chat_id: str, lane: Lane) -> RunControl:
+    def reserve(self, chat_id: str, lane: Lane, *, slots: int = 1) -> RunControl:
+        """Reserves the lane. `slots` free places are required: the first lane of a comparison
+        needs room for its sibling too (annex 10, F8), but reserves only its own."""
         with self._lock:
             if chat_id in self._closed:
                 raise AppError(ErrorCode.CHAT_NOT_FOUND)
             if (chat_id, lane) in self._runs:
                 raise AppError(ErrorCode.CHAT_BUSY)
-            if len(self._runs) >= self._max:
+            if len(self._runs) + slots > self._max:
                 raise AppError(
                     ErrorCode.CONCURRENCY_LIMIT,
                     params={"max": self._max},

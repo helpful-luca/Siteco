@@ -70,6 +70,7 @@
     "QUESTION_EMPTY": "Schreib eine Frage, dann geht es los.",
     "QUESTION_TOO_LONG": "Die Frage ist länger als {max} Zeichen. Kürze sie ein wenig.",
     "MODEL_NOT_ALLOWED": "Dieses Modell steht hier nicht zur Wahl. Wähle oben ein anderes.",
+    "COMPARE_SAME_MODEL": "Beide Spalten nutzen dasselbe Modell. Wähle für den Vergleich zwei unterschiedliche Modelle.",
     "TOKEN_BUDGET_EXCEEDED": "Das Tagesbudget dieser Demo ist aufgebraucht. Ab {time} Uhr kannst du wieder fragen.",
     "LLM_AUTH": "Der Claude API-Schlüssel wird nicht akzeptiert. Prüfe ANTHROPIC_API_KEY in der .env und starte die App neu.",
     "LLM_BILLING": "Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Prüfe die Abrechnung in der Claude Console.",

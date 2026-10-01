@@ -116,10 +116,24 @@ class AnswerService:
         if self._budget is not None:
             self._budget.check()
 
-    def _count_request(self) -> None:
+    def _count_request(self, cost: int = 1) -> None:
         """Last of all checks: a question refused for another reason never uses up the limit."""
-        if self._rate is not None:
-            self._rate.acquire()
+        if self._rate is not None and cost > 0:
+            self._rate.acquire(cost)
+
+    def _sibling(self, question: Message, lane: Lane, comparison_id: str) -> Message:
+        """The other lane's answer of the same comparison. A question reused outside its
+        comparison is a duplicate."""
+        other = Lane.B if lane is Lane.A else Lane.A
+        sibling = self._chats.answer_in_lane(question.id, other)
+        if sibling is None or sibling.comparison_id != comparison_id:
+            raise AppError(ErrorCode.DUPLICATE_REQUEST)
+        return sibling
+
+    @staticmethod
+    def _other_model(sibling: Message, model: str) -> None:
+        if sibling.model == model:
+            raise AppError(ErrorCode.COMPARE_SAME_MODEL, params={"model": model})
 
     def _message_room(self, chat_id: str, adding: int) -> None:
         count = self._chats.count_messages(chat_id)
@@ -180,20 +194,31 @@ class AnswerService:
 
     def _prepare_ask(self, command: AskCommand) -> tuple[RunInput, RunControl]:
         question_text = self._question(command.content)
-        options = replace(command.options, model=self._model(command.options.model))
+        model = self._model(command.options.model)
+        options = replace(command.options, model=model)
         chat = self._chat(command.chat_id)
         existing = self._chats.find_user_message(chat.id, command.client_message_id)
-        if existing is not None and (
-            command.comparison_id is None
-            or self._chats.answer_in_lane(existing.id, command.lane) is not None
-        ):
-            raise AppError(ErrorCode.DUPLICATE_REQUEST)
+        comparison = command.comparison_id
+        if existing is not None:
+            # Only the second lane of a comparison may answer a saved question again.
+            if (
+                comparison is None
+                or self._chats.answer_in_lane(existing.id, command.lane) is not None
+            ):
+                raise AppError(ErrorCode.DUPLICATE_REQUEST)
+            self._other_model(self._sibling(existing, command.lane, comparison), model)
         self._message_room(chat.id, 1 if existing else 2)
         self._check_budget()
         plan = self._deps.retrieval.plan(chat)
-        control = self._deps.registry.reserve(chat.id, command.lane)
+        # The lane that saves the question carries the whole comparison: it needs room for both
+        # answers and counts twice, so a comparison is refused as a whole, never half (F7, F8).
+        # The client starts the second lane only after the first one's `meta`.
+        opens_comparison = comparison is not None and existing is None
+        control = self._deps.registry.reserve(
+            chat.id, command.lane, slots=2 if opens_comparison else 1
+        )
         try:
-            self._count_request()
+            self._count_request(2 if opens_comparison else 0 if existing else 1)
             earlier = self._chats.list_messages(chat.id)
             if existing is not None:
                 earlier = [m for m in earlier if m.created_at < existing.created_at]
@@ -235,6 +260,11 @@ class AnswerService:
             previous = answer.model if answer.model in MODEL_PROFILES else None
             options = replace(options, model=previous)
         options = replace(options, model=self._model(options.model))
+        if answer.comparison_id is not None and answer.parent_id is not None:
+            other = Lane.A if answer.lane is Lane.B else Lane.B
+            sibling = self._chats.answer_in_lane(answer.parent_id, other)
+            if sibling is not None and options.model is not None:
+                self._other_model(sibling, options.model)
         messages = self._chats.list_messages(chat.id)
         questions = [m for m in messages if m.role is MessageRole.USER]
         if not questions or questions[-1].id != answer.parent_id:

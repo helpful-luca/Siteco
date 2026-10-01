@@ -276,7 +276,10 @@ class SqliteChatRepository:
 
     def save_message(self, message: Message) -> bool:
         columns = [c.strip() for c in _MESSAGE_COLUMNS.split(",")]
-        mutable = [c for c in columns if c not in {"id", "chat_id", "role", "created_at"}]
+        # `is_preferred` belongs to the user (set_preferred): a lane that finishes after
+        # "keep this answer" must not undo the choice.
+        fixed = {"id", "chat_id", "role", "created_at", "is_preferred"}
+        mutable = [c for c in columns if c not in fixed]
         values = dict(zip(columns, _message_values(message), strict=True))
         assignments = ", ".join(f"{c} = ?" for c in mutable)
         with self._db.connect() as conn:
@@ -287,6 +290,17 @@ class SqliteChatRepository:
                 ).rowcount
                 == 1
             )
+
+    def set_preferred(self, comparison_id: str, message_id: str) -> bool:
+        """Marks one answer of a comparison as kept and the other one as not, together."""
+        with self._db.connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            changed = conn.execute(
+                "UPDATE messages SET is_preferred = (id = ?) WHERE comparison_id = ?",
+                (message_id, comparison_id),
+            ).rowcount
+            conn.execute("COMMIT")
+        return changed > 0
 
     # Redaction (master spec 10b, 4)
 

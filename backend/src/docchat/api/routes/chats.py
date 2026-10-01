@@ -163,6 +163,13 @@ async def regenerate(
         yield event
 
 
+@router.post("/{chat_id}/messages/{assistant_id}/prefer", status_code=204, responses=_errors(404))
+def prefer(chat_id: UUID, assistant_id: UUID, chats: ChatServiceDep) -> Response:
+    """Keeps this answer of a comparison; only the kept answer goes into later history."""
+    chats.prefer(str(chat_id), str(assistant_id))
+    return Response(status_code=204)
+
+
 @router.post("/{chat_id}/stop", status_code=202, response_model=StopOut, responses=_errors(404))
 def stop(chat_id: UUID, chats: ChatServiceDep, body: StopIn | None = None) -> StopOut:
     """Second safety net next to aborting the request: stops the lane's answer, which is then

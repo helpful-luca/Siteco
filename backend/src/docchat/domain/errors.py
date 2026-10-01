@@ -56,6 +56,7 @@ class ErrorCode(StrEnum):
     QUESTION_EMPTY = "QUESTION_EMPTY"
     QUESTION_TOO_LONG = "QUESTION_TOO_LONG"
     MODEL_NOT_ALLOWED = "MODEL_NOT_ALLOWED"
+    COMPARE_SAME_MODEL = "COMPARE_SAME_MODEL"
     TOKEN_BUDGET_EXCEEDED = "TOKEN_BUDGET_EXCEEDED"
     # Claude API, mapped by `error.type` (mid-stream errors arrive with HTTP 200)
     LLM_AUTH = "LLM_AUTH"
@@ -145,6 +146,7 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     ErrorCode.QUESTION_EMPTY: ErrorSpec(422, False),
     ErrorCode.QUESTION_TOO_LONG: ErrorSpec(422, False),
     ErrorCode.MODEL_NOT_ALLOWED: ErrorSpec(422, False),
+    ErrorCode.COMPARE_SAME_MODEL: ErrorSpec(422, False),
     ErrorCode.TOKEN_BUDGET_EXCEEDED: ErrorSpec(429, True),
     # Anthropic errors are 5xx before the stream opens: our own 429 means "you", not "Claude".
     ErrorCode.LLM_AUTH: ErrorSpec(503, False),

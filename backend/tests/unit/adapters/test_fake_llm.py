@@ -60,3 +60,22 @@ async def test_looks_into_the_next_result_when_the_first_has_no_sentence() -> No
     )
     [citation] = [e for e in await _events(request) if isinstance(e, CitationDelta)]
     assert citation.source == "c2"
+
+
+async def test_a_scenario_can_be_limited_to_one_model() -> None:
+    """`#fake:<scenario>@<model>` fails one lane of a comparison and leaves the other alone."""
+    from dataclasses import replace
+
+    from docchat.domain.llm import LLMError
+
+    question = "Welche Schutzart? #fake:overloaded@claude-haiku-4-5 #fake:no_citations"
+    sonnet = replace(_request("Die Mira L hat die Schutzart IP66."), question=question)
+    events = await _events(sonnet)  # the generic marker applies: no citation
+    assert not [e for e in events if isinstance(e, CitationDelta)]
+    haiku = replace(sonnet, model="claude-haiku-4-5")
+    try:
+        await _events(haiku)
+    except LLMError as error:
+        assert error.code == "LLM_OVERLOADED"
+    else:
+        raise AssertionError("the haiku lane should fail")

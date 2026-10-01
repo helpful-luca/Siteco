@@ -2,7 +2,8 @@
 
 It answers with the first real sentence of the search results and cites it, so E2E tests and a demo
 without a key run through the real retrieval, SSE, citations and persistence. Scenarios for
-error paths come from a script (tests) or a `#fake:<scenario>` marker in the question (E2E).
+error paths come from a script (tests) or a `#fake:<scenario>` marker in the question (E2E);
+`#fake:<scenario>@<model>` applies to that model only, so one lane of a comparison can fail.
 """
 
 import asyncio
@@ -54,7 +55,7 @@ class FakeScenario(StrEnum):
 
 _MIN_ANSWER_WORDS = 4
 _SENTENCE_ENDS = (".", "!", "?", ":", ";", ")", '"', "\u201c")
-_MARKER = re.compile(r"#fake:([a-z_]+)")
+_MARKER = re.compile(r"#fake:([a-z_]+)(?:@([a-z0-9.-]+))?")
 _INTRO = {Locale.DE: "Laut deinen Dokumenten: ", Locale.EN: "According to your documents: "}
 _NOTHING = {
     Locale.DE: "Dazu habe ich in deinen Dokumenten nichts gefunden.",
@@ -118,9 +119,9 @@ class FakeLLMClient:
     def _scenario(self, request: LLMRequest) -> FakeScenario:
         if self.script:
             return self.script.pop(0)
-        marker = _MARKER.search(request.question)
-        if marker and marker.group(1) in FakeScenario:
-            return FakeScenario(marker.group(1))
+        for name, model in _MARKER.findall(request.question):
+            if name in FakeScenario and model in ("", request.model):
+                return FakeScenario(name)
         return self.default
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]:

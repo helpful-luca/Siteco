@@ -330,7 +330,13 @@ class ChatRepository(Protocol):
     def answer_in_lane(self, parent_id: str, lane: Lane) -> Message | None: ...
 
     def save_message(self, message: Message) -> bool:
-        """Overwrites every mutable column of an existing message. False if it is gone."""
+        """Overwrites every mutable column of an existing message (not `is_preferred`, see
+        set_preferred). False if it is gone."""
+        ...
+
+    def set_preferred(self, comparison_id: str, message_id: str) -> bool:
+        """Keeps `message_id` and unmarks the other answer of the comparison. False if none
+        matched."""
         ...
 
     def interrupt_streaming(self) -> int:

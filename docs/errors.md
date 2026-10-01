@@ -59,6 +59,7 @@ HTTP errors: the document ends `failed` with the code.
 | `QUESTION_EMPTY` | 422 | no | backend | composer note | Schreib eine Frage, dann geht es los. |
 | `QUESTION_TOO_LONG` | 422 | no | backend | composer note | Die Frage ist länger als 4000 Zeichen. Kürze sie ein wenig. |
 | `MODEL_NOT_ALLOWED` | 422 | no | backend | composer note | Dieses Modell steht hier nicht zur Wahl. Wähle oben ein anderes. |
+| `COMPARE_SAME_MODEL` | 422 | no | backend | inline in the answer | Beide Spalten nutzen dasselbe Modell. Wähle für den Vergleich zwei unterschiedliche Modelle. |
 | `TOKEN_BUDGET_EXCEEDED` | 429 | yes | backend | global banner, composer note | Das Tagesbudget dieser Demo ist aufgebraucht. Ab 02:00 Uhr kannst du wieder fragen. |
 | `LLM_AUTH` | 503 | no | backend | global banner, inline in the answer | Der Claude API-Schlüssel wird nicht akzeptiert. Prüfe ANTHROPIC_API_KEY in der .env und starte die App neu. |
 | `LLM_BILLING` | 503 | no | backend | global banner, inline in the answer | Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Prüfe die Abrechnung in der Claude Console. |

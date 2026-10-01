@@ -7,7 +7,7 @@ import uuid
 from dataclasses import dataclass, replace
 
 from docchat.domain.chat_models import Chat, ChatSummary, Message
-from docchat.domain.enums import ChatScope, DocumentStatus, Lane, TitleSource
+from docchat.domain.enums import ChatScope, DocumentStatus, Lane, MessageRole, TitleSource
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.ports import ChatRepository, Clock, DocumentRepository
 from docchat.domain.redaction import without_text_of
@@ -124,6 +124,21 @@ class ChatService:
         """Stops running answers of the chat (one lane or all). Returns the stopped lanes."""
         self.get(chat_id)
         return self._runs.stop(chat_id, lane)
+
+    def prefer(self, chat_id: str, assistant_id: str) -> None:
+        """Keep this answer of a comparison. Only the kept one goes into the history of later
+        questions (annex 11, 1.3)."""
+        self.get(chat_id)
+        answer = self._chats.get_message(assistant_id)
+        if (
+            answer is None
+            or answer.chat_id != chat_id
+            or answer.role is not MessageRole.ASSISTANT
+            or answer.comparison_id is None
+        ):
+            raise AppError(ErrorCode.NOT_FOUND)
+        self._chats.set_preferred(answer.comparison_id, answer.id)
+        log.info("answer_preferred", extra={"chat_id": chat_id, "message_id": answer.id})
 
     async def delete(self, chat_id: str) -> None:
         """Running answers are stopped first, so none of them writes into a deleted chat."""

@@ -717,6 +717,7 @@
           "QUESTION_EMPTY",
           "QUESTION_TOO_LONG",
           "MODEL_NOT_ALLOWED",
+          "COMPARE_SAME_MODEL",
           "TOKEN_BUDGET_EXCEEDED",
           "LLM_AUTH",
           "LLM_BILLING",
@@ -745,6 +746,10 @@
           "CHAT_NOT_FOUND": {
             "retryable": false,
             "status": 404
+          },
+          "COMPARE_SAME_MODEL": {
+            "retryable": false,
+            "status": 422
           },
           "CONCURRENCY_LIMIT": {
             "retryable": true,
@@ -2647,6 +2652,63 @@
           }
         },
         "summary": "Ask",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/chats/{chat_id}/messages/{assistant_id}/prefer": {
+      "post": {
+        "description": "Keeps this answer of a comparison; only the kept answer goes into later history.",
+        "operationId": "prefer_api_chats__chat_id__messages__assistant_id__prefer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assistant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assistant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Prefer",
         "tags": [
           "chats"
         ]

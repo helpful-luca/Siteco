@@ -476,3 +476,31 @@ def test_logs_never_contain_question_or_answer(
     assert "answer_finished" in logged
     for secret in (secret_question, "Zephyr", "Laut deinen Dokumenten", "IP66"):
         assert secret not in logged
+
+
+def test_comparison_lanes_same_model_and_prefer(client: TestClient) -> None:
+    add_document(client)
+    chat_id = new_chat(client)
+    client_id, comparison = str(uuid4()), str(uuid4())
+
+    def lane(name: str, model: str) -> tuple[Response, list[Event]]:
+        body = {"comparison": {"id": comparison, "lane": name}, "client_message_id": client_id}
+        return ask(client, chat_id, model=model, **body)
+
+    r, events_a = lane("a", "claude-sonnet-5-5")
+    assert r.status_code == 200 and events_a[0].data["comparison_id"] == comparison
+    r, _ = lane("b", "claude-sonnet-5-5")
+    assert r.status_code == 422 and error(r)["code"] == "COMPARE_SAME_MODEL"
+    r, events_b = lane("b", "claude-opus-5-5")
+    assert r.status_code == 200 and events_b[0].data["lane"] == "b"
+
+    b_id = events_b[0].data["assistant_message_id"]
+    r = client.post(f"/api/chats/{chat_id}/messages/{b_id}/prefer")
+    assert r.status_code == 204
+    kept = {
+        m["lane"]: m["is_preferred"] for m in messages(client, chat_id) if m["role"] == "assistant"
+    }
+    assert kept == {"a": False, "b": True}
+
+    r = client.post(f"/api/chats/{chat_id}/messages/{uuid4()}/prefer")
+    assert r.status_code == 404 and error(r)["code"] == "NOT_FOUND"
