@@ -1,7 +1,7 @@
 # Retrieval evaluation
 
-Draft of the README section. The numbers are what `make eval` measured on 2026-10-01 (commit in
-`eval/results/latest.json`); the app shows the same file on its Quality page.
+Draft of the README section. The numbers are what `make eval` measured on 2026-10-01 at commit 0e8ef49
+(`eval/results/latest.json`); latencies vary by a millisecond or two between runs; the app shows the same file on its Quality page.
 
 ## What is measured
 
@@ -26,11 +26,11 @@ Draft of the README section. The numbers are what `make eval` measured on 2026-1
 
 | Configuration | Hit@1 | Hit@5 | MRR@10 | In sources | p50 / p95 |
 |---|---|---|---|---|---|
-| **Hybrid, German stemmer (default)** | 0.46 | 0.89 | 0.66 | **0.93** | 12 / 14 ms |
+| **Hybrid, German stemmer (default)** | 0.46 | 0.89 | 0.66 | **0.93** | 10 / 12 ms |
 | Hybrid, English stemmer | 0.50 | 0.89 | 0.69 | 0.93 | 11 / 13 ms |
-| Hybrid, no stemming | 0.50 | 0.89 | 0.68 | 0.96 | 11 / 15 ms |
-| Vectors only | 0.46 | 0.86 | 0.67 | 0.89 | 11 / 14 ms |
-| BM25 only, German stemmer | 0.57 | 0.79 | 0.68 | 0.86 | 2 / 2 ms |
+| Hybrid, no stemming | 0.50 | 0.89 | 0.68 | 0.96 | 11 / 12 ms |
+| Vectors only | 0.46 | 0.86 | 0.67 | 0.89 | 10 / 14 ms |
+| BM25 only, German stemmer | 0.57 | 0.79 | 0.68 | 0.86 | 2 / 3 ms |
 | BM25 only, English stemmer | 0.46 | 0.75 | 0.61 | 0.86 | 2 / 3 ms |
 | BM25 only, no stemming | 0.50 | 0.79 | 0.64 | 0.82 | 2 / 2 ms |
 
@@ -71,7 +71,7 @@ By kind of question, default configuration against each retriever alone (in sour
   of about 900 tokens; the 8 best passages already are the whole document, so both reach 1.00.
   The full-context mode exists for "summarize this document", which retrieval metrics do not
   measure.
-- **Search is not the slow part:** 12 ms median, almost all of it embedding the question; BM25
+- **Search is not the slow part:** 10 ms median, almost all of it embedding the question; BM25
   alone takes 2 ms.
 - **How solid this is:** a small set, hand-checked, built for a direction and as a regression
   guard, not as a benchmark. Unanswerable questions are not scored by retrieval (there is no

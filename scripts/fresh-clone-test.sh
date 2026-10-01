@@ -137,6 +137,14 @@ smoke_malware() {
   return 1
 }
 
+# The retrieval eval results are baked into the image and fit its configuration (Quality page).
+smoke_eval() {
+  local body
+  body="$(curl -sf "$API/eval")" || { echo "GET /api/eval failed"; return 1; }
+  echo "$body" | grep -q '"stale":false' || { echo "eval results missing or stale: ${body:0:200}"; return 1; }
+  echo "eval results OK"
+}
+
 # Tesseract (deu+eng) in the backend image renders and reads a generated page.
 smoke_ocr() {
   docker compose -p "$PROJECT" exec -T backend python -m docchat.cli.ocr_selftest
@@ -157,6 +165,7 @@ for _ in $(seq 1 90); do
     smoke_malware || { docker compose -p "$PROJECT" logs backend; exit 1; }
     smoke_ingestion || { docker compose -p "$PROJECT" logs backend; exit 1; }
     smoke_ocr || exit 1
+    smoke_eval || exit 1
     chat_round_trip sources_only || { docker compose -p "$PROJECT" logs backend; exit 1; }
     smoke_fake_chat || { docker compose -p "$PROJECT" logs backend; exit 1; }
     echo "fresh clone OK"
