@@ -38,7 +38,15 @@ export function RowNotices({ document }: { document: DocumentOut }) {
   if (messages.length === 0) return null;
   const message = messages.join(' ');
   return (
-    <Tooltip content={<span className="block max-w-72 text-pretty">{message}</span>}>
+    <Tooltip
+      content={
+        <span className="flex max-w-96 flex-col gap-1">
+          {messages.map((line) => (
+            <span key={line}>{line}</span>
+          ))}
+        </span>
+      }
+    >
       <button
         type="button"
         aria-label={message}

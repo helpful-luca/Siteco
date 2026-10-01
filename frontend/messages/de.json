@@ -105,9 +105,9 @@
     "URL_UNSUPPORTED_TYPE": "Hinter dem Link liegt kein PDF, keine Webseite und keine Text- oder Markdown-Datei. Nimm einen Link, der direkt auf ein solches Dokument zeigt."
   },
   "notices": {
-    "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne lesbaren Text, etwa ein Foto oder ein Scan. Diese Seite wird nicht durchsucht.} other {# Seiten ohne lesbaren Text, etwa Fotos oder Scans. Diese Seiten werden nicht durchsucht.}}",
-    "PAGES_SKIPPED": "{count, plural, one {# Seite ließ sich nicht lesen und fehlt in der Suche.} other {# Seiten ließen sich nicht lesen und fehlen in der Suche.}}",
-    "PDF_ACTIVE_CONTENT": "Dieses PDF enthält aktive Inhalte wie Skripte. Die App liest nur den Text, ausgeführt wird nichts.",
+    "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne Text wird nicht durchsucht.} other {# Seiten ohne Text werden nicht durchsucht.}}",
+    "PAGES_SKIPPED": "{count, plural, one {# Seite ließ sich nicht lesen und wird nicht durchsucht.} other {# Seiten ließen sich nicht lesen und werden nicht durchsucht.}}",
+    "PDF_ACTIVE_CONTENT": "Enthält aktive Inhalte wie Skripte, sie werden nicht ausgeführt.",
     "SCANNER_STARTING": "Die Virenprüfung startet noch. Die Datei wird gleich geprüft.",
     "SCANNER_UNAVAILABLE": "Die Virenprüfung ist gerade nicht erreichbar. Die Datei wartet, bis sie wieder läuft.",
     "SOURCES_PARTIAL": "{count, plural, one {# Dokument wird noch verarbeitet und ist in dieser Antwort nicht dabei.} other {# Dokumente werden noch verarbeitet und sind in dieser Antwort nicht dabei.}}",
@@ -118,8 +118,8 @@
     "LLM_REFUSED": "Claude kann auf diese Anfrage nicht antworten. Formuliere sie anders.",
     "LLM_NOT_CONFIGURED": "Ohne API-Key gibt es keine Antwort, nur die passenden Stellen aus deinen Dokumenten.",
     "MODEL_SWITCHED": "Diese Antwort hat {new} geschrieben statt {old}.",
-    "PAGES_OCR": "{count, plural, one {# gescannte Seite wurde per Texterkennung gelesen. Markierungen dort können etwas ungenauer sein.} other {# gescannte Seiten wurden per Texterkennung gelesen. Markierungen dort können etwas ungenauer sein.}}",
-    "OCR_ENGINE_MISSING": "Tesseract ist auf diesem Rechner nicht installiert, daher wird kein gescannter Text gelesen. Installiere es mit: brew install tesseract tesseract-lang",
+    "PAGES_OCR": "{count, plural, one {# Seite per Texterkennung gelesen, Markierungen dort sind weniger genau.} other {# Seiten per Texterkennung gelesen, Markierungen dort sind weniger genau.}}",
+    "OCR_ENGINE_MISSING": "Texterkennung für gescannte Seiten ist nicht verfügbar.",
     "OCR_RUNNING": "Texterkennung für gescannte Seiten, Seite {page} von {pages}.",
     "HIGHLIGHT_UNAVAILABLE": "Die Stelle lässt sich hier nicht markieren. Du findest sie auf Seite {page}."
   },

@@ -93,6 +93,10 @@ const MIXED = [
   doc({ id: 'f', filename: 'Formular.pdf', notices: [{ code: 'PDF_ACTIVE_CONTENT', params: {} }] }),
 ];
 
+/** A file label: stem and extension in two spans, matched as one name. */
+const fileName = (name: string) => (_: string, element: Element | null) =>
+  element?.textContent === name && element.childElementCount === 2 && element.firstElementChild?.classList.contains('truncate') === true;
+
 describe('LibraryView', () => {
   it('previews a ready document in the viewer, from its first page and without a mark', async () => {
     setup(MIXED);
@@ -134,7 +138,7 @@ describe('LibraryView', () => {
     expect(screen.getByLabelText(/Die Virenprüfung startet noch/)).toBeInTheDocument();
     expect(screen.getByText(/Die Virenprüfung hat in dieser Datei Schadsoftware gefunden/)).toBeInTheDocument();
     expect(screen.getByText('Gefunden: Eicar-Test-Signature')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Dieses PDF enthält aktive Inhalte/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Enthält aktive Inhalte/)).toBeInTheDocument();
   });
 
   it('announces states politely, without every percent, and leaves unknown cells empty', async () => {
@@ -154,7 +158,7 @@ describe('LibraryView', () => {
     await screen.findByRole('table');
     await userEvent.click(screen.getByRole('radio', { name: 'Fehler' }));
     expect(screen.getAllByRole('row')).toHaveLength(2);
-    expect(screen.getByTitle('eicar.txt')).toBeInTheDocument();
+    expect(screen.getByText(fileName('eicar.txt'))).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('radio', { name: 'Alle' }));
     await userEvent.type(screen.getByRole('searchbox', { name: 'Dokumente durchsuchen' }), 'KATALOG');
@@ -177,7 +181,7 @@ describe('LibraryView', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Mira_L_Datenblatt.pdf löschen' }));
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Löschen' }));
-    await waitFor(() => expect(screen.queryByTitle('Mira_L_Datenblatt.pdf')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(fileName('Mira_L_Datenblatt.pdf'))).not.toBeInTheDocument());
     expect(fetchMock).toHaveBeenCalledWith('/api/documents/a', expect.objectContaining({ method: 'DELETE' }));
   });
 
@@ -190,6 +194,6 @@ describe('LibraryView', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Dieses Format wird nicht unterstützt');
     expect(screen.queryByRole('button', { name: 'Angebot.docx erneut hochladen' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Angebot.docx aus der Liste entfernen' }));
-    expect(screen.queryByTitle('Angebot.docx')).not.toBeInTheDocument();
+    expect(screen.queryByText(fileName('Angebot.docx'))).not.toBeInTheDocument();
   });
 });

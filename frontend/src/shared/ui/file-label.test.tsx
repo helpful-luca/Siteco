@@ -1,5 +1,6 @@
-import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { FileLabel, splitExtension } from './file-label';
 
 describe('splitExtension', () => {
@@ -16,12 +17,28 @@ describe('splitExtension', () => {
 });
 
 describe('FileLabel', () => {
-  it('truncates the stem only, so the extension stays visible, and keeps the full name as title', () => {
+  it('truncates the stem only, so the extension stays visible', () => {
     const { container } = render(<FileLabel name="Wartung_LED_Module.md" />);
     const root = container.firstElementChild!;
-    expect(root).toHaveAttribute('title', 'Wartung_LED_Module.md');
     expect(root).toHaveTextContent('Wartung_LED_Module.md');
     expect(root.firstElementChild).toHaveClass('truncate');
     expect(root.lastElementChild).toHaveClass('shrink-0');
+  });
+
+  it('shows the full name on hover only when it is cut', async () => {
+    const name = 'SIT_KAT_Beleuchtungsloesungen_DE_2026.pdf';
+    const { container } = render(<FileLabel name={name} />);
+    const stem = container.querySelector<HTMLElement>('.truncate')!;
+    const user = userEvent.setup();
+
+    await user.hover(container.firstElementChild!);
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(screen.queryByText(name)).toBeNull();
+
+    await user.unhover(container.firstElementChild!);
+    vi.spyOn(stem, 'scrollWidth', 'get').mockReturnValue(400);
+    vi.spyOn(stem, 'clientWidth', 'get').mockReturnValue(200);
+    await user.hover(container.firstElementChild!);
+    expect(await screen.findByText(name)).toBeInTheDocument();
   });
 });

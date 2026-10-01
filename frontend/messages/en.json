@@ -105,9 +105,9 @@
     "URL_UNSUPPORTED_TYPE": "The link doesn't lead to a PDF, a web page or a text or Markdown file. Use a link that points straight to such a document."
   },
   "notices": {
-    "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no readable text, such as a photo or a scan. It won't be searched.} other {# pages have no readable text, such as photos or scans. They won't be searched.}}",
-    "PAGES_SKIPPED": "{count, plural, one {# page couldn't be read and is missing from search.} other {# pages couldn't be read and are missing from search.}}",
-    "PDF_ACTIVE_CONTENT": "This PDF contains active content such as scripts. The app only reads the text and runs nothing.",
+    "PAGES_WITHOUT_TEXT": "{count, plural, one {# page without text is not searched.} other {# pages without text are not searched.}}",
+    "PAGES_SKIPPED": "{count, plural, one {# page could not be read and is not searched.} other {# pages could not be read and are not searched.}}",
+    "PDF_ACTIVE_CONTENT": "Contains active content such as scripts, which is never run.",
     "SCANNER_STARTING": "The virus check is still starting. The file will be checked in a moment.",
     "SCANNER_UNAVAILABLE": "The virus check is not reachable right now. The file waits until it is back.",
     "SOURCES_PARTIAL": "{count, plural, one {# document is still processing and isn't included in this answer.} other {# documents are still processing and aren't included in this answer.}}",
@@ -118,8 +118,8 @@
     "LLM_REFUSED": "Claude can't answer this request. Try rephrasing it.",
     "LLM_NOT_CONFIGURED": "Without an API key there is no answer, only the matching passages from your documents.",
     "MODEL_SWITCHED": "This answer was written by {new} instead of {old}.",
-    "PAGES_OCR": "{count, plural, one {# scanned page was read with text recognition. Highlights there may be less exact.} other {# scanned pages were read with text recognition. Highlights there may be less exact.}}",
-    "OCR_ENGINE_MISSING": "Tesseract is not installed on this machine, so scanned text is not read. Install it with: brew install tesseract tesseract-lang",
+    "PAGES_OCR": "{count, plural, one {# page read by text recognition, highlights there are less precise.} other {# pages read by text recognition, highlights there are less precise.}}",
+    "OCR_ENGINE_MISSING": "Text recognition for scanned pages isn't available.",
     "OCR_RUNNING": "Recognizing text on scanned pages, page {page} of {pages}.",
     "HIGHLIGHT_UNAVAILABLE": "The passage can't be highlighted here. It is on page {page}."
   },

@@ -4,12 +4,11 @@ import { RotateCw, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCodeText } from '@/shared/i18n/use-code-text';
 import { useCountdown } from '@/shared/lib/use-countdown';
-import { Button, Countdown, ErrorId, Tooltip } from '@/shared/ui';
+import { Button, Countdown, ErrorId, FileLabel, Tooltip } from '@/shared/ui';
 import { kindOfFileName } from '../upload/pre-check';
 import type { UploadItem } from '../upload/upload-queue';
 import { useFormatSize } from '../use-format-size';
 import { FileIcon } from './file-icon';
-import { FileName } from './file-name';
 import { EmptyValue } from './empty-cell';
 import { UploadStatus } from './status-cell';
 
@@ -37,7 +36,7 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex h-(--row-line) items-center">
-              <FileName name={name} />
+              <FileLabel className="text-body font-medium" name={name} />
             </div>
             {item.total !== null && (
               <p className="text-caption text-ink-muted tabular-nums @3xl:hidden">{formatSize(item.total)}</p>

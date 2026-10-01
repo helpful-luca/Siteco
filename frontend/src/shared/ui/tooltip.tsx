@@ -5,10 +5,18 @@ import type { ReactElement, ReactNode } from 'react';
 
 export const TooltipProvider = BaseTooltip.Provider;
 
+type Props = {
+  content: ReactNode;
+  children: ReactElement;
+  /** Controlled, for tooltips that only show sometimes (a truncated label). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
 /** Short hint on hover and keyboard focus. Never the only way to learn what something does. */
-export function Tooltip({ content, children }: { content: ReactNode; children: ReactElement }) {
+export function Tooltip({ content, children, open, onOpenChange }: Props) {
   return (
-    <BaseTooltip.Root>
+    <BaseTooltip.Root open={open} onOpenChange={onOpenChange ? (next) => onOpenChange(next) : undefined}>
       <BaseTooltip.Trigger render={children} />
       <BaseTooltip.Portal>
         <BaseTooltip.Positioner sideOffset={8}>

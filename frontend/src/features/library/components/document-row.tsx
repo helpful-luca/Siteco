@@ -3,10 +3,9 @@
 import { Eye, Trash2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import type { DocumentOut } from '@/shared/api/types';
-import { Button, Tooltip } from '@/shared/ui';
+import { Button, FileLabel, Tooltip } from '@/shared/ui';
 import { useFormatSize } from '../use-format-size';
 import { FileIcon } from './file-icon';
-import { FileName } from './file-name';
 import { RowDetails, RowNotices } from './row-details';
 import { EmptyValue } from './empty-cell';
 import { DocumentStatus } from './status-cell';
@@ -33,7 +32,7 @@ export function DocumentRow({ document, onPreview, onDelete }: Props) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex h-(--row-line) items-center gap-1">
-              <FileName name={document.filename} />
+              <FileLabel className="text-body font-medium" name={document.filename} />
               <RowNotices document={document} />
             </div>
             <p className="text-caption text-ink-muted tabular-nums @3xl:hidden">
