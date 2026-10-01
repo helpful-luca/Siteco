@@ -1,51 +1,70 @@
 'use client';
 
 import { PanelLeft, SquarePen } from 'lucide-react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
+import { useMediaQuery } from '@/shared/lib/use-media-query';
 import { isApplePlatform, isModShortcut } from '@/shared/lib/shortcut';
 import { Button, buttonStyles, SideSheet, TooltipProvider } from '@/shared/ui';
 import { RightPanel } from './right-panel';
-import { Sidebar } from './sidebar';
+import { Sidebar, SidebarRail } from './sidebar';
+import { SIDEBAR_RAIL, type SidebarLayout } from './sidebar-layout';
+import { SidebarResizer } from './sidebar-resizer';
 import { UIProvider, useUI } from './ui-context';
 
-/** Sidebar | main | right panel. Below 1024 px the sidebar becomes a drawer behind a toggle. */
-export function AppShell({ chatList, children }: { chatList?: ReactNode; children: ReactNode }) {
+type Slots = {
+  chatList?: ReactNode;
+  libraryBadge?: ReactNode;
+  /** The command palette (its own feature), mounted inside the UI state. */
+  palette?: ReactNode;
+};
+
+/** Collapsing and expanding: a spring without overshoot; reduced motion makes it a cut. */
+const SPRING = { type: 'spring', duration: 0.42, bounce: 0 } as const;
+
+/**
+ * Sidebar | main | right panel. On wide windows the sidebar collapses to an icon rail and can be
+ * resized; below 1024 px it becomes a drawer behind a toggle.
+ */
+export function AppShell({ initialSidebar, children, ...slots }: Slots & { initialSidebar?: SidebarLayout; children: ReactNode }) {
   return (
-    <UIProvider>
+    <UIProvider initialSidebar={initialSidebar}>
       <TooltipProvider>
-        <Frame chatList={chatList}>{children}</Frame>
+        <MotionConfig reducedMotion="user">
+          <Frame {...slots}>{children}</Frame>
+        </MotionConfig>
       </TooltipProvider>
     </UIProvider>
   );
 }
 
-function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNode }) {
+function Frame({ chatList, libraryBadge, palette, children }: Slots & { children: ReactNode }) {
   const t = useTranslations('shell');
-  const { sidebarOpen, setSidebarOpen } = useUI();
+  const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed, sidebarWidth, paletteOpen, setPaletteOpen } =
+    useUI();
+  const wide = useMediaQuery('(min-width: 1024px)');
+  const [resizing, setResizing] = useState(false);
 
-  // Command+K (Control+K) searches the chats, like Spotlight: on narrow windows the drawer opens
-  // first and the field is focused once it is there.
+  // Command+K opens and closes the palette anywhere; Shift+Command+S (or Command+\) shows and
+  // hides the sidebar, like the View menu of Mac apps. Control on Windows and Linux.
   useEffect(() => {
     const apple = isApplePlatform();
-    const visibleField = () =>
-      [...document.querySelectorAll<HTMLInputElement>('[data-chat-search]')].find((field) => field.offsetParent !== null);
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || !isModShortcut(event, 'k', apple)) return;
-      event.preventDefault();
-      const field = visibleField();
-      if (field) {
-        field.focus();
-        field.select();
-        return;
+      if (event.defaultPrevented) return;
+      if (isModShortcut(event, 'k', apple)) {
+        event.preventDefault();
+        setPaletteOpen(!paletteOpen);
+      } else if (isModShortcut(event, 's', apple, { shift: true }) || isModShortcut(event, '\\', apple)) {
+        event.preventDefault();
+        if (wide) setSidebarCollapsed(!sidebarCollapsed);
+        else setSidebarOpen(!sidebarOpen);
       }
-      setSidebarOpen(true);
-      requestAnimationFrame(() => requestAnimationFrame(() => visibleField()?.focus()));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [setSidebarOpen]);
+  }, [paletteOpen, setPaletteOpen, wide, sidebarCollapsed, setSidebarCollapsed, sidebarOpen, setSidebarOpen]);
 
   return (
     // In the frameless desktop window the panels start below the window buttons (--window-top).
@@ -56,12 +75,48 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
       >
         {t('skipToContent')}
       </a>
-      <aside aria-label={t('sidebar')} className="glass specular hidden w-sidebar shrink-0 rounded-panel lg:block">
-        <Sidebar chatList={chatList} />
-      </aside>
+      <motion.aside
+        aria-label={t('sidebar')}
+        initial={false}
+        animate={{ width: sidebarCollapsed ? SIDEBAR_RAIL : sidebarWidth }}
+        transition={resizing ? { duration: 0 } : SPRING}
+        className="glass specular relative hidden shrink-0 rounded-panel lg:block"
+      >
+        {/* Clips the content while the width moves; the glass rim stays outside on the aside. */}
+        <div className="h-full overflow-hidden rounded-[inherit]">
+          <AnimatePresence initial={false} mode="popLayout">
+            {sidebarCollapsed ? (
+              <motion.div
+                key="rail"
+                className="h-full"
+                style={{ width: SIDEBAR_RAIL }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+              >
+                <SidebarRail />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="panel"
+                className="h-full"
+                style={{ width: sidebarWidth }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+              >
+                <Sidebar chatList={chatList} libraryBadge={libraryBadge} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        {!sidebarCollapsed && <SidebarResizer onResizingChange={setResizing} />}
+      </motion.aside>
       <SideSheet side="left" label={t('sidebar')} open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <div className="glass-dense specular w-sidebar max-w-[calc(100vw-var(--spacing)*12)] rounded-panel">
-          <Sidebar chatList={chatList} onNavigate={() => setSidebarOpen(false)} />
+          <Sidebar chatList={chatList} libraryBadge={libraryBadge} variant="drawer" onNavigate={() => setSidebarOpen(false)} />
         </div>
       </SideSheet>
 
@@ -85,6 +140,7 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
       </div>
 
       <RightPanel />
+      {palette}
     </div>
   );
 }

@@ -248,8 +248,7 @@
   "shell": {
     "sidebar": "Sidebar",
     "navigation": "Navigation",
-    "search": "Search chats",
-    "clearSearch": "Clear search",
+    "search": "Search",
     "newChat": "New chat",
     "library": "Library",
     "settings": "Settings",
@@ -262,7 +261,10 @@
       "maximize": "Maximize",
       "restore": "Restore",
       "close": "Close"
-    }
+    },
+    "collapse": "Hide sidebar",
+    "expand": "Show sidebar",
+    "resize": "Sidebar width"
   },
   "chat": {
     "greeting": {
@@ -740,5 +742,41 @@
       "month": "This month",
       "requests": "{count, plural, =0 {No requests yet} one {# request} other {# requests}}"
     }
+  },
+  "command": {
+    "label": "Search and commands",
+    "placeholder": "Search chats, documents and commands",
+    "groups": {
+      "recent": "Recent",
+      "chats": "Chats",
+      "documents": "Documents",
+      "actions": "Commands",
+      "settings": "Settings"
+    },
+    "empty": "No results for “{query}”",
+    "emptyHint": "Try another word.",
+    "hints": {
+      "move": "Select",
+      "open": "Open",
+      "close": "Close"
+    },
+    "actions": {
+      "newChat": "New chat",
+      "library": "Open library",
+      "upload": "Add documents",
+      "toggleSidebar": "Show or hide the sidebar",
+      "themeLight": "Use light appearance",
+      "themeDark": "Use dark appearance",
+      "themeSystem": "Match the system appearance",
+      "setup": "Run setup again"
+    },
+    "keywords": {
+      "theme": "Appearance theme mode",
+      "upload": "Upload file PDF import",
+      "sidebar": "Sidebar panel",
+      "settings": "Preferences"
+    },
+    "openSettings": "Settings: {section}",
+    "pages": "{count, plural, one {# page} other {# pages}}"
   }
 }

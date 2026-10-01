@@ -5,10 +5,17 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { cn } from '@/shared/ui';
 
-type Props = { href: '/library' | '/settings'; icon: ReactNode; onNavigate?: () => void; children: ReactNode };
+type Props = {
+  href: '/library' | '/settings';
+  icon: ReactNode;
+  /** Trailing quiet text, like a mailbox count in Mail. */
+  badge?: ReactNode;
+  onNavigate?: () => void;
+  children: ReactNode;
+};
 
 /** Sidebar row in the Finder and Mail style. The current page is marked, not only colored. */
-export function NavItem({ href, icon, onNavigate, children }: Props) {
+export function NavItem({ href, icon, badge, onNavigate, children }: Props) {
   const pathname = usePathname();
   const active = pathname === href || pathname.startsWith(`${href}/`);
   return (
@@ -25,7 +32,8 @@ export function NavItem({ href, icon, onNavigate, children }: Props) {
       )}
     >
       {icon}
-      {children}
+      <span className="min-w-0 flex-1 truncate">{children}</span>
+      {badge && <span className="shrink-0 text-footnote font-normal text-ink-muted tabular-nums">{badge}</span>}
     </Link>
   );
 }

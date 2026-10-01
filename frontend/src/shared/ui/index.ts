@@ -12,7 +12,9 @@ export { FileLabel } from './file-label';
 export { Flag } from './flag';
 export { FormGroup, FormRow, FormText } from './grouped-list';
 export { HoverCard } from './hover-card';
+export { Kbd } from './kbd';
 export {
+  ContextMenu,
   Menu,
   MenuCheckboxItem,
   MenuItem,

@@ -40,3 +40,18 @@ export function alternateModel(models: ModelInfo[] | undefined, current: string 
   const others = (models ?? []).filter((m) => m.available && m.id !== current);
   return (others.find((m) => m.id === defaultModel) ?? others[0])?.id ?? null;
 }
+
+const DAY_MS = 86_400_000;
+const dayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+/**
+ * A chat's time in a list, like Mail: the clock time today and yesterday, the weekday within the
+ * week, else day and month.
+ */
+export function formatListTime(iso: string, now: Date, locale: string): string {
+  const at = new Date(iso);
+  const days = Math.round((dayStart(now) - dayStart(at)) / DAY_MS);
+  if (days <= 1) return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(at);
+  if (days < 7) return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(at);
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(at);
+}

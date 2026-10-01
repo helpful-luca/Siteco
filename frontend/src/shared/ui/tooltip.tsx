@@ -11,15 +11,16 @@ type Props = {
   /** Controlled, for tooltips that only show sometimes (a truncated label). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  side?: 'top' | 'bottom' | 'left' | 'right';
 };
 
 /** Short hint on hover and keyboard focus. Never the only way to learn what something does. */
-export function Tooltip({ content, children, open, onOpenChange }: Props) {
+export function Tooltip({ content, children, open, onOpenChange, side = 'top' }: Props) {
   return (
     <BaseTooltip.Root open={open} onOpenChange={onOpenChange ? (next) => onOpenChange(next) : undefined}>
       <BaseTooltip.Trigger render={children} />
       <BaseTooltip.Portal>
-        <BaseTooltip.Positioner sideOffset={8}>
+        <BaseTooltip.Positioner sideOffset={8} side={side} className="z-50">
           <BaseTooltip.Popup className="glass-dense rounded-control px-2 py-1 text-footnote transition-opacity duration-150 data-starting-style:opacity-0 data-ending-style:opacity-0">
             {content}
           </BaseTooltip.Popup>

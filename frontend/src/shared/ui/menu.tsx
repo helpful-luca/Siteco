@@ -1,5 +1,6 @@
 'use client';
 
+import { ContextMenu as BaseContextMenu } from '@base-ui/react/context-menu';
 import { Menu as BaseMenu } from '@base-ui/react/menu';
 import { Check } from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
@@ -35,6 +36,38 @@ export function Menu({ trigger, align = 'start', side = 'bottom', className, chi
         </BaseMenu.Positioner>
       </BaseMenu.Portal>
     </BaseMenu.Root>
+  );
+}
+
+const POPUP =
+  'glass-dense min-w-48 origin-(--transform-origin) rounded-control p-1 outline-none ' +
+  'transition-[opacity,scale] duration-150 ease-out-soft ' +
+  'data-starting-style:scale-[0.97] data-starting-style:opacity-0 data-ending-style:opacity-0';
+
+/**
+ * Right click (or long press) menu at the pointer, in the same dense glass as `Menu`. The trigger
+ * is the element itself (a list row); the items are the usual `MenuItem`s.
+ */
+export function ContextMenu({
+  trigger,
+  className,
+  children,
+  onOpenChange,
+}: {
+  trigger: ReactElement;
+  className?: string;
+  children: ReactNode;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  return (
+    <BaseContextMenu.Root onOpenChange={onOpenChange ? (next) => onOpenChange(next) : undefined}>
+      <BaseContextMenu.Trigger render={trigger} />
+      <BaseContextMenu.Portal>
+        <BaseContextMenu.Positioner className="z-50 outline-none">
+          <BaseContextMenu.Popup className={cn(POPUP, className)}>{children}</BaseContextMenu.Popup>
+        </BaseContextMenu.Positioner>
+      </BaseContextMenu.Portal>
+    </BaseContextMenu.Root>
   );
 }
 

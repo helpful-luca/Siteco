@@ -248,8 +248,7 @@
   "shell": {
     "sidebar": "Seitenleiste",
     "navigation": "Navigation",
-    "search": "Chats durchsuchen",
-    "clearSearch": "Suche löschen",
+    "search": "Suchen",
     "newChat": "Neuer Chat",
     "library": "Bibliothek",
     "settings": "Einstellungen",
@@ -262,7 +261,10 @@
       "maximize": "Maximieren",
       "restore": "Wiederherstellen",
       "close": "Schließen"
-    }
+    },
+    "collapse": "Seitenleiste ausblenden",
+    "expand": "Seitenleiste einblenden",
+    "resize": "Breite der Seitenleiste"
   },
   "chat": {
     "greeting": {
@@ -740,5 +742,41 @@
       "month": "Dieser Monat",
       "requests": "{count, plural, =0 {Noch keine Anfrage} one {# Anfrage} other {# Anfragen}}"
     }
+  },
+  "command": {
+    "label": "Suchen und Befehle",
+    "placeholder": "Chats, Dokumente und Befehle durchsuchen",
+    "groups": {
+      "recent": "Zuletzt",
+      "chats": "Chats",
+      "documents": "Dokumente",
+      "actions": "Befehle",
+      "settings": "Einstellungen"
+    },
+    "empty": "Keine Treffer für „{query}“",
+    "emptyHint": "Versuch einen anderen Begriff.",
+    "hints": {
+      "move": "Auswählen",
+      "open": "Öffnen",
+      "close": "Schließen"
+    },
+    "actions": {
+      "newChat": "Neuer Chat",
+      "library": "Bibliothek öffnen",
+      "upload": "Dokumente hinzufügen",
+      "toggleSidebar": "Seitenleiste ein- oder ausblenden",
+      "themeLight": "Hell darstellen",
+      "themeDark": "Dunkel darstellen",
+      "themeSystem": "Wie das System darstellen",
+      "setup": "Einrichtung erneut starten"
+    },
+    "keywords": {
+      "theme": "Erscheinungsbild Theme Modus",
+      "upload": "Hochladen Datei PDF Import",
+      "sidebar": "Sidebar Leiste",
+      "settings": "Einstellungen"
+    },
+    "openSettings": "Einstellungen: {section}",
+    "pages": "{count, plural, one {# Seite} other {# Seiten}}"
   }
 }

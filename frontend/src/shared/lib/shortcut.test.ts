@@ -18,8 +18,15 @@ describe('keyboard shortcuts', () => {
     expect(isModShortcut(key({ key: 'k', metaKey: true, isComposing: true }), 'k', true)).toBe(false);
   });
 
+  it('takes Shift only when the shortcut has it', () => {
+    expect(isModShortcut(key({ key: 'S', metaKey: true, shiftKey: true }), 's', true, { shift: true })).toBe(true);
+    expect(isModShortcut(key({ key: 's', metaKey: true }), 's', true, { shift: true })).toBe(false);
+  });
+
   it('labels the shortcut like the platform does', () => {
     expect(shortcutLabel('k', true)).toBe('⌘K');
     expect(shortcutLabel('k', false)).toBe('Ctrl K');
+    expect(shortcutLabel('s', true, { shift: true })).toBe('⇧⌘S');
+    expect(shortcutLabel('s', false, { shift: true })).toBe('Ctrl Shift S');
   });
 });

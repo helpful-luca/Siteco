@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ModelInfo } from '@/shared/api/types';
-import { alternateModel, formatCost, formatSeconds, modelLabel, priceLevel } from './format';
+import { alternateModel, formatCost, formatListTime, formatSeconds, modelLabel, priceLevel } from './format';
 
 const model = (id: string, output: number): ModelInfo => ({
   id,
@@ -47,5 +47,18 @@ describe('alternateModel', () => {
   it('never offers an unavailable model or none at all', () => {
     expect(alternateModel([models[0], models[2]], 'haiku', 'haiku')).toBeNull();
     expect(alternateModel(undefined, 'haiku')).toBeNull();
+  });
+});
+
+describe('formatListTime', () => {
+  const now = new Date(2026, 9, 1, 15, 0);
+  const at = (days: number, hour = 9, minute = 5) => new Date(2026, 9, 1 - days, hour, minute).toISOString();
+
+  it('shows the time today and yesterday, the weekday this week, else the date', () => {
+    expect(formatListTime(at(0), now, 'de')).toBe('09:05');
+    expect(formatListTime(at(1, 23, 59), now, 'de')).toBe('23:59');
+    expect(formatListTime(at(3), now, 'de')).toBe('Mo');
+    expect(formatListTime(at(12), now, 'de')).toBe('19. Sept.');
+    expect(formatListTime(at(3), now, 'en')).toBe('Mon');
   });
 });
