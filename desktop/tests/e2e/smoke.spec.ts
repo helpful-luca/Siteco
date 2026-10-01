@@ -29,7 +29,8 @@ test('splash, then the app in a native window', async () => {
     const page = await app.waitForEvent('window', { predicate: (page) => page.url().startsWith(URL) });
     await page.waitForLoadState('domcontentloaded');
 
-    // The preload bridge is all the page gets: a few window commands, no Node, no generic IPC.
+    // The preload bridge is all the page gets: the app menu, no Node, no generic IPC. The window
+    // buttons are native (traffic lights, Windows caption overlay), never drawn by the page.
     const bridge = await page.evaluate(() => {
       const desktop = (window as unknown as { desktop: Record<string, unknown> }).desktop;
       const controls = desktop.window as Record<string, unknown>;
@@ -45,19 +46,25 @@ test('splash, then the app in a native window', async () => {
       isDesktop: true,
       platform: process.platform,
       keys: ['isDesktop', 'platform', 'window'],
-      window: ['close', 'isMaximized', 'minimize', 'onMaximizedChange', 'openMenu', 'toggleMaximize'],
+      window: ['openMenu'],
       frozen: true,
     });
     expect(await page.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined');
     expect(await page.evaluate(() => typeof (globalThis as { process?: unknown }).process)).toBe('undefined');
 
-    // The UI leaves room for the traffic lights and drags the window by its top strip.
+    // The traffic lights sit on the sidebar's first row (y = 40 axis); the UI drags the window by
+    // its top strip and drops the insets in full screen.
     await expect(page.locator('html')).toHaveAttribute('data-desktop', '');
     await expect(page.locator('html')).toHaveAttribute('data-platform', process.platform);
     const inset = await page.evaluate(() =>
       getComputedStyle(document.documentElement).getPropertyValue('--titlebar-inset').trim(),
     );
-    expect(inset).toBe(process.platform === 'darwin' ? '28px' : '0px');
+    expect(inset).toBe(process.platform === 'darwin' ? '16px' : '0px');
+    if (process.platform === 'darwin') {
+      expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map((win) => win.getWindowButtonPosition()))).toContainEqual({ x: 33, y: 32 });
+      const newChat = await page.locator('aside a[href="/chat"]').first().boundingBox();
+      expect(newChat && newChat.y + newChat.height / 2).toBe(40);
+    }
     const strip = await page.evaluate(() => {
       const element = document.querySelector<HTMLElement>('.window-drag-strip')!;
       const style = getComputedStyle(element);
@@ -73,7 +80,7 @@ test('splash, then the app in a native window', async () => {
         width: box.width,
       };
     });
-    expect(strip).toMatchObject({ first: true, region: 'drag', zIndex: '-1', top: 0, height: process.platform === 'win32' ? 84 : 52 });
+    expect(strip).toMatchObject({ first: true, region: 'drag', zIndex: '-1', top: 0, height: process.platform === 'win32' ? 88 : 56 });
     expect(strip.width).toBe(await page.evaluate(() => window.innerWidth));
 
     // Every control in the strip is cut out of the drag area: search, new chat, pickers, links.
@@ -92,21 +99,12 @@ test('splash, then the app in a native window', async () => {
     );
     expect(draggableControls).toEqual([]);
 
-    // Window commands from the page reach the window (double click and the Windows buttons).
-    const maximizedBefore = await page.evaluate(() =>
-      (window as unknown as { desktop: { window: { isMaximized(): Promise<boolean> } } }).desktop.window.isMaximized(),
-    );
-    expect(typeof maximizedBefore).toBe('boolean');
-    const toggled = await page.evaluate(() =>
-      (window as unknown as { desktop: { window: { toggleMaximize(): Promise<boolean> } } }).desktop.window.toggleMaximize(),
-    );
-    expect(toggled).toBe(!maximizedBefore);
-    expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().some((win) => win.isMaximized()))).toBe(
-      toggled,
-    );
-    await page.evaluate(() =>
-      (window as unknown as { desktop: { window: { toggleMaximize(): Promise<boolean> } } }).desktop.window.toggleMaximize(),
-    );
+    // Full screen: no native buttons there, so the page drops their inset.
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((win) => win.webContents.send('window:full-screen', true)));
+    await expect(page.locator('html')).toHaveAttribute('data-full-screen', '');
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--titlebar-inset').trim())).toBe('0px');
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((win) => win.webContents.send('window:full-screen', false)));
+    await expect(page.locator('html')).not.toHaveAttribute('data-full-screen');
 
     // Window rules: popups are denied.
     expect(await page.evaluate(() => window.open('https://example.com') === null)).toBe(true);

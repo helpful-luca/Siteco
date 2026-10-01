@@ -24,7 +24,7 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
   const t = useTranslations('shell');
   const { sidebarOpen, setSidebarOpen } = useUI();
   return (
-    // On Windows the title bar with the window buttons sits above (--window-bar).
+    // On Windows the title band with the native caption buttons sits above (--window-bar).
     <div className="flex h-dvh gap-3 pt-(--window-bar) lg:p-3 lg:pt-[calc(var(--spacing)*3+var(--window-bar))]">
       <a
         href="#main"
@@ -42,8 +42,11 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
       </SideSheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile bar: icon glyphs sit on the page gutter (16 px), buttons are 44 px on touch. */}
-        <div className="drag-region flex h-[calc(var(--spacing)*12+var(--titlebar-inset))] shrink-0 items-center justify-between px-2 pt-(--titlebar-inset) pointer-coarse:h-[calc(var(--spacing)*14+var(--titlebar-inset))] pointer-coarse:px-0.5 lg:hidden">
+        {/*
+          Narrow bar: icon glyphs sit on the page gutter (16 px), buttons are 44 px on touch. In a
+          Mac window it starts right of the traffic lights and centres on their axis.
+        */}
+        <div className="drag-region flex h-[calc(var(--spacing)*12+var(--titlebar-inset))] shrink-0 items-center justify-between px-2 pt-(--titlebar-inset) pl-[calc(var(--spacing)*2+var(--traffic-lights))] pointer-coarse:h-[calc(var(--spacing)*14+var(--titlebar-inset))] pointer-coarse:px-0.5 lg:hidden">
           <Button icon variant="ghost" aria-label={t('openSidebar')} onClick={() => setSidebarOpen(true)}>
             <PanelLeft />
           </Button>

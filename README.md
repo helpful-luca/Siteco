@@ -186,7 +186,7 @@ Security: context isolation, sandbox and no Node.js in the page; the page sees o
 - Needs Windows 10 22H2 (build 19045) or Windows 11, and Docker Desktop with WSL 2. The splash checks this when Docker is missing or does not start and says what to do: update Windows, turn on virtualization (Intel VT-x or AMD-V) in the BIOS or UEFI, or run `wsl --install` as administrator.
 - The app finds `docker.exe` in Docker Desktop's folder under Program Files (also on another drive) or `%LOCALAPPDATA%\Programs`, starts `Docker Desktop.exe` when the engine is off and runs the same `docker compose` command as on a Mac.
 - The window has no Windows title bar: the app draws its own buttons (menu, minimize, maximize or restore, close) in its 32 px title bar, which also moves the window, snaps and maximizes on double click. Windows 11 rounds the corners natively; Windows 10 keeps square corners with the normal shadow, snap and edge resizing.
-- Windows has no app menu bar: settings, view, about, "Dienste beenden" and quit are in the menu button next to the window buttons; the shortcuts (Ctrl+, Ctrl+R, Ctrl+plus and minus) work as usual.
+- Windows has no app menu bar: settings, view, about, "Dienste beenden" and quit are in the menu button at the left of the title bar (the window buttons are the native ones, with Snap Layouts); the shortcuts (Ctrl+, Ctrl+R, Ctrl+plus and minus) work as usual.
 - Not signed: SmartScreen asks once ("More info", "Run anyway").
 
 Honest limit: the Windows build, its platform logic and the title bar are covered by unit tests and checked in a Chrome simulation of the Windows shell; I could not run the app on a real Windows 10 or 11 machine.

@@ -1,33 +1,14 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import de from '../../../messages/de.json';
-import type { DesktopWindowControls } from '@/shared/desktop/desktop-script';
-import { WindowControls, WindowDragStrip } from './window-chrome';
+import { WindowDragStrip, WindowTitleBar } from './window-chrome';
 
-function controls(): DesktopWindowControls & { emit: (maximized: boolean) => void } {
-  let listener: (maximized: boolean) => void = () => {};
-  return {
-    minimize: vi.fn(async () => {}),
-    toggleMaximize: vi.fn(async () => true),
-    close: vi.fn(async () => {}),
-    isMaximized: vi.fn(async () => false),
-    openMenu: vi.fn(async () => {}),
-    onMaximizedChange: (callback) => {
-      listener = callback;
-      return () => {
-        listener = () => {};
-      };
-    },
-    emit: (maximized) => listener(maximized),
-  };
-}
-
-const renderControls = () =>
+const renderBar = () =>
   render(
     <NextIntlClientProvider locale="de" messages={de}>
-      <WindowControls />
+      <WindowTitleBar />
     </NextIntlClientProvider>,
   );
 
@@ -35,43 +16,26 @@ afterEach(() => {
   delete window.desktop;
 });
 
-describe('WindowControls', () => {
+describe('WindowTitleBar', () => {
   it('draws nothing in a browser or on a Mac (native traffic lights)', () => {
-    const { container } = renderControls();
+    const { container } = renderBar();
     expect(container).toBeEmptyDOMElement();
-    window.desktop = { isDesktop: true, platform: 'darwin', window: controls() };
-    const mac = renderControls();
+    window.desktop = { isDesktop: true, platform: 'darwin', window: { openMenu: vi.fn(async () => {}) } };
+    const mac = renderBar();
     expect(mac.container).toBeEmptyDOMElement();
   });
 
-  it('offers menu, minimize, maximize and close on Windows', async () => {
-    const bridge = controls();
-    window.desktop = { isDesktop: true, platform: 'win32', window: bridge };
-    renderControls();
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Minimieren' }));
-    await user.click(screen.getByRole('button', { name: 'Maximieren' }));
-    await user.click(screen.getByRole('button', { name: 'Schließen' }));
-    await user.click(screen.getByRole('button', { name: 'Menü' }));
-    expect(bridge.minimize).toHaveBeenCalled();
-    expect(bridge.toggleMaximize).toHaveBeenCalled();
-    expect(bridge.close).toHaveBeenCalled();
-    expect(bridge.openMenu).toHaveBeenCalled();
-  });
-
-  it('follows the maximized state for the middle button', async () => {
-    const bridge = controls();
-    window.desktop = { isDesktop: true, platform: 'win32', window: bridge };
-    renderControls();
-    expect(await screen.findByRole('button', { name: 'Maximieren' })).toBeInTheDocument();
-    act(() => bridge.emit(true));
-    expect(screen.getByRole('button', { name: 'Wiederherstellen' })).toBeInTheDocument();
-  });
-
-  it('keeps every button out of the drag region', () => {
-    window.desktop = { isDesktop: true, platform: 'win32', window: controls() };
-    renderControls();
-    for (const button of screen.getAllByRole('button')) expect(button.closest('[data-no-drag]')).not.toBeNull();
+  it('shows the app name and the app menu on Windows, never drawn window buttons', async () => {
+    const openMenu = vi.fn(async () => {});
+    window.desktop = { isDesktop: true, platform: 'win32', window: { openMenu } };
+    renderBar();
+    expect(screen.getByText('Siteco Document Chat')).toBeInTheDocument();
+    // Minimize, maximize and close are the native caption buttons (titleBarOverlay).
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    const menu = screen.getByRole('button', { name: 'Menü' });
+    expect(menu.closest('[data-no-drag]')).not.toBeNull();
+    await userEvent.setup().click(menu);
+    expect(openMenu).toHaveBeenCalled();
   });
 });
 

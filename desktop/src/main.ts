@@ -47,7 +47,7 @@ import {
 const DOCKER_DOWNLOAD_URL = 'https://www.docker.com/products/docker-desktop/';
 /** Matches the app's canvas token (globals.css), so no white flash before the first paint. */
 const CANVAS = { light: '#f2f2f5', dark: '#000000' } as const;
-/** Ink on the canvas, for the splash's native caption buttons on Windows. */
+/** Ink on the canvas, for the native caption buttons on Windows (splash and app window). */
 const INK = { light: '#1d1d1f', dark: '#f5f5f7' } as const;
 const SPLASH_SIZE = { width: 520, height: 380 } as const;
 /** The only files the splash scheme serves, with their types. */
@@ -141,7 +141,7 @@ function buildMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(t, menuActions())));
 }
 
-// Window controls (the app's own title bar on Windows, double click on the drag strip) ------
+// Window bridge: the app menu (Windows) and the full screen state ------------------------------
 
 function registerWindowIpc(): void {
   const fromApp = (event: Electron.IpcMainInvokeEvent) =>
@@ -154,27 +154,14 @@ function registerWindowIpc(): void {
       mainWindow?.webContents,
       APP_ORIGIN,
     );
-  ipcMain.handle(WINDOW_CHANNELS.minimize, (event) => {
-    if (fromApp(event)) mainWindow?.minimize();
-  });
-  ipcMain.handle(WINDOW_CHANNELS.toggleMaximize, (event) => {
-    if (!fromApp(event) || !mainWindow) return false;
-    if (mainWindow.isMaximized()) mainWindow.unmaximize();
-    else mainWindow.maximize();
-    return mainWindow.isMaximized();
-  });
-  ipcMain.handle(WINDOW_CHANNELS.close, (event) => {
-    if (fromApp(event)) mainWindow?.close();
-  });
-  ipcMain.handle(WINDOW_CHANNELS.isMaximized, (event) => fromApp(event) && Boolean(mainWindow?.isMaximized()));
   ipcMain.handle(WINDOW_CHANNELS.menu, (event) => {
     if (!fromApp(event) || !mainWindow) return;
     Menu.buildFromTemplate(popupMenuTemplate(t, menuActions())).popup({ window: mainWindow });
   });
 }
 
-function sendMaximized(win: BrowserWindow): void {
-  if (!win.isDestroyed()) win.webContents.send(WINDOW_CHANNELS.maximized, win.isMaximized());
+function sendFullScreen(win: BrowserWindow): void {
+  if (!win.isDestroyed()) win.webContents.send(WINDOW_CHANNELS.fullScreen, win.isFullScreen());
 }
 
 // Splash ----------------------------------------------------------------------------------------
@@ -302,15 +289,14 @@ function openMainWindow(): void {
     minHeight: DEFAULT_WINDOW.minHeight,
     show: false,
     title: t.appName,
-    ...windowChrome(process.platform),
+    ...windowChrome(process.platform, { color: canvasColor(), symbolColor: inkColor() }),
     backgroundColor: canvasColor(),
     webPreferences: { ...secureWebPreferences, preload: join(__dirname, 'preload.js') },
   });
   if (bounds.maximized) win.maximize();
-  for (const name of ['maximize', 'unmaximize', 'enter-full-screen', 'leave-full-screen'] as const) {
-    win.on(name as 'maximize', () => sendMaximized(win));
-  }
-  win.webContents.on('did-finish-load', () => sendMaximized(win));
+  win.on('enter-full-screen', () => sendFullScreen(win));
+  win.on('leave-full-screen', () => sendFullScreen(win));
+  win.webContents.on('did-finish-load', () => sendFullScreen(win));
   win.once('ready-to-show', () => {
     loadRetries.reset();
     win.show();
@@ -416,8 +402,10 @@ if (!app.requestSingleInstanceLock()) {
 
   nativeTheme.on('updated', () => {
     for (const win of BrowserWindow.getAllWindows()) win.setBackgroundColor(canvasColor());
-    if (process.platform === 'win32' && splash && !splash.isDestroyed()) {
-      splash.setTitleBarOverlay({ color: canvasColor(), symbolColor: inkColor() });
+    if (process.platform === 'win32') {
+      for (const win of [splash, mainWindow]) {
+        if (win && !win.isDestroyed()) win.setTitleBarOverlay({ color: canvasColor(), symbolColor: inkColor() });
+      }
     }
   });
 

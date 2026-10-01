@@ -257,11 +257,7 @@
     "closePanel": "Bereich schließen",
     "skipToContent": "Zum Inhalt springen",
     "window": {
-      "menu": "Menü",
-      "minimize": "Minimieren",
-      "maximize": "Maximieren",
-      "restore": "Wiederherstellen",
-      "close": "Schließen"
+      "menu": "Menü"
     }
   },
   "chat": {

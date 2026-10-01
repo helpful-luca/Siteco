@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
-import { WindowControls, WindowDragStrip } from '@/features/shell';
+import { WindowDragStrip, WindowTitleBar } from '@/features/shell';
 import { QueryProvider } from '@/shared/api/query-provider';
 import { DESKTOP_SCRIPT } from '@/shared/desktop/desktop-script';
 import { PreferencesProvider } from '@/shared/preferences/preferences';
@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <QueryProvider>
             <PreferencesProvider initial={preferences}>{children}</PreferencesProvider>
           </QueryProvider>
-          <WindowControls />
+          <WindowTitleBar />
         </NextIntlClientProvider>
       </body>
     </html>

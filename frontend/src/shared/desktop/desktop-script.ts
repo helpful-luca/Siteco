@@ -1,16 +1,12 @@
 /**
  * The Electron shell exposes `window.desktop` from its preload script, which runs before any
  * page script. This inline script marks <html data-desktop data-platform> before first paint,
- * so the title bar leaves room for the traffic lights (macOS) or the window buttons (Windows)
+ * so the layout leaves room for the traffic lights (macOS) or the caption buttons (Windows)
  * without a layout jump. In a browser it does nothing.
  */
+/** The window buttons are native; the page can only open the app menu (Windows). */
 export type DesktopWindowControls = {
-  minimize: () => Promise<void>;
-  toggleMaximize: () => Promise<boolean>;
-  close: () => Promise<void>;
-  isMaximized: () => Promise<boolean>;
   openMenu: () => Promise<void>;
-  onMaximizedChange: (callback: (maximized: boolean) => void) => () => void;
 };
 
 export type DesktopBridge = {

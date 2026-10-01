@@ -16,14 +16,21 @@ export function Sidebar({ chatList, onNavigate }: { chatList?: ReactNode; onNavi
   const t = useTranslations('shell');
   const { chatQuery, setChatQuery } = useUI();
   return (
-    <div className="flex h-full flex-col p-3 pt-[calc(var(--spacing)*3+var(--titlebar-inset))]">
-      <div className="drag-region flex items-center gap-1">
+    // 12 px from the glass's outer edge (its 1 px border included), so the first row centres on
+    // y = 40 like the chat header and the side panel header, and the Mac traffic lights.
+    <div className="flex h-full flex-col p-[calc(var(--spacing)*3-1px)]">
+      {/*
+        In a Mac window the first row belongs to the traffic lights (native, positioned by the
+        desktop app on this row's axis) and the new chat button; the search moves to its own row.
+      */}
+      <div className="drag-region flex flex-wrap items-center gap-1 mac-window:gap-y-2">
+        <div aria-hidden className="hidden h-8 flex-1 mac-window:block" />
         <SearchField
           label={t('search')}
           clearLabel={t('clearSearch')}
           value={chatQuery}
           onValueChange={setChatQuery}
-          className="flex-1"
+          className="flex-1 mac-window:order-last mac-window:basis-full"
         />
         <Tooltip content={t('newChat')}>
           <Link

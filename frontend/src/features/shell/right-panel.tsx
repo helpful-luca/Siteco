@@ -102,7 +102,7 @@ function PanelBody({ panel, onClose }: { panel: PanelContent; onClose: () => voi
   return (
     <>
       {/* 56 px bar: centered on the sidebar's first row; text on the body's 24 px inset. */}
-      <header className="glass drag-region flex h-[calc(var(--spacing)*14+var(--titlebar-inset))] shrink-0 items-center justify-between gap-3 rounded-none border-0 border-b border-hairline pt-(--titlebar-inset) pr-4 pl-6 shadow-none pointer-coarse:pr-2">
+      <header className="glass drag-region flex h-14 shrink-0 items-center justify-between gap-3 rounded-none border-0 border-b border-hairline pr-4 pl-6 shadow-none pointer-coarse:pr-2">
         <div className="min-w-0">
           <h2 className="truncate text-body font-medium">{panel.title}</h2>
           {panel.subtitle && <div className="truncate text-caption text-ink-muted">{panel.subtitle}</div>}
