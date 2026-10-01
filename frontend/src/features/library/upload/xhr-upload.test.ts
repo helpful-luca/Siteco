@@ -68,6 +68,13 @@ describe('xhrUpload', () => {
     await expect(result).resolves.toMatchObject({ status: 'scanning' });
   });
 
+  it('uploads into a chat with its id in the query', async () => {
+    const result = xhrUpload(file, { onProgress: vi.fn(), chatId: 'c 1' });
+    expect(FakeXhr.last.url).toBe('/api/documents?chat_id=c%201');
+    FakeXhr.last.respond(202, { document: doc({ in_library: false }) });
+    await expect(result).resolves.toMatchObject({ in_library: false });
+  });
+
   it('stops listening to the abort signal once the request is over', async () => {
     const controller = new AbortController();
     const remove = vi.spyOn(controller.signal, 'removeEventListener');

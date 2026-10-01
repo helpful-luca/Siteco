@@ -96,3 +96,18 @@ def test_deleting_the_chat_deletes_its_attachments_only(client: TestClient) -> N
     assert client.delete(f"/api/chats/{chat_id}").status_code == 204
     assert client.get(f"/api/documents/{only['id']}").status_code == 404
     assert client.get(f"/api/documents/{library_id}").status_code == 200
+
+
+def test_removing_an_attachment_from_its_chat(client: TestClient, settings: Settings) -> None:
+    library_id = add_document(client)
+    chat_id = new_chat(client)
+    only = attach(client, chat_id, "nur hier.md", b"# Nur hier\n\nEin Text.").json()["document"]
+    attach(client, chat_id, "kopie.md", DATASHEET.encode())  # the library document
+    assert client.delete(f"/api/chats/{chat_id}/attachments/{only['id']}").status_code == 204
+    assert client.get(f"/api/documents/{only['id']}").status_code == 404
+    assert not (settings.uploads_dir / f"{only['id']}.md").exists()
+    assert client.delete(f"/api/chats/{chat_id}/attachments/{library_id}").status_code == 204
+    assert client.get(f"/api/documents/{library_id}").status_code == 200  # stays in the library
+    assert attachments(client, chat_id) == []
+    r = client.delete(f"/api/chats/{chat_id}/attachments/{library_id}")
+    assert (r.status_code, error(r)["code"]) == (404, "NOT_FOUND")

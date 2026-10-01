@@ -2544,6 +2544,73 @@
         ]
       }
     },
+    "/api/chats/{chat_id}/attachments/{document_id}": {
+      "delete": {
+        "description": "Removes the document from this chat. One that is neither in the library nor in another\nchat is deleted completely (file, index, cited text).",
+        "operationId": "remove_attachment_api_chats__chat_id__attachments__document_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Remove Attachment",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
     "/api/chats/{chat_id}/messages": {
       "get": {
         "description": "All messages, oldest first.",

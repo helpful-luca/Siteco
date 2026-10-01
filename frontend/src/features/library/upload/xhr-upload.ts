@@ -9,14 +9,16 @@ import type { DocumentEnvelopeOut, DocumentOut } from '@/shared/api/types';
 type Options = {
   onProgress: (loaded: number, total: number) => void;
   signal?: AbortSignal;
+  /** Upload into this chat (an attachment) instead of the library. */
+  chatId?: string | null;
 };
 
-export function xhrUpload(file: File, { onProgress, signal }: Options): Promise<DocumentOut> {
+export function xhrUpload(file: File, { onProgress, signal, chatId }: Options): Promise<DocumentOut> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const abort = () => xhr.abort();
     xhr.onloadend = () => signal?.removeEventListener('abort', abort);
-    xhr.open('POST', '/api/documents');
+    xhr.open('POST', chatId ? `/api/documents?chat_id=${encodeURIComponent(chatId)}` : '/api/documents');
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('Content-Type', 'application/octet-stream');
     xhr.setRequestHeader('X-Requested-With', 'docchat');

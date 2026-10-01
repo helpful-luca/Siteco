@@ -155,6 +155,16 @@ class SqliteDocumentRepository:
             return False
         return True
 
+    def detach(self, chat_id: str, document_id: str) -> bool:
+        with self._db.connect() as conn:
+            return (
+                conn.execute(
+                    "DELETE FROM chat_attachments WHERE chat_id = ? AND document_id = ?",
+                    (chat_id, document_id),
+                ).rowcount
+                == 1
+            )
+
     def add_to_library(self, document_id: str, now: datetime) -> bool:
         return self._update(
             "UPDATE documents SET in_library = 1, updated_at = ? WHERE id = ? AND status != ?",

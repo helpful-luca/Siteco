@@ -91,4 +91,12 @@ describe('pause for our own upload limit (annex 11, 6.3)', () => {
     expect(items[0]).toMatchObject({ state: 'waiting', error: null });
     expect(pausedUntil(items)).toBeNull();
   });
+
+  it('remembers the chat a file was dropped into, and the library answer', () => {
+    let items = createItems([file('a.pdf')], 1024, makeId, 'chat-1');
+    expect(items[0]).toMatchObject({ chatId: 'chat-1', toLibrary: null });
+    items = uploadReducer(items, { type: 'choose', id: items[0].id, toLibrary: true });
+    expect(items[0].toLibrary).toBe(true);
+    expect(createItems([file('b.pdf')], 1024, makeId)[0]).toMatchObject({ chatId: null, toLibrary: null });
+  });
 });

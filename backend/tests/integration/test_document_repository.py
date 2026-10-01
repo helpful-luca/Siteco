@@ -214,3 +214,11 @@ def test_unreferenced_keeps_library_and_still_attached_documents(
     with repo._db.connect() as conn:
         conn.execute("DELETE FROM chats WHERE id = 'c1'")
     assert repo.unreferenced(["only", "shared", "lib", "missing"]) == ["only"]
+
+
+def test_detach(repo: SqliteDocumentRepository) -> None:
+    _chat(repo, "c1")
+    repo.insert(_doc("att", in_library=False), attach_to="c1")
+    assert repo.detach("c1", "att") is True
+    assert repo.detach("c1", "att") is False
+    assert repo.unreferenced(["att"]) == ["att"]

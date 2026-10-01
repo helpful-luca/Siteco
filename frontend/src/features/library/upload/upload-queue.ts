@@ -15,6 +15,10 @@ export type UploadItem = {
   state: UploadState;
   loaded: number;
   error: UploadError | null;
+  /** Uploaded into this chat (an attachment); null: into the library. */
+  chatId: string | null;
+  /** For a chat upload: also into the library? null until answered (then: chat only). */
+  toLibrary: boolean | null;
 };
 
 export type UploadAction =
@@ -24,16 +28,18 @@ export type UploadAction =
   | { type: 'succeeded'; id: string }
   | { type: 'failed'; id: string; error: UploadError }
   | { type: 'retry'; id: string }
+  | { type: 'choose'; id: string; toLibrary: boolean }
   | { type: 'dismiss'; id: string };
 
 export function createItems(
   files: readonly File[],
   maxUploadMb: number | undefined,
   makeId: () => string,
+  chatId: string | null = null,
 ): UploadItem[] {
   return files.map((file) => {
     const error = preCheck(file, maxUploadMb);
-    return { id: makeId(), file, state: error ? 'failed' : 'waiting', loaded: 0, error };
+    return { id: makeId(), file, state: error ? 'failed' : 'waiting', loaded: 0, error, chatId, toLibrary: null };
   });
 }
 
@@ -56,6 +62,8 @@ export function uploadReducer(items: UploadItem[], action: UploadAction): Upload
       if (!item || item.state !== 'failed' || !item.error?.retryable) return items;
       return update(items, action.id, { state: 'waiting', loaded: 0, error: null });
     }
+    case 'choose':
+      return update(items, action.id, { toLibrary: action.toLibrary });
     case 'succeeded':
     case 'dismiss':
       return items.filter((item) => item.id !== action.id);

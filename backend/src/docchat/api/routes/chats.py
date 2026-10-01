@@ -141,6 +141,14 @@ def list_attachments(
     )
 
 
+@router.delete("/{chat_id}/attachments/{document_id}", status_code=204, responses=_errors(404, 500))
+async def remove_attachment(chat_id: UUID, document_id: UUID, chats: ChatServiceDep) -> Response:
+    """Removes the document from this chat. One that is neither in the library nor in another
+    chat is deleted completely (file, index, cited text)."""
+    await chats.detach(str(chat_id), str(document_id))
+    return Response(status_code=204)
+
+
 @router.get("/{chat_id}/messages", response_model=MessageListOut, responses=_errors(404))
 def list_messages(chat_id: UUID, chats: ChatServiceDep) -> MessageListOut:
     """All messages, oldest first."""

@@ -154,6 +154,28 @@ class ChatService:
         await self._erasure.after_documents()
         log.info("chat_deleted", extra={"chat_id": chat_id})
 
+    async def detach(self, chat_id: str, document_id: str) -> None:
+        """Removes a document from the chat; one that is in no library and no other chat is
+        deleted like a library delete."""
+        self.get(chat_id)
+        if not await asyncio.to_thread(self._documents.detach, chat_id, document_id):
+            raise AppError(ErrorCode.NOT_FOUND)
+        if await self._purge_unreferenced([document_id]):
+            await self._erasure.after_documents()
+        log.info("attachment_removed", extra={"chat_id": chat_id, "document_id": document_id})
+
+    async def _purge_unreferenced(self, candidates: list[str]) -> int:
+        """Deletes the candidates that no chat and not the library holds. Not erased here."""
+        purged = 0
+        for document_id in await asyncio.to_thread(self._documents.unreferenced, candidates):
+            try:
+                await self._library.delete(document_id, erase=False)
+                purged += 1
+            except AppError as exc:
+                if exc.code is not ErrorCode.NOT_FOUND:  # deleted meanwhile
+                    raise
+        return purged
+
     async def _delete_with_attachments(self, chat_id: str) -> bool:
         """Not erased on disk here; the caller erases once."""
         candidates = [
@@ -164,12 +186,7 @@ class ChatService:
         if not await asyncio.to_thread(self._chats.delete_chat, chat_id):
             return False
         # Checked after the chat is gone: another chat may hold the same file meanwhile.
-        for document_id in await asyncio.to_thread(self._documents.unreferenced, candidates):
-            try:
-                await self._library.delete(document_id, erase=False)
-            except AppError as exc:
-                if exc.code is not ErrorCode.NOT_FOUND:  # deleted meanwhile
-                    raise
+        await self._purge_unreferenced(candidates)
         return True
 
     async def delete_if_idle(self, chat_id: str) -> bool:
