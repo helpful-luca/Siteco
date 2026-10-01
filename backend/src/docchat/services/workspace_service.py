@@ -110,7 +110,7 @@ class WorkspaceService:
             if reset_preferences:
                 await asyncio.to_thread(p.preferences.reset)
                 if p.api_keys is not None:  # settings include the key entered in the app
-                    await asyncio.to_thread(p.api_keys.delete)
+                    await p.api_keys.delete()
             await p.erasure.after_wipe()
         except AppError:
             raise

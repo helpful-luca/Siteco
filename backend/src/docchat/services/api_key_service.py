@@ -40,16 +40,20 @@ class ApiKeyService:
         self._source: KeySource | None = None
         self._key: str | None = None
         self._status = LlmStatus.MISSING_KEY  # of the key; with a fixed client not the health
+        # Save and delete one at a time: the file, the key in memory and the client stay in step.
+        self._lock = asyncio.Lock()
 
     def load(self) -> None:
-        """Startup: the stored key, else the environment's."""
+        """Startup (before anything runs): the stored key, else the environment's."""
         stored = self._store.load()
         if stored is not None:
-            self._use(stored, KeySource.SETTINGS, LlmStatus.UNCHECKED)
+            self._set(stored, KeySource.SETTINGS, LlmStatus.UNCHECKED)
         elif self._env_key is not None:
-            self._use(self._env_key, KeySource.ENV, LlmStatus.UNCHECKED)
+            self._set(self._env_key, KeySource.ENV, LlmStatus.UNCHECKED)
         else:
-            self._use(None, None, LlmStatus.MISSING_KEY)
+            self._set(None, None, LlmStatus.MISSING_KEY)
+        if self._swaps_client:
+            self._llm.current = self._build_client(self._key) if self._key is not None else None
 
     def state(self) -> KeyState:
         return KeyState(
@@ -68,29 +72,35 @@ class ApiKeyService:
                 "This does not look like an API key.",
                 details=[{"loc": ["body", "key"], "type": "value_error"}],
             )
-        check = await self._validator.check(key)
-        if check is KeyCheck.INVALID:
-            log.info("api_key_rejected")
-            raise AppError(ErrorCode.API_KEY_INVALID)
-        await asyncio.to_thread(self._store.save, key)
-        status = LlmStatus.OK if check is KeyCheck.VALID else LlmStatus.UNCHECKED
-        self._use(key, KeySource.SETTINGS, status)
-        log.info("api_key_saved", extra={"checked": check.value})
-        return self.state()
+        async with self._lock:
+            check = await self._validator.check(key)
+            if check is KeyCheck.INVALID:
+                log.info("api_key_rejected")
+                raise AppError(ErrorCode.API_KEY_INVALID)
+            await asyncio.to_thread(self._store.save, key)
+            status = LlmStatus.OK if check is KeyCheck.VALID else LlmStatus.UNCHECKED
+            await self._use(key, KeySource.SETTINGS, status)
+            log.info("api_key_saved", extra={"checked": check.value})
+            return self.state()
 
-    def delete(self) -> KeyState:
+    async def delete(self) -> KeyState:
         """Removes the key from Settings; ANTHROPIC_API_KEY applies again if set."""
-        self._store.delete()
-        if self._env_key is not None:
-            self._use(self._env_key, KeySource.ENV, LlmStatus.UNCHECKED)
-        else:
-            self._use(None, None, LlmStatus.MISSING_KEY)
-        log.info("api_key_deleted")
-        return self.state()
+        async with self._lock:
+            await asyncio.to_thread(self._store.delete)
+            if self._env_key is not None:
+                await self._use(self._env_key, KeySource.ENV, LlmStatus.UNCHECKED)
+            else:
+                await self._use(None, None, LlmStatus.MISSING_KEY)
+            log.info("api_key_deleted")
+            return self.state()
 
-    def _use(self, key: str | None, source: KeySource | None, status: LlmStatus) -> None:
+    def _set(self, key: str | None, source: KeySource | None, status: LlmStatus) -> None:
         self._key, self._source, self._status = key, source, status
-        if not self._swaps_client:
-            return
-        self._llm.current = self._build_client(key) if key is not None else None
-        self._health.status = status
+        if self._swaps_client:
+            self._health.status = status
+
+    async def _use(self, key: str | None, source: KeySource | None, status: LlmStatus) -> None:
+        """Only on the event loop, under the lock: the key, its client and the health."""
+        self._set(key, source, status)
+        if self._swaps_client:
+            await self._llm.swap(self._build_client(key) if key is not None else None)

@@ -65,6 +65,10 @@ class FakeSdk:
     def __init__(self, outcome: FakeStream | Exception) -> None:
         self.beta = type("Beta", (), {})()
         self.beta.messages = FakeMessages(outcome)
+        self.closed = False
+
+    async def close(self) -> None:
+        self.closed = True
 
 
 def llm_request(model: str = "claude-sonnet-5-5") -> LLMRequest:
@@ -193,3 +197,19 @@ def test_only_claude_saying_not_found_error_means_the_model_is_gone() -> None:
     mapped = map_error(bare)
     assert (mapped.code, mapped.model_gone) == (ErrorCode.MODEL_UNAVAILABLE, False)
     assert map_error(status_error(529, "overloaded_error")).model_gone is False
+
+
+async def test_a_replaced_client_closes_once_its_running_answers_are_done() -> None:
+    """A key change swaps the client; the answer that is streaming keeps its connection."""
+    sdk = FakeSdk(FakeStream([]))
+    client = AnthropicLLMClient("key", sdk=sdk)
+    events = client.stream(llm_request())
+    await anext(events)  # RequestStarted: the answer is running
+    await client.aclose()
+    assert sdk.closed is False
+    async for _ in events:
+        pass
+    assert sdk.closed is True
+    idle = FakeSdk(FakeStream([]))
+    await AnthropicLLMClient("key", sdk=idle).aclose()
+    assert idle.closed is True

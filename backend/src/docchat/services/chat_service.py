@@ -164,7 +164,7 @@ class ChatService:
             await self._erasure.after_documents()
         log.info("attachment_removed", extra={"chat_id": chat_id, "document_id": document_id})
 
-    async def _purge_unreferenced(self, candidates: list[str]) -> int:
+    async def _purge_unreferenced(self, candidates: list[str] | None) -> int:
         """Deletes the candidates that no chat and not the library holds. Not erased here."""
         purged = 0
         for document_id in await asyncio.to_thread(self._documents.unreferenced, candidates):
@@ -177,16 +177,13 @@ class ChatService:
         return purged
 
     async def _delete_with_attachments(self, chat_id: str) -> bool:
-        """Not erased on disk here; the caller erases once."""
-        candidates = [
-            d.id
-            for d in await asyncio.to_thread(self._documents.list_attachments, chat_id)
-            if not d.in_library
-        ]
+        """Not erased on disk here; the caller erases once. The sweep after the delete covers
+        every document no chat and not the library holds, so a file that arrived in the chat
+        while it was being deleted goes as well (uploads attach in the same transaction as
+        their row, so nothing else is ever unreferenced)."""
         if not await asyncio.to_thread(self._chats.delete_chat, chat_id):
             return False
-        # Checked after the chat is gone: another chat may hold the same file meanwhile.
-        await self._purge_unreferenced(candidates)
+        await self._purge_unreferenced(None)
         return True
 
     async def delete_if_idle(self, chat_id: str) -> bool:

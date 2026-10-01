@@ -22,7 +22,7 @@ from urllib.parse import urljoin
 
 from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.models import Document
-from docchat.domain.ports import HostResolver, UrlFetcher
+from docchat.domain.ports import ChatRepository, HostResolver, UrlFetcher
 from docchat.domain.url_import import (
     MAX_REDIRECTS,
     ParsedUrl,
@@ -73,6 +73,7 @@ class UrlImportService:
     def __init__(
         self,
         uploads: UploadService,
+        chats: ChatRepository,
         resolver: HostResolver,
         fetcher: UrlFetcher,
         *,
@@ -82,6 +83,7 @@ class UrlImportService:
         is_public: Callable[[str], bool] = address_is_public,
     ) -> None:
         self._uploads = uploads
+        self._chats = chats
         self._resolver = resolver
         self._fetcher = fetcher
         self._max_bytes = max_bytes
@@ -95,6 +97,8 @@ class UrlImportService:
         downloads in the background. Without a chat the document always goes to the library."""
         url = parse_import_url(raw_url)
         self._check_name(url)
+        if chat_id is not None and self._chats.get_chat(chat_id) is None:
+            raise AppError(ErrorCode.CHAT_NOT_FOUND)
         if self._rate is not None:
             self._rate.acquire()
         job = ImportJob(
@@ -142,8 +146,10 @@ class UrlImportService:
             self._fail(job, AppError(ErrorCode.URL_TIMEOUT))
         except AppError as exc:
             self._fail(job, exc)
-        except Exception:
-            log.exception("url_import_failed", extra={"job_id": job.id})
+        except Exception as exc:
+            # The type only: messages of HTTP libraries carry the URL, which is personal data.
+            # The request id of the start is in the record (the task inherits its context).
+            log.error("url_import_failed", extra={"job_id": job.id, "error": type(exc).__name__})
             self._fail(job, AppError(ErrorCode.INTERNAL_ERROR))
         else:
             job.state = ImportState.DONE

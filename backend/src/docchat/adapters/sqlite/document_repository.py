@@ -173,18 +173,19 @@ class SqliteDocumentRepository:
             (_ts(now), document_id, DocumentStatus.DELETING.value),
         )
 
-    def unreferenced(self, document_ids: Collection[str]) -> list[str]:
-        """Of these, the documents outside the library that no chat holds any more."""
-        ids = list(document_ids)
-        if not ids:
+    def unreferenced(self, document_ids: Collection[str] | None = None) -> list[str]:
+        """Of these (None: of all), the documents outside the library that no chat holds and
+        that are not being deleted already."""
+        ids = None if document_ids is None else list(document_ids)
+        if ids is not None and not ids:
             return []
+        only = "" if ids is None else f" AND d.id IN ({_placeholders(ids)})"
         with self._db.connect() as conn:
             rows = conn.execute(
-                f"SELECT d.id FROM documents d WHERE d.id IN ({_placeholders(ids)})"
-                " AND d.in_library = 0"
+                "SELECT d.id FROM documents d WHERE d.in_library = 0 AND d.status != ?"
                 " AND NOT EXISTS (SELECT 1 FROM chat_attachments a WHERE a.document_id = d.id)"
-                " ORDER BY d.created_at, d.id",
-                ids,
+                f"{only} ORDER BY d.created_at, d.id",
+                [DocumentStatus.DELETING.value, *(ids or [])],
             ).fetchall()
         return [r[0] for r in rows]
 

@@ -29,6 +29,6 @@ async def put_api_key(body: ApiKeyIn, container: ContainerDep) -> ApiKeyOut:
 
 
 @router.delete("/api-key", response_model=ApiKeyOut)
-def delete_api_key(container: ContainerDep) -> ApiKeyOut:
+async def delete_api_key(container: ContainerDep) -> ApiKeyOut:
     """Forgets the key from Settings; ANTHROPIC_API_KEY applies again if it is set."""
-    return ApiKeyOut.from_state(container.api_keys.delete())
+    return ApiKeyOut.from_state(await container.api_keys.delete())

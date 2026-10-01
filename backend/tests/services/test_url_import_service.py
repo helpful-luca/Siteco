@@ -25,7 +25,12 @@ def importer(
     resolver = FakeResolver(dns if dns is not None else {"www.siteco.de": [PUBLIC]})
     fetcher = FakeFetcher(routes)
     service = UrlImportService(
-        harness.uploads, resolver, fetcher, max_bytes=5 * 1024 * 1024, total_timeout_s=30
+        harness.uploads,
+        harness.chats,
+        resolver,
+        fetcher,
+        max_bytes=5 * 1024 * 1024,
+        total_timeout_s=30,
     )
     return service, resolver, fetcher
 
@@ -186,7 +191,10 @@ async def test_an_error_status_is_unreachable(harness: Harness) -> None:
 
 async def test_an_html_page_without_length_into_a_chat(harness: Harness) -> None:
     with harness.database.connect() as conn:
-        conn.execute("INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', 't', 't')")
+        conn.execute(
+            "INSERT INTO chats (id, created_at, updated_at)"
+            " VALUES ('c1', '2026-10-01T00:00:00+00:00', '2026-10-01T00:00:00+00:00')"
+        )
     page = "https://www.siteco.de/de/produkte/"
     html = b"<!DOCTYPE html><html><body><h1>Produkte</h1><p>Mira L</p></body></html>"
     routes = {page: (200, {"Content-Type": "text/html; charset=utf-8"}, [html])}
@@ -226,3 +234,28 @@ def test_unknown_jobs_are_not_found(tmp_path: Path) -> None:
     with pytest.raises(AppError) as caught:
         service.get("nope")
     assert caught.value.code is ErrorCode.NOT_FOUND
+
+
+async def test_an_unknown_chat_is_refused_at_once(harness: Harness) -> None:
+    service, resolver, _ = importer(harness, {CATALOG: pdf_route()})
+    with pytest.raises(AppError) as caught:
+        service.start(CATALOG, library=False, chat_id="00000000-0000-4000-8000-000000000000")
+    assert caught.value.code is ErrorCode.CHAT_NOT_FOUND
+    assert resolver.lookups == []
+
+
+async def test_an_unexpected_failure_logs_no_link(
+    harness: Harness, caplog: pytest.LogCaptureFixture
+) -> None:
+    class Broken(FakeFetcher):
+        def open(self, url, address):  # type: ignore[no-untyped-def]
+            raise RuntimeError(f"connection to {url.text} failed")
+
+    service, _, _ = importer(harness, {})
+    service._fetcher = Broken({})
+    secret = "https://www.siteco.de/privat/angebot-4711.pdf?token=geheim"
+    job = service.start(secret, library=True, chat_id=None)
+    await finished(service, job.id)
+    assert service.get(job.id).error_code is ErrorCode.INTERNAL_ERROR
+    assert "geheim" not in caplog.text and "angebot-4711" not in caplog.text
+    assert any(getattr(r, "error", None) == "RuntimeError" for r in caplog.records)

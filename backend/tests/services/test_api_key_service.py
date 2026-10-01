@@ -1,5 +1,6 @@
 """The Claude key from Settings: stored server-side, checked, swapped in without a restart."""
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -22,13 +23,24 @@ OFFLINE = "sk-ant-api03-" + "c" * 40 + "Off1"
 ENV = "sk-ant-api03-" + "e" * 40 + "Env7"
 
 
+class ClosableFake(FakeLLMClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.closed = False
+
+    async def aclose(self) -> None:
+        self.closed = True
+
+
 class Built:
     def __init__(self) -> None:
         self.keys: list[str] = []
+        self.clients: list[ClosableFake] = []
 
     def __call__(self, key: str) -> LLMClient:
         self.keys.append(key)
-        return FakeLLMClient()
+        self.clients.append(ClosableFake())
+        return self.clients[-1]
 
 
 def service(
@@ -93,11 +105,11 @@ async def test_obviously_wrong_input_is_refused_before_any_check(tmp_path: Path,
 async def test_delete_falls_back_to_the_environment_or_to_nothing(tmp_path: Path) -> None:
     keys, _, _, _, store = service(tmp_path, env=ENV)
     await keys.save(GOOD)
-    state = keys.delete()
+    state = await keys.delete()
     assert (state.source, state.suffix) == (KeySource.ENV, "Env7") and store.load() is None
     keys_without, health_without, llm, _, _ = service(tmp_path / "other")
     await keys_without.save(GOOD)
-    keys_without.delete()
+    await keys_without.delete()
     assert health_without.status is LlmStatus.MISSING_KEY and llm.current is None
 
 
@@ -116,7 +128,7 @@ async def test_the_key_never_reaches_the_log(
     await keys.save(GOOD)
     with pytest.raises(AppError):
         await keys.save(BAD)
-    keys.delete()
+    await keys.delete()
     assert GOOD not in caplog.text and BAD not in caplog.text
     assert "Wx9Z" not in caplog.text
 
@@ -132,3 +144,29 @@ async def test_with_the_fake_model_the_key_is_managed_but_not_used(tmp_path: Pat
     assert keys.state().status is LlmStatus.MISSING_KEY
     assert (await keys.save(GOOD)).status is LlmStatus.OK
     assert llm.current is fake and health.status is LlmStatus.OK
+
+
+async def test_the_replaced_client_is_closed(tmp_path: Path) -> None:
+    keys, _, _, built, _ = service(tmp_path, env=ENV)
+    await keys.save(GOOD)
+    assert built.clients[0].closed and not built.clients[1].closed
+    await keys.delete()
+    assert built.clients[1].closed
+
+
+async def test_save_and_delete_at_once_leave_file_and_memory_in_step(tmp_path: Path) -> None:
+    """Without one lock, a delete could run while a save waits for the key check: the file
+    gone, the key still in use (or the other way round)."""
+    keys, _, llm, _, store = service(tmp_path)
+
+    async def slow_check(key: str) -> KeyCheck:
+        await asyncio.sleep(0.05)
+        return KeyCheck.VALID
+
+    keys._validator.check = slow_check  # type: ignore[method-assign]
+    await asyncio.gather(keys.save(GOOD), keys.delete(), keys.save(OFFLINE))
+    state = keys.state()
+    assert (store.load() is not None) == (state.source is KeySource.SETTINGS)
+    assert (store.load() is None) == (llm.current is None)
+    if state.suffix is not None:
+        assert store.load() is not None and store.load().endswith(state.suffix)

@@ -66,8 +66,9 @@ class DocumentRepository(Protocol):
 
     def add_to_library(self, document_id: str, now: datetime) -> bool: ...
 
-    def unreferenced(self, document_ids: Collection[str]) -> list[str]:
-        """Of these ids, documents outside the library that no chat holds any more."""
+    def unreferenced(self, document_ids: Collection[str] | None = None) -> list[str]:
+        """Of these ids (None: of all), documents outside the library that no chat holds and
+        that are not being deleted already."""
         ...
 
     def list_by_status(self, *statuses: DocumentStatus) -> list[Document]: ...

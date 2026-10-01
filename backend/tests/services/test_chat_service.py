@@ -163,3 +163,21 @@ def test_selection_is_made_of_library_documents_only(h: ChatHarness) -> None:
     with pytest.raises(AppError) as caught:
         h.chats.create(ChatScope.SELECTED, [attachment.id])
     assert caught.value.code is ErrorCode.NOT_FOUND
+
+
+async def test_an_upload_into_the_chat_during_its_delete_is_purged_too(h: ChatHarness) -> None:
+    """The attachments are not only those listed before the delete: a file that lands in the
+    chat a moment before the row goes must not stay behind unreferenced."""
+    chat = h.new_chat()
+    early = h.add_document(filename="früh.pdf", attach_to=chat.id)
+    late: list[str] = []
+    real_delete = h.chats_repo.delete_chat
+
+    def delete_after_an_upload(chat_id: str) -> bool:
+        late.append(h.add_document(filename="spät.pdf", attach_to=chat_id).id)
+        return real_delete(chat_id)
+
+    h.chats_repo.delete_chat = delete_after_an_upload  # type: ignore[method-assign]
+    await h.chats.delete(chat.id)
+    assert h.documents.get(early.id) is None
+    assert h.documents.get(late[0]) is None

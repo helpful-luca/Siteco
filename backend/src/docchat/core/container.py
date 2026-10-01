@@ -354,6 +354,7 @@ def build_container(
         uploads=uploads,
         url_imports=UrlImportService(
             uploads,
+            chats,
             url_resolver or SystemHostResolver(),
             HttpUrlFetcher(
                 connect_timeout_s=settings.url_connect_timeout_s,

@@ -30,3 +30,14 @@ def test_an_empty_file_is_no_key(tmp_path: Path) -> None:
     path = tmp_path / "anthropic_api_key"
     path.write_text("  \n")
     assert FileSecretStore(path).load() is None
+
+
+def test_saves_at_the_same_time_do_not_collide(tmp_path: Path) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    store = FileSecretStore(tmp_path / "secrets" / "anthropic_api_key")
+    keys = [f"sk-ant-api03-{i:04d}" + "x" * 30 for i in range(40)]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(store.save, keys))
+    assert store.load() in keys
+    assert [p.name for p in (tmp_path / "secrets").iterdir()] == ["anthropic_api_key"]

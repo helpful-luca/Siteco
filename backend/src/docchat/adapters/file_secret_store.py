@@ -6,6 +6,7 @@ crash never leaves half a key; the folder is 0700, the file 0600."""
 
 import contextlib
 import os
+import uuid
 from pathlib import Path
 
 
@@ -24,9 +25,8 @@ class FileSecretStore:
         folder = self._path.parent
         folder.mkdir(mode=0o700, parents=True, exist_ok=True)
         os.chmod(folder, 0o700)
-        temp = folder / f".{self._path.name}.tmp"
-        with contextlib.suppress(FileNotFoundError):
-            temp.unlink()
+        # A unique temp name per save: two saves at once never trip over each other.
+        temp = folder / f".{self._path.name}.{uuid.uuid4().hex}.tmp"
         fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:

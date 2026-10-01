@@ -39,6 +39,15 @@ class AnthropicLLMClient:
         self._sdk = sdk or _sdk_client(api_key)
         self._sonnet_thinking = sonnet_thinking
         self._semaphore = asyncio.Semaphore(concurrency)
+        self._running = 0
+        self._closing = False
+
+    async def aclose(self) -> None:
+        """Called when a new key replaces this client: the HTTP connections close once the
+        answers still streaming with it are done (closing earlier would cut them off)."""
+        self._closing = True
+        if self._running == 0:
+            await self._sdk.close()
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]:
         profile = MODEL_PROFILES.get(request.model)
@@ -46,6 +55,18 @@ class AnthropicLLMClient:
             raise LLMError(ErrorCode.MODEL_UNAVAILABLE)
         body = build_request(request, profile, sonnet_thinking=self._sonnet_thinking)
         mapper = StreamMapper(request.model)
+        self._running += 1
+        try:
+            async for event in self._stream(body, mapper, request.model):
+                yield event
+        finally:
+            self._running -= 1
+            if self._closing and self._running == 0:
+                await self._sdk.close()
+
+    async def _stream(
+        self, body: dict[str, Any], mapper: StreamMapper, model: str
+    ) -> AsyncIterator[LLMEvent]:
         async with self._semaphore:
             yield RequestStarted()
             try:
@@ -62,7 +83,7 @@ class AnthropicLLMClient:
                     "llm_error",
                     extra={
                         "code": error.code.value,
-                        "model": request.model,
+                        "model": model,
                         "anthropic_request_id": error.upstream_request_id,
                     },
                 )
