@@ -515,6 +515,11 @@
             "title": "Id",
             "type": "string"
           },
+          "in_library": {
+            "description": "False: uploaded into a chat, listed and searched only there.",
+            "title": "In Library",
+            "type": "boolean"
+          },
           "kind": {
             "$ref": "#/components/schemas/DocumentKind"
           },
@@ -589,7 +594,8 @@
           "error_params",
           "notices",
           "created_at",
-          "ready_at"
+          "ready_at",
+          "in_library"
         ],
         "title": "DocumentOut",
         "type": "object"
@@ -2484,6 +2490,60 @@
         ]
       }
     },
+    "/api/chats/{chat_id}/attachments": {
+      "get": {
+        "description": "Documents uploaded into this chat, newest first. Poll while any is processing.",
+        "operationId": "list_attachments_api_chats__chat_id__attachments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chat Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "List Attachments",
+        "tags": [
+          "chats"
+        ]
+      }
+    },
     "/api/chats/{chat_id}/messages": {
       "get": {
         "description": "All messages, oldest first.",
@@ -2922,7 +2982,7 @@
     },
     "/api/documents": {
       "get": {
-        "description": "All documents, newest first. Poll while any is not `ready` or `failed`.",
+        "description": "The library, newest first. Poll while any is not `ready` or `failed`. Documents\nuploaded into a chat are listed by `GET /api/chats/{chat_id}/attachments`.",
         "operationId": "list_documents_api_documents_get",
         "responses": {
           "200": {
@@ -2942,9 +3002,28 @@
         ]
       },
       "post": {
-        "description": "Raw body, one file per request. Answers 202 at once; ingestion runs in the background.",
+        "description": "Raw body, one file per request. Answers 202 at once; ingestion runs in the background.\nWithout `chat_id` the file goes into the library; an attachment with the same bytes\nmoves there instead of 409.",
         "operationId": "upload_document_api_documents_post",
         "parameters": [
+          {
+            "description": "Upload into this chat: searched only there, not listed in the library. The same file again attaches the existing document instead of 409.",
+            "in": "query",
+            "name": "chat_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Upload into this chat: searched only there, not listed in the library. The same file again attaches the existing document instead of 409.",
+              "title": "Chat Id"
+            }
+          },
           {
             "description": "Percent-encoded UTF-8 file name.",
             "in": "header",
@@ -3021,6 +3100,16 @@
               }
             },
             "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
           },
           "409": {
             "content": {
@@ -3346,6 +3435,60 @@
           }
         },
         "summary": "Get Document File",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/documents/{document_id}/library": {
+      "post": {
+        "description": "Moves a chat attachment into the library. Idempotent.",
+        "operationId": "add_document_to_library_api_documents__document_id__library_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Add Document To Library",
         "tags": [
           "documents"
         ]

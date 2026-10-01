@@ -37,6 +37,8 @@ class Document:
     error_params: Mapping[str, int | str] = field(default_factory=dict)
     notices: tuple[Notice, ...] = ()
     ready_at: datetime | None = None
+    # False: uploaded into a chat and only searched there (master spec feedback 1).
+    in_library: bool = True
 
 
 @dataclass(frozen=True)

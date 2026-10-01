@@ -130,3 +130,36 @@ def test_recover_marks_leftover_streaming_answers(h: ChatHarness) -> None:
     assert h.chats.recover() == 1
     message = h.chats_repo.get_message("a1")
     assert message is not None and message.status is MessageStatus.INTERRUPTED
+
+
+# Attachments: documents uploaded into a chat ------------------------------------------
+
+
+async def test_deleting_a_chat_purges_the_documents_only_it_held(h: ChatHarness) -> None:
+    chat, other = h.new_chat(), h.new_chat()
+    only = h.add_document(filename="nur hier.pdf", attach_to=chat.id)
+    shared = h.add_document(filename="geteilt.pdf", attach_to=chat.id)
+    library = h.add_document(filename="Bibliothek.pdf")
+    assert h.documents.attach(other.id, shared.id, h.clock.now())
+    assert h.documents.attach(chat.id, library.id, h.clock.now())
+    await h.chats.delete(chat.id)
+    assert h.documents.get(only.id) is None
+    assert h.chunks(only) == []
+    assert h.documents.get(shared.id) is not None
+    assert h.documents.get(library.id) is not None
+    assert [d.id for d in h.documents.list_attachments(other.id)] == [shared.id]
+
+
+async def test_retention_deleting_a_chat_also_purges_its_attachments(h: ChatHarness) -> None:
+    chat = h.new_chat()
+    only = h.add_document(attach_to=chat.id)
+    assert await h.chats.delete_if_idle(chat.id) is True
+    assert h.documents.get(only.id) is None
+
+
+def test_selection_is_made_of_library_documents_only(h: ChatHarness) -> None:
+    chat = h.new_chat()
+    attachment = h.add_document(attach_to=chat.id)
+    with pytest.raises(AppError) as caught:
+        h.chats.create(ChatScope.SELECTED, [attachment.id])
+    assert caught.value.code is ErrorCode.NOT_FOUND

@@ -6,10 +6,12 @@ from pathlib import Path
 from uuid import uuid4
 
 from docchat.adapters.fake_llm import FakeLLMClient
+from docchat.adapters.local_file_storage import LocalFileStorage
 from docchat.adapters.sqlite.chat_repository import SqliteChatRepository
 from docchat.adapters.sqlite.database import Database
 from docchat.adapters.sqlite.document_repository import SqliteDocumentRepository
 from docchat.adapters.sqlite.usage_ledger import SqliteUsageLedger
+from docchat.adapters.text_parser import TextFileParser
 from docchat.domain.chat_models import Chat
 from docchat.domain.enums import ChatScope, DocumentKind, DocumentStatus, LlmStatus, Locale
 from docchat.domain.models import Chunk, Document, Sentence
@@ -19,6 +21,8 @@ from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerOptions, AnswerService, AskCommand
 from docchat.services.chat_service import ChatService
 from docchat.services.disk_erasure import DiskErasure
+from docchat.services.document_purge import DocumentPurge
+from docchat.services.document_service import DocumentService
 from docchat.services.limits import DailyBudget, LimitScope, RateLimit
 from docchat.services.llm_health import LlmHealth
 from docchat.services.model_availability import ModelAvailability
@@ -28,6 +32,19 @@ from docchat.services.run_registry import RunRegistry
 from tests.fakes import FakeClock, FakeEmbedder, FakeSleep, FakeTicker, FakeVectorStore
 
 MODELS = ("claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5")
+
+
+class _NoIngestion:
+    """Documents in these tests are processed by hand; nothing waits in a queue."""
+
+    def enqueue(self, document: Document) -> None:
+        pass
+
+    def forget(self, document_id: str) -> None:
+        pass
+
+    def queue_positions(self) -> dict[str, int]:
+        return {}
 
 
 @dataclass
@@ -56,7 +73,9 @@ class ChatHarness:
         status: DocumentStatus = DocumentStatus.READY,
         filename: str = "Datenblatt Mira.pdf",
         char_count: int | None = None,
+        attach_to: str | None = None,
     ) -> Document:
+        """A processed document; with `attach_to` uploaded into that chat (not the library)."""
         doc_id = str(uuid4())
         now = self.clock.now()
         document = Document(
@@ -68,8 +87,9 @@ class ChatHarness:
             status=DocumentStatus.QUEUED,
             created_at=now,
             updated_at=now,
+            in_library=attach_to is None,
         )
-        self.documents.insert(document)
+        self.documents.insert(document, attach_to=attach_to)
         chunks = [
             Chunk(
                 chunk_id=str(uuid4()),
@@ -180,9 +200,20 @@ def build_chat_harness(
         rate=RateLimit(LimitScope.CHAT, chat_per_minute, ticker),
         budget=DailyBudget(ledger, clock, daily_budget_usd),
     )
-    chats = ChatService(
-        chats_repo, documents, registry, clock, DiskErasure(vectors, database), max_chats=5
+    erasure = DiskErasure(vectors, database)
+    storage = LocalFileStorage(root / "uploads", root / "quarantine")
+    library = DocumentService(
+        documents,
+        storage,
+        vectors,
+        _NoIngestion(),
+        DocumentPurge(documents, storage, vectors, chats_repo),
+        clock,
+        TextFileParser(),
+        erasure,
+        max_text_chars=1_000_000,
     )
+    chats = ChatService(chats_repo, documents, registry, clock, erasure, library, max_chats=5)
     return ChatHarness(
         documents, chats_repo, ledger, vectors, client, health, clock, sleep, registry, chats,
         answers, models, ticker,

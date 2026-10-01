@@ -137,3 +137,54 @@ async def test_retry_of_a_failed_duplicate_leaves_no_file_if_deleted_meanwhile(
     assert not harness.storage.is_quarantined(first.id, DocumentKind.PDF)
     assert not harness.storage.exists(first.id, DocumentKind.PDF)
     assert _temp_files(harness) == []
+
+
+# Uploads into a chat -------------------------------------------------------------------
+
+
+def _new_chat(harness: Harness, chat_id: str = "c1") -> str:
+    with harness.database.connect() as conn:
+        conn.execute(
+            "INSERT INTO chats (id, created_at, updated_at) VALUES (?, 't', 't')", (chat_id,)
+        )
+    return chat_id
+
+
+async def test_upload_into_a_chat_is_an_attachment_not_a_library_document(
+    harness: Harness,
+) -> None:
+    chat_id = _new_chat(harness)
+    doc = await harness.uploads.accept("a.pdf", len(PDF), _body(PDF), chat_id=chat_id)
+    assert doc.in_library is False
+    assert [d.id for d in harness.repository.list_attachments(chat_id)] == [doc.id]
+    assert harness.repository.list_library() == []
+
+
+async def test_upload_into_an_unknown_chat_is_refused_without_files(harness: Harness) -> None:
+    with pytest.raises(AppError) as info:
+        await harness.uploads.accept("a.pdf", len(PDF), _body(PDF), chat_id="gone")
+    assert info.value.code is ErrorCode.CHAT_NOT_FOUND
+    assert harness.repository.list_visible() == []
+    assert _temp_files(harness) == []
+    assert list((harness.root / "quarantine").glob("*")) == []
+
+
+async def test_duplicate_in_a_chat_attaches_the_existing_document(harness: Harness) -> None:
+    library_doc = await _accept(harness, "a.pdf", PDF)
+    chat_id = _new_chat(harness)
+    again = await harness.uploads.accept("b.pdf", len(PDF), _body(PDF), chat_id=chat_id)
+    assert again.id == library_doc.id
+    assert again.in_library is True
+    assert [d.id for d in harness.repository.list_attachments(chat_id)] == [library_doc.id]
+    assert _temp_files(harness) == []
+
+
+async def test_library_upload_of_an_attachment_moves_it_into_the_library(
+    harness: Harness,
+) -> None:
+    chat_id = _new_chat(harness)
+    attached = await harness.uploads.accept("a.pdf", len(PDF), _body(PDF), chat_id=chat_id)
+    again = await _accept(harness, "a.pdf", PDF)
+    assert again.id == attached.id
+    assert again.in_library is True
+    assert [d.id for d in harness.repository.list_library()] == [attached.id]

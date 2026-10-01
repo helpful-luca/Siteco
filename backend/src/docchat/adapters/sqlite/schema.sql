@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS documents (
   notices       TEXT NOT NULL DEFAULT '[]',
   created_at    TEXT NOT NULL,
   updated_at    TEXT NOT NULL,
-  ready_at      TEXT
+  ready_at      TEXT,
+  -- 0: uploaded into a chat only; it is searched there and leaves with the last such chat.
+  in_library    INTEGER NOT NULL DEFAULT 1 CHECK (in_library IN (0, 1))
 );
 CREATE INDEX IF NOT EXISTS ix_documents_status ON documents(status);
 
@@ -43,6 +45,15 @@ CREATE TABLE IF NOT EXISTS chat_documents (
   document_id   TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   PRIMARY KEY (chat_id, document_id)
 );
+
+-- Documents uploaded into a chat. Always in that chat's scope, whatever the library selection.
+CREATE TABLE IF NOT EXISTS chat_attachments (
+  chat_id       TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+  document_id   TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  created_at    TEXT NOT NULL,
+  PRIMARY KEY (chat_id, document_id)
+);
+CREATE INDEX IF NOT EXISTS ix_chat_attachments_document ON chat_attachments(document_id);
 
 CREATE TABLE IF NOT EXISTS messages (
   id                TEXT PRIMARY KEY,

@@ -67,10 +67,17 @@ class RetrievalService:
 
     def plan(self, chat: Chat) -> RetrievalPlan:
         """Raises NO_DOCUMENTS or DOCUMENTS_NOT_READY when there is nothing to search yet."""
-        visible = self._documents.list_visible()
-        if chat.scope is ChatScope.SELECTED:
-            selected = set(chat.document_ids)
-            visible = [d for d in visible if d.id in selected]
+        attached = {d.id for d in self._documents.list_attachments(chat.id)}
+        selected = set(chat.document_ids)
+
+        def in_scope(document: Document) -> bool:
+            if document.id in attached:  # uploaded into this chat: always searched here
+                return True
+            if not document.in_library:  # another chat's attachment
+                return False
+            return chat.scope is ChatScope.ALL or document.id in selected
+
+        visible = [d for d in self._documents.list_visible() if in_scope(d)]
         ready = tuple(d for d in visible if d.status is DocumentStatus.READY)
         processing = sum(1 for d in visible if d.status in _PROCESSING)
         if not ready:
@@ -111,7 +118,8 @@ class RetrievalService:
     ) -> Retrieved:
         """The chat's hybrid search without a chat, for other interfaces (the MCP server).
         Always ranked, never full-context. Only ready documents, optionally narrowed to
-        `document_ids`; unknown or not ready ids are ignored."""
+        `document_ids`; unknown or not ready ids are ignored. Library documents only: chat
+        attachments belong to their chat."""
         documents = await asyncio.to_thread(self._ready_documents, document_ids)
         ids = [d.id for d in documents]
         allowed = {d.id: d for d in documents}
@@ -120,7 +128,7 @@ class RetrievalService:
         return Retrieved(SourcesMode.RETRIEVAL, kept, allowed, ())
 
     def _ready_documents(self, only: Collection[str] | None) -> list[Document]:
-        ready = [d for d in self._documents.list_visible() if d.status is DocumentStatus.READY]
+        ready = [d for d in self._documents.list_library() if d.status is DocumentStatus.READY]
         return ready if only is None else [d for d in ready if d.id in set(only)]
 
     async def _rank(self, ids: list[str], query: str, top_k: int) -> list[Chunk]:

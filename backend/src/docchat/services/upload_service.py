@@ -3,6 +3,10 @@
 Order (annex 10, C): name and extension, declared size, quota and free disk, uploads per minute,
 magic bytes while streaming, byte count, duplicate by SHA-256, atomic rename into the quarantine,
 row `scanning`.
+
+An upload into a chat (`chat_id`) is an attachment: searched in that chat only, not listed in the
+library. The same bytes again attach the existing document instead of failing as a duplicate;
+uploaded in the library they move an attachment into the library.
 The malware scan and everything that opens the document happen later in background workers.
 """
 
@@ -130,7 +134,12 @@ class UploadService:
             raise AppError(ErrorCode.STORAGE_FULL)
 
     async def accept(
-        self, file_name: str, declared_size: int, body: AsyncIterator[bytes]
+        self,
+        file_name: str,
+        declared_size: int,
+        body: AsyncIterator[bytes],
+        *,
+        chat_id: str | None = None,
     ) -> Document:
         filename, kind = self._check_name(file_name)
         await self._check_space(declared_size)
@@ -148,17 +157,22 @@ class UploadService:
             existing = await asyncio.to_thread(
                 self._repository.find_by_sha256, receiver.sha256.hexdigest()
             )
-            if existing is not None and existing.status is not DocumentStatus.FAILED:
-                raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id})
-            if existing is not None:
-                return await self._retry(existing, sink)
-            document = self._new_document(filename, kind, receiver)
-            await asyncio.to_thread(self._storage.quarantine, sink, document.id, kind)
+            if existing is not None and existing.status is DocumentStatus.FAILED:
+                retried = await self._retry(existing, sink)
+                return await self._place(retried, chat_id)
+            if existing is None:
+                document = self._new_document(filename, kind, receiver, in_library=chat_id is None)
+                await asyncio.to_thread(self._storage.quarantine, sink, document.id, kind)
         except BaseException:
             await asyncio.to_thread(sink.discard)
             raise
+        if existing is not None:
+            await asyncio.to_thread(sink.discard)
+            if chat_id is None and existing.in_library:
+                raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id})
+            return await self._place(existing, chat_id)
         try:
-            await asyncio.to_thread(self._repository.insert, document)
+            await asyncio.to_thread(self._repository.insert, document, attach_to=chat_id)
         except BaseException:
             await asyncio.to_thread(self._storage.discard_quarantined, document.id, kind)
             raise
@@ -169,7 +183,22 @@ class UploadService:
         )
         return document
 
-    def _new_document(self, filename: str, kind: DocumentKind, receiver: _Receiver) -> Document:
+    async def _place(self, document: Document, chat_id: str | None) -> Document:
+        """An existing document where this upload wanted it: in the chat, or in the library."""
+        now = self._clock.now()
+        if chat_id is not None:
+            if not await asyncio.to_thread(self._repository.attach, chat_id, document.id, now):
+                raise AppError(ErrorCode.CHAT_NOT_FOUND)
+        elif not document.in_library:
+            await asyncio.to_thread(self._repository.add_to_library, document.id, now)
+        placed = await asyncio.to_thread(self._repository.get, document.id)
+        if placed is None:  # deleted a moment ago
+            raise AppError(ErrorCode.UPLOAD_INCOMPLETE)
+        return placed
+
+    def _new_document(
+        self, filename: str, kind: DocumentKind, receiver: _Receiver, *, in_library: bool
+    ) -> Document:
         now = self._clock.now()
         return Document(
             id=str(uuid4()),
@@ -180,6 +209,7 @@ class UploadService:
             status=DocumentStatus.SCANNING,
             created_at=now,
             updated_at=now,
+            in_library=in_library,
         )
 
     async def _retry(self, failed: Document, sink: UploadSink) -> Document:

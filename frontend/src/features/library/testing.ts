@@ -17,6 +17,7 @@ export function doc(patch: Partial<DocumentOut> = {}): DocumentOut {
     notices: [],
     created_at: '2026-09-30T10:00:00Z',
     ready_at: '2026-09-30T10:00:05Z',
+    in_library: true,
     ...patch,
   };
 }

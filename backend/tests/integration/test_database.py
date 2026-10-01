@@ -10,6 +10,7 @@ EXPECTED_TABLES = {
     "documents",
     "chats",
     "chat_documents",
+    "chat_attachments",
     "messages",
     "usage_ledger",
 }
@@ -137,3 +138,26 @@ def test_a_migration_finished_by_another_process_meanwhile_is_not_run_again(
     Database(path).migrate()
     with sqlite3.connect(path) as conn:
         assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+
+
+def test_version_4_documents_become_library_documents(tmp_path: Path) -> None:
+    """Before chat attachments every document was in the library, and stays there."""
+    path = tmp_path / "v4.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(
+            "CREATE TABLE documents (id TEXT PRIMARY KEY);"
+            "CREATE TABLE chats (id TEXT PRIMARY KEY);"
+            "CREATE TABLE messages (id TEXT PRIMARY KEY);"
+            "INSERT INTO documents VALUES ('d1'); INSERT INTO chats VALUES ('c1');"
+            "PRAGMA user_version = 4;"
+        )
+    db = Database(path)
+    db.migrate()
+    with db.connect() as conn:
+        assert conn.execute("SELECT in_library FROM documents").fetchone()[0] == 1
+        conn.execute(
+            "INSERT INTO chat_attachments (chat_id, document_id, created_at)"
+            " VALUES ('c1', 'd1', 't')"
+        )
+        conn.execute("DELETE FROM chats WHERE id = 'c1'")
+        assert conn.execute("SELECT COUNT(*) FROM chat_attachments").fetchone()[0] == 0

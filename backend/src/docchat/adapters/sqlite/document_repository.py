@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from datetime import datetime
 
 from docchat.adapters.sqlite.database import Database
@@ -49,6 +49,7 @@ def _row_to_document(row: sqlite3.Row) -> Document:
         error_params=json.loads(row["error_params"]),
         notices=notices,
         ready_at=_parse_ts(row["ready_at"]),
+        in_library=bool(row["in_library"]),
     )
 
 
@@ -64,34 +65,51 @@ class SqliteDocumentRepository:
         with self._db.connect() as conn:
             return conn.execute(sql, params).rowcount == 1
 
-    def insert(self, document: Document) -> None:
+    def insert(self, document: Document, *, attach_to: str | None = None) -> None:
+        """`attach_to`: the chat the document was uploaded into, in the same transaction, so a
+        chat deleted meanwhile leaves no row behind (CHAT_NOT_FOUND)."""
         try:
             with self._db.connect() as conn:
-                conn.execute(
-                    "INSERT INTO documents (id, filename, kind, size_bytes, sha256, page_count,"
-                    " status, progress, notices, created_at, updated_at)"
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (
-                        document.id,
-                        document.filename,
-                        document.kind.value,
-                        document.size_bytes,
-                        document.sha256,
-                        document.page_count,
-                        document.status.value,
-                        document.progress,
-                        _notices_json(document.notices),
-                        _ts(document.created_at),
-                        _ts(document.updated_at),
-                    ),
-                )
+                conn.execute("BEGIN")
+                try:
+                    conn.execute(
+                        "INSERT INTO documents (id, filename, kind, size_bytes, sha256,"
+                        " page_count, status, progress, notices, created_at, updated_at,"
+                        " in_library) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            document.id,
+                            document.filename,
+                            document.kind.value,
+                            document.size_bytes,
+                            document.sha256,
+                            document.page_count,
+                            document.status.value,
+                            document.progress,
+                            _notices_json(document.notices),
+                            _ts(document.created_at),
+                            _ts(document.updated_at),
+                            int(document.in_library),
+                        ),
+                    )
+                    if attach_to is not None:
+                        conn.execute(
+                            "INSERT INTO chat_attachments (chat_id, document_id, created_at)"
+                            " VALUES (?, ?, ?)",
+                            (attach_to, document.id, _ts(document.created_at)),
+                        )
+                    conn.execute("COMMIT")
+                except BaseException:
+                    conn.execute("ROLLBACK")
+                    raise
         except sqlite3.IntegrityError as exc:
             existing = self.find_by_sha256(document.sha256)
-            if existing is None:
-                raise
-            raise AppError(
-                ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id}
-            ) from exc
+            if existing is not None:
+                raise AppError(
+                    ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id}
+                ) from exc
+            if attach_to is not None:
+                raise AppError(ErrorCode.CHAT_NOT_FOUND) from exc
+            raise
 
     def get(self, document_id: str) -> Document | None:
         with self._db.connect() as conn:
@@ -105,6 +123,58 @@ class SqliteDocumentRepository:
                 (DocumentStatus.DELETING.value,),
             ).fetchall()
         return [_row_to_document(r) for r in rows]
+
+    def list_library(self) -> list[Document]:
+        with self._db.connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM documents WHERE status != ? AND in_library = 1"
+                " ORDER BY created_at DESC, id",
+                (DocumentStatus.DELETING.value,),
+            ).fetchall()
+        return [_row_to_document(r) for r in rows]
+
+    def list_attachments(self, chat_id: str) -> list[Document]:
+        with self._db.connect() as conn:
+            rows = conn.execute(
+                "SELECT d.* FROM documents d JOIN chat_attachments a ON a.document_id = d.id"
+                " WHERE a.chat_id = ? AND d.status != ? ORDER BY a.created_at DESC, d.id",
+                (chat_id, DocumentStatus.DELETING.value),
+            ).fetchall()
+        return [_row_to_document(r) for r in rows]
+
+    def attach(self, chat_id: str, document_id: str, now: datetime) -> bool:
+        """False if the chat or the document is gone. Attaching twice is harmless."""
+        try:
+            with self._db.connect() as conn:
+                conn.execute(
+                    "INSERT OR IGNORE INTO chat_attachments (chat_id, document_id, created_at)"
+                    " VALUES (?, ?, ?)",
+                    (chat_id, document_id, _ts(now)),
+                )
+        except sqlite3.IntegrityError:
+            return False
+        return True
+
+    def add_to_library(self, document_id: str, now: datetime) -> bool:
+        return self._update(
+            "UPDATE documents SET in_library = 1, updated_at = ? WHERE id = ? AND status != ?",
+            (_ts(now), document_id, DocumentStatus.DELETING.value),
+        )
+
+    def unreferenced(self, document_ids: Collection[str]) -> list[str]:
+        """Of these, the documents outside the library that no chat holds any more."""
+        ids = list(document_ids)
+        if not ids:
+            return []
+        with self._db.connect() as conn:
+            rows = conn.execute(
+                f"SELECT d.id FROM documents d WHERE d.id IN ({_placeholders(ids)})"
+                " AND d.in_library = 0"
+                " AND NOT EXISTS (SELECT 1 FROM chat_attachments a WHERE a.document_id = d.id)"
+                " ORDER BY d.created_at, d.id",
+                ids,
+            ).fetchall()
+        return [r[0] for r in rows]
 
     def list_by_status(self, *statuses: DocumentStatus) -> list[Document]:
         values = [s.value for s in statuses]

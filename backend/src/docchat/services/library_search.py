@@ -42,7 +42,7 @@ class LibrarySearch:
     def list_documents(self) -> list[LibraryDocument]:
         return [
             LibraryDocument(d.id, d.filename, d.kind, d.page_count)
-            for d in self._documents.list_visible()
+            for d in self._documents.list_library()
             if d.status is DocumentStatus.READY
         ]
 

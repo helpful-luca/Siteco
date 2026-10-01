@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 # Steps from one version to the next for databases created by an older release. A new database
 # gets schema.sql, which already has the latest shape.
@@ -16,6 +16,16 @@ _MIGRATIONS: dict[int, str] = {
     3: "ALTER TABLE messages ADD COLUMN sources_mode TEXT;\n"
     "ALTER TABLE messages ADD COLUMN notices TEXT NOT NULL DEFAULT '[]';",
     4: "ALTER TABLE messages ADD COLUMN error_request_id TEXT;",
+    # Chat attachments; every existing document was uploaded to the library and stays there.
+    5: "ALTER TABLE documents ADD COLUMN in_library INTEGER NOT NULL DEFAULT 1"
+    " CHECK (in_library IN (0, 1));\n"
+    "CREATE TABLE chat_attachments (\n"
+    "  chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,\n"
+    "  document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,\n"
+    "  created_at TEXT NOT NULL,\n"
+    "  PRIMARY KEY (chat_id, document_id)\n"
+    ");\n"
+    "CREATE INDEX ix_chat_attachments_document ON chat_attachments(document_id);",
 }
 
 

@@ -64,9 +64,23 @@ class DocumentService:
     def view(self, document: Document) -> DocumentView:
         return self._view(document, self._worker.queue_positions())
 
-    def list(self) -> list[DocumentView]:
+    def attachments(self, chat_id: str) -> list[DocumentView]:
+        """Documents uploaded into the chat, newest first; the caller checks the chat exists."""
         positions = self._worker.queue_positions()
-        return [self._view(d, positions) for d in self._repository.list_visible()]
+        return [self._view(d, positions) for d in self._repository.list_attachments(chat_id)]
+
+    def add_to_library(self, document_id: str) -> DocumentView:
+        """An attachment becomes a library document: listed there, searched in every chat
+        whose scope includes it. Idempotent."""
+        if not self._repository.add_to_library(document_id, self._clock.now()):
+            raise AppError(ErrorCode.NOT_FOUND)
+        log.info("document_added_to_library", extra={"document_id": document_id})
+        return self.get(document_id)
+
+    def list(self) -> list[DocumentView]:
+        """The library: documents uploaded into a chat only are listed with that chat."""
+        positions = self._worker.queue_positions()
+        return [self._view(d, positions) for d in self._repository.list_library()]
 
     def _require(self, document_id: str) -> Document:
         document = self._repository.get(document_id)

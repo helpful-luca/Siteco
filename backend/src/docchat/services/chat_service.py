@@ -12,6 +12,7 @@ from docchat.domain.errors import AppError, ErrorCode
 from docchat.domain.ports import ChatRepository, Clock, DocumentRepository
 from docchat.domain.redaction import without_text_of
 from docchat.services.disk_erasure import DiskErasure
+from docchat.services.document_service import DocumentService
 from docchat.services.run_registry import RunRegistry
 
 log = logging.getLogger("docchat.chats")
@@ -46,10 +47,12 @@ class ChatService:
         runs: RunRegistry,
         clock: Clock,
         erasure: DiskErasure,
+        library: DocumentService,
         *,
         max_chats: int,
     ) -> None:
         self._erasure = erasure
+        self._library = library
         self._chats = chats
         self._documents = documents
         self._runs = runs
@@ -75,8 +78,8 @@ class ChatService:
                 "A selected scope needs at least one document.",
                 details=[{"loc": ["body", "document_ids"], "type": "too_short"}],
             )
-        visible = {d.id for d in self._documents.list_visible()}
-        missing = [d for d in ids if d not in visible]
+        library = {d.id for d in self._documents.list_library()}
+        missing = [d for d in ids if d not in library]
         if missing:
             raise AppError(ErrorCode.NOT_FOUND, params={"document_ids": missing})
         return ids
@@ -141,14 +144,33 @@ class ChatService:
         log.info("answer_preferred", extra={"chat_id": chat_id, "message_id": answer.id})
 
     async def delete(self, chat_id: str) -> None:
-        """Running answers are stopped first, so none of them writes into a deleted chat."""
+        """Running answers are stopped first, so none of them writes into a deleted chat.
+        Documents uploaded only into this chat go with it, as forensically as a delete in
+        the library (files, index, cited text)."""
         self.get(chat_id)
         await self._runs.stop_and_wait(chat_id)
-        deleted = await asyncio.to_thread(self._chats.delete_chat, chat_id)
-        if not deleted:
+        if not await self._delete_with_attachments(chat_id):
             raise AppError(ErrorCode.CHAT_NOT_FOUND)
-        await self._erasure.after_rows()
+        await self._erasure.after_documents()
         log.info("chat_deleted", extra={"chat_id": chat_id})
+
+    async def _delete_with_attachments(self, chat_id: str) -> bool:
+        """Not erased on disk here; the caller erases once."""
+        candidates = [
+            d.id
+            for d in await asyncio.to_thread(self._documents.list_attachments, chat_id)
+            if not d.in_library
+        ]
+        if not await asyncio.to_thread(self._chats.delete_chat, chat_id):
+            return False
+        # Checked after the chat is gone: another chat may hold the same file meanwhile.
+        for document_id in await asyncio.to_thread(self._documents.unreferenced, candidates):
+            try:
+                await self._library.delete(document_id, erase=False)
+            except AppError as exc:
+                if exc.code is not ErrorCode.NOT_FOUND:  # deleted meanwhile
+                    raise
+        return True
 
     async def delete_if_idle(self, chat_id: str) -> bool:
         """For automatic deletion: only a chat without a running answer, and no answer can
@@ -157,7 +179,7 @@ class ChatService:
         if not self._runs.close_if_idle(chat_id):
             return False
         try:
-            return await asyncio.to_thread(self._chats.delete_chat, chat_id)
+            return await self._delete_with_attachments(chat_id)
         finally:
             self._runs.reopen(chat_id)
 

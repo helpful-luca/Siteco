@@ -46,6 +46,7 @@ class World:
             self.runs,
             harness.clock,
             self.erasure,
+            harness.documents,
             max_chats=100,
         )
         self.workspace = WorkspaceService(

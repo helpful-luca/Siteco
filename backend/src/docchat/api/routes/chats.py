@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from docchat.api.answer_stream import answer_stream
-from docchat.api.dependencies import AnswerServiceDep, ChatServiceDep
+from docchat.api.dependencies import AnswerServiceDep, ChatServiceDep, DocumentServiceDep
 from docchat.api.schemas.chats import (
     AskIn,
     ChatEnvelopeOut,
@@ -29,6 +29,7 @@ from docchat.api.schemas.chats import (
     UpdateChatIn,
 )
 from docchat.api.schemas.common import ErrorEnvelope
+from docchat.api.schemas.documents import DocumentListOut, DocumentOut
 from docchat.core.logging import request_id_var
 from docchat.domain.enums import Lane
 from docchat.services.answer_run import AnswerRun
@@ -127,6 +128,17 @@ async def delete_chat(chat_id: UUID, chats: ChatServiceDep) -> Response:
     """Stops running answers of the chat first."""
     await chats.delete(str(chat_id))
     return Response(status_code=204)
+
+
+@router.get("/{chat_id}/attachments", response_model=DocumentListOut, responses=_errors(404))
+def list_attachments(
+    chat_id: UUID, chats: ChatServiceDep, documents: DocumentServiceDep
+) -> DocumentListOut:
+    """Documents uploaded into this chat, newest first. Poll while any is processing."""
+    chats.get(str(chat_id))
+    return DocumentListOut(
+        documents=[DocumentOut.from_view(v) for v in documents.attachments(str(chat_id))]
+    )
 
 
 @router.get("/{chat_id}/messages", response_model=MessageListOut, responses=_errors(404))

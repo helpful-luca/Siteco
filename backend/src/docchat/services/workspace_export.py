@@ -62,6 +62,7 @@ class WorkspaceExport:
                                 "size_bytes": d.size_bytes,
                                 "page_count": d.page_count,
                                 "status": d.status.value,
+                                "in_library": d.in_library,
                                 "created_at": d.created_at.isoformat(),
                             }
                             for d in documents

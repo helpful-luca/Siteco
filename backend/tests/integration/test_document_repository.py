@@ -157,3 +157,60 @@ def test_rescan_takes_a_failed_document_back_to_scanning(repo: SqliteDocumentRep
         None,
         {},
     )
+
+
+# Chat attachments ----------------------------------------------------------------------
+
+
+def _chat(repo: SqliteDocumentRepository, chat_id: str) -> None:
+    with repo._db.connect() as conn:
+        conn.execute(
+            "INSERT INTO chats (id, created_at, updated_at) VALUES (?, 't', 't')", (chat_id,)
+        )
+
+
+def test_attachments_are_not_library_documents(repo: SqliteDocumentRepository) -> None:
+    _chat(repo, "c1")
+    repo.insert(_doc("lib", "a" * 64))
+    repo.insert(_doc("att", "b" * 64, in_library=False), attach_to="c1")
+    assert [d.id for d in repo.list_library()] == ["lib"]
+    assert {d.id for d in repo.list_visible()} == {"lib", "att"}
+    assert [d.id for d in repo.list_attachments("c1")] == ["att"]
+    attached = repo.get("att")
+    assert attached is not None and attached.in_library is False
+
+
+def test_insert_into_a_deleted_chat_fails_and_leaves_no_row(
+    repo: SqliteDocumentRepository,
+) -> None:
+    with pytest.raises(AppError) as caught:
+        repo.insert(_doc("att", in_library=False), attach_to="gone")
+    assert caught.value.code is ErrorCode.CHAT_NOT_FOUND
+    assert repo.get("att") is None
+
+
+def test_attach_and_add_to_library(repo: SqliteDocumentRepository) -> None:
+    _chat(repo, "c1")
+    _chat(repo, "c2")
+    repo.insert(_doc("att", in_library=False), attach_to="c1")
+    assert repo.attach("c2", "att", T0) is True
+    assert repo.attach("c2", "att", T0) is True  # idempotent
+    assert repo.attach("gone", "att", T0) is False
+    assert [d.id for d in repo.list_attachments("c2")] == ["att"]
+    assert repo.add_to_library("att", T0) is True
+    assert [d.id for d in repo.list_library()] == ["att"]
+    assert repo.add_to_library("missing", T0) is False
+
+
+def test_unreferenced_keeps_library_and_still_attached_documents(
+    repo: SqliteDocumentRepository,
+) -> None:
+    _chat(repo, "c1")
+    _chat(repo, "c2")
+    repo.insert(_doc("only", "a" * 64, in_library=False), attach_to="c1")
+    repo.insert(_doc("shared", "b" * 64, in_library=False), attach_to="c1")
+    repo.attach("c2", "shared", T0)
+    repo.insert(_doc("lib", "c" * 64), attach_to="c1")
+    with repo._db.connect() as conn:
+        conn.execute("DELETE FROM chats WHERE id = 'c1'")
+    assert repo.unreferenced(["only", "shared", "lib", "missing"]) == ["only"]

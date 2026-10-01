@@ -92,3 +92,13 @@ async def test_query_limits(library: LibrarySearch, query: str) -> None:
 async def test_too_many_document_ids(library: LibrarySearch) -> None:
     with pytest.raises(AppError):
         await library.search("q", document_ids=[str(i) for i in range(51)])
+
+
+async def test_chat_attachments_are_invisible_to_mcp(
+    h: ChatHarness, library: LibrarySearch
+) -> None:
+    chat = h.new_chat()
+    h.add_document(("Die Mira hat Schutzart IP66.",), filename="Bibliothek.pdf")
+    h.add_document(("Die Mira hat Schutzart IP66.",), filename="Anhang.pdf", attach_to=chat.id)
+    assert [d.filename for d in library.list_documents()] == ["Bibliothek.pdf"]
+    assert {p.filename for p in await library.search("Schutzart IP66")} == {"Bibliothek.pdf"}

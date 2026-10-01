@@ -31,6 +31,9 @@ class DocumentOut(BaseModel):
     notices: list[NoticeOut]
     created_at: datetime
     ready_at: datetime | None
+    in_library: bool = Field(
+        description="False: uploaded into a chat, listed and searched only there."
+    )
 
     @classmethod
     def from_view(cls, view: DocumentView) -> "DocumentOut":
@@ -50,6 +53,7 @@ class DocumentOut(BaseModel):
             notices=[NoticeOut(code=n.code, params=dict(n.params)) for n in d.notices],
             created_at=d.created_at,
             ready_at=d.ready_at,
+            in_library=d.in_library,
         )
 
 

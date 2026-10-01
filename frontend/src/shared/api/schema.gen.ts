@@ -50,6 +50,26 @@ export interface paths {
         patch: operations["update_chat_api_chats__chat_id__patch"];
         trace?: never;
     };
+    "/api/chats/{chat_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Attachments
+         * @description Documents uploaded into this chat, newest first. Poll while any is processing.
+         */
+        get: operations["list_attachments_api_chats__chat_id__attachments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chats/{chat_id}/messages": {
         parameters: {
             query?: never;
@@ -166,13 +186,16 @@ export interface paths {
         };
         /**
          * List Documents
-         * @description All documents, newest first. Poll while any is not `ready` or `failed`.
+         * @description The library, newest first. Poll while any is not `ready` or `failed`. Documents
+         *     uploaded into a chat are listed by `GET /api/chats/{chat_id}/attachments`.
          */
         get: operations["list_documents_api_documents_get"];
         put?: never;
         /**
          * Upload Document
          * @description Raw body, one file per request. Answers 202 at once; ingestion runs in the background.
+         *     Without `chat_id` the file goes into the library; an attachment with the same bytes
+         *     moves there instead of 409.
          */
         post: operations["upload_document_api_documents_post"];
         delete?: never;
@@ -236,6 +259,26 @@ export interface paths {
         get: operations["get_document_file_api_documents__document_id__file_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{document_id}/library": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Document To Library
+         * @description Moves a chat attachment into the library. Idempotent.
+         */
+        post: operations["add_document_to_library_api_documents__document_id__library_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -589,6 +632,11 @@ export interface components {
             filename: string;
             /** Id */
             id: string;
+            /**
+             * In Library
+             * @description False: uploaded into a chat, listed and searched only there.
+             */
+            in_library: boolean;
             kind: components["schemas"]["DocumentKind"];
             /** Notices */
             notices: components["schemas"]["NoticeOut"][];
@@ -1345,6 +1393,46 @@ export interface operations {
             };
         };
     };
+    list_attachments_api_chats__chat_id__attachments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chat_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentListOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     list_messages_api_chats__chat_id__messages_get: {
         parameters: {
             query?: never;
@@ -1653,7 +1741,10 @@ export interface operations {
     };
     upload_document_api_documents_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Upload into this chat: searched only there, not listed in the library. The same file again attaches the existing document instead of 409. */
+                chat_id?: string | null;
+            };
             header: {
                 /** @description Percent-encoded UTF-8 file name. */
                 "x-file-name": string;
@@ -1680,6 +1771,15 @@ export interface operations {
             };
             /** @description Bad Request */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1921,6 +2021,46 @@ export interface operations {
             };
             /** @description Requested Range Not Satisfiable */
             416: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    add_document_to_library_api_documents__document_id__library_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentEnvelopeOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -69,10 +69,8 @@ class RetentionSweeper:
                 documents += 1
             except AppError:
                 continue  # deleted meanwhile, or the next sweep tries again
-        if documents:
+        if chats or documents:  # a deleted chat may have taken its attachments along
             await self._erasure.after_documents()
-        elif chats:
-            await self._erasure.after_rows()
         if chats or documents:
             log.info("retention_swept", extra={"chats": chats, "documents": documents})
         return SweepResult(chats, documents)

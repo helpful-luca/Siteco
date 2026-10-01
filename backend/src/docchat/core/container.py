@@ -286,7 +286,7 @@ def build_container(
         max_text_chars=settings.max_chars_per_doc,
     )
     chat_service = ChatService(
-        chats, repository, runs, clock, erasure, max_chats=settings.max_chats
+        chats, repository, runs, clock, erasure, documents, max_chats=settings.max_chats
     )
     preferences = PreferencesService(
         SqlitePreferencesStore(database), clock, settings.enabled_models, settings.default_model

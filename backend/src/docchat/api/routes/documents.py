@@ -5,7 +5,7 @@ from typing import Annotated, Any
 from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import APIRouter, Header, Request, Response
+from fastapi import APIRouter, Header, Query, Request, Response
 from fastapi.responses import FileResponse, PlainTextResponse
 from starlette.requests import ClientDisconnect
 
@@ -69,7 +69,7 @@ def _header_error(name: str, message: str) -> AppError:
     status_code=202,
     response_model=DocumentEnvelopeOut,
     openapi_extra=_UPLOAD_BODY,
-    responses=_errors(400, 409, 413, 415, 507),
+    responses=_errors(400, 404, 409, 413, 415, 507),
 )
 async def upload_document(
     request: Request,
@@ -78,25 +78,50 @@ async def upload_document(
     x_file_name: Annotated[str, Header(description="Percent-encoded UTF-8 file name.")],
     content_length: Annotated[int | None, Header(ge=0)] = None,
     content_type: Annotated[str | None, Header()] = None,
+    chat_id: Annotated[
+        UUID | None,
+        Query(
+            description="Upload into this chat: searched only there, not listed in the "
+            "library. The same file again attaches the existing document instead of 409."
+        ),
+    ] = None,
 ) -> DocumentEnvelopeOut:
-    """Raw body, one file per request. Answers 202 at once; ingestion runs in the background."""
+    """Raw body, one file per request. Answers 202 at once; ingestion runs in the background.
+    Without `chat_id` the file goes into the library; an attachment with the same bytes
+    moves there instead of 409."""
     if (content_type or "").split(";")[0].strip() != "application/octet-stream":
         raise _header_error("content-type", "Content-Type must be application/octet-stream.")
     if content_length is None:
         raise _header_error("content-length", "Content-Length is required.")
-    document = await uploads.accept(x_file_name, content_length, _body(request))
+    document = await uploads.accept(
+        x_file_name,
+        content_length,
+        _body(request),
+        chat_id=None if chat_id is None else str(chat_id),
+    )
     return DocumentEnvelopeOut(document=DocumentOut.from_view(documents.view(document)))
 
 
 @router.get("", response_model=DocumentListOut)
 def list_documents(documents: DocumentServiceDep) -> DocumentListOut:
-    """All documents, newest first. Poll while any is not `ready` or `failed`."""
+    """The library, newest first. Poll while any is not `ready` or `failed`. Documents
+    uploaded into a chat are listed by `GET /api/chats/{chat_id}/attachments`."""
     return DocumentListOut(documents=[DocumentOut.from_view(v) for v in documents.list()])
 
 
 @router.get("/{document_id}", response_model=DocumentEnvelopeOut, responses=_errors(404))
 def get_document(document_id: UUID, documents: DocumentServiceDep) -> DocumentEnvelopeOut:
     return DocumentEnvelopeOut(document=DocumentOut.from_view(documents.get(str(document_id))))
+
+
+@router.post("/{document_id}/library", response_model=DocumentEnvelopeOut, responses=_errors(404))
+def add_document_to_library(
+    document_id: UUID, documents: DocumentServiceDep
+) -> DocumentEnvelopeOut:
+    """Moves a chat attachment into the library. Idempotent."""
+    return DocumentEnvelopeOut(
+        document=DocumentOut.from_view(documents.add_to_library(str(document_id)))
+    )
 
 
 @router.delete("/{document_id}", status_code=204, responses=_errors(404, 500))
