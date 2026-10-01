@@ -2,13 +2,27 @@
 
 [![CI](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml/badge.svg)](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml)
 
-Upload PDFs, text, Markdown or HTML files and ask questions about them in German or English. Answers stream in, and every claim links to the sentence it comes from, highlighted in the original PDF. Parsing, OCR, the malware scan, embeddings and search run on your machine; only the question and the best passages are sent to Claude.
+Upload your documents and ask questions about them in German or English. Every answer shows its sources, and a click on a source opens the PDF with the quoted sentence highlighted.
+
+Your files stay on your machine. Only the question and the relevant passages are sent to Claude.
 
 ![Answer with citations and the cited sentence highlighted in the PDF](docs/images/citation-highlight.jpg)
 
-## Run with Docker
+## Getting started
 
-You need Docker with Compose v2 and about 4 GB of free memory.
+There are three ways to run the app. All of them need Docker.
+
+| Way | Command | Result |
+|---|---|---|
+| Docker | `docker compose up --build` | App in the browser |
+| Desktop app | `npm install && npm run app` | Same app in its own window |
+| Development | `npm install && npm run dev` | Backend and frontend with hot reload |
+
+After the first start, an onboarding asks for language, appearance and your name. Then add your Claude API key under **Settings > Models**. Without a key you can already upload and search; questions then return matching passages instead of an answer.
+
+### Docker
+
+Requires Docker with Compose v2 and about 4 GB of free memory.
 
 ```sh
 git clone https://github.com/helpful-luca/Siteco.git
@@ -16,148 +30,161 @@ cd Siteco
 docker compose up --build
 ```
 
-Open http://localhost:3000, or use the [desktop app](#run-as-a-desktop-app) for a separate window. The first build downloads the images, the virus scanner and the local embedding model (about 3.5 GB on disk) and takes a few minutes. Later starts take seconds.
+Open http://localhost:3000.
 
-On first start a short onboarding asks for language, appearance and your name. Then add your Claude API key in Settings > Models; it is checked and used from the next question, no restart needed. Alternatively put it in a `.env` file (`cp .env.example .env`, set `ANTHROPIC_API_KEY`) and run `docker compose up -d`.
+- The first build takes a few minutes and uses about 3.5 GB of disk (images, virus scanner, embedding model). Later starts take seconds.
+- Instead of the settings page, the key can go into a `.env` file: `cp .env.example .env`, set `ANTHROPIC_API_KEY`, run `docker compose up -d`.
+- Port 3000 taken: `APP_PORT=3001 docker compose up --build`.
+- Stop with `docker compose down`. Documents and chats are kept in Docker volumes.
 
-Until a key is set, upload and search already work, and a question shows the matching passages instead of an answer.
+### Desktop app
 
-If port 3000 is taken, start with `APP_PORT=3001 docker compose up --build`. Stop with `docker compose down`; your documents and chats stay in Docker volumes.
-
-## Run as a desktop app
-
-The same Docker stack, opened in its own window instead of a browser tab. You need Docker and Node 22.12 or newer.
+Requires Docker and Node 22.12 or newer.
 
 ```sh
 npm install
 npm run app
 ```
 
-The app starts Docker Desktop if it is not running, runs `docker compose up` in the project folder and opens the window once the app answers. The first start builds the images as above and downloads Electron (about 130 MB). Quitting the window leaves the containers running, so the next start is instant. Building an installer for macOS or Windows is described in [desktop/README.md](desktop/README.md).
+The app starts Docker Desktop if needed, runs the same `docker compose` stack and opens a window. The first start also downloads Electron (about 130 MB). Closing the window leaves the containers running, so the next start is instant. Installers for macOS and Windows: [desktop/README.md](desktop/README.md).
 
-## Run for development
+### Development
 
-The backend and the web app run directly on your machine with hot reload, shown in the desktop window.
-
-You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 22.12 or newer, `make` and Docker (only for the virus scanner). Stop the Docker stack first with `docker compose stop`, since both use port 3000.
+Requires Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 22.12 or newer, `make` and Docker. Stop the Docker stack first (`docker compose stop`), since both use port 3000.
 
 ```sh
 npm install
 npm run dev
 ```
 
-This starts the virus scanner in Docker, the FastAPI backend on 127.0.0.1:8000, the Next.js dev server on http://localhost:3000 and the Electron window. The first run downloads the embedding model (about 400 MB) and Electron (about 130 MB). The backend reads the same `.env` as Docker, so a key set there applies here too.
+This starts the virus scanner in Docker, the backend on port 8000, the Next.js dev server on port 3000 and the desktop window. The first run downloads the embedding model (about 400 MB). A key in `.env` is used here as well.
 
-Scanned PDFs need Tesseract outside Docker: `brew install tesseract tesseract-lang` on macOS. Without it, pages without a text layer are marked as not searchable.
+For scanned PDFs outside Docker, install Tesseract: `brew install tesseract tesseract-lang`.
 
-## How to use it
+## Using the app
 
-1. **Library:** drop in files or import a link. The status goes from "Checking" (malware scan) to "Reading" to "Ready".
-2. **Ask:** start a chat and ask a question. The answer streams in with numbered citations.
-3. **Check the source:** click a citation. The PDF opens on that page with the sentence highlighted.
-4. **Follow up:** ask again in the same chat; the previous question is used for the search.
-5. **Details:** under each answer you see the model, tokens, cost, timings and the passages that were sent.
-6. **Compare:** let two models answer the same question side by side.
+1. **Upload:** drop files into the library or import a link. Each file is scanned for malware, read and indexed.
+2. **Ask:** start a chat. The answer streams in with numbered sources.
+3. **Check:** click a source. The PDF opens on that page with the sentence highlighted.
+4. **Follow up:** keep asking in the same chat.
+5. **Compare:** let two models answer the same question side by side.
 
-| | |
-|---|---|
-| ![Library](docs/images/library.jpg) | ![Import from a link](docs/images/import-link.jpg) |
-| ![New chat](docs/images/new-chat.jpg) | ![Answer with citations](docs/images/chat-answer.jpg) |
-| ![Onboarding: language](docs/images/onboarding-language.jpg) | ![Onboarding: appearance](docs/images/onboarding-appearance.jpg) |
+Below each answer you find the model, cost, timings and the passages that were used.
+
+<p>
+  <img src="docs/images/onboarding-language.jpg" width="32%" alt="Onboarding: language">
+  <img src="docs/images/onboarding-appearance.jpg" width="32%" alt="Onboarding: appearance">
+  <img src="docs/images/onboarding-name.jpg" width="32%" alt="Onboarding: name">
+</p>
+<p>
+  <img src="docs/images/new-chat.jpg" width="49%" alt="New chat">
+  <img src="docs/images/library.jpg" width="49%" alt="Library">
+</p>
+<p>
+  <img src="docs/images/import-link.jpg" width="49%" alt="Import from a link">
+  <img src="docs/images/chat-answer.jpg" width="49%" alt="Answer with sources">
+</p>
 
 ## What is built
 
 | Case brief | Implementation |
 |---|---|
-| Upload | Drag and drop or link import (with SSRF protection); PDF, TXT, Markdown, HTML; up to 1 GB and 5000 pages per file; OCR for scanned pages; ClamAV scan before anything is stored |
-| Process | pypdfium2 in its own process with timeouts; sentence-aware chunks of about 400 tokens that never cross pages; local multilingual embeddings (IBM Granite); LanceDB with vectors and BM25 |
-| Retrieve | Hybrid search (vectors and BM25 with German stemming, reciprocal rank fusion), a cap per document, per-chat document scope |
-| Answer | Claude with `search_result` blocks and native citations, streamed over SSE, with stop, retry and chat history |
-| Rich rendering | Markdown with tables and code; tables and code open in a side panel. No raw HTML or images in answers |
-| Citation highlighting | Exact line rectangles in the PDF; text files highlight the passage; scanned pages use OCR word positions |
-| Multiple models | Model per message (Haiku, Sonnet, Opus) and a side-by-side comparison with timings and cost |
+| Upload | PDF, TXT, Markdown, HTML; drag and drop or link import; up to 1 GB and 5000 pages per file; ClamAV scan first |
+| Process | pypdfium2 in its own process, OCR for scanned pages, sentence-aware chunks of about 400 tokens, local embeddings (IBM Granite), LanceDB |
+| Retrieve | Hybrid search: vectors and BM25 with German stemming, combined by rank fusion |
+| Answer | Claude with native citations, streamed, with stop, retry and chat history |
+| Rich rendering | Markdown with tables and code; tables and code open in a side panel |
+| Citation highlighting | Exact line positions in the PDF, passage highlight in text files, OCR word positions for scans |
+| Multiple models | Haiku, Sonnet or Opus per message, and a side-by-side comparison |
 
-Also included: German and English UI, onboarding, light and dark mode, a command palette (⌘K or Ctrl K), settings, export and deletion of all data, and a desktop app for macOS and Windows.
+Also included: German and English UI, light and dark mode, command palette (⌘K or Ctrl K), data export and deletion, desktop app for macOS and Windows.
 
 ## Architecture
 
 ```
 Browser or desktop window (localhost:3000)
-  -> Next.js container: UI and a streaming proxy for /api
-       -> FastAPI container (internal network only)
-            SQLite    documents, chats, messages, settings, usage
+  -> Next.js: UI and a streaming proxy for /api
+       -> FastAPI (internal network only)
+            SQLite    documents, chats, settings
             LanceDB   chunks, vectors, BM25 index
             files     uploaded originals
-            embeddings and Tesseract run inside the container
-       -> ClamAV container: scans every upload
-  -> Anthropic API (only with a key, called by the backend)
+            embedding model and Tesseract inside the container
+       -> ClamAV: scans every upload
+  -> Claude API (called by the backend, only with a key)
 ```
 
-The backend is layered: `api` (HTTP), `services` (use cases), `domain` (rules and ports) and `adapters` (SQLite, LanceDB, Claude, ClamAV and so on). import-linter enforces the boundaries in CI. The frontend is organised in feature folders, and its API types are generated from the OpenAPI contract. More in [docs/architecture.md](docs/architecture.md).
+- **Backend:** layers `api`, `services`, `domain` and `adapters`. import-linter checks the boundaries in CI.
+- **Frontend:** feature folders; API types are generated from the OpenAPI contract.
+
+More in [docs/architecture.md](docs/architecture.md).
 
 ## Key decisions
 
 | Topic | Chosen | Rejected | Why |
 |---|---|---|---|
-| Citations | Claude `search_result` blocks with native citations | The model writes `[1]` itself | Exact cited sentences, and documents stay data rather than instructions |
-| Retrieval | Hybrid: vectors and BM25 with rank fusion | Vectors only | Exact codes like IP66 and cross-language questions both work |
-| Embeddings | IBM Granite multilingual, local | API embeddings, bge-m3 | Good German, Apache 2.0, runs on CPU, offline, one key is enough |
-| Index | LanceDB embedded, SQLite as source of truth | Qdrant, Chroma | No extra service; search only sees documents marked ready |
-| PDF parsing | pypdfium2 in a separate process | PyMuPDF (AGPL), Docling (needs torch) | Line positions for highlighting, and a hostile file can be killed |
+| Citations | Claude `search_result` blocks with native citations | The model writes `[1]` itself | Exact cited sentences; documents stay data, not instructions |
+| Retrieval | Hybrid: vectors and BM25 | Vectors only | Finds exact codes like IP66 and works across languages |
+| Embeddings | IBM Granite multilingual, local | API embeddings, bge-m3 | Good German, runs offline on CPU, only one API key needed |
+| Index | LanceDB embedded, SQLite as source of truth | Qdrant, Chroma | No extra service; search only sees finished documents |
+| PDF parsing | pypdfium2 in a separate process | PyMuPDF (AGPL), Docling (needs torch) | Line positions for highlighting; a broken file can be stopped |
 | Streaming | Own SSE endpoint and Next.js proxy | Vercel AI SDK, Next.js `rewrites()` | Full control; `rewrites()` buffered the stream |
-| Model | Claude Sonnet 5.5 by default, switchable per message | One fixed model | Good quality and cost for reading tasks; cost is shown per answer |
-| Chunking | Page, paragraph, sentence, with a context header | Semantic chunking | Sentences are the unit that is cited and highlighted |
-| Answer safety | No images or HTML, only http(s) and mailto links, static CSP | Sanitising afterwards | A prompt injection cannot leak data through a rendered image |
-| Uploads | Raw body per file, quarantine until ClamAV reports clean | Multipart, scan later | Size is enforced while reading; nothing unscanned is ever served |
+| Model | Claude Sonnet 5.5, switchable per message | One fixed model | Good quality and cost for reading; cost shown per answer |
+| Chunking | Page, paragraph, sentence | Semantic chunking | Sentences are what gets cited and highlighted |
+| Answer safety | No images or HTML in answers, strict CSP | Sanitising afterwards | A prompt injection cannot leak data through an image |
+| Uploads | One file per request, quarantine until scanned | Multipart, scan later | Size is checked while reading; nothing unscanned is used |
 
 All decisions: [docs/decisions.md](docs/decisions.md).
 
 ## Tests
 
 ```sh
-make test   # backend, frontend and desktop unit tests
-make lint   # ruff, mypy, import-linter, ESLint and TypeScript
-make e2e    # browser tests against the Docker stack (needs: cd frontend && npx playwright install chromium)
+make test   # backend, frontend and desktop tests
+make lint   # linters, type checks, architecture boundaries
+make e2e    # browser tests against the Docker stack
 ```
 
 | Area | Tool | Tests |
 |---|---|---|
-| Backend: domain, adapters, services, API | pytest with real SQLite and LanceDB; the embedder and Claude are replaced by test doubles | 944 |
-| Frontend: streaming, citations, markdown safety, components | Vitest and Testing Library | 491 |
+| Backend | pytest with real SQLite and LanceDB | 944 |
+| Frontend | Vitest and Testing Library | 491 |
 | Desktop app | Vitest | 113 |
-| End to end | Playwright against the Docker stack, with a test double for Claude and without a key | 2 runs |
+| End to end | Playwright against the Docker stack | 2 runs |
 
-CI runs all of the above plus the Docker build on amd64 and arm64. No test calls the paid API. Two opt-in suites exist: `RUN_SLOW=1` parses a 1500-page PDF, `RUN_LIVE=1` makes one real Claude call.
+- CI runs all of the above and builds the Docker images on amd64 and arm64.
+- Tests replace Claude with a test double, so they never call the paid API.
+- `make e2e` needs a browser once: `cd frontend && npx playwright install chromium`.
+- Opt-in: `RUN_SLOW=1` parses a 1500-page PDF, `RUN_LIVE=1` makes one real Claude call.
 
 ## Configuration
 
-Nothing is required. All variables are listed in [.env.example](.env.example); the common ones:
+Nothing is required. All options are in [.env.example](.env.example).
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | empty | Claude API key, read only by the backend. A key set in the app takes precedence |
+| `ANTHROPIC_API_KEY` | empty | Claude API key; a key set in the app takes precedence |
 | `APP_PORT` | `3000` | Port of the web app |
-| `OCR` | `on` | Read scanned pages with Tesseract; `off` skips them |
+| `OCR` | `on` | Read scanned pages; `off` skips them |
 | `LOG_LEVEL` | `INFO` | Backend log level |
 
 ## Security and privacy
 
-- The API key stays in the backend. The backend has no host port, and every API request must be addressed to localhost; requests that change data also need a custom header and a matching origin.
-- Uploads are checked by size and file signature, parsed in a separate process with timeouts and scanned by ClamAV before they are used.
-- Documents are passed to Claude as data, never as instructions. Answers cannot load images or run HTML.
-- Only the question and the selected passages leave the machine. No analytics, no third-party requests in the browser, telemetry of all bundled tools turned off.
-- Deleting a document removes the file, its vectors and quoted snippets. Chats can be exported, and automatic deletion after 30, 90 or 365 days can be turned on.
+- The API key stays in the backend, and the backend is not reachable from outside Docker.
+- The API only accepts requests to localhost; changes also need a custom header and the app's own origin.
+- Uploads are checked for size and file type, parsed in a separate process and scanned by ClamAV.
+- Documents go to Claude as data, never as instructions. Answers cannot load images or run HTML.
+- No analytics and no third-party requests. Telemetry of all bundled tools is off.
+- Deleting a document removes the file, its vectors and quoted snippets. Automatic deletion after 30, 90 or 365 days can be turned on.
 
 Details and known limits: [docs/security.md](docs/security.md).
 
 ## Next steps
 
-1. A retrieval evaluation set with numbers, then a reranker if it shows the right passage is often not ranked first.
-2. Summaries of whole large documents (today an answer says when it only saw the relevant parts).
-3. Login and separate libraries per user, then a server deployment.
+1. A retrieval evaluation with numbers, then a reranker if needed.
+2. Summaries of whole large documents.
+3. Login with a library per user, then a server deployment.
 4. EU-hosted inference, for example Claude on AWS Bedrock in Frankfurt.
 5. Signed desktop builds with automatic updates.
 
 ## How I worked with AI
 
-I built this with Claude Code as pair programmer and reviewer. It wrote most of the code, test first. The decisions, the scope and the verification were mine: I chose the stack and the trade-offs, dropped what did not hold up (for example `rewrites()` for streaming, PyMuPDF, a fixed model), and checked the results by running the app and reading logs rather than trusting green tests.
+I built this with Claude Code as pair programmer and reviewer, and it wrote most of the code, test first. The decisions, the scope and the checks were mine: I picked the stack and the trade-offs, dropped what did not work (for example `rewrites()` for streaming, PyMuPDF, a fixed model) and tested the app by running it and reading the logs.
