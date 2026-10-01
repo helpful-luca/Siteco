@@ -79,7 +79,7 @@ export function TextViewer({ documentId, span, onMissing }: { documentId: string
   }
   const firstMark = firstMarked(blocks);
   return (
-    <div tabIndex={0} aria-label={t('label')} className="h-full overflow-y-auto overscroll-contain outline-none focus-visible:outline-2">
+    <div tabIndex={0} aria-label={t('label')} className="h-full overflow-y-auto overscroll-contain focus-visible:outline-2">
       <pre className="px-6 pt-6 pb-16 font-mono text-footnote leading-5 break-words whitespace-pre-wrap text-ink">
         {blocks.map((pieces, index) => (
           <span key={index} className={blocks.length > 1 ? '[contain-intrinsic-size:auto_600px] [content-visibility:auto] block' : undefined}>

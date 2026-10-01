@@ -66,7 +66,7 @@ export function ModelsSection() {
                 value={model.id}
                 disabled={!model.available}
                 className={cn(
-                  'group relative flex w-full items-center gap-3 px-4 py-3 text-left outline-none',
+                  'group relative flex w-full items-center gap-3 px-4 py-3 text-left',
                   'first:rounded-t-card last:rounded-b-card hover:bg-fill data-disabled:opacity-50',
                   'focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent',
                   'not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-4',

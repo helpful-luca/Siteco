@@ -42,7 +42,7 @@ export function RowNotices({ document }: { document: DocumentOut }) {
       <button
         type="button"
         aria-label={message}
-        className="relative grid size-6 shrink-0 place-items-center rounded-full text-ink-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-accent pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5"
+        className="relative grid size-6 shrink-0 place-items-center rounded-full text-ink-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5"
       >
         <Info aria-hidden className="size-4" />
       </button>

@@ -61,7 +61,7 @@ export function ViewerToolbar({ page, pages, zoom, onPage, onZoom, onFit }: Prop
             }
           }}
           style={{ width: `${Math.max(2, String(pages).length) + 1}ch` }}
-          className="h-7 rounded-inner bg-fill text-center text-footnote text-ink outline-none focus-visible:outline-2 pointer-coarse:h-11"
+          className="h-7 rounded-inner bg-fill text-center text-footnote text-ink focus-visible:outline-2 pointer-coarse:h-11"
         />
         <span aria-hidden>/</span>
         <span>{pages}</span>
