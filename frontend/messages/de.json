@@ -573,7 +573,7 @@
     },
     "import": {
       "title": "Von Link importieren",
-      "text": "PDF, Webseite oder Textdatei. Die Datei wird heruntergeladen und wie jede andere geprüft.",
+      "text": "PDF, Webseite oder Textdatei.\nDie Datei wird heruntergeladen und wie jede andere geprüft.",
       "label": "Link",
       "placeholder": "https://",
       "action": "Importieren",

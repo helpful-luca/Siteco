@@ -6,7 +6,7 @@ import { cn } from './cn';
 
 type Props = {
   title: string;
-  description?: string;
+  description?: ReactNode;
   trigger?: ReactElement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;

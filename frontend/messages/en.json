@@ -573,7 +573,7 @@
     },
     "import": {
       "title": "Import from a link",
-      "text": "PDF, web page or text file. It is downloaded and checked like any other file.",
+      "text": "PDF, web page or text file.\nIt is downloaded and checked like any other file.",
       "label": "Link",
       "placeholder": "https://",
       "action": "Import",

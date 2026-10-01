@@ -39,7 +39,13 @@ export function ImportLinkDialog({ open, onOpenChange, onImport }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={close} title={t('title')} description={t('text')}>
+    <Dialog open={open} onOpenChange={close} title={t('title')} description={t('text')
+        .split('\n')
+        .map((line) => (
+          <span key={line} className="block">
+            {line}
+          </span>
+        ))}>
       <label htmlFor={fieldId} className="block text-footnote font-medium text-ink-muted">
         {t('label')}
       </label>
