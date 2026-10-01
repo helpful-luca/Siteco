@@ -168,3 +168,25 @@ def test_a_heading_line_in_larger_type_is_its_own_sentence(tmp_path: Path) -> No
     assert texts[0] == "Technische Daten"
     assert texts[1] == "Die Mira L ist nach IP66 geschützt, nicht nur der\nOptikraum."
     assert len(section.sentences[1].rects) == 2
+
+
+def test_text_outside_the_crop_box_is_not_part_of_the_page(tmp_path: Path) -> None:
+    # Catalogs exported as spreads carry the facing page's text beyond the page edge. It is not
+    # visible, belongs to another page and must neither be indexed nor cited here.
+    page = PageSpec(
+        lines=[
+            TextLine("Sichtbare Zeile auf der Seite.", x=72, y=740),
+            TextLine("Rechte Seite der Doppelseite.", x=700, y=740),
+            TextLine("Nur rechts daneben.", x=700, y=720),
+            TextLine("Unten sichtbar.", x=72, y=700),
+            TextLine("Unter dem Seitenrand.", x=72, y=-40),
+        ]
+    )
+    section = _only_section(_write(tmp_path, build_pdf([page])))
+    assert section.text == "Sichtbare Zeile auf der Seite.\nUnten sichtbar."
+    assert section.precise_highlight is True
+    assert [section.text[s.start : s.end] for s in section.sentences] == [
+        "Sichtbare Zeile auf der Seite.",
+        "Unten sichtbar.",
+    ]
+    assert all(0 <= x <= 0.5 for s in section.sentences for x, _, _, _ in s.rects)

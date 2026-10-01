@@ -4,10 +4,15 @@ pdfium marks a hyphenated line break as U+FFFE (or U+0002) instead of "-\\r\\n",
 arrives as "Schutz\\ufffeart". The marker is removed to make the word searchable. Every cleaned
 character remembers the raw index it came from, so sentence spans can still be mapped to the
 character positions pdfium uses for line rectangles.
+
+`hidden` raw positions are left out: text the reader never sees on the page (beyond its edge).
+A line that only had hidden text disappears with its line break, and spaces next to hidden text
+go with it.
 """
 
 import re
 import unicodedata
+from collections.abc import Collection
 from dataclasses import dataclass
 
 _HYPHEN_MARKERS = frozenset({"\ufffe", "\u0002", "\u00ad"})
@@ -47,9 +52,10 @@ class CleanText:
         return raw_start, self.raw_index[end - 1] + 1 - raw_start
 
 
-def clean_page_text(raw: str) -> CleanText:
+def clean_page_text(raw: str, hidden: Collection[int] = frozenset()) -> CleanText:
     chars: list[str] = []
     index: list[int] = []
+    line_shown = line_hidden = after_hidden = False
 
     def emit(piece: str, at: int) -> None:
         for char in piece:
@@ -65,9 +71,18 @@ def clean_page_text(raw: str) -> CleanText:
             if chars and chars[-1] == " ":
                 chars.pop()
                 index.pop()
-            chars.append("\n")
-            index.append(i)
+            if line_shown or not line_hidden:
+                chars.append("\n")
+                index.append(i)
+            line_shown = line_hidden = after_hidden = False
             i += 2 if raw.startswith("\r\n", i) else 1
+            continue
+        if i in hidden:
+            line_hidden = after_hidden = True
+            i += 1
+            continue
+        if char.isspace() and after_hidden:
+            i += 1
             continue
         # A base character and its combining marks form one cluster, normalized together.
         end = i + 1
@@ -75,7 +90,12 @@ def clean_page_text(raw: str) -> CleanText:
             end += 1
         cluster = "".join(_replacement(c) for c in raw[i:end])
         emit(unicodedata.normalize("NFC", cluster), i)
+        if cluster.strip():
+            line_shown, after_hidden = True, False
         i = end
+    if line_hidden and not line_shown and chars and chars[-1] == "\n":
+        chars.pop()
+        index.pop()
     return CleanText("".join(chars), tuple(index))
 
 

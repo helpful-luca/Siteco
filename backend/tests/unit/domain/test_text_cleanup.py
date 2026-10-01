@@ -62,3 +62,18 @@ def test_empty_text() -> None:
     cleaned = clean_page_text("")
     assert cleaned.text == ""
     assert cleaned.raw_index == ()
+
+
+def test_hidden_characters_lines_and_their_spaces_are_left_out() -> None:
+    raw = "Links sichtbar Rechts\r\nVerborgen ganz\r\nWieder da\r\nVerborgen"
+    hidden = {i for word in ("Rechts", "Verborgen ganz") for i in _positions(raw, word)}
+    hidden |= set(range(raw.rindex("Verborgen"), len(raw)))
+    cleaned = clean_page_text(raw, hidden)
+    assert cleaned.text == "Links sichtbar\nWieder da"
+    _check_map(raw, cleaned.text, cleaned.raw_index)
+    assert all(i not in hidden for i in cleaned.raw_index)
+
+
+def _positions(raw: str, word: str) -> range:
+    start = raw.index(word)
+    return range(start, start + len(word))
