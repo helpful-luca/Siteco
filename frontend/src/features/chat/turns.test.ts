@@ -38,6 +38,12 @@ describe('buildTurns', () => {
     expect(turns[1].answer).toMatchObject({ key: 'a2', text: 'Live', live: true, status: 'streaming' });
   });
 
+  it('shows the live first question of a chat that has no saved messages yet (created by an attachment)', () => {
+    const turns = buildTurns([], [liveRun()]);
+    expect(turns).toHaveLength(1);
+    expect(turns[0]).toMatchObject({ key: 'u2', question: 'Neu?', answer: { text: 'Live', live: true } });
+  });
+
   it('replaces a regenerated answer in place', () => {
     const run = liveRun({ regenerateOf: 'a1', meta: { ...META, user_message_id: 'u1', assistant_message_id: 'a1' } });
     const turns = buildTurns(persisted, [run]);

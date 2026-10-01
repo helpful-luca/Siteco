@@ -294,7 +294,9 @@ export function ChatView({ chatId }: { chatId: string }) {
             <DelayedSpinner label={t('loading')} className="size-5" />
           </div>
         )
-      ) : list.length === 0 ? (
+      ) : turns.length === 0 ? (
+        // Turns, not saved messages: a chat created by an attachment has none saved while its
+        // first question is still live (the list reloads after the answer).
         <p className="pt-16 text-reading text-ink-muted">{t('emptyChat')}</p>
       ) : (
         <ol className="flex flex-col gap-12">
