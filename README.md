@@ -1,8 +1,11 @@
 <div align="center">
 
-# Document Chat
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/banner-dark.svg">
+  <img src="docs/images/banner-light.svg" alt="Document Chat: ask your documents, get answers you can check" width="100%">
+</picture>
 
-**Ask your documents. Get answers you can check.**
+<br>
 
 Upload PDFs and text files, ask in German or English, and every answer points to the exact sentence it comes from.
 
@@ -67,7 +70,10 @@ Pick one of three ways. All of them use Docker.
 | **Desktop app** | `npm install && npm run app` | The same app in its own window |
 | **Development** | `npm install && npm run dev` | Backend and frontend with hot reload |
 
-On first start an onboarding asks for language, appearance and your name. Then add your Claude API key under **Settings > Models**, and you are ready. Without a key, upload and search already work.
+On first start an onboarding asks for language, appearance and your name. Then add your Claude API key under **Settings > Models**, and you are ready.
+
+> [!TIP]
+> No key yet? Upload and search already work. Questions then return the matching passages instead of an answer.
 
 <details open>
 <summary><b>Docker</b></summary>
@@ -81,7 +87,9 @@ cd Siteco
 docker compose up --build
 ```
 
-- The first build takes a few minutes and about 3.5 GB of disk. Later starts take seconds.
+> [!NOTE]
+> The first build takes a few minutes and about 3.5 GB of disk, since it bundles the virus scanner and the embedding model. Later starts take seconds.
+
 - The key can also go into `.env`: `cp .env.example .env`, set `ANTHROPIC_API_KEY`, run `docker compose up -d`.
 - Port 3000 taken? `APP_PORT=3001 docker compose up --build`
 - Stop with `docker compose down`. Your documents and chats stay in Docker volumes.
