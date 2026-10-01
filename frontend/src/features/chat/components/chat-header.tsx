@@ -12,7 +12,7 @@ export function ChatHeader({ title, children }: { title: ReactNode; children: Re
         {/* A 32 px line box: stacked or in one row, the title centres on the y = 40 axis. */}
         <h1 className="min-w-0 truncate text-body leading-8 font-semibold">{title}</h1>
         <div
-          className="glass specular flex w-fit max-w-full min-w-0 shrink-0 items-center gap-0.5 rounded-full p-0.5 [--glass-shadow:var(--c-shadow-tight)]"
+          className="glass specular flex w-fit max-w-full min-w-0 shrink-0 items-center gap-0.5 rounded-full p-px [--glass-shadow:var(--c-shadow-tight)]"
         >
           {children}
         </div>

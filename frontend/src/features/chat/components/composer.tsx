@@ -79,7 +79,7 @@ export function Composer({
 
   return (
     <form
-      className="glass glass-tight pointer-events-auto flex items-end gap-2 rounded-panel p-2"
+      className="glass glass-tight specular pointer-events-auto flex items-end gap-2 rounded-panel p-2 transition-[border-color] duration-200 focus-within:border-hairline-strong"
       onSubmit={(event) => {
         event.preventDefault();
         send();

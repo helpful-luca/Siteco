@@ -67,7 +67,7 @@ export function ChatList() {
       <div className="flex flex-col gap-4">
         {groups.map((group) => (
           <section key={group.key} aria-labelledby={`chat-group-${group.key}`}>
-            <h2 id={`chat-group-${group.key}`} className="px-2 pb-2 text-caption font-medium text-ink-muted">
+            <h2 id={`chat-group-${group.key}`} className="px-2 pb-2 text-caption font-semibold text-ink-muted">
               {t(group.key)}
             </h2>
             <ul className="flex flex-col gap-0.5">

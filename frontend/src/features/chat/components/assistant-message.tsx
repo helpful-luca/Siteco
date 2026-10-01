@@ -108,7 +108,7 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate, inComparison
     settled && answer.status !== 'error' && answer.status !== 'refused' && (answer.text.length > 0 || answer.sources.length > 0);
 
   return (
-    <article aria-label={t('answer.label')} aria-busy={streaming} className="flex flex-col gap-4">
+    <article aria-label={t('answer.label')} aria-busy={streaming} className="flex flex-col gap-4 transition-opacity duration-300 ease-out-soft starting:opacity-0">
       {leading.length > 0 && <AnswerNotices notices={leading} />}
       {streaming && !answer.text && answer.phase && <StatusLine phase={answer.phase} startedAt={answer.startedAt} />}
       {elsewhere && <p className="text-footnote text-ink-muted">{t('answer.otherWindow')}</p>}
