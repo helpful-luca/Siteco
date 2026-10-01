@@ -1,0 +1,427 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-01T06:59:01Z",
+  "commit": "677f333-dirty",
+  "config_hash": "1b80bebe77c08f2f",
+  "settings": {
+    "embedding_model": "ibm-granite/granite-embedding-97m-multilingual-r2",
+    "fts_language": "German",
+    "chunk_target_tokens": 400,
+    "candidates": 20,
+    "top_k": 8,
+    "per_document_cap": 5,
+    "full_context_max_tokens": 20000
+  },
+  "dataset": {
+    "questions": 32,
+    "answerable": 28,
+    "by_category": {
+      "factual": 9,
+      "exact_code": 8,
+      "cross_lingual": 6,
+      "follow_up": 5,
+      "unanswerable": 4
+    },
+    "by_language": {
+      "de": 17,
+      "en": 15
+    },
+    "documents": 5,
+    "pages": 71,
+    "chunks": 176
+  },
+  "configs": [
+    {
+      "id": "hybrid-german",
+      "search": "hybrid",
+      "stemming": "german",
+      "default": true,
+      "metrics": {
+        "questions": 28,
+        "hit_at_1": 0.4643,
+        "hit_at_5": 0.8929,
+        "mrr_at_10": 0.6575,
+        "in_sources": 0.9286,
+        "latency_p50_ms": 11.8,
+        "latency_p95_ms": 13.7
+      },
+      "by_category": {
+        "factual": {
+          "questions": 9,
+          "hit_at_1": 0.6667,
+          "hit_at_5": 0.8889,
+          "mrr_at_10": 0.7889,
+          "in_sources": 0.8889,
+          "latency_p50_ms": 11.8,
+          "latency_p95_ms": 13.1
+        },
+        "exact_code": {
+          "questions": 8,
+          "hit_at_1": 0.375,
+          "hit_at_5": 0.875,
+          "mrr_at_10": 0.6076,
+          "in_sources": 1.0,
+          "latency_p50_ms": 11.2,
+          "latency_p95_ms": 12.4
+        },
+        "cross_lingual": {
+          "questions": 6,
+          "hit_at_1": 0.0,
+          "hit_at_5": 0.8333,
+          "mrr_at_10": 0.325,
+          "in_sources": 0.8333,
+          "latency_p50_ms": 11.5,
+          "latency_p95_ms": 13.7
+        },
+        "follow_up": {
+          "questions": 5,
+          "hit_at_1": 0.8,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.9,
+          "in_sources": 1.0,
+          "latency_p50_ms": 12.6,
+          "latency_p95_ms": 14.0
+        }
+      }
+    },
+    {
+      "id": "hybrid-english",
+      "search": "hybrid",
+      "stemming": "english",
+      "default": false,
+      "metrics": {
+        "questions": 28,
+        "hit_at_1": 0.5,
+        "hit_at_5": 0.8929,
+        "mrr_at_10": 0.6921,
+        "in_sources": 0.9286,
+        "latency_p50_ms": 11.0,
+        "latency_p95_ms": 13.2
+      },
+      "by_category": {
+        "factual": {
+          "questions": 9,
+          "hit_at_1": 0.7778,
+          "hit_at_5": 0.8889,
+          "mrr_at_10": 0.8444,
+          "in_sources": 0.8889,
+          "latency_p50_ms": 11.2,
+          "latency_p95_ms": 14.4
+        },
+        "exact_code": {
+          "questions": 8,
+          "hit_at_1": 0.375,
+          "hit_at_5": 0.875,
+          "mrr_at_10": 0.6181,
+          "in_sources": 1.0,
+          "latency_p50_ms": 10.9,
+          "latency_p95_ms": 12.6
+        },
+        "cross_lingual": {
+          "questions": 6,
+          "hit_at_1": 0.0,
+          "hit_at_5": 0.8333,
+          "mrr_at_10": 0.3889,
+          "in_sources": 0.8333,
+          "latency_p50_ms": 11.1,
+          "latency_p95_ms": 12.4
+        },
+        "follow_up": {
+          "questions": 5,
+          "hit_at_1": 0.8,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.9,
+          "in_sources": 1.0,
+          "latency_p50_ms": 10.4,
+          "latency_p95_ms": 11.5
+        }
+      }
+    },
+    {
+      "id": "hybrid-none",
+      "search": "hybrid",
+      "stemming": "none",
+      "default": false,
+      "metrics": {
+        "questions": 28,
+        "hit_at_1": 0.5,
+        "hit_at_5": 0.8929,
+        "mrr_at_10": 0.6775,
+        "in_sources": 0.9643,
+        "latency_p50_ms": 11.2,
+        "latency_p95_ms": 14.7
+      },
+      "by_category": {
+        "factual": {
+          "questions": 9,
+          "hit_at_1": 0.7778,
+          "hit_at_5": 0.8889,
+          "mrr_at_10": 0.8444,
+          "in_sources": 0.8889,
+          "latency_p50_ms": 10.5,
+          "latency_p95_ms": 11.8
+        },
+        "exact_code": {
+          "questions": 8,
+          "hit_at_1": 0.375,
+          "hit_at_5": 0.875,
+          "mrr_at_10": 0.6181,
+          "in_sources": 1.0,
+          "latency_p50_ms": 10.9,
+          "latency_p95_ms": 13.5
+        },
+        "cross_lingual": {
+          "questions": 6,
+          "hit_at_1": 0.0,
+          "hit_at_5": 0.8333,
+          "mrr_at_10": 0.321,
+          "in_sources": 1.0,
+          "latency_p50_ms": 12.1,
+          "latency_p95_ms": 23.1
+        },
+        "follow_up": {
+          "questions": 5,
+          "hit_at_1": 0.8,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.9,
+          "in_sources": 1.0,
+          "latency_p50_ms": 13.6,
+          "latency_p95_ms": 14.9
+        }
+      }
+    },
+    {
+      "id": "dense",
+      "search": "dense",
+      "stemming": null,
+      "default": false,
+      "metrics": {
+        "questions": 28,
+        "hit_at_1": 0.4643,
+        "hit_at_5": 0.8571,
+        "mrr_at_10": 0.6726,
+        "in_sources": 0.8929,
+        "latency_p50_ms": 11.1,
+        "latency_p95_ms": 13.6
+      },
+      "by_category": {
+        "factual": {
+          "questions": 9,
+          "hit_at_1": 0.5556,
+          "hit_at_5": 0.7778,
+          "mrr_at_10": 0.6852,
+          "in_sources": 0.7778,
+          "latency_p50_ms": 10.1,
+          "latency_p95_ms": 12.5
+        },
+        "exact_code": {
+          "questions": 8,
+          "hit_at_1": 0.375,
+          "hit_at_5": 0.875,
+          "mrr_at_10": 0.625,
+          "in_sources": 0.875,
+          "latency_p50_ms": 10.9,
+          "latency_p95_ms": 12.3
+        },
+        "cross_lingual": {
+          "questions": 6,
+          "hit_at_1": 0.3333,
+          "hit_at_5": 0.8333,
+          "mrr_at_10": 0.6111,
+          "in_sources": 1.0,
+          "latency_p50_ms": 11.1,
+          "latency_p95_ms": 12.3
+        },
+        "follow_up": {
+          "questions": 5,
+          "hit_at_1": 0.6,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.8,
+          "in_sources": 1.0,
+          "latency_p50_ms": 13.3,
+          "latency_p95_ms": 15.0
+        }
+      }
+    },
+    {
+      "id": "bm25-german",
+      "search": "bm25",
+      "stemming": "german",
+      "default": false,
+      "metrics": {
+        "questions": 28,
+        "hit_at_1": 0.5714,
+        "hit_at_5": 0.7857,
+        "mrr_at_10": 0.6757,
+        "in_sources": 0.8571,
+        "latency_p50_ms": 1.9,
+        "latency_p95_ms": 2.3
+      },
+      "by_category": {
+        "factual": {
+          "questions": 9,
+          "hit_at_1": 0.6667,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.8148,
+          "in_sources": 1.0,
+          "latency_p50_ms": 2.1,
+          "latency_p95_ms": 2.9
+        },
+        "exact_code": {
+          "questions": 8,
+          "hit_at_1": 0.625,
+          "hit_at_5": 0.875,
+          "mrr_at_10": 0.7679,
+          "in_sources": 1.0,
+          "latency_p50_ms": 1.9,
+          "latency_p95_ms": 2.2
+        },
+        "cross_lingual": {
+          "questions": 6,
+          "hit_at_1": 0.0,
+          "hit_at_5": 0.1667,
+          "mrr_at_10": 0.0738,
+          "in_sources": 0.3333,
+          "latency_p50_ms": 1.8,
+          "latency_p95_ms": 1.9
+        },
+        "follow_up": {
+          "questions": 5,
+          "hit_at_1": 1.0,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 1.0,
+          "in_sources": 1.0,
+          "latency_p50_ms": 1.8,
+          "latency_p95_ms": 2.1
+        }
+      }
+    },
+    {
+      "id": "bm25-english",
+      "search": "bm25",
+      "stemming": "english",
+      "default": false,
+      "metrics": {
+        "questions": 28,
+        "hit_at_1": 0.4643,
+        "hit_at_5": 0.75,
+        "mrr_at_10": 0.6135,
+        "in_sources": 0.8571,
+        "latency_p50_ms": 2.2,
+        "latency_p95_ms": 3.3
+      },
+      "by_category": {
+        "factual": {
+          "questions": 9,
+          "hit_at_1": 0.6667,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.8056,
+          "in_sources": 1.0,
+          "latency_p50_ms": 2.2,
+          "latency_p95_ms": 2.6
+        },
+        "exact_code": {
+          "questions": 8,
+          "hit_at_1": 0.625,
+          "hit_at_5": 0.875,
+          "mrr_at_10": 0.7679,
+          "in_sources": 0.875,
+          "latency_p50_ms": 2.7,
+          "latency_p95_ms": 3.3
+        },
+        "cross_lingual": {
+          "questions": 6,
+          "hit_at_1": 0.0,
+          "hit_at_5": 0.0,
+          "mrr_at_10": 0.0891,
+          "in_sources": 0.5,
+          "latency_p50_ms": 2.0,
+          "latency_p95_ms": 2.4
+        },
+        "follow_up": {
+          "questions": 5,
+          "hit_at_1": 0.4,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.65,
+          "in_sources": 1.0,
+          "latency_p50_ms": 2.1,
+          "latency_p95_ms": 4.0
+        }
+      }
+    },
+    {
+      "id": "bm25-none",
+      "search": "bm25",
+      "stemming": "none",
+      "default": false,
+      "metrics": {
+        "questions": 28,
+        "hit_at_1": 0.5,
+        "hit_at_5": 0.7857,
+        "mrr_at_10": 0.6352,
+        "in_sources": 0.8214,
+        "latency_p50_ms": 1.9,
+        "latency_p95_ms": 2.3
+      },
+      "by_category": {
+        "factual": {
+          "questions": 9,
+          "hit_at_1": 0.7778,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.8611,
+          "in_sources": 1.0,
+          "latency_p50_ms": 2.0,
+          "latency_p95_ms": 2.3
+        },
+        "exact_code": {
+          "questions": 8,
+          "hit_at_1": 0.625,
+          "hit_at_5": 0.875,
+          "mrr_at_10": 0.7656,
+          "in_sources": 0.875,
+          "latency_p50_ms": 2.0,
+          "latency_p95_ms": 2.2
+        },
+        "cross_lingual": {
+          "questions": 6,
+          "hit_at_1": 0.0,
+          "hit_at_5": 0.1667,
+          "mrr_at_10": 0.096,
+          "in_sources": 0.3333,
+          "latency_p50_ms": 1.9,
+          "latency_p95_ms": 2.1
+        },
+        "follow_up": {
+          "questions": 5,
+          "hit_at_1": 0.4,
+          "hit_at_5": 1.0,
+          "mrr_at_10": 0.6667,
+          "in_sources": 1.0,
+          "latency_p50_ms": 1.9,
+          "latency_p95_ms": 2.0
+        }
+      }
+    }
+  ],
+  "full_context": {
+    "questions": 13,
+    "retrieval_in_sources": 1.0,
+    "retrieval_tokens": 882.5,
+    "full_context_in_sources": 1.0,
+    "full_context_tokens": 882.5
+  },
+  "misses": [
+    {
+      "question_id": "fact-01",
+      "category": "factual",
+      "question": "Ab welchem Datum gelten die Ökodesign-Anforderungen der Verordnung 2019/2020?",
+      "rank": 10
+    },
+    {
+      "question_id": "xl-03",
+      "category": "cross_lingual",
+      "question": "Which older lighting regulations does Regulation 2019/2020 repeal, and from which date?",
+      "rank": 12
+    }
+  ]
+}

@@ -46,6 +46,7 @@
     "DOCUMENT_FILE_MISSING": "Die Originaldatei ist nicht mehr da. Lade das Dokument erneut hoch.",
     "DELETE_FAILED": "Das Löschen hat nicht ganz geklappt. Versuch es noch einmal, bereits Gelöschtes bleibt gelöscht.",
     "RANGE_NOT_SATISFIABLE": "Dieser Teil der Datei existiert nicht. Lade die Ansicht neu.",
+    "EVAL_RESULTS_MISSING": "Es gibt noch keine Auswertung. Führe make eval aus, um sie zu erzeugen.",
     "PDF_ENCRYPTED": "Dieses PDF ist passwortgeschützt. Speichere eine Kopie ohne Passwort und lade sie hoch.",
     "PDF_CORRUPT": "Dieses PDF lässt sich nicht öffnen, vielleicht ist es beschädigt. Exportiere es neu und versuch es erneut.",
     "PDF_NO_TEXT": "In diesem PDF haben wir keinen lesbaren Text gefunden, vermutlich ist es ein Scan. Nimm eine Version mit Textebene oder eine schärfere Kopie.",
@@ -528,13 +529,6 @@
     "notAddedYet": "noch nicht hinzugefügt",
     "pauseOver": "Die Pause ist vorbei. Versuch es jetzt noch einmal."
   },
-  "placeholder": {
-    "note": "Folgt in einem der nächsten Schritte.",
-    "quality": {
-      "title": "Qualität",
-      "text": "Hier siehst du bald, wie zuverlässig die Suche die richtigen Stellen findet, gemessen an einem festen Fragenkatalog."
-    }
-  },
   "markdown": {
     "code": "Code",
     "copyCode": "Code kopieren",
@@ -719,6 +713,161 @@
       "setup": "Einrichtung",
       "setupText": "Sprache, Erscheinungsbild und Name noch einmal wählen",
       "setupAction": "Erneut starten"
+    }
+  },
+  "quality": {
+    "title": "Qualität",
+    "loading": "Auswertung wird geladen",
+    "loadError": "Die Auswertung ließ sich nicht laden.",
+    "retry": "Erneut versuchen",
+    "empty": {
+      "title": "Noch keine Auswertung",
+      "text": "Führe <code>make eval</code> im Projektordner aus. Danach zeigt diese Seite, wie zuverlässig die Suche die richtige Stelle findet."
+    },
+    "lead": "Wie zuverlässig die Suche die richtige Stelle findet, gemessen mit {questions} Fragen auf {documents} Dokumenten mit zusammen {pages} Seiten.",
+    "measured": "Gemessen am {date}, Commit {commit}",
+    "stale": {
+      "badge": "Veraltet",
+      "text": "Diese Ergebnisse passen nicht mehr zur aktuellen Konfiguration der Suche. Führe make eval aus, um neu zu messen."
+    },
+    "summary": {
+      "title": "Standard: Hybrid-Suche",
+      "latency": "Suchzeit pro Frage {p50} ms im Median, {p95} ms bei den langsamsten 5 %. Gemessen mit {questions} beantwortbaren Fragen."
+    },
+    "metric": {
+      "inSources": {
+        "label": "Richtige Seite in den Quellen",
+        "hint": "unter den {k} Stellen, die Claude liest"
+      },
+      "hit5": {
+        "label": "Unter den ersten 5",
+        "hint": "richtige Seite unter den ersten 5 Treffern"
+      },
+      "hit1": {
+        "label": "Auf Platz 1",
+        "hint": "der beste Treffer ist schon die richtige Seite"
+      },
+      "mrr": {
+        "label": "MRR@10",
+        "hint": "1 heißt immer Platz 1, 0,5 im Schnitt Platz 2"
+      }
+    },
+    "column": {
+      "hit_at_1": "Platz 1",
+      "hit_at_5": "Top 5",
+      "in_sources": "In den Quellen",
+      "mrr_at_10": "MRR@10",
+      "latency": "Suchzeit p50 / p95"
+    },
+    "configs": {
+      "title": "Konfigurationen",
+      "caption": "Jede Konfiguration mit ihren Messwerten",
+      "config": "Konfiguration",
+      "default": "Standard",
+      "ms": "{p50} / {p95} ms"
+    },
+    "search": {
+      "hybrid": "Hybrid",
+      "dense": "Nur Vektoren",
+      "bm25": "Nur BM25"
+    },
+    "stemming": {
+      "german": "deutscher Stemmer",
+      "english": "englischer Stemmer",
+      "none": "ohne Stemming"
+    },
+    "categories": {
+      "title": "Nach Art der Frage",
+      "choose": "Suche wählen",
+      "count": "{count, plural, one {# Frage} other {# Fragen}}",
+      "unanswerable": "Für die Suche nicht messbar: hier zählt, dass die Antwort ehrlich sagt, dass es nicht in den Dokumenten steht."
+    },
+    "category": {
+      "factual": {
+        "name": "Fakten",
+        "text": "Werte und Aussagen, die so im Text stehen"
+      },
+      "exact_code": {
+        "name": "Exakte Codes",
+        "text": "IP66, EN 13201-2, Artikelnummern, Grenzwerte"
+      },
+      "cross_lingual": {
+        "name": "Sprachübergreifend",
+        "text": "Deutsche Frage auf englischem Text und umgekehrt"
+      },
+      "follow_up": {
+        "name": "Folgefragen",
+        "text": "Kurze Nachfrage, die nur mit der Frage davor Sinn ergibt"
+      },
+      "unanswerable": {
+        "name": "Unbeantwortbar",
+        "text": "Steht in keinem der Dokumente"
+      }
+    },
+    "fullContext": {
+      "title": "Ganze Dokumente statt Auswahl",
+      "retrieval": "Passendste Stellen",
+      "whole": "Ganzes Dokument",
+      "tokens": "im Schnitt {tokens} Tokens an Claude",
+      "footer": "Ein Chat mit kleinen Dokumenten (zusammen bis {limit} Tokens) gibt Claude alles. Gemessen mit {questions} Fragen zu je einem Datenblatt: Anteil mit der richtigen Seite.",
+      "same": "Bei Datenblättern dieser Größe sind die passendsten Stellen schon das ganze Dokument: der Modus ändert hier nichts."
+    },
+    "misses": {
+      "title": "Wo die Suche danebenliegt",
+      "footer": "Fragen, bei denen die richtige Seite nicht unter den Quellen der Standardsuche ist.",
+      "none": "Bei keiner Frage.",
+      "rank": "richtige Seite erst auf Platz {rank}",
+      "notFound": "richtige Seite nicht unter den ersten 20",
+      "category": {
+        "factual": "Fakten",
+        "exact_code": "Exakte Codes",
+        "cross_lingual": "Sprachübergreifend",
+        "follow_up": "Folgefragen",
+        "unanswerable": "Unbeantwortbar"
+      }
+    },
+    "generation": {
+      "title": "Antworten der Modelle",
+      "missing": "Noch nicht gemessen. Mit API-Schlüssel vergleicht <code>make eval-generation</code> Haiku, Sonnet und Opus auf denselben Fragen: Richtigkeit, Genauigkeit der Zitate, ehrliche Absagen, Kosten und Antwortzeit.",
+      "footer": "Richtigkeit bewertet von {judge}, mit einer Musterantwort je Frage. Kosten ohne die Bewertung.",
+      "model": "Modell",
+      "correct": "Richtig",
+      "citations": "Zitate auf der richtigen Seite",
+      "abstention": "Ehrliche Absagen",
+      "cost": "Kosten gesamt",
+      "latency": "Antwortzeit",
+      "seconds": "{seconds} s"
+    },
+    "explain": {
+      "title": "Was die Zahlen bedeuten",
+      "inSources": {
+        "term": "Richtige Seite in den Quellen",
+        "text": "Die wichtigste Zahl: Bei so vielen Fragen ist unter den {k} Stellen, die Claude zum Antworten bekommt, mindestens eine von der Seite, auf der die Antwort steht. Fehlt sie, kann auch das beste Modell nur raten oder absagen."
+      },
+      "hit": {
+        "term": "Platz 1 und Top 5",
+        "text": "Wie oft der erste Treffer, oder einer der ersten fünf, von der richtigen Seite stammt. Gezählt wird nach Seiten, nicht nach Textstücken, damit verschiedene Zerlegungen vergleichbar bleiben."
+      },
+      "mrr": {
+        "term": "MRR@10",
+        "text": "Der Mittelwert von 1 durch den Rang des ersten richtigen Treffers: Platz 1 zählt 1, Platz 2 zählt 0,5, ab Platz 11 zählt 0. Eine Zahl dafür, wie weit oben die richtige Seite im Schnitt landet."
+      },
+      "latency": {
+        "term": "Suchzeit",
+        "text": "Zeit für das Einbetten der Frage und die Suche im Index, ohne Claude. Median und der Wert, unter dem 95 % der Fragen liegen."
+      },
+      "hybrid": {
+        "term": "Hybrid, Vektoren, BM25",
+        "text": "Vektoren finden Bedeutung, auch über Sprachgrenzen. BM25 findet exakte Wörter und Codes wie IP66. Hybrid holt die {candidates} besten Treffer aus beidem und mischt sie nach Rang. So arbeitet die App."
+      },
+      "stemming": {
+        "term": "Stemmer",
+        "text": "BM25 kürzt Wörter auf ihren Stamm, damit „Leuchten“ auch „Leuchte“ findet. Ein Index hat einen Stemmer für alle Dokumente; gemessen sind Deutsch, Englisch und keiner."
+      },
+      "limits": {
+        "term": "Wie belastbar das ist",
+        "text": "Ein kleiner, von Hand geprüfter Fragenkatalog: eine Frage macht mehrere Prozentpunkte aus. Die Zahlen zeigen eine Richtung und schützen vor Rückschritten, sie sind kein allgemeiner Benchmark."
+      }
     }
   }
 }

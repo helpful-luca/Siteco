@@ -54,15 +54,13 @@ class EvalConfig:
 
 
 def configurations(app_language: str) -> list[EvalConfig]:
-    """Hybrid with the app's stemmer first (the default), then the variants."""
+    """Hybrid with the app's stemmer first (the default), the other hybrids, dense, then BM25."""
     default: Stemming = "english" if app_language.lower() == "english" else "german"
-    others = [s for s in _STEMMERS if s != default]
+    stemmers: list[Stemming] = [default, *(s for s in _STEMMERS if s != default)]
     return [
-        EvalConfig(f"hybrid-{default}", SearchMode.HYBRID, default),
+        *(EvalConfig(f"hybrid-{s}", SearchMode.HYBRID, s) for s in stemmers),
         EvalConfig("dense", SearchMode.DENSE, None),
-        EvalConfig(f"bm25-{default}", SearchMode.BM25, default),
-        *(EvalConfig(f"bm25-{s}", SearchMode.BM25, s) for s in others),
-        *(EvalConfig(f"hybrid-{s}", SearchMode.HYBRID, s) for s in others),
+        *(EvalConfig(f"bm25-{s}", SearchMode.BM25, s) for s in stemmers),
     ]
 
 

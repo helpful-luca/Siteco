@@ -1,5 +1,4 @@
 export { AppShell } from './app-shell';
-export { ComingSoon } from './coming-soon';
 export { ConnectionWatcher } from './connection-watcher';
 export { ErrorScreen } from './error-screen';
 export { GlobalBanner, RECONNECTING_BANNER } from './global-banner';

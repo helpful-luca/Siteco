@@ -199,3 +199,17 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 128 | One failing lane in tests and demos | `#fake:<scenario>@<model>` limits a fake scenario to one model | One scenario for the whole question | Both lanes get the same question, but never the same model |
 | 129 | Comparison layout | Two columns that break out of the reading column up to the page width (container query on the chat scroller); below 672 px of width a segmented control switches between the answers; model, first text, total time, tokens and cost in each column head | A fixed 720 px column; a separate comparison screen | Two answers side by side need room; narrow windows and phones keep one readable column |
 | 130 | Comparison switch | An icon toggle next to the model picker; on, it starts from the pair in the settings and a second picker appears that cannot pick the first model | A switch in the composer | The toolbar already holds scope and model; the pickers prevent `COMPARE_SAME_MODEL` before sending |
+
+## Retrieval eval and Quality page (phase 9)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 131 | Eval documents | Regulation (EU) 2019/2020 in German and English (Publications Office PDFs, reuse under Decision 2011/833/EU, 2.7 MB in the repo with SHA-256 in `golden.json`) plus three fictional datasheets generated from Markdown with the test PDF writer | Real Siteco datasheets; a download script | Clear licence; the files are small enough, and checked in they cannot change under the labels |
+| 132 | Labels | Page level (`document`, `pages`), alternatives allowed (both language versions of the regulation), scope per question for cross-lingual cases | Chunk ids | Chunking variants stay comparable; checked by keyword search on the page text |
+| 133 | Metrics | Hit@1, Hit@5 and MRR@10 on the raw ranking (20 candidates), plus "in sources": a right page among the 8 passages the production selection would send | Only Hit@k | The last one is what an answer actually gets after dedupe and the per-document cap |
+| 134 | Runner | `docchat.cli.run_eval` builds the real container in a temp dir, uploads like the app, then swaps only the BM25 index for the stemming variants (`rebuild_text_index`) | One index per variant; an eval package | Same pipeline as production, one embedding pass (15 s on an M4) |
+| 135 | Unanswerable questions | Counted, not scored by retrieval | A score threshold | RRF scores are not calibrated (annex 10, G1); refusing is the model's job and belongs to the generation eval |
+| 136 | Stale | SHA-256 of the settings that change retrieval (model, stemmer, chunk size, candidates, top k, cap, full-context limit) stored with the results and compared by `GET /api/eval` | Comparing commits | A commit that does not touch retrieval must not mark the numbers as old |
+| 137 | Gate | `tests/eval` marked `model`, own CI job with the pinned model in a cache, thresholds a little below the measured values | Asserting the committed JSON | Only a fresh run proves the code still reaches the numbers |
+| 138 | Results in the image | `eval/results` as the named build context `eval`, `eval/.dockerignore` keeps the documents out | Mounting the folder | The image is self-contained; the backend build context stays `./backend` |
+| 139 | Lance warnings | `LANCEDB_LOG=error` by default | Selecting `_score` and `_distance` | Every hybrid search logged two deprecation warnings; selecting the columns breaks the hybrid query |

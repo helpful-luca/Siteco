@@ -29,6 +29,8 @@ class ErrorCode(StrEnum):
     DOCUMENT_FILE_MISSING = "DOCUMENT_FILE_MISSING"
     DELETE_FAILED = "DELETE_FAILED"
     RANGE_NOT_SATISFIABLE = "RANGE_NOT_SATISFIABLE"
+    # Quality page: no results file (or one that does not fit the schema)
+    EVAL_RESULTS_MISSING = "EVAL_RESULTS_MISSING"
     # Ingestion (never an HTTP response: stored as documents.error_code with status `failed`)
     PDF_ENCRYPTED = "PDF_ENCRYPTED"
     PDF_CORRUPT = "PDF_CORRUPT"
@@ -122,6 +124,7 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     ErrorCode.DOCUMENT_FILE_MISSING: ErrorSpec(410, False),
     ErrorCode.DELETE_FAILED: ErrorSpec(500, True),
     ErrorCode.RANGE_NOT_SATISFIABLE: ErrorSpec(416, False),
+    ErrorCode.EVAL_RESULTS_MISSING: ErrorSpec(404, False),
     ErrorCode.PDF_ENCRYPTED: ErrorSpec(422, False),
     ErrorCode.PDF_CORRUPT: ErrorSpec(422, False),
     ErrorCode.PDF_NO_TEXT: ErrorSpec(422, False),

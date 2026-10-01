@@ -41,6 +41,8 @@ RUN apt-get update \
 RUN useradd --uid 10001 --create-home app && mkdir -p /data && chown app:app /data
 COPY --from=model /opt/models /opt/models
 COPY --from=app /app/.venv /app/.venv
+# Retrieval eval results for the Quality page, from the named build context `eval` (compose.yaml).
+COPY --from=eval results/ /app/eval/
 WORKDIR /app
 USER app
 EXPOSE 8000

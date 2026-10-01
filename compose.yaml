@@ -4,6 +4,9 @@ services:
   backend:
     build:
       context: ./backend
+      # Only eval/results reaches the image (annex 11, 9.1); eval/.dockerignore leaves the rest out.
+      additional_contexts:
+        eval: ./eval
       args:
         GIT_SHA: ${GIT_SHA:-dev}
     env_file:

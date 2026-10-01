@@ -1,0 +1,3 @@
+# The backend image takes only results/ from this folder (named build context `eval`).
+*
+!results/
