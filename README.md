@@ -1,26 +1,77 @@
+<div align="center">
+
 # Document Chat
 
+**Ask your documents. Get answers you can check.**
+
+Upload PDFs and text files, ask in German or English, and every answer points to the exact sentence it comes from.
+
 [![CI](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml/badge.svg)](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-Sonnet%205.5-D97757?logo=anthropic&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey)
 
-Upload your documents and ask questions about them in German or English. Every answer shows its sources, and a click on a source opens the PDF with the quoted sentence highlighted.
+[Getting started](#getting-started) · [Features](#features) · [How it works](#how-it-works) · [Decisions](#key-decisions) · [Tests](#tests) · [Roadmap](#roadmap)
 
-Your files stay on your machine. Only the question and the relevant passages are sent to Claude.
+<br>
 
-![Answer with citations and the cited sentence highlighted in the PDF](docs/images/citation-highlight.jpg)
+<img src="docs/images/citation-highlight.jpg" alt="Answer with citations and the cited sentence highlighted in the PDF" width="100%">
+
+</div>
+
+<br>
+
+## Highlights
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <b>Answers with proof</b><br>
+      Every claim carries a numbered source. One click opens the PDF on the right page with the sentence highlighted.
+    </td>
+    <td width="33%" valign="top">
+      <b>Private by default</b><br>
+      Parsing, OCR, embeddings and search run locally. Only the question and the relevant passages go to Claude.
+    </td>
+    <td width="33%" valign="top">
+      <b>Built for real documents</b><br>
+      Catalogs up to 5000 pages, scanned pages with OCR, tables and product codes like IP66.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <b>German and English</b><br>
+      Ask in one language about a document in the other. UI in both languages.
+    </td>
+    <td valign="top">
+      <b>Safe uploads</b><br>
+      Every file is scanned by ClamAV before it is used, and parsed in an isolated process.
+    </td>
+    <td valign="top">
+      <b>Browser or desktop</b><br>
+      Runs in the browser or as a native window on macOS and Windows.
+    </td>
+  </tr>
+</table>
 
 ## Getting started
 
-There are three ways to run the app. All of them need Docker.
+Pick one of three ways. All of them use Docker.
 
-| Way | Command | Result |
+| | Command | You get |
 |---|---|---|
-| Docker | `docker compose up --build` | App in the browser |
-| Desktop app | `npm install && npm run app` | Same app in its own window |
-| Development | `npm install && npm run dev` | Backend and frontend with hot reload |
+| **Docker** | `docker compose up --build` | The app at http://localhost:3000 |
+| **Desktop app** | `npm install && npm run app` | The same app in its own window |
+| **Development** | `npm install && npm run dev` | Backend and frontend with hot reload |
 
-After the first start, an onboarding asks for language, appearance and your name. Then add your Claude API key under **Settings > Models**. Without a key you can already upload and search; questions then return matching passages instead of an answer.
+On first start an onboarding asks for language, appearance and your name. Then add your Claude API key under **Settings > Models**, and you are ready. Without a key, upload and search already work.
 
-### Docker
+<details open>
+<summary><b>Docker</b></summary>
+<br>
 
 Requires Docker with Compose v2 and about 4 GB of free memory.
 
@@ -30,14 +81,16 @@ cd Siteco
 docker compose up --build
 ```
 
-Open http://localhost:3000.
+- The first build takes a few minutes and about 3.5 GB of disk. Later starts take seconds.
+- The key can also go into `.env`: `cp .env.example .env`, set `ANTHROPIC_API_KEY`, run `docker compose up -d`.
+- Port 3000 taken? `APP_PORT=3001 docker compose up --build`
+- Stop with `docker compose down`. Your documents and chats stay in Docker volumes.
 
-- The first build takes a few minutes and uses about 3.5 GB of disk (images, virus scanner, embedding model). Later starts take seconds.
-- Instead of the settings page, the key can go into a `.env` file: `cp .env.example .env`, set `ANTHROPIC_API_KEY`, run `docker compose up -d`.
-- Port 3000 taken: `APP_PORT=3001 docker compose up --build`.
-- Stop with `docker compose down`. Documents and chats are kept in Docker volumes.
+</details>
 
-### Desktop app
+<details>
+<summary><b>Desktop app</b></summary>
+<br>
 
 Requires Docker and Node 22.12 or newer.
 
@@ -46,9 +99,13 @@ npm install
 npm run app
 ```
 
-The app starts Docker Desktop if needed, runs the same `docker compose` stack and opens a window. The first start also downloads Electron (about 130 MB). Closing the window leaves the containers running, so the next start is instant. Installers for macOS and Windows: [desktop/README.md](desktop/README.md).
+The app starts Docker Desktop if needed, runs the same stack and opens a window. The first start downloads Electron (about 130 MB). Closing the window keeps the containers running, so the next start is instant. Installers for macOS and Windows: [desktop/README.md](desktop/README.md).
 
-### Development
+</details>
+
+<details>
+<summary><b>Development</b></summary>
+<br>
 
 Requires Python 3.12 with [uv](https://docs.astral.sh/uv/), Node 22.12 or newer, `make` and Docker. Stop the Docker stack first (`docker compose stop`), since both use port 3000.
 
@@ -57,19 +114,11 @@ npm install
 npm run dev
 ```
 
-This starts the virus scanner in Docker, the backend on port 8000, the Next.js dev server on port 3000 and the desktop window. The first run downloads the embedding model (about 400 MB). A key in `.env` is used here as well.
+Starts the virus scanner in Docker, the backend on port 8000, Next.js on port 3000 and the desktop window. The first run downloads the embedding model (about 400 MB). A key in `.env` is used here as well. For scanned PDFs outside Docker: `brew install tesseract tesseract-lang`.
 
-For scanned PDFs outside Docker, install Tesseract: `brew install tesseract tesseract-lang`.
+</details>
 
-## Using the app
-
-1. **Upload:** drop files into the library or import a link. Each file is scanned for malware, read and indexed.
-2. **Ask:** start a chat. The answer streams in with numbered sources.
-3. **Check:** click a source. The PDF opens on that page with the sentence highlighted.
-4. **Follow up:** keep asking in the same chat.
-5. **Compare:** let two models answer the same question side by side.
-
-Below each answer you find the model, cost, timings and the passages that were used.
+## Features
 
 <p>
   <img src="docs/images/onboarding-language.jpg" width="32%" alt="Onboarding: language">
@@ -85,36 +134,46 @@ Below each answer you find the model, cost, timings and the passages that were u
   <img src="docs/images/chat-answer.jpg" width="49%" alt="Answer with sources">
 </p>
 
-## What is built
-
-| Case brief | Implementation |
+| Case brief | What is built |
 |---|---|
-| Upload | PDF, TXT, Markdown, HTML; drag and drop or link import; up to 1 GB and 5000 pages per file; ClamAV scan first |
-| Process | pypdfium2 in its own process, OCR for scanned pages, sentence-aware chunks of about 400 tokens, local embeddings (IBM Granite), LanceDB |
-| Retrieve | Hybrid search: vectors and BM25 with German stemming, combined by rank fusion |
-| Answer | Claude with native citations, streamed, with stop, retry and chat history |
-| Rich rendering | Markdown with tables and code; tables and code open in a side panel |
-| Citation highlighting | Exact line positions in the PDF, passage highlight in text files, OCR word positions for scans |
-| Multiple models | Haiku, Sonnet or Opus per message, and a side-by-side comparison |
+| **Upload** | PDF, TXT, Markdown, HTML by drag and drop or link; up to 1 GB and 5000 pages per file; ClamAV scan first |
+| **Process** | pypdfium2 in its own process, OCR for scans, sentence-aware chunks, local embeddings (IBM Granite), LanceDB |
+| **Retrieve** | Hybrid search: vectors and BM25 with German stemming, combined by rank fusion |
+| **Answer** | Claude with native citations, streamed, with stop, retry and chat history |
+| **Rich rendering** | Markdown with tables and code; tables and code open in a side panel |
+| **Citation highlighting** | Exact line positions in PDFs, passages in text files, OCR word positions for scans |
+| **Multiple models** | Haiku, Sonnet or Opus per message, plus side-by-side comparison with cost and timings |
 
-Also included: German and English UI, light and dark mode, command palette (⌘K or Ctrl K), data export and deletion, desktop app for macOS and Windows.
+Also included: light and dark mode, command palette (⌘K or Ctrl K), data export and deletion, desktop app for macOS and Windows.
 
-## Architecture
+## How it works
 
+```mermaid
+flowchart LR
+    subgraph ingest [Upload]
+        direction LR
+        U[File] --> S[ClamAV scan] --> P[Parse and OCR] --> C[Chunk by sentence] --> E[Embed locally] --> I[(LanceDB)]
+    end
+    subgraph ask [Question]
+        direction LR
+        Q[Question] --> H[Hybrid search] --> M[Claude with sources] --> A[Answer with citations]
+    end
+    I --> H
 ```
-Browser or desktop window (localhost:3000)
-  -> Next.js: UI and a streaming proxy for /api
-       -> FastAPI (internal network only)
-            SQLite    documents, chats, settings
-            LanceDB   chunks, vectors, BM25 index
-            files     uploaded originals
-            embedding model and Tesseract inside the container
-       -> ClamAV: scans every upload
-  -> Claude API (called by the backend, only with a key)
+
+```mermaid
+flowchart LR
+    B[Browser or desktop window] --> W[Next.js<br>UI and streaming proxy]
+    W --> F[FastAPI backend]
+    F --> D[(SQLite<br>documents, chats)]
+    F --> L[(LanceDB<br>vectors, BM25)]
+    F --> V[ClamAV]
+    F --> K[Claude API]
 ```
 
-- **Backend:** layers `api`, `services`, `domain` and `adapters`. import-linter checks the boundaries in CI.
+- **Backend:** layers `api`, `services`, `domain` and `adapters`; import-linter checks the boundaries in CI.
 - **Frontend:** feature folders; API types are generated from the OpenAPI contract.
+- **Network:** only the web app is published, on 127.0.0.1. The backend and the scanner stay inside Docker.
 
 More in [docs/architecture.md](docs/architecture.md).
 
@@ -133,9 +192,18 @@ More in [docs/architecture.md](docs/architecture.md).
 | Answer safety | No images or HTML in answers, strict CSP | Sanitising afterwards | A prompt injection cannot leak data through an image |
 | Uploads | One file per request, quarantine until scanned | Multipart, scan later | Size is checked while reading; nothing unscanned is used |
 
-All decisions: [docs/decisions.md](docs/decisions.md).
+All 42 decisions with reasons: [docs/decisions.md](docs/decisions.md).
 
 ## Tests
+
+<table>
+  <tr>
+    <td align="center"><b>944</b><br>Backend</td>
+    <td align="center"><b>491</b><br>Frontend</td>
+    <td align="center"><b>113</b><br>Desktop</td>
+    <td align="center"><b>2</b><br>End-to-end runs</td>
+  </tr>
+</table>
 
 ```sh
 make test   # backend, frontend and desktop tests
@@ -143,17 +211,10 @@ make lint   # linters, type checks, architecture boundaries
 make e2e    # browser tests against the Docker stack
 ```
 
-| Area | Tool | Tests |
-|---|---|---|
-| Backend | pytest with real SQLite and LanceDB | 944 |
-| Frontend | Vitest and Testing Library | 491 |
-| Desktop app | Vitest | 113 |
-| End to end | Playwright against the Docker stack | 2 runs |
-
-- CI runs all of the above and builds the Docker images on amd64 and arm64.
+- **Backend:** pytest with real SQLite and LanceDB. **Frontend and desktop:** Vitest. **End to end:** Playwright against the Docker stack, once with a stubbed model and once without a key.
 - Tests replace Claude with a test double, so they never call the paid API.
+- CI runs everything and builds the images on amd64 and arm64.
 - `make e2e` needs a browser once: `cd frontend && npx playwright install chromium`.
-- Opt-in: `RUN_SLOW=1` parses a 1500-page PDF, `RUN_LIVE=1` makes one real Claude call.
 
 ## Configuration
 
@@ -168,11 +229,24 @@ Nothing is required. All options are in [.env.example](.env.example).
 
 ## Security and privacy
 
-- The API key stays in the backend, and the backend is not reachable from outside Docker.
-- The API only accepts requests to localhost; changes also need a custom header and the app's own origin.
-- Uploads are checked for size and file type, parsed in a separate process and scanned by ClamAV.
-- Documents go to Claude as data, never as instructions. Answers cannot load images or run HTML.
-- No analytics and no third-party requests. Telemetry of all bundled tools is off.
-- Deleting a document removes the file, its vectors and quoted snippets. Automatic deletion after 30, 90 or 365 days can be turned on.
+| | |
+|---|---|
+| **API key** | Stays in the backend; the backend is not reachable from outside Docker |
+| **Requests** | Only to localhost; changes also need a custom header and the app's own origin |
+| **Uploads** | Size and file type checked, parsed in an isolated process, scanned by ClamAV |
+| **Prompt injection** | Documents go to Claude as data; answers cannot load images or run HTML |
+| **Tracking** | No analytics, no third-party requests, bundled telemetry turned off |
+| **Deletion** | Removes file, vectors and quoted snippets; optional automatic deletion after 30, 90 or 365 days |
 
 Details and known limits: [docs/security.md](docs/security.md).
+
+## Roadmap
+
+| Next | What | Why |
+|---|---|---|
+| **Hosting** | Deploy as a web service with managed storage and EU inference (Claude on AWS Bedrock, Frankfurt) | Use it without Docker on your own machine |
+| **Accounts** | Registration, login and a private library per user, later shared team libraries | One instance for many people |
+| **Choose your model** | Plug in other providers and local models next to Claude | Pick by cost, speed or data policy |
+| **Quality checks** | A test set of questions with measured retrieval and answer quality, a reranker where it helps | Improve with numbers, not by feel |
+| **Mobile app** | iOS and Android apps that sync documents and chats across devices | Ask your documents on the go |
+| **Large documents** | Summaries over whole catalogs, not only the best passages | Questions like "summarize all 1500 pages" |
