@@ -42,6 +42,7 @@ from docchat.domain.llm import (
 from docchat.domain.model_profiles import cost_usd
 from docchat.domain.models import Chunk, Document, Notice
 from docchat.domain.ports import ChatRepository, Clock, LLMClient, UsageLedger
+from docchat.domain.prompt import one_line
 from docchat.domain.retrieval import snippet
 from docchat.domain.usage import ModelUsage, total_usage
 from docchat.services.context_budget import ContextBudget
@@ -114,7 +115,9 @@ MAX_PAGE_SOURCES = 12  # full-context mode: chunks of the asked page shown up fr
 def _title(document: Document, chunk: Chunk) -> str:
     """File, heading (product or section) and, for PDFs, the page last: the system prompt
     matches asked pages at the end of the title."""
-    parts = [document.filename, chunk.heading] if chunk.heading else [document.filename]
+    # File name and heading are untrusted text: one line, no tags (like the <documents> list).
+    name = one_line(document.filename)
+    parts = [name, one_line(chunk.heading)] if chunk.heading else [name]
     if chunk.page is not None:
         parts.append(f"S. {chunk.page}")
     return ", ".join(parts)

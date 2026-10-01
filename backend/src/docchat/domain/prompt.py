@@ -105,10 +105,10 @@ _KIND_LABELS = {
 _UNSAFE_IN_NAME = re.compile(r"[\x00-\x1f\x7f<>]+")
 
 
-def _safe_name(name: str) -> str:
-    """One line, no tags: a file name is untrusted text inside the prompt."""
-    cleaned = " ".join(_UNSAFE_IN_NAME.sub(" ", name).split())
-    return cleaned if len(cleaned) <= _NAME_LIMIT else cleaned[: _NAME_LIMIT - 3] + "..."
+def one_line(text: str, limit: int = _NAME_LIMIT) -> str:
+    """One line, no tags, capped: for untrusted names (files, headings) inside the prompt."""
+    cleaned = " ".join(_UNSAFE_IN_NAME.sub(" ", text).split())
+    return cleaned if len(cleaned) <= limit else cleaned[: limit - 3] + "..."
 
 
 def documents_overview(documents: Sequence[DocumentFacts]) -> str:
@@ -119,7 +119,7 @@ def documents_overview(documents: Sequence[DocumentFacts]) -> str:
     for document in documents[:MAX_LISTED_DOCUMENTS]:
         label = _KIND_LABELS.get(document.kind, document.kind.value)
         pages = f", {document.pages} pages" if document.pages else ""
-        lines.append(f"- {_safe_name(document.name)}: {label}{pages}")
+        lines.append(f"- {one_line(document.name)}: {label}{pages}")
     if len(documents) > MAX_LISTED_DOCUMENTS:
         lines.append(f"- and {len(documents) - MAX_LISTED_DOCUMENTS} more documents")
     return "<documents>\n" + "\n".join(lines) + "\n</documents>"

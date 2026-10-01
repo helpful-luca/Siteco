@@ -1,6 +1,6 @@
 from docchat.domain.enums import AnswerStyle, DocumentKind, Locale
 from docchat.domain.llm import DocumentFacts
-from docchat.domain.prompt import SYSTEM_PROMPT, documents_overview, turn_context
+from docchat.domain.prompt import SYSTEM_PROMPT, documents_overview, one_line, turn_context
 
 
 def test_system_prompt_is_long_enough_to_be_cached() -> None:
@@ -57,3 +57,8 @@ def test_documents_overview_keeps_file_names_on_one_line_and_caps_the_list() -> 
     )
     assert many.count("\n- d") == 50
     assert "- and 5 more documents" in many
+
+
+def test_one_line_cleans_untrusted_names() -> None:
+    assert one_line("a\nb\t<c>  d") == "a b c d"
+    assert len(one_line("x" * 300)) == 120
