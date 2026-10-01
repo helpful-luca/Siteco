@@ -1,6 +1,7 @@
 """ClamdScanner against a tiny fake clamd that speaks the INSTREAM protocol."""
 
 import asyncio
+import contextlib
 import socket
 import struct
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -128,6 +129,12 @@ async def test_size_limit_answer_mid_stream_is_a_scan_failure(tmp_path: Path) ->
         await reader.readexactly(4)
         writer.write(b"INSTREAM size limit exceeded. ERROR\0")
         await writer.drain()
+        # Answer early like clamd, but swallow what is still in flight before hanging up: closing
+        # with unread data makes the kernel send a reset that can destroy the answer, and the
+        # outcome then depends on timing (this test failed once under load).
+        with contextlib.suppress(ConnectionError, asyncio.IncompleteReadError):
+            while await reader.read(65536):
+                pass
         writer.close()
 
     async with fake_clamd(refuse) as port:
