@@ -299,6 +299,7 @@ def build_container(
     run_deps = RunDeps(
         budget=ContextBudget(settings.full_context_max_tokens, settings.history_max_tokens + 2000),
         chats=chats,
+        documents=repository,
         retrieval=retrieval,
         llm=llm_handle,
         health=llm_health,

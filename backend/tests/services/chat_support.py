@@ -184,6 +184,7 @@ def build_chat_harness(
     deps = RunDeps(
         budget=ContextBudget(full_context_max_tokens),
         chats=chats_repo,
+        documents=documents,
         retrieval=retrieval,
         llm=llm_port,
         health=health,

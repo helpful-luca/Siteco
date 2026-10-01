@@ -41,7 +41,7 @@ from docchat.domain.llm import (
 )
 from docchat.domain.model_profiles import cost_usd, model_alias
 from docchat.domain.models import Chunk, Document, Notice
-from docchat.domain.ports import ChatRepository, Clock, LLMClient, UsageLedger
+from docchat.domain.ports import ChatRepository, Clock, DocumentRepository, LLMClient, UsageLedger
 from docchat.domain.prompt import one_line
 from docchat.domain.retrieval import snippet
 from docchat.domain.usage import ModelUsage, total_usage
@@ -80,6 +80,7 @@ class RunTimings:
 @dataclass(frozen=True)
 class RunDeps:
     chats: ChatRepository
+    documents: DocumentRepository
     retrieval: RetrievalService
     llm: LLMClient | None
     health: LlmHealth
@@ -520,6 +521,16 @@ class AnswerRun:
 
     # Saving
 
+    def _redact_vanished_sources(self, message: Message) -> None:
+        """A source deleted while this answer ran was redacted before the answer was saved:
+        the answer must not bring its text back (master spec 10b, 4)."""
+        cited = {s.document_id for s in message.sources if s.document_id}
+        if not cited:
+            return
+        visible = {d.id for d in self._deps.documents.list_visible()}
+        for document_id in cited - visible:
+            self._deps.chats.redact_document(document_id)
+
     async def _save(self, final: Message, terminal: RunEvent) -> RunEvent:
         """Saves the answer. Only a failed save of the message itself changes the outcome;
         the usage ledger and the chat reload are extras that are logged when they fail."""
@@ -532,6 +543,10 @@ class AnswerRun:
             return ErrorEvent(
                 code=ErrorCode.INTERNAL_ERROR, partial=self._got_delta, stage=ErrorStage.PERSIST
             )
+        try:
+            await asyncio.to_thread(self._redact_vanished_sources, final)
+        except Exception:
+            log.exception("source_redaction_failed", extra=self._log_fields())
         if self._parts:
             try:
                 await asyncio.to_thread(self._record_usage)

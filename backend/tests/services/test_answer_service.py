@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from docchat.adapters.fake_llm import FakeLLMClient, FakeScenario
+from docchat.domain.chat_models import Message
 from docchat.domain.enums import (
     ChatScope,
     DocumentStatus,
@@ -858,3 +859,22 @@ async def test_a_dated_model_id_from_the_api_is_the_same_model_not_a_switch(tmp_
     saved = answer_of(h, events)
     assert saved.model == "claude-sonnet-5-5"
     assert saved.cost_usd is not None and saved.cost_usd > 0
+
+
+async def test_an_answer_saved_after_its_source_was_deleted_keeps_no_text_of_it(
+    h: ChatHarness, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The document is deleted while the answer runs: its purge redacted the saved answers
+    # before this one was saved.
+    document = h.add_document(MIRA)
+    save = h.chats_repo.save_message
+
+    def delete_then_save(message: Message) -> None:
+        h.documents.mark_deleting(document.id, h.clock.now())
+        save(message)
+
+    monkeypatch.setattr(h.chats_repo, "save_message", delete_then_save)
+    events = await h.ask(h.new_chat())
+    saved = answer_of(h, events)
+    assert saved.sources and all(not s.snippet for s in saved.sources)
+    assert all(not c.cited_text for c in saved.citations)
