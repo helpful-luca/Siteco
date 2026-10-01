@@ -54,21 +54,30 @@ class PageLine:
         return self.spans[-1][1]
 
     @property
-    def one_segment(self) -> bool:
-        gap = self.size * _SEGMENT_GAP
-        return all(after[0] - before[1] <= gap for before, after in pairwise(self.spans))
+    def segments(self) -> list[tuple[float, float]]:
+        """The runs merged where they are close: a table row has several, a sentence one."""
+        merged: list[tuple[float, float]] = []
+        for x0, x1 in self.spans:
+            if merged and x0 - merged[-1][1] <= self.size * _SEGMENT_GAP:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], x1))
+            else:
+                merged.append((x0, x1))
+        return merged
 
 
 def _continues(line: PageLine, nxt: PageLine) -> bool:
-    """`nxt` sits right below `line` in the same column and type, both are one run of text."""
-    if not (line.one_segment and nxt.one_segment and line.size > 0):
+    """`nxt` sits right below `line` in the same column and type and is one run of text: under
+    the line's start, under the text after a bullet, or under the value of a "label  value"
+    line (a cell that wraps). A line of more runs is a table row and ends there."""
+    segments = line.segments
+    if line.size <= 0 or len(segments) > 2 or len(nxt.segments) != 1:
         return False
     if abs(nxt.size - line.size) > line.size * _SIZE_TOLERANCE:
         return False
     if not 0 < nxt.top - line.end_top <= line.size * _MAX_LEADING:
         return False
-    # The same left edge, or a hanging indent under the text after a bullet.
-    return any(abs(nxt.left - x0) <= line.size * _ALIGN for x0, _ in line.spans)
+    starts = [segments[-1][0]] if len(segments) == 2 else [x0 for x0, _ in line.spans]
+    return any(abs(nxt.left - x0) <= line.size * _ALIGN for x0 in starts)
 
 
 def _matches(text: str, lines: Sequence[PageLine]) -> bool:

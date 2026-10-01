@@ -111,3 +111,21 @@ def test_a_heading_over_two_lines_is_one_unit_and_the_size_change_ends_it() -> N
         PageLine(37, 65, ((108, 200),), 134, 8, 20),
     ]
     assert line_break_cuts(text, lines) == [37]
+
+
+def test_a_value_that_wraps_in_its_cell_stays_with_its_label() -> None:
+    text, lines = _layout(
+        [
+            ("Montage Einsteckmontage, an der", [(305, 332), (417, 489)], 30),
+            ("Tragschiene", [(416, 451)], 35),
+            ("Gehäuse weiß (RAL 9016)", [(305, 332), (417, 470)], 30),
+            ("4000 ≥ 80 7260 41 177 EIN/AUS", [(63, 77), (104, 108), (111, 251), (280, 309)], 14),
+            ("Multilumen", [(280, 311)], 40),
+        ]
+    )
+    assert _pieces(text, line_break_cuts(text, lines)) == [
+        "Montage Einsteckmontage, an der\nTragschiene",
+        "Gehäuse weiß (RAL 9016)",
+        "4000 ≥ 80 7260 41 177 EIN/AUS",
+        "Multilumen",
+    ]
