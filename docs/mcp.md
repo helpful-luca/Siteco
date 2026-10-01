@@ -6,11 +6,12 @@ passages, your MCP client's model writes the answer.
 
 | Tool | Returns |
 |---|---|
-| `list_documents()` | Ready documents: `id`, `filename`, `kind`, `pages` |
+| `list_documents()` | Ready library documents: `id`, `filename`, `kind`, `pages` |
 | `search_documents(query, top_k=5, document_ids=null)` | Up to `top_k` passages (at most 10), best first: `source_id`, `document_id`, `filename`, `page`, `heading`, `text` |
 
 `search_documents` runs the same hybrid search as the chat (`RetrievalService`). Documents that are
-still processing, failed or deleted are never returned. `query` has at most 500 characters.
+still processing, failed or deleted are never returned, and neither are files uploaded into a chat
+only (they belong to that chat). `query` has at most 500 characters.
 `document_ids` narrows the search (ids from `list_documents`, at most 50; unknown ids are ignored).
 `source_id` is the id of the passage in the index and stays the same until the document is deleted.
 

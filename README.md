@@ -37,7 +37,7 @@ Open http://localhost:3000. The first build downloads dependencies, the web font
 
 | Case brief | Where |
 |---|---|
-| Upload | Library with drag and drop and progress; PDF, TXT, Markdown; up to 1 GB and 5000 pages per file; scanned pages via OCR (Tesseract, German and English); ClamAV scan before anything is stored |
+| Upload | Library with drag and drop and progress, or straight into a chat (only there, or also into the library); PDF, TXT, Markdown, HTML (read as text, never rendered); up to 1 GB and 5000 pages per file; scanned pages via OCR (Tesseract, German and English); ClamAV scan before anything is stored |
 | Process | pypdfium2 in its own process with timeouts, sentence aware chunking (about 400 tokens, never across pages), local Granite multilingual embeddings, LanceDB index with vectors and BM25, batches so a 1500 page catalog stays at flat memory |
 | Retrieve | Hybrid search (vectors plus BM25 with German stemming, reciprocal rank fusion), follow-up rewriting, source selection with a per-document cap |
 | Answer | Claude with `search_result` blocks and native citations, SSE streaming, stop, retry, multichat with history, document scope per chat |

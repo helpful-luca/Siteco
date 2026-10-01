@@ -37,10 +37,14 @@ core       config and container.py, the only place that wires concrete adapters
 
 Upload (raw body, size, quota and disk checks, magic bytes while streaming) writes into quarantine and a `scanning` row. The scan worker asks clamd, then moves the file into the library and queues it. The ingestion worker takes documents by page count (small files overtake catalogs, at most 5 times), parses in a separate pdfium process in batches of 50 pages with a timeout per batch, OCRs pages without text, chunks into a JSONL spool, then embeds from the spool in batches and writes to LanceDB. Only at the end the row becomes `ready`. Memory stays flat from 150 to 1500 pages. A restart re-queues interrupted work and sweeps orphans.
 
+PDF, TXT, Markdown and HTML are accepted. HTML is read with the standard library's `html.parser` into its visible text (no scripts, styles, embeds, attributes or hidden elements; headings become chunk context) and is never rendered.
+
+A file uploaded in a chat is an attachment of that chat (`documents.in_library = 0`, row in `chat_attachments`): the library and MCP do not list it, the chat always searches it. The chat asks whether it should also go into the library; that, or "Add to library" later, flips the flag. Deleting the chat (or removing the attachment) deletes documents that neither the library nor another chat holds, through the same purge as a library delete.
+
 ## Answering
 
 1. The question is validated and rate limited; a follow-up is rewritten for search with the recent history.
-2. `RetrievalService` runs vector search and BM25 (German stemming), fuses them with reciprocal rank fusion (20 candidates), then selects 8 passages with a cap per document. Small scopes can use the whole text.
+2. `RetrievalService` runs vector search and BM25 (German stemming), fuses them with reciprocal rank fusion (20 candidates), then selects 8 passages with a cap per document. Small scopes can use the whole text. A chat's scope is its own attachments plus all library documents or its selection of them.
 3. The request to Claude holds the passages as `search_result` blocks (one text block per sentence, citations enabled), a short turn context and the question. Documents never appear in the system prompt or the question.
 4. Claude streams text and citation events. The pure `AnswerAssembler` places each citation at the end of its text block and maps it by `source` (the chunk id) to document, page and sentence range.
 5. The SSE stream (`meta`, `status`, `sources`, text deltas, `citation`, `done` or `error`) is persisted as it goes. Stop cancels the task and saves the partial answer as `stopped`; a vanished client marks it `interrupted`.
