@@ -6,13 +6,13 @@ import { COOKIE_LOCALE } from '@/shared/preferences/cookies';
 // with a few inline rules (system font, canvas colors, a pill button) and follows the OS theme.
 const TEXT = {
   de: {
-    title: 'Die App lässt sich gerade nicht anzeigen.',
+    title: 'Die App lässt sich gerade nicht anzeigen',
     text: 'Deine Dokumente und Chats sind sicher. Versuch es noch einmal.',
     retry: 'Erneut versuchen',
     id: 'Fehler-ID',
   },
   en: {
-    title: "The app can't be shown right now.",
+    title: "The app can't be shown right now",
     text: 'Your documents and chats are safe. Try again.',
     retry: 'Try again',
     id: 'Error ID',

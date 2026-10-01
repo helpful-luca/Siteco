@@ -72,8 +72,8 @@ export function DropOverlay() {
       className="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-canvas/40 p-2 backdrop-blur-[2px] lg:p-3"
     >
       <div className="glass-dense flex size-full rounded-panel p-3">
-        <div className="flex flex-1 flex-col items-center justify-center rounded-control border-2 border-dashed border-accent/60">
-          <div className="grid size-16 place-items-center rounded-full bg-accent/10 text-accent-ink">
+        <div className="flex flex-1 flex-col items-center justify-center rounded-control border-2 border-dashed border-ink-muted/40">
+          <div className="grid size-16 place-items-center rounded-full bg-fill-strong text-ink">
             <FileUp className="size-7" />
           </div>
           <p className="mt-4 text-title-3 font-semibold">{dropTarget ? t('chatTitle') : t('title')}</p>
