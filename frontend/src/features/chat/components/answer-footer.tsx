@@ -14,10 +14,11 @@ type Props = {
   onOpenArtifact?: () => void;
   /** A comparison column shows model, times and cost in its own header. */
   showDetails?: boolean;
+  className?: string;
 };
 
 /** Quiet actions under an answer, then a one-line summary that discloses the details (annex 11, 8.4). */
-export function AnswerFooter({ answer, onRegenerate, onOpenArtifact, showDetails = true }: Props) {
+export function AnswerFooter({ answer, onRegenerate, onOpenArtifact, showDetails = true, className }: Props) {
   const t = useTranslations('chat');
   const locale = useLocale();
   const { data: config } = useConfig();
@@ -47,7 +48,7 @@ export function AnswerFooter({ answer, onRegenerate, onOpenArtifact, showDetails
   if (total !== null) rows.push([t('detail.total'), t('detail.seconds', { seconds: formatSeconds(total, locale) })]);
 
   return (
-    <div>
+    <div className={className}>
       {/* The first glyph sits on the text edge: 28 px buttons pull back 6 px, 44 px touch ones 14 px. */}
       <div className="-ml-1.5 flex flex-wrap items-center gap-x-1 gap-y-1 pointer-coarse:-ml-3.5">
         {answer.text && <CopyButton text={answer.text} label={t('answer.copy')} copiedLabel={t('answer.copied')} />}

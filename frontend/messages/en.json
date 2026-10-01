@@ -278,9 +278,10 @@
     "untitled": "New chat",
     "suggestionsLabel": "Suggestions",
     "suggestions": {
-      "summary": "Summarize the key points",
       "specs": "What technical data is listed?",
-      "norms": "Which standards and regulations are mentioned?"
+      "norms": "Which standards and regulations are mentioned?",
+      "summaryOf": "Summarize {name}",
+      "compare": "How do the documents differ?"
     },
     "list": {
       "today": "Today",
@@ -378,7 +379,8 @@
       "onlyTitle": "Passages",
       "onlyText": "{count, plural, one {This passage matches your question.} other {These # passages match your question.}}",
       "open": "Open",
-      "openOf": "Open {file}"
+      "openOf": "Open {file}",
+      "openHint": "Click to show the passage in the document."
     },
     "composer": {
       "label": "Your question",

@@ -278,9 +278,10 @@
     "untitled": "Neuer Chat",
     "suggestionsLabel": "Vorschläge",
     "suggestions": {
-      "summary": "Fasse die wichtigsten Punkte zusammen",
       "specs": "Welche technischen Daten werden genannt?",
-      "norms": "Welche Normen und Vorschriften kommen vor?"
+      "norms": "Welche Normen und Vorschriften kommen vor?",
+      "summaryOf": "Fasse {name} zusammen",
+      "compare": "Worin unterscheiden sich die Dokumente?"
     },
     "list": {
       "today": "Heute",
@@ -378,7 +379,8 @@
       "onlyTitle": "Fundstellen",
       "onlyText": "{count, plural, one {Diese Stelle passt zu deiner Frage.} other {Diese # Stellen passen zu deiner Frage.}}",
       "open": "Öffnen",
-      "openOf": "{file} öffnen"
+      "openOf": "{file} öffnen",
+      "openHint": "Klicken zeigt die Stelle im Dokument."
     },
     "composer": {
       "label": "Deine Frage",

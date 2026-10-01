@@ -158,6 +158,7 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate, inComparison
             />
           )}
           <AnswerFooter
+            className="turn-actions"
             answer={answer}
             onRegenerate={retry}
             onOpenArtifact={openWholeAnswer}

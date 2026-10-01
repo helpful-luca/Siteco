@@ -43,6 +43,7 @@ export function ModelPicker({ value, onChange, exclude = null, second = false }:
   return (
     <Menu
       align="end"
+      side="top"
       className="w-80"
       open={pickerOpen}
       onOpenChange={setPickerOpen}

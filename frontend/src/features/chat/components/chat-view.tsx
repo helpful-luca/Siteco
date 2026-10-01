@@ -258,8 +258,6 @@ export function ChatView({ chatId }: { chatId: string }) {
       header={
         <ChatHeader title={current ? (current.title ?? t('untitled')) : ''}>
           <AttachmentsButton chatId={chatId} />
-          <ScopePicker value={scope} onChange={changeScope} disabled={!current} />
-          <ModelControls />
         </ChatHeader>
       }
       dock={
@@ -278,6 +276,8 @@ export function ChatView({ chatId }: { chatId: string }) {
             blocked={block !== null || !settings.model || down || waiting}
             maxChars={config?.limits.max_question_chars}
             describedBy={notice ? NOTICE_ID : undefined}
+            tools={<ScopePicker value={scope} onChange={changeScope} disabled={!current} />}
+            models={<ModelControls />}
             autoFocus
           />
         </>
@@ -354,7 +354,7 @@ const TurnRow = memo(function TurnRow({ turn, minHeight, chatTitle, canRegenerat
   const answer = turn.answer;
   const messageId = answer?.messageId;
   return (
-    <li data-turn={turn.key} className="flex flex-col gap-8" style={minHeight ? { minHeight } : undefined}>
+    <li data-turn={turn.key} className="chat-turn flex flex-col gap-8" style={minHeight ? { minHeight } : undefined}>
       <UserMessage text={turn.question} />
       {answer && (
         <AssistantMessage
@@ -395,7 +395,7 @@ const CompareRow = memo(function CompareRow({
   const regenerate = useCallback((answer: Answer) => onRegenerate(answer, question), [onRegenerate, question]);
   if (!turn.comparison) return null;
   return (
-    <li data-turn={turn.key} className="flex flex-col gap-8" style={minHeight ? { minHeight } : undefined}>
+    <li data-turn={turn.key} className="chat-turn flex flex-col gap-8" style={minHeight ? { minHeight } : undefined}>
       <UserMessage text={turn.question} />
       <CompareTurn
         comparison={turn.comparison}

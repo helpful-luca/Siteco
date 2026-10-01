@@ -457,6 +457,20 @@ html[data-desktop]
 }
 
 /*
+ * Older answers keep their actions quiet until their turn is hovered or holds the focus, like the
+ * best chat apps; the latest answer always shows them. Touch screens always show them.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .turn-actions {
+    transition: opacity 150ms var(--ease-out-soft);
+  }
+
+  .chat-turn:not(:last-child):not(:hover):not(:focus-within) .turn-actions {
+    opacity: 0;
+  }
+}
+
+/*
  * Streaming status ("Durchsuche Dokumente"): a soft band of light passes over the words, clipped
  * to the text. The only thing that moves while the model works. Reduced motion: plain muted text
  * (set explicitly, the global rule would turn an infinite animation into a flicker).

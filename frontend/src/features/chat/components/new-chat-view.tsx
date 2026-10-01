@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { ImportLinkDialog, useUploads } from '@/features/library';
+import { ImportLinkDialog, useDocuments, useUploads } from '@/features/library';
 import { ApiError, toApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
 import { useBackendDown } from '@/shared/api/use-connection';
@@ -13,6 +13,7 @@ import { usePreferences } from '@/shared/preferences/preferences';
 import { cn } from '@/shared/ui';
 import { useChatSettings } from '../chat-settings';
 import { greetingFor } from '../greeting';
+import { suggestionsFor } from '../suggestions';
 import { CHATS_KEY, useCreateChat, useDeleteChat } from '../queries';
 import { useStreamActions } from '../stream/stream-provider';
 import { sendQuestion } from '../send-question';
@@ -29,7 +30,6 @@ import { ScopePicker, type ScopeValue } from './scope-picker';
 
 const NOTICE_ID = 'composer-notice';
 const NEW = 'new';
-const SUGGESTIONS = ['summary', 'specs', 'norms'] as const;
 const noSubscription = () => () => undefined;
 
 /** The time of day greeting, from the viewer's clock; null on the server (its clock may differ). */
@@ -53,6 +53,8 @@ export function NewChatView() {
   // Only for this greeting; the name never goes to the model (annex 11, 5.4).
   const { name } = usePreferences();
   const greeting = useGreeting();
+  const { data: documents } = useDocuments();
+  const suggestions = suggestionsFor(documents?.documents ?? []);
   const streams = useStreamActions();
   const createChat = useCreateChat();
   const queryClient = useQueryClient();
@@ -155,10 +157,7 @@ export function NewChatView() {
       scrollRef={scrollRef}
       contentRef={contentRef}
       header={
-        <ChatHeader title={<span className="sr-only">{t('untitled')}</span>}>
-          <ScopePicker value={scope} onChange={setScope} />
-          <ModelControls />
-        </ChatHeader>
+        <ChatHeader title={<span className="sr-only">{t('untitled')}</span>}>{null}</ChatHeader>
       }
       dock={
         <>
@@ -175,6 +174,8 @@ export function NewChatView() {
             blocked={block !== null || !settings.model || down || waiting}
             maxChars={config?.limits.max_question_chars}
             describedBy={notice ? NOTICE_ID : block === 'noDocuments' ? 'new-chat-hint' : undefined}
+            tools={<ScopePicker value={scope} onChange={setScope} />}
+            models={<ModelControls />}
             autoFocus
           />
         </>
@@ -185,7 +186,7 @@ export function NewChatView() {
         {/* Fades in once the viewer's clock is known, so the server's greeting never flips. */}
         <h2
           className={cn(
-            'text-title-1 font-semibold wrap-anywhere transition-opacity duration-500 ease-out-soft',
+            'text-title-1 font-semibold wrap-anywhere transition-opacity duration-500 ease-out-soft sm:text-large-title',
             greeting === null && 'opacity-0',
           )}
         >
@@ -200,23 +201,23 @@ export function NewChatView() {
         {readyCount > 0 && <p className="mt-1 text-reading text-ink-muted">{t('ready', { count: readyCount })}</p>}
 
         {hasDocuments ? (
-          readyCount > 0 && (
+          suggestions.length > 0 && (
             // Plain rows like Spotlight suggestions: a quiet glyph on the text edge, the question,
             // a fill on hover. The glyph turns to ink with the row.
             <ul aria-label={t('suggestionsLabel')} className="-mx-3 mt-8 flex flex-col gap-0.5 sm:max-w-md">
-              {SUGGESTIONS.map((key) => (
+              {suggestions.map(({ key, name }) => (
                 <li key={key}>
                   <button
                     type="button"
                     disabled={sending || block !== null || down || waiting}
-                    onClick={() => void submit(t(`suggestions.${key}`))}
+                    onClick={() => void submit(t(`suggestions.${key}`, { name: name ?? '' }))}
                     className="group flex h-10 w-full items-center gap-3 rounded-control px-3 text-left text-body text-ink/85 transition-colors hover:bg-fill hover:text-ink disabled:opacity-50 pointer-coarse:h-11"
                   >
                     <CornerDownRight
                       aria-hidden
                       className="size-4 shrink-0 text-ink-muted/70 transition-colors group-hover:text-ink"
                     />
-                    <span className="min-w-0 truncate">{t(`suggestions.${key}`)}</span>
+                    <span className="min-w-0 truncate">{t(`suggestions.${key}`, { name: name ?? '' })}</span>
                   </button>
                 </li>
               ))}

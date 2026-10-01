@@ -31,16 +31,32 @@ export function CitationChip({ n, source, citedText, active = false, onOpen }: P
     <HoverCard
       content={
         <div className="min-w-0">
-          <p className="flex min-w-0 items-center gap-1.5 text-footnote font-medium">
-            <FileText aria-hidden className="size-3.5 shrink-0 text-ink-muted" />
-            <span className={cn('truncate', deleted && 'text-ink-muted line-through')}>{source?.filename}</span>
-          </p>
-          <p className="mt-1 text-caption text-ink-muted">
-            {deleted ? t('deleted') : source.page !== null ? t('page', { page: source.page }) : t('passage')}
-          </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              aria-hidden
+              className="grid size-7 shrink-0 place-items-center rounded-inner bg-fill-strong text-footnote font-semibold tabular-nums"
+            >
+              {n}
+            </span>
+            <div className="min-w-0">
+              <p className={cn('flex min-w-0 items-center gap-1.5 text-footnote font-medium', deleted && 'text-ink-muted line-through')}>
+                <FileText aria-hidden className="size-3.5 shrink-0 text-ink-muted" />
+                <span className="truncate">{source?.filename}</span>
+              </p>
+              <p className="text-caption text-ink-muted">
+                {deleted ? t('deleted') : source.page !== null ? t('page', { page: source.page }) : t('passage')}
+              </p>
+            </div>
+          </div>
           {!deleted && (citedText || source?.snippet) && (
-            <p className="mt-2 line-clamp-6 text-footnote">„{citedText || source?.snippet}“</p>
+            // The cited words look as they will in the document: marked like with a text marker.
+            <p className="mt-3 line-clamp-6 text-footnote">
+              <mark className="rounded-[3px] bg-highlight box-decoration-clone px-0.5 text-on-highlight">
+                {citedText || source?.snippet}
+              </mark>
+            </p>
           )}
+          {!deleted && <p className="mt-3 text-caption text-ink-muted">{t('openHint')}</p>}
         </div>
       }
     >
