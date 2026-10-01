@@ -20,11 +20,6 @@ def test_empty_key_counts_as_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Settings(_env_file=None).anthropic_api_key is None
 
 
-def test_llm_key_configured_reflects_key() -> None:
-    assert Settings(_env_file=None).llm_key_configured is False
-    assert Settings(_env_file=None, anthropic_api_key="sk-ant-x").llm_key_configured is True
-
-
 def test_chat_defaults_follow_the_spec() -> None:
     s = Settings(_env_file=None)
     assert s.default_model == "claude-sonnet-5-5"

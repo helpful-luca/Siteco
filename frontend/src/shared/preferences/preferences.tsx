@@ -11,7 +11,7 @@ import { COOKIE_NAME, COOKIE_ONBOARDED, COOKIE_THEME, type Locale } from './cook
 import type { InitialPreferences } from './initial';
 import { readCookie, writeCookie } from './write-cookie';
 
-export const PREFERENCES_KEY = ['preferences'] as const;
+const PREFERENCES_KEY = ['preferences'] as const;
 
 const InitialContext = createContext<InitialPreferences | null>(null);
 
@@ -51,7 +51,7 @@ export function usePreferences() {
  * routes and survive the refresh (annex 11, 5.1). Before the setup ran, language and theme stay
  * with what the browser (or the running setup) chose.
  */
-export function mirrorPreferences(prefs: PreferencesBody, refresh: () => void): void {
+function mirrorPreferences(prefs: PreferencesBody, refresh: () => void): void {
   writeCookie(COOKIE_NAME, prefs.name);
   writeCookie(COOKIE_ONBOARDED, prefs.onboarded ? '1' : '0');
   if (!prefs.onboarded) return;

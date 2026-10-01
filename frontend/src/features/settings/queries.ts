@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchJson } from '@/shared/api/client';
 import { clientError, isAbortError, normalizeError } from '@/shared/api/errors';
-import type { ApiKeyOut, ReadyOut, WorkspaceOut } from '@/shared/api/types';
+import type { ApiKeyOut, WorkspaceOut } from '@/shared/api/types';
 
 export const WORKSPACE_KEY = ['workspace'] as const;
 
@@ -12,15 +12,6 @@ export function useWorkspace() {
     queryKey: WORKSPACE_KEY,
     queryFn: () => fetchJson<WorkspaceOut>('/api/workspace'),
     refetchOnWindowFocus: true,
-  });
-}
-
-/** Same query as the startup gate, read again for the status in Info. */
-export function useReady() {
-  return useQuery({
-    queryKey: ['health', 'ready'],
-    queryFn: () => fetchJson<ReadyOut>('/api/health/ready'),
-    retry: false,
   });
 }
 

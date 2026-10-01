@@ -87,9 +87,6 @@ class RunRegistry:
             c.lane for c in self._controls(chat_id, lane) if c.request_stop(StopReason.STOPPED)
         )
 
-    def is_active(self, chat_id: str) -> bool:
-        return bool(self._controls(chat_id, None))
-
     def close_if_idle(self, chat_id: str) -> bool:
         """Blocks new answers in an idle chat, atomically with the check. False if one runs."""
         with self._lock:

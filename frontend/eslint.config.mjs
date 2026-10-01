@@ -31,15 +31,11 @@ const eslintConfig = defineConfig([
   },
   {
     files: ['src/features/**/*.{ts,tsx}'],
-    ignores: ['src/features/styleguide/**'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            deepFeatureImport,
-            { group: ['@/features/styleguide'], message: 'The style screen is a showcase, not a library.' },
-          ],
+          patterns: [deepFeatureImport],
         },
       ],
     },

@@ -1,5 +1,4 @@
 from docchat.domain.exact_terms import (
-    count_occurrences,
     fuse,
     is_keyword_query,
     is_rare,
@@ -25,13 +24,6 @@ def test_keyword_queries_are_short_and_rare_terms_are_codes_or_compounds() -> No
     assert not is_keyword_query(question, query_terms(question))
     assert is_rare("ip66") and is_rare("bemessungslebensdauer")
     assert not is_rare("leuchte")
-
-
-def test_occurrences_are_case_insensitive_and_inside_compounds() -> None:
-    text = "Die Bemessungslebensdauer (L90B10) steht neben der LEBENSDAUER."
-    assert count_occurrences(text, "lebensdauer") == 2
-    assert count_occurrences(text, "l90b10") == 1
-    assert count_occurrences(text, "ip66") == 0
 
 
 def test_exact_matches_rank_by_density_and_cover_all_terms() -> None:

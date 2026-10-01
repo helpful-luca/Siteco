@@ -6,7 +6,7 @@ import { ApiError, fetchJson } from '@/shared/api/client';
 import type { DocumentEnvelopeOut, DocumentListOut, DocumentOut } from '@/shared/api/types';
 import { pollInterval } from './status';
 
-export const DOCUMENTS_KEY = ['documents'] as const;
+const DOCUMENTS_KEY = ['documents'] as const;
 
 export function useDocuments() {
   return useQuery({
@@ -61,7 +61,7 @@ export function useDeleteDocument() {
   });
 }
 
-export const attachmentsKey = (chatId: string) => ['attachments', chatId] as const;
+const attachmentsKey = (chatId: string) => ['attachments', chatId] as const;
 
 /** Documents uploaded into one chat (not listed in the library unless moved there). */
 export function useAttachments(chatId: string | null) {

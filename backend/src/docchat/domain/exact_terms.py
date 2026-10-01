@@ -67,10 +67,6 @@ def is_rare(term: str) -> bool:
     return len(term) >= _COMPOUND_CHARS or any(c.isdigit() for c in term)
 
 
-def count_occurrences(text: str, term: str) -> int:
-    return text.lower().count(term)
-
-
 def missing_from(chunks: Collection[Chunk], terms: Sequence[str]) -> tuple[str, ...]:
     """The terms that appear in none of the chunks."""
     lowered = [c.text.lower() for c in chunks]

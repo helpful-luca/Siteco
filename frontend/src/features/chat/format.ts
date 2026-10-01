@@ -19,7 +19,7 @@ export function formatCount(value: number, locale: string): string {
 }
 
 /** The API names a served model with a date ("claude-haiku-4-5-20251001"); the alias is the same model. */
-export function modelAlias(id: string): string {
+function modelAlias(id: string): string {
   return id.replace(/-\d{8}$/, '');
 }
 

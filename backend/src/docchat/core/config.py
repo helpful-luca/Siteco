@@ -111,10 +111,6 @@ class Settings(BaseSettings):
         return None if isinstance(value, str) and not value.strip() else value
 
     @property
-    def llm_key_configured(self) -> bool:
-        return self.anthropic_api_key is not None
-
-    @property
     def database_path(self) -> Path:
         return self.data_dir / "app.db"
 

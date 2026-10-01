@@ -26,7 +26,7 @@ function usePrice() {
 }
 
 /** Price per million tokens, for the model list here and in Info. */
-export function useModelPrice() {
+function useModelPrice() {
   const t = useTranslations('settings.models');
   const price = usePrice();
   return (model: ModelInfo) =>

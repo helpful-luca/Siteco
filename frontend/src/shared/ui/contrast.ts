@@ -5,7 +5,7 @@ function channel(value: number): number {
   return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
 }
 
-export function relativeLuminance(hex: string): number {
+function relativeLuminance(hex: string): number {
   const n = Number.parseInt(hex.replace('#', ''), 16);
   const [r, g, b] = [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff].map(channel);
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;

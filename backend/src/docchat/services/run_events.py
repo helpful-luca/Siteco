@@ -73,4 +73,3 @@ class ErrorEvent:
 RunEvent = (
     MetaEvent | StatusEvent | SourcesEvent | DeltaEvent | CitationEvent | DoneEvent | ErrorEvent
 )
-TERMINAL_EVENTS = (DoneEvent, ErrorEvent)
