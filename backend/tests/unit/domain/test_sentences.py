@@ -84,3 +84,8 @@ def test_forced_cuts_split_where_the_text_has_no_punctuation() -> None:
         "Die Mira L hat IP66.",
         "Sie wiegt 7,4 kg.",
     ]
+
+
+def test_compound_abbreviations_and_spaced_dots_do_not_end_a_sentence() -> None:
+    assert _texts("kg Bestell-Nr. UVP Art.-Nr. 5") == ["kg Bestell-Nr. UVP Art.-Nr. 5"]
+    assert _texts("Typ 51RE . . . A mit 1172 mm") == ["Typ 51RE . . . A mit 1172 mm"]

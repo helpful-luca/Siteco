@@ -32,3 +32,9 @@ def test_a_page_sized_rectangle_is_not_trusted() -> None:
 
 def test_no_rectangles_stay_none() -> None:
     assert trusted_rects([]) == ()
+
+
+def test_cells_of_one_table_row_count_as_one_line() -> None:
+    row = [(0.1 + i * 0.06, 0.4, 0.04, 0.012) for i in range(9)]
+    rects = [*row, *[(x, y + 0.015, w, h) for x, y, w, h in row]]
+    assert trusted_rects(rects) == tuple(rects)

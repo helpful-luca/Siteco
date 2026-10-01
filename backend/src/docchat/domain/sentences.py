@@ -27,12 +27,22 @@ _TOKEN_WINDOW = 16  # longer than any abbreviation; keeps the check constant per
 def _is_abbreviation(text: str, dot: int) -> bool:
     if text[dot] != ".":
         return False
+    # Spaced dots ("51RE . . . A") are a placeholder, not the end of a sentence.
+    if dot == 0 or text[dot - 1].isspace() or text[dot - 1] == ".":
+        return True
     # A token cut off by the window is longer than every abbreviation, so the cut is harmless.
     before = text[max(0, dot - _TOKEN_WINDOW) : dot].split()
     if not before:
         return False
     token = before[-1].lower().lstrip("(\"'")
-    return token in _ABBREVIATIONS or token.isdigit() or (len(token) == 1 and token.isalpha())
+    # Compounds end in the abbreviation: "Bestell-Nr.", "Art.-Nr.".
+    last = token.rsplit("-", 1)[-1]
+    return (
+        token in _ABBREVIATIONS
+        or last in _ABBREVIATIONS
+        or token.isdigit()
+        or (len(token) == 1 and token.isalpha())
+    )
 
 
 def _boundaries(text: str) -> list[int]:

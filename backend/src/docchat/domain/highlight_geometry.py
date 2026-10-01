@@ -26,8 +26,19 @@ def _jumps(rects: Sequence[Rect]) -> int:
     return count
 
 
+def _lines(rects: Sequence[Rect]) -> int:
+    """Rectangles on one line (table cells, a bold word) count once."""
+    count, previous = 0, None
+    for rect in rects:
+        middle = rect[1] + rect[3] / 2
+        if previous is None or not previous[1] <= middle <= previous[1] + previous[3]:
+            count += 1
+        previous = rect
+    return count
+
+
 def rects_are_reliable(rects: Sequence[Rect]) -> bool:
-    if len(rects) > MAX_LINES or _jumps(rects) > MAX_JUMPS:
+    if _lines(rects) > MAX_LINES or _jumps(rects) > MAX_JUMPS:
         return False
     return not any(w > _PAGE_SHARE and h > _PAGE_SHARE for _, _, w, h in rects)
 
