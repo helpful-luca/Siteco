@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  checkMutationGuard,
+  checkRequestGuard,
   exceedsBodyLimit,
   forwardRequestHeaders,
   isMcpPath,
@@ -22,15 +22,32 @@ describe("isSafePath", () => {
   ])("rejects %j", (segments) => expect(isSafePath(segments)).toBe(false));
 });
 
-describe("checkMutationGuard", () => {
+describe("checkRequestGuard", () => {
+  it("answers only requests addressed to this machine, for every method (DNS rebinding)", () => {
+    const rebound = "evil.example:3000";
+    expect(checkRequestGuard("GET", headers({}), rebound, ["documents"])).toBe("FORBIDDEN_ORIGIN");
+    expect(
+      checkRequestGuard(
+        "POST",
+        headers({ "x-requested-with": "docchat", origin: "http://evil.example:3000" }),
+        rebound,
+        ["chats"],
+      ),
+    ).toBe("FORBIDDEN_ORIGIN");
+    for (const local of ["localhost:3000", "127.0.0.1:3000", "[::1]:3000", "localhost"]) {
+      expect(checkRequestGuard("GET", headers({}), local, ["documents"])).toBe("ok");
+    }
+    expect(checkRequestGuard("GET", headers({}), "", ["documents"])).toBe("FORBIDDEN_ORIGIN");
+  });
+
   const headers = (init: Record<string, string>) => new Headers(init);
   const host = "localhost:3000";
 
   it("allows GET without extra headers", () =>
-    expect(checkMutationGuard("GET", headers({}), host)).toBe("ok"));
+    expect(checkRequestGuard("GET", headers({}), host)).toBe("ok"));
   it("rejects POST without X-Requested-With", () =>
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({ origin: "http://localhost:3000" }),
         host,
@@ -38,7 +55,7 @@ describe("checkMutationGuard", () => {
     ).toBe("FORBIDDEN_ORIGIN"));
   it("rejects POST from a foreign origin", () =>
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({
           origin: "https://evil.example",
@@ -49,7 +66,7 @@ describe("checkMutationGuard", () => {
     ).toBe("FORBIDDEN_ORIGIN"));
   it("rejects a malformed origin", () =>
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({ origin: "null", "x-requested-with": "docchat" }),
         host,
@@ -57,7 +74,7 @@ describe("checkMutationGuard", () => {
     ).toBe("FORBIDDEN_ORIGIN"));
   it("allows POST from the same origin with the header", () =>
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({
           origin: "http://localhost:3000",
@@ -68,7 +85,7 @@ describe("checkMutationGuard", () => {
     ).toBe("ok"));
   it("allows DELETE without Origin but with the header", () =>
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "DELETE",
         headers({ "x-requested-with": "docchat" }),
         host,
@@ -76,7 +93,7 @@ describe("checkMutationGuard", () => {
     ).toBe("ok"));
 });
 
-describe("checkMutationGuard for the MCP endpoint", () => {
+describe("checkRequestGuard for the MCP endpoint", () => {
   const headers = (init: Record<string, string>) => new Headers(init);
   const mcp = ["mcp"];
 
@@ -92,12 +109,12 @@ describe("checkMutationGuard for the MCP endpoint", () => {
       "[::1]:3000",
       "localhost",
     ]) {
-      expect(checkMutationGuard("POST", headers({}), host, mcp)).toBe("ok");
+      expect(checkRequestGuard("POST", headers({}), host, mcp)).toBe("ok");
     }
   });
   it("allows the app origin", () =>
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({ origin: "http://localhost:3000" }),
         "localhost:3000",
@@ -106,7 +123,7 @@ describe("checkMutationGuard for the MCP endpoint", () => {
     ).toBe("ok"));
   it("rejects a foreign or malformed Origin", () => {
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({ origin: "https://evil.example" }),
         "localhost:3000",
@@ -114,7 +131,7 @@ describe("checkMutationGuard for the MCP endpoint", () => {
       ),
     ).toBe("FORBIDDEN_ORIGIN");
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({ origin: "null" }),
         "localhost:3000",
@@ -129,14 +146,14 @@ describe("checkMutationGuard for the MCP endpoint", () => {
       "localhost.evil.example",
       "",
     ]) {
-      expect(checkMutationGuard("POST", headers({}), host, mcp)).toBe(
+      expect(checkRequestGuard("POST", headers({}), host, mcp)).toBe(
         "FORBIDDEN_ORIGIN",
       );
     }
   });
   it("rejects a foreign Origin even when the Host is the attacker own", () =>
     expect(
-      checkMutationGuard(
+      checkRequestGuard(
         "POST",
         headers({ origin: "http://evil.example:3000" }),
         "evil.example:3000",
@@ -145,9 +162,9 @@ describe("checkMutationGuard for the MCP endpoint", () => {
     ).toBe("FORBIDDEN_ORIGIN"));
   it("keeps the CSRF guard for every other path", () => {
     expect(
-      checkMutationGuard("POST", headers({}), "localhost:3000", ["chats"]),
+      checkRequestGuard("POST", headers({}), "localhost:3000", ["chats"]),
     ).toBe("FORBIDDEN_ORIGIN");
-    expect(checkMutationGuard("POST", headers({}), "localhost:3000")).toBe(
+    expect(checkRequestGuard("POST", headers({}), "localhost:3000")).toBe(
       "FORBIDDEN_ORIGIN",
     );
   });

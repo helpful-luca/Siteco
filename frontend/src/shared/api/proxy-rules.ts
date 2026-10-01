@@ -59,15 +59,20 @@ export function forwardRequestHeaders(
 }
 
 /**
- * Blocks cross-site writes: any website could otherwise POST to http://localhost:3000.
- * Browsers never let a foreign page set X-Requested-With without a CORS preflight we do not answer.
+ * Guards every /api request.
+ * - DNS rebinding: a website whose name suddenly resolves to 127.0.0.1 is same-origin with this
+ *   app, so header and Origin checks pass. It still sends its own name as Host. The app listens
+ *   on loopback only, so any request not addressed to a loopback name is refused, for reads too.
+ * - Cross-site writes: any website could otherwise POST to http://localhost:3000. Browsers never
+ *   let a foreign page set X-Requested-With without a CORS preflight we do not answer.
  */
-export function checkMutationGuard(
+export function checkRequestGuard(
   method: string,
   headers: Headers,
   host: string,
   path: string[] = [],
 ): "ok" | "FORBIDDEN_ORIGIN" {
+  if (!LOCAL_HOSTNAME.test(host)) return "FORBIDDEN_ORIGIN";
   if (isMcpPath(path)) return checkMcpGuard(headers, host);
   if (!MUTATING_METHODS.has(method.toUpperCase())) return "ok";
   if (headers.get("x-requested-with") !== "docchat") return "FORBIDDEN_ORIGIN";
@@ -85,14 +90,14 @@ export function checkMutationGuard(
  * so the CSRF header cannot be required. The same two threats stay covered another way:
  * - A web page in the browser (cross-site POST, or DNS rebinding) always sends an Origin, which
  *   must then be this app's own origin; a rebinding page also arrives with a foreign Host.
- * - The Host must be a loopback name, so the endpoint answers only for requests addressed to
- *   this machine. MCP_TOKEN (checked by the backend) is the optional second factor.
+ * - The Host is a loopback name (checked for every request in checkRequestGuard), so the
+ *   endpoint answers only for requests addressed to this machine. MCP_TOKEN (checked by the
+ *   backend) is the optional second factor.
  */
 function checkMcpGuard(
   headers: Headers,
   host: string,
 ): "ok" | "FORBIDDEN_ORIGIN" {
-  if (!LOCAL_HOSTNAME.test(host)) return "FORBIDDEN_ORIGIN";
   const origin = headers.get("origin");
   if (origin === null) return "ok";
   try {

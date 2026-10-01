@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { BACKEND_URL, internalHeaders } from "@/shared/api/backend";
 import { envelopeResponse } from "@/shared/api/errors";
 import {
-  checkMutationGuard,
+  checkRequestGuard,
   exceedsBodyLimit,
   FORWARD_RESPONSE_HEADERS,
   forwardRequestHeaders,
@@ -21,7 +21,7 @@ async function proxy(
   if (!isSafePath(path))
     return envelopeResponse(422, "VALIDATION_ERROR", requestId);
   if (
-    checkMutationGuard(
+    checkRequestGuard(
       req.method,
       req.headers,
       req.headers.get("host") ?? "",
