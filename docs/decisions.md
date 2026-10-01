@@ -221,3 +221,6 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 145 | Signing | Ad-hoc signature, no quarantine because built locally | Developer ID and notarization | Enough for this Mac; distribution is the next step |
 | 146 | Desktop permissions | Deny all, except `clipboard-sanitized-write` from the app origin | Deny all | The copy buttons would fail otherwise |
 | 147 | Help menu | Omitted | Link to the README on GitHub | The repository is private; the app explains itself |
+| 148 | Server identity | `/api/health/live` answering `app: siteco-docchat` is trusted; accepted risk that another local process on the port could fake it | Shared secret or TLS pinning for localhost | Local single-user app; the renderer is sandboxed and its bridge is only `{ isDesktop, platform }`, so a fake server gains nothing beyond a web page |
+| 149 | Docker CLI lookup | Fixed absolute candidates, including user-writable `~/.docker/bin` and `~/Applications` | Only root-owned paths | Whoever can write there already runs code as this user; same threat model as the shell's PATH |
+| 150 | Compose files | `--file compose.yaml` explicitly, and a folder with a compose override file is refused with its own message | Silently ignoring the override | COMPOSE_FILE (also from .env) cannot swap the file; the person learns why their override is not used |
