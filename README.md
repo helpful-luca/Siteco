@@ -1,7 +1,7 @@
 <div align="center">
 
-![Document Chat](docs/images/banner-light.svg#gh-light-mode-only)
-![Document Chat](docs/images/banner-dark.svg#gh-dark-mode-only)
+![Document Chat](docs/images/header-light.svg#gh-light-mode-only)
+![Document Chat](docs/images/header-dark.svg#gh-dark-mode-only)
 
 <br>
 
