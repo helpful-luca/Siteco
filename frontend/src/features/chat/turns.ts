@@ -101,8 +101,11 @@ export function buildTurns(messages: MessageOut[], runs: ReadonlyArray<RunState 
     const lane = (name: Lane) => asking.find((run) => run.lane === name && run.meta?.user_message_id === newQuestion);
     const runA = lane('a');
     const runB = lane('b');
-    const a = runA ? runAnswer(runA) : null;
-    const b = withRefused(a, runB ? runAnswer(runB) : null);
+    // A lane that finished first has its run cleared once its saved answer arrived; while the
+    // other lane still streams, that saved answer fills its column.
+    const saved = answers.get(newQuestion) ?? {};
+    const a = runA ? runAnswer(runA) : pick(saved.a);
+    const b = withRefused(a, runB ? runAnswer(runB) : pick(saved.b));
     const first = runA ?? runB;
     const comparison = comparisonOf(a, b, Boolean(runA?.comparisonId));
     turns.push({ key: newQuestion, question: first?.question ?? '', answer: a, comparison });

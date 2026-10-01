@@ -112,6 +112,24 @@ describe('buildTurns with a comparison', () => {
     expect(buildTurns(persisted, [runA, runB])[1].comparison?.b).toMatchObject({ key: 'b2', lane: 'b', live: true });
   });
 
+  it('shows the saved answer of a lane that finished while the other one still streams', () => {
+    // Lane a is done and its run cleared once the reload had its saved answer; lane b streams on.
+    const rows = [
+      ...persisted,
+      user('u2', 'Neu?'),
+      message({ id: 'a2', parent_id: 'u2', lane: 'a', comparison_id: 'cmp2', content: 'Fertig.' }),
+      message({ id: 'b2', parent_id: 'u2', lane: 'b', comparison_id: 'cmp2', status: 'streaming', content: '' }),
+    ];
+    const runB = liveRun({
+      lane: 'b',
+      comparisonId: 'cmp2',
+      meta: { ...META, lane: 'b', user_message_id: 'u2', assistant_message_id: 'b2', comparison_id: 'cmp2' },
+    });
+    const turn = buildTurns(rows, [undefined, runB])[1];
+    expect(turn.comparison).toMatchObject({ id: 'cmp2', a: { key: 'a2', live: false, text: 'Fertig.' }, b: { key: 'b2', live: true } });
+    expect(turn.answer?.key).toBe('a2');
+  });
+
   it('keeps a lane b refused before its stream in the column of its comparison', () => {
     const refused = {
       ...liveRun({ lane: 'b', comparisonId: 'cmp1', clientMessageId: 'q1' }),
