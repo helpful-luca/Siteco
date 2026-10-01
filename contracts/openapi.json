@@ -9,6 +9,65 @@
         "title": "AnswerStyle",
         "type": "string"
       },
+      "ApiKeyIn": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "description": "Never returned, never logged.",
+            "maxLength": 600,
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "ApiKeyIn",
+        "type": "object"
+      },
+      "ApiKeyOut": {
+        "description": "What the UI may know about the key: never the key, only its last four characters.",
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KeySource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "settings wins over env (ANTHROPIC_API_KEY)."
+          },
+          "status": {
+            "$ref": "#/components/schemas/LlmStatus"
+          },
+          "suffix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The last four characters, for recognizing it.",
+            "title": "Suffix"
+          }
+        },
+        "required": [
+          "configured",
+          "source",
+          "suffix",
+          "status"
+        ],
+        "title": "ApiKeyOut",
+        "type": "object"
+      },
       "AskIn": {
         "additionalProperties": false,
         "properties": {
@@ -727,6 +786,7 @@
           "COMPARE_SAME_MODEL",
           "TOKEN_BUDGET_EXCEEDED",
           "LLM_AUTH",
+          "API_KEY_INVALID",
           "LLM_BILLING",
           "LLM_FORBIDDEN",
           "MODEL_UNAVAILABLE",
@@ -742,6 +802,10 @@
         "title": "ErrorCode",
         "type": "string",
         "x-error-specs": {
+          "API_KEY_INVALID": {
+            "retryable": false,
+            "status": 422
+          },
           "CHAT_BUSY": {
             "retryable": true,
             "status": 409
@@ -1009,6 +1073,14 @@
         ],
         "title": "Features",
         "type": "object"
+      },
+      "KeySource": {
+        "enum": [
+          "settings",
+          "env"
+        ],
+        "title": "KeySource",
+        "type": "string"
       },
       "Lane": {
         "description": "Single answers always use `a`; the comparison mode adds `b`.",
@@ -2121,6 +2193,24 @@
         "title": "UpdateChatIn",
         "type": "object"
       },
+      "UsageMonthOut": {
+        "properties": {
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cost_usd",
+          "requests"
+        ],
+        "title": "UsageMonthOut",
+        "type": "object"
+      },
       "UsageOut": {
         "properties": {
           "cache_creation_input_tokens": {
@@ -2207,6 +2297,10 @@
           "stats": {
             "$ref": "#/components/schemas/WorkspaceStatsOut"
           },
+          "usage_month": {
+            "$ref": "#/components/schemas/UsageMonthOut",
+            "description": "Since the first of the current UTC month: what this app spent at Anthropic."
+          },
           "usage_today": {
             "$ref": "#/components/schemas/UsageTodayOut",
             "description": "The current UTC day."
@@ -2215,6 +2309,7 @@
         "required": [
           "stats",
           "usage_today",
+          "usage_month",
           "retention_days"
         ],
         "title": "WorkspaceOut",
@@ -3757,6 +3852,88 @@
         "summary": "Put Preferences",
         "tags": [
           "workspace"
+        ]
+      }
+    },
+    "/api/settings/api-key": {
+      "delete": {
+        "description": "Forgets the key from Settings; ANTHROPIC_API_KEY applies again if it is set.",
+        "operationId": "delete_api_key_api_settings_api_key_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete Api Key",
+        "tags": [
+          "settings"
+        ]
+      },
+      "get": {
+        "description": "Whether a key is set, where it comes from and how it was checked. Never the key.",
+        "operationId": "get_api_key_api_settings_api_key_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Api Key",
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "description": "Checks the key with a free call, then stores it on this machine and uses it from the\nnext question on. 422 `API_KEY_INVALID` when Anthropic refuses it (nothing is stored).",
+        "operationId": "put_api_key_api_settings_api_key_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Put Api Key",
+        "tags": [
+          "settings"
         ]
       }
     },

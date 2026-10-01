@@ -78,7 +78,8 @@ describe('GlobalBanner', () => {
     setup(config({ llm_status: 'invalid_key' }));
     const banner = screen.getByRole('status');
     expect(banner).toHaveTextContent(de.banner.invalidKey);
-    expect(banner).toHaveTextContent('ANTHROPIC_API_KEY');
+    expect(banner).toHaveTextContent('Einstellungen > Modelle');
+    expect(screen.getByRole('link', { name: 'Schlüssel eintragen' })).toHaveAttribute('href', '/settings?section=models');
   });
 
   it('names the local time when the daily budget resets', () => {

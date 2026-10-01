@@ -115,6 +115,11 @@ class Settings(BaseSettings):
         return self.data_dir / "lancedb"
 
     @property
+    def secrets_dir(self) -> Path:
+        """The Claude key entered in Settings (0700 folder, 0600 file), outside the database."""
+        return self.data_dir / "secrets"
+
+    @property
     def spool_dir(self) -> Path:
         return self.data_dir / "spool"
 

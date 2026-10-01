@@ -35,3 +35,13 @@ class SqliteUsageLedger:
         if row is None:
             return UsageDay(0.0, 0, 0, 0)
         return UsageDay(round(float(row[0]), 6), int(row[1]), int(row[2]), int(row[3]))
+
+    def usage_since(self, first_day: str) -> UsageDay:
+        with self._db.connect() as conn:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(cost_usd), 0), COALESCE(SUM(requests), 0),"
+                " COALESCE(SUM(input_tokens), 0), COALESCE(SUM(output_tokens), 0)"
+                " FROM usage_ledger WHERE day >= ?",
+                (first_day,),
+            ).fetchone()
+        return UsageDay(round(float(row[0]), 6), int(row[1]), int(row[2]), int(row[3]))

@@ -72,9 +72,17 @@ class UsageTodayOut(BaseModel):
     budget_usd: float | None = Field(description="DAILY_BUDGET_USD; null is off.")
 
 
+class UsageMonthOut(BaseModel):
+    cost_usd: float
+    requests: int
+
+
 class WorkspaceOut(BaseModel):
     stats: WorkspaceStatsOut
     usage_today: UsageTodayOut = Field(description="The current UTC day.")
+    usage_month: UsageMonthOut = Field(
+        description="Since the first of the current UTC month: what this app spent at Anthropic."
+    )
     retention_days: int | None = Field(
         description="From the preferences; null: nothing is deleted automatically."
     )
@@ -95,6 +103,9 @@ class WorkspaceOut(BaseModel):
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
                 budget_usd=stats.budget_usd,
+            ),
+            usage_month=UsageMonthOut(
+                cost_usd=stats.usage_month.cost_usd, requests=stats.usage_month.requests
             ),
             retention_days=stats.retention_days,
         )

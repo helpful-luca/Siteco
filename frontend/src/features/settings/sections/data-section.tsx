@@ -11,6 +11,7 @@ import { usePreferences } from '@/shared/preferences/preferences';
 import { Button, DelayedSpinner, FormGroup, FormRow, SegmentedControl } from '@/shared/ui';
 import { DeleteAllDialog } from '../delete-all-dialog';
 import { downloadExport, useDeleteEverything, useWorkspace, WORKSPACE_KEY } from '../queries';
+import { useCostFormat } from '../use-cost-format';
 import { SaveError, useSettingSave } from '../use-setting-save';
 
 /** What the app offers; a different installation default (RETENTION_DAYS) is shown as well. */
@@ -19,17 +20,8 @@ const RETENTION_CHOICES = [0, 30, 90, 365];
 function useFormat() {
   const format = useFormatter();
   const size = useFormatSize();
-  return {
-    size,
-    count: (value: number) => format.number(value),
-    cost: (usd: number) =>
-      format.number(usd, {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: usd > 0 && usd < 0.01 ? 4 : 2,
-      }),
-  };
+  const cost = useCostFormat();
+  return { size, count: (value: number) => format.number(value), cost };
 }
 
 export function DataSection() {

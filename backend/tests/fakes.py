@@ -8,6 +8,7 @@ from collections.abc import Callable, Collection, Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from docchat.domain.api_key import KeyCheck
 from docchat.domain.chunking import section_from_text
 from docchat.domain.enums import SearchMode
 from docchat.domain.errors import IngestionError
@@ -219,3 +220,15 @@ class FakeSleep:
         if self.on_sleep is not None:
             self.on_sleep(len(self.waits))
         await asyncio.sleep(0)
+
+
+class FakeKeyValidator:
+    """Answers key checks from a table (unknown keys are valid); records what was checked."""
+
+    def __init__(self, verdicts: dict[str, KeyCheck] | None = None) -> None:
+        self.verdicts = verdicts or {}
+        self.checked: list[str] = []
+
+    async def check(self, key: str) -> KeyCheck:
+        self.checked.append(key)
+        return self.verdicts.get(key, KeyCheck.VALID)

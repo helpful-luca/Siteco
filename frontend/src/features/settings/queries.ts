@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchJson } from '@/shared/api/client';
 import { clientError, isAbortError, normalizeError } from '@/shared/api/errors';
-import type { ReadyOut, WorkspaceOut } from '@/shared/api/types';
+import type { ApiKeyOut, ReadyOut, WorkspaceOut } from '@/shared/api/types';
 
 export const WORKSPACE_KEY = ['workspace'] as const;
 
@@ -55,4 +55,35 @@ export async function downloadExport(): Promise<void> {
   link.remove();
   // Some browsers read the blob after click() returns; ten seconds is plenty for a local file.
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+const API_KEY_KEY = ['settings', 'api-key'] as const;
+const CONFIG_KEY = ['config'] as const;
+
+/** Whether a Claude key is set, where from and its last characters. Never the key. */
+export function useApiKey() {
+  return useQuery({ queryKey: API_KEY_KEY, queryFn: () => fetchJson<ApiKeyOut>('/api/settings/api-key') });
+}
+
+/** Checks and saves a key, or removes the one from Settings; answers use it at once. */
+export function useApiKeyChange() {
+  const client = useQueryClient();
+  const settle = (state: ApiKeyOut) => {
+    client.setQueryData(API_KEY_KEY, state);
+    void client.invalidateQueries({ queryKey: CONFIG_KEY }); // llm_status, retrieval-only
+  };
+  const save = useMutation({
+    mutationFn: (key: string) =>
+      fetchJson<ApiKeyOut>('/api/settings/api-key', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+      }),
+    onSuccess: settle,
+  });
+  const remove = useMutation({
+    mutationFn: () => fetchJson<ApiKeyOut>('/api/settings/api-key', { method: 'DELETE' }),
+    onSuccess: settle,
+  });
+  return { save, remove };
 }

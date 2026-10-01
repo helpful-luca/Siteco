@@ -16,7 +16,7 @@ Prerequisites: Docker with Compose v2 and about 4 GB of free memory (backend up 
 Open http://localhost:3000. The first build downloads dependencies, the web font and the local embedding model (about 400 MB) and verifies that the model works offline; allow a few minutes. After that the app runs offline, except for calls to the Claude API.
 
 - **Without a key** (nothing to configure): upload and search work. A question shows the matching passages instead of an answer ("search-only mode") and the app says how to add a key.
-- **With a key:** `cp .env.example .env`, set `ANTHROPIC_API_KEY=...`, restart. The default model is Claude Sonnet 5.5, switchable per message (Haiku 4.5, Opus 5.5).
+- **With a key:** paste it in Settings > Models (checked with a free call, used from the next question, no restart), or set `ANTHROPIC_API_KEY` in `.env` (`cp .env.example .env`) and restart. The default model is Claude Sonnet 5.5, switchable per message (Haiku 4.5, Opus 5.5).
 - **Full chat without any key:** put `LLM_PROVIDER=fake` in `.env`. A deterministic stand-in answers with the first real sentence of the best passage and cites it, so the whole path (retrieval, streaming, citations, highlighting, persistence) works offline. All automated tests and CI use it; CI never calls Claude.
 - Only the web app is published, on `127.0.0.1:3000`. The backend is reachable only inside the Compose network.
 - Every upload is checked by ClamAV first. The scanner starts with the signatures shipped in its image (seconds on a current Mac, up to a minute on slower machines); until it answers, uploads wait with the status "Checking".
@@ -133,7 +133,7 @@ Claude Code and Claude Desktop can search your library: `claude mcp add --transp
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | no | empty | Claude API key, read only by the backend container |
+| `ANTHROPIC_API_KEY` | no | empty | Claude API key, read only by the backend container; a key entered in Settings > Models wins |
 | `APP_PORT` | no | `3000` | Host port of the web app |
 | `INTERNAL_TOKEN` | no | empty | Optional shared secret between web app and backend |
 | `MCP_TOKEN` | no | empty | Optional bearer token for the MCP endpoint (see docs/mcp.md) |

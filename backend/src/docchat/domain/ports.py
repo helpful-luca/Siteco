@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
+from docchat.domain.api_key import KeyCheck
 from docchat.domain.chat_models import Chat, ChatSummary, Message
 from docchat.domain.enums import DocumentKind, DocumentStatus, Lane, SearchMode
 from docchat.domain.errors import ErrorCode
@@ -377,6 +378,10 @@ class UsageLedger(Protocol):
 
     def usage_on(self, day: str) -> UsageDay: ...
 
+    def usage_since(self, first_day: str) -> UsageDay:
+        """All days from `first_day` (ISO date) on, added up."""
+        ...
+
 
 class SnapshotRedactor(Protocol):
     """Removes a deleted document's text from the answers that cited it."""
@@ -414,6 +419,22 @@ class LLMClient(Protocol):
     Raises LLMError; thinking blocks never leave the adapter."""
 
     def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]: ...
+
+
+class SecretStore(Protocol):
+    """One secret (the Claude key) outside the database, readable by the app only."""
+
+    def load(self) -> str | None: ...
+
+    def save(self, value: str) -> None: ...
+
+    def delete(self) -> None: ...
+
+
+class KeyValidator(Protocol):
+    async def check(self, key: str) -> KeyCheck:
+        """A free call with the key: valid, refused, or no answer right now."""
+        ...
 
 
 class AnswerJudge(Protocol):

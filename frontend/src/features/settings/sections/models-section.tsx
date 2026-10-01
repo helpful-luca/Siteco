@@ -9,6 +9,7 @@ import { useConfig } from '@/shared/api/use-config';
 import { useStoredPreferences } from '@/shared/preferences/preferences';
 import { cn, FormGroup, FormRow, SegmentedControl } from '@/shared/ui';
 import { SaveError, useSettingSave } from '../use-setting-save';
+import { ApiKeyGroup } from './api-key-group';
 
 const EFFORTS: Effort[] = ['low', 'medium', 'high'];
 const STYLES: AnswerStyle[] = ['concise', 'detailed'];
@@ -43,6 +44,7 @@ export function ModelsSection() {
 
   return (
     <div className="flex flex-col gap-8">
+      <ApiKeyGroup />
       <div>
         <FormGroup
           title={t('default')}

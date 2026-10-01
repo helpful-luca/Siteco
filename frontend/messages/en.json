@@ -13,7 +13,7 @@
   },
   "banner": {
     "missingKey": "No API key configured. Search and sources work, answers do not yet.",
-    "missingKeyHint": "Add ANTHROPIC_API_KEY to the .env file and restart the app.",
+    "missingKeyHint": "Add your API key under Settings > Models.",
     "reconnecting": "The connection to the server was lost.",
     "reconnectingHint": "We'll keep trying automatically. Anything you typed stays here.",
     "retryNow": "Try now",
@@ -21,11 +21,12 @@
     "offline": "You're offline.",
     "offlineHint": "Your library and search keep working. Claude needs an internet connection for answers.",
     "invalidKey": "The Claude API key isn't accepted. Search and sources keep working.",
-    "invalidKeyHint": "Check ANTHROPIC_API_KEY in the .env file and restart the app.",
+    "invalidKeyHint": "Check the API key under Settings > Models.",
     "budget": "This demo's daily budget is used up. Your library stays available.",
     "billing": "The API account's credit or spend limit has been reached. Your library stays available.",
     "billingHint": "Check billing in the Claude Console, then try again.",
-    "budgetHint": "You can ask again from {time}. The limit is DAILY_BUDGET_USD in the .env file."
+    "budgetHint": "You can ask again from {time}. The limit is DAILY_BUDGET_USD in the .env file.",
+    "keySettings": "Enter key"
   },
   "errors": {
     "VALIDATION_ERROR": "Something about this request didn't work. Reload the page and try again.",
@@ -72,7 +73,7 @@
     "MODEL_NOT_ALLOWED": "This model isn't available here. Choose another one above.",
     "COMPARE_SAME_MODEL": "Both columns use the same model. Choose two different models to compare.",
     "TOKEN_BUDGET_EXCEEDED": "This demo's daily budget is used up. You can ask again from {time}.",
-    "LLM_AUTH": "The Claude API key isn't accepted. Check ANTHROPIC_API_KEY in .env and restart the app.",
+    "LLM_AUTH": "The Claude API key isn't accepted. Check it under Settings > Models.",
     "LLM_BILLING": "The API account's credit or spend limit has been reached. Check billing in the Claude Console.",
     "LLM_FORBIDDEN": "This API key can't use the selected model. Pick another model or check access in the Claude Console.",
     "MODEL_UNAVAILABLE": "{model} isn't available right now. Choose another model.",
@@ -93,7 +94,8 @@
     "STREAM_INTERRUPTED": "The connection dropped before the answer was finished. Please try again.",
     "REQUEST_TOO_LARGE": "This request is too large. Shorten the text and try again.",
     "RATE_LIMITED": "Quick pause. You can continue in {seconds, plural, one {one second} other {# seconds}}.",
-    "pageNotFound": "This page doesn't exist. The address may have changed."
+    "pageNotFound": "This page doesn't exist. The address may have changed.",
+    "API_KEY_INVALID": "Anthropic doesn't accept this key. Check it in the Anthropic Console and paste it again."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no text, probably scanned. It won't be searched.} other {# pages have no text, probably scanned. They won't be searched.}}",
@@ -722,6 +724,37 @@
       "setup": "Setup",
       "setupText": "Choose language, appearance and name again",
       "setupAction": "Start again"
+    },
+    "apiKey": {
+      "title": "API key",
+      "footer": "The key stays on this computer. The app never shows it again and does not export it.",
+      "current": "Key",
+      "endsWith": "Ends in {suffix}",
+      "fromSettings": "entered here",
+      "fromEnv": "from the .env file",
+      "none": "None entered yet",
+      "status": {
+        "ok": "Valid",
+        "unchecked": "Not checked yet",
+        "missing_key": "Missing",
+        "invalid_key": "Not accepted"
+      },
+      "label": "New key",
+      "placeholder": "sk-ant-…",
+      "save": "Check and save",
+      "checking": "Checking",
+      "saved": "Saved. Applies from the next question.",
+      "savedUnchecked": "Saved. Anthropic could not be reached just now, the app checks it with the next question.",
+      "remove": "Remove key",
+      "removeText": "Then the key from the .env file applies, if there is one.",
+      "spend": "Spending of this app",
+      "spendFooter": "Only requests of this app count, from midnight (UTC) and from the first of the month. Your remaining credit is shown only in the Anthropic Console.",
+      "today": "Today",
+      "month": "This month",
+      "requests": "{count, plural, =0 {No requests yet} one {# request} other {# requests}}",
+      "console": "Remaining credit",
+      "consoleText": "Shown only in the Anthropic Console",
+      "consoleOpen": "Open in the Console"
     }
   }
 }

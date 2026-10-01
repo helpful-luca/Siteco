@@ -19,6 +19,7 @@ from docchat.domain.ports import (
     VectorStore,
 )
 from docchat.domain.usage import UsageDay
+from docchat.services.api_key_service import ApiKeyService
 from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_service import DocumentService
 from docchat.services.limits import DailyBudget
@@ -44,6 +45,7 @@ class WorkspaceParts:
     ledger: UsageLedger
     budget: DailyBudget
     clock: Clock
+    api_keys: ApiKeyService | None = None  # the Claude key from Settings
 
 
 @dataclass(frozen=True)
@@ -53,6 +55,7 @@ class WorkspaceStats:
     documents_bytes: int  # the original files
     storage_bytes: int  # everything on disk: files, search index, database
     usage_today: UsageDay
+    usage_month: UsageDay  # since the first of the current UTC month
     budget_usd: float | None
     retention_days: int | None  # None: automatic deletion is off
 
@@ -64,13 +67,17 @@ class WorkspaceService:
     async def stats(self) -> WorkspaceStats:
         p = self._p
         documents = await asyncio.to_thread(p.documents.list_visible)
-        today = p.clock.now().astimezone(UTC).date().isoformat()
+        day = p.clock.now().astimezone(UTC).date()
+        today = day.isoformat()
         return WorkspaceStats(
             documents=len(documents),
             chats=await asyncio.to_thread(p.chats.count_chats),
             documents_bytes=sum(d.size_bytes for d in documents),
             storage_bytes=await asyncio.to_thread(p.meter.used_bytes),
             usage_today=await asyncio.to_thread(p.ledger.usage_on, today),
+            usage_month=await asyncio.to_thread(
+                p.ledger.usage_since, day.replace(day=1).isoformat()
+            ),
             budget_usd=p.budget.limit_usd,
             retention_days=p.preferences.get().retention_days or None,
         )
@@ -85,8 +92,9 @@ class WorkspaceService:
 
     async def wipe(self, *, reset_preferences: bool) -> None:
         """Deletes every document (files, index, rows), chat and message; with
-        `reset_preferences` also name and settings. Running answers are stopped first.
-        Idempotent: a failed run can simply be repeated. The usage ledger stays (annex 11)."""
+        `reset_preferences` also name and settings, including the API key from Settings.
+        Running answers are stopped first. Idempotent: a failed run can simply be repeated.
+        The usage ledger stays (annex 11)."""
         p = self._p
         await p.runs.stop_all_and_wait()
         try:
@@ -101,6 +109,8 @@ class WorkspaceService:
             await self._sweep()
             if reset_preferences:
                 await asyncio.to_thread(p.preferences.reset)
+                if p.api_keys is not None:  # settings include the key entered in the app
+                    await asyncio.to_thread(p.api_keys.delete)
             await p.erasure.after_wipe()
         except AppError:
             raise

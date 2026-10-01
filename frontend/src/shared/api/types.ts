@@ -15,6 +15,7 @@ export type ChunkOut = Schemas['ChunkOut'];
 export type NoticeOut = Schemas['NoticeOut'];
 export type NoticeCode = Schemas['NoticeCode'];
 export type Limits = Schemas['Limits'];
+export type ApiKeyOut = Schemas['ApiKeyOut'];
 
 export type ChatOut = Schemas['ChatOut'];
 export type ChatListItemOut = Schemas['ChatListItemOut'];

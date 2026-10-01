@@ -5,9 +5,9 @@ from fastapi import FastAPI
 from docchat.adapters.system_clock import SystemClock
 from docchat.core.config import Settings
 from docchat.core.container import build_container
-from docchat.domain.ports import Embedder, LLMClient, MalwareScanner
+from docchat.domain.ports import Embedder, KeyValidator, LLMClient, MalwareScanner
 from docchat.main import create_app
-from tests.fakes import FakeEmbedder, FakeScanner
+from tests.fakes import FakeEmbedder, FakeKeyValidator, FakeScanner
 
 
 def make_app(
@@ -17,6 +17,7 @@ def make_app(
     scanner: MalwareScanner | None = None,
     llm: LLMClient | None = None,
     clock: SystemClock | None = None,
+    key_validator: KeyValidator | None = None,
 ) -> FastAPI:
     container = build_container(
         settings,
@@ -24,5 +25,6 @@ def make_app(
         scanner=scanner or FakeScanner(),
         llm=llm,
         clock=clock,
+        key_validator=key_validator or FakeKeyValidator(),  # never a call to Anthropic
     )
     return create_app(settings, container)

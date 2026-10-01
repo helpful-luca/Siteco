@@ -391,6 +391,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/api-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Api Key
+         * @description Whether a key is set, where it comes from and how it was checked. Never the key.
+         */
+        get: operations["get_api_key_api_settings_api_key_get"];
+        /**
+         * Put Api Key
+         * @description Checks the key with a free call, then stores it on this machine and uses it from the
+         *     next question on. 422 `API_KEY_INVALID` when Anthropic refuses it (nothing is stored).
+         */
+        put: operations["put_api_key_api_settings_api_key_put"];
+        post?: never;
+        /**
+         * Delete Api Key
+         * @description Forgets the key from Settings; ANTHROPIC_API_KEY applies again if it is set.
+         */
+        delete: operations["delete_api_key_api_settings_api_key_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workspace": {
         parameters: {
             query?: never;
@@ -441,6 +470,30 @@ export interface components {
          * @enum {string}
          */
         AnswerStyle: "concise" | "detailed";
+        /** ApiKeyIn */
+        ApiKeyIn: {
+            /**
+             * Key
+             * @description Never returned, never logged.
+             */
+            key: string;
+        };
+        /**
+         * ApiKeyOut
+         * @description What the UI may know about the key: never the key, only its last four characters.
+         */
+        ApiKeyOut: {
+            /** Configured */
+            configured: boolean;
+            /** @description settings wins over env (ANTHROPIC_API_KEY). */
+            source: components["schemas"]["KeySource"] | null;
+            status: components["schemas"]["LlmStatus"];
+            /**
+             * Suffix
+             * @description The last four characters, for recognizing it.
+             */
+            suffix: string | null;
+        };
         /** AskIn */
         AskIn: {
             /**
@@ -721,7 +774,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
+        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "API_KEY_INVALID" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
@@ -736,6 +789,11 @@ export interface components {
             /** Retrieval Only */
             retrieval_only: boolean;
         };
+        /**
+         * KeySource
+         * @enum {string}
+         */
+        KeySource: "settings" | "env";
         /**
          * Lane
          * @description Single answers always use `a`; the comparison mode adds `b`.
@@ -1163,6 +1221,13 @@ export interface components {
              */
             title?: string | null;
         };
+        /** UsageMonthOut */
+        UsageMonthOut: {
+            /** Cost Usd */
+            cost_usd: number;
+            /** Requests */
+            requests: number;
+        };
         /** UsageOut */
         UsageOut: {
             /** Cache Creation Input Tokens */
@@ -1198,6 +1263,8 @@ export interface components {
              */
             retention_days: number | null;
             stats: components["schemas"]["WorkspaceStatsOut"];
+            /** @description Since the first of the current UTC month: what this app spent at Anthropic. */
+            usage_month: components["schemas"]["UsageMonthOut"];
             /** @description The current UTC day. */
             usage_today: components["schemas"]["UsageTodayOut"];
         };
@@ -2310,6 +2377,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_api_key_api_settings_api_key_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"];
+                };
+            };
+        };
+    };
+    put_api_key_api_settings_api_key_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    delete_api_key_api_settings_api_key_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"];
                 };
             };
         };

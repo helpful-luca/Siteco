@@ -2,6 +2,7 @@
 
 import { CreditCard, Gauge, KeyRound, WifiOff } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useBillingBlocked } from '@/shared/api/account-status';
 import { fetchJson } from '@/shared/api/client';
@@ -9,11 +10,12 @@ import { useConfig } from '@/shared/api/use-config';
 import { useBackendDown } from '@/shared/api/use-connection';
 import { codeParams } from '@/shared/i18n/code-params';
 import { useOnline } from '@/shared/lib/use-online';
-import { Button, cn, Spinner } from '@/shared/ui';
+import { Button, buttonStyles, cn, Spinner } from '@/shared/ui';
 
 type Banner = { key: string; icon: ReactNode; title: string; hint: string; live?: boolean; action?: ReactNode };
 
 const ICON = 'mt-px size-4 shrink-0';
+const KEY_SETTINGS_HREF = '/settings?section=models';
 
 /** The key of the reconnecting banner, for views that show the outage where you act instead. */
 export const RECONNECTING_BANNER = 'reconnecting';
@@ -49,11 +51,17 @@ export function GlobalBanner({ className, omit = [] }: { className?: string; omi
   if (!online) {
     banners.push({ key: 'offline', icon: <WifiOff aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('offline'), hint: t('offlineHint'), live: true });
   }
+  // The key is entered in Settings > Models (no restart needed).
+  const keyAction = (
+    <Link href={KEY_SETTINGS_HREF} className={buttonStyles({ size: 'sm', variant: 'secondary' })}>
+      {t('keySettings')}
+    </Link>
+  );
   if (config?.llm_status === 'invalid_key') {
-    banners.push({ key: 'invalidKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('invalidKey'), hint: t('invalidKeyHint'), live: true });
+    banners.push({ key: 'invalidKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('invalidKey'), hint: t('invalidKeyHint'), live: true, action: keyAction });
   }
   if (config?.llm_status === 'missing_key') {
-    banners.push({ key: 'missingKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('missingKey'), hint: t('missingKeyHint') });
+    banners.push({ key: 'missingKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-sodium-ink')} />, title: t('missingKey'), hint: t('missingKeyHint'), action: keyAction });
   }
   if (config?.budget?.exceeded) {
     const { time } = codeParams({ reset_time: config.budget.reset_time }, { locale });

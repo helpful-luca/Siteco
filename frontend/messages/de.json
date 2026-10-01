@@ -13,7 +13,7 @@
   },
   "banner": {
     "missingKey": "Kein API-Key hinterlegt. Suche und Fundstellen funktionieren, Antworten noch nicht.",
-    "missingKeyHint": "Trag ANTHROPIC_API_KEY in die Datei .env ein und starte die App neu.",
+    "missingKeyHint": "Trag deinen API-Schlüssel unter Einstellungen > Modelle ein.",
     "reconnecting": "Die Verbindung zum Server ist unterbrochen.",
     "reconnectingHint": "Wir versuchen es automatisch weiter. Was du eingegeben hast, bleibt erhalten.",
     "retryNow": "Jetzt versuchen",
@@ -21,11 +21,12 @@
     "offline": "Du bist offline.",
     "offlineHint": "Deine Bibliothek und die Suche funktionieren weiter. Für Antworten braucht Claude eine Internetverbindung.",
     "invalidKey": "Der Claude API-Schlüssel wird nicht akzeptiert. Suche und Fundstellen funktionieren weiter.",
-    "invalidKeyHint": "Prüfe ANTHROPIC_API_KEY in der Datei .env und starte die App neu.",
+    "invalidKeyHint": "Prüf den API-Schlüssel unter Einstellungen > Modelle.",
     "budget": "Das Tagesbudget dieser Demo ist aufgebraucht. Deine Bibliothek bleibt nutzbar.",
     "billing": "Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Deine Bibliothek bleibt nutzbar.",
     "billingHint": "Prüfe die Abrechnung in der Claude Console und versuch es danach noch einmal.",
-    "budgetHint": "Ab {time} Uhr kannst du wieder fragen. Das Limit steht in DAILY_BUDGET_USD in der .env."
+    "budgetHint": "Ab {time} Uhr kannst du wieder fragen. Das Limit steht in DAILY_BUDGET_USD in der .env.",
+    "keySettings": "Schlüssel eintragen"
   },
   "errors": {
     "VALIDATION_ERROR": "Da hat etwas mit der Anfrage nicht gepasst. Lade die Seite neu und versuch es noch einmal.",
@@ -72,7 +73,7 @@
     "MODEL_NOT_ALLOWED": "Dieses Modell steht hier nicht zur Wahl. Wähle oben ein anderes.",
     "COMPARE_SAME_MODEL": "Beide Spalten nutzen dasselbe Modell. Wähle für den Vergleich zwei unterschiedliche Modelle.",
     "TOKEN_BUDGET_EXCEEDED": "Das Tagesbudget dieser Demo ist aufgebraucht. Ab {time} Uhr kannst du wieder fragen.",
-    "LLM_AUTH": "Der Claude API-Schlüssel wird nicht akzeptiert. Prüfe ANTHROPIC_API_KEY in der .env und starte die App neu.",
+    "LLM_AUTH": "Der Claude API-Schlüssel wird nicht akzeptiert. Prüf ihn unter Einstellungen > Modelle.",
     "LLM_BILLING": "Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Prüfe die Abrechnung in der Claude Console.",
     "LLM_FORBIDDEN": "Dieser API-Schlüssel darf das gewählte Modell nicht nutzen. Wähle ein anderes Modell oder prüfe die Freigaben in der Claude Console.",
     "MODEL_UNAVAILABLE": "{model} ist gerade nicht verfügbar. Wähle ein anderes Modell.",
@@ -93,7 +94,8 @@
     "STREAM_INTERRUPTED": "Die Verbindung ist abgerissen, bevor die Antwort fertig war. Versuch es noch einmal.",
     "REQUEST_TOO_LARGE": "Diese Anfrage ist zu groß. Kürze den Text und versuch es erneut.",
     "RATE_LIMITED": "Kurze Pause. {seconds, plural, one {In einer Sekunde} other {In # Sekunden}} kannst du weitermachen.",
-    "pageNotFound": "Diese Seite gibt es nicht. Vielleicht hat sich die Adresse geändert."
+    "pageNotFound": "Diese Seite gibt es nicht. Vielleicht hat sich die Adresse geändert.",
+    "API_KEY_INVALID": "Anthropic akzeptiert diesen Schlüssel nicht. Prüf ihn in der Anthropic Console und füg ihn noch einmal ein."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne Text, vermutlich gescannt. Diese Seite wird nicht durchsucht.} other {# Seiten ohne Text, vermutlich gescannt. Diese Seiten werden nicht durchsucht.}}",
@@ -722,6 +724,37 @@
       "setup": "Einrichtung",
       "setupText": "Sprache, Erscheinungsbild und Name noch einmal wählen",
       "setupAction": "Erneut starten"
+    },
+    "apiKey": {
+      "title": "API-Schlüssel",
+      "footer": "Der Schlüssel bleibt auf diesem Rechner. Die App zeigt ihn nie wieder an und exportiert ihn nicht.",
+      "current": "Schlüssel",
+      "endsWith": "Endet auf {suffix}",
+      "fromSettings": "hier eingetragen",
+      "fromEnv": "aus der Datei .env",
+      "none": "Noch keiner eingetragen",
+      "status": {
+        "ok": "Gültig",
+        "unchecked": "Noch nicht geprüft",
+        "missing_key": "Fehlt",
+        "invalid_key": "Wird nicht akzeptiert"
+      },
+      "label": "Neuer Schlüssel",
+      "placeholder": "sk-ant-…",
+      "save": "Prüfen und speichern",
+      "checking": "Wird geprüft",
+      "saved": "Gespeichert. Gilt ab der nächsten Frage.",
+      "savedUnchecked": "Gespeichert. Anthropic war gerade nicht erreichbar, die App prüft ihn bei der nächsten Frage.",
+      "remove": "Schlüssel entfernen",
+      "removeText": "Danach gilt der Schlüssel aus der Datei .env, falls es einen gibt.",
+      "spend": "Ausgaben dieser App",
+      "spendFooter": "Gezählt werden nur Anfragen dieser App, ab Mitternacht (UTC) und ab dem Monatsersten. Dein Restguthaben zeigt nur die Anthropic Console.",
+      "today": "Heute",
+      "month": "Dieser Monat",
+      "requests": "{count, plural, =0 {Noch keine Anfrage} one {# Anfrage} other {# Anfragen}}",
+      "console": "Restguthaben",
+      "consoleText": "Steht nur in der Anthropic Console",
+      "consoleOpen": "In der Console öffnen"
     }
   }
 }

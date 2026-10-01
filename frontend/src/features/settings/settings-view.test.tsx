@@ -62,6 +62,7 @@ const PREFS: PreferencesBody = {
 const WORKSPACE: WorkspaceOut = {
   stats: { documents: 3, chats: 2, documents_bytes: 2_400_000, storage_bytes: 5_300_000 },
   usage_today: { cost_usd: 0.0123, requests: 4, input_tokens: 9000, output_tokens: 800, budget_usd: null },
+  usage_month: { cost_usd: 1.5, requests: 120 },
   retention_days: 30,
 };
 
@@ -83,6 +84,19 @@ beforeEach(() => {
       }
       if (url === '/api/preferences') return Response.json(prefs);
       if (url === '/api/workspace') return Response.json(WORKSPACE);
+      if (url === '/api/settings/api-key' && method === 'PUT') {
+        const { key } = JSON.parse(String(init?.body)) as { key: string };
+        if (key.endsWith('Bad1')) {
+          return Response.json(
+            { error: { code: 'API_KEY_INVALID', retryable: false, request_id: 'r', params: {} } },
+            { status: 422 },
+          );
+        }
+        return Response.json({ configured: true, source: 'settings', suffix: key.slice(-4), status: 'ok' });
+      }
+      if (url === '/api/settings/api-key') {
+        return Response.json({ configured: false, source: null, suffix: null, status: 'missing_key' });
+      }
       if (url.startsWith('/api/workspace') && method === 'DELETE') return new Response(null, { status: 204 });
       if (url === '/api/health/ready') return Response.json({ ready: true, checks: {} });
       return Response.json({}, { status: 404 });
@@ -167,6 +181,24 @@ describe('SettingsView', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(calls.find((c) => c.method === 'DELETE')?.url).toBe('/api/workspace?reset_preferences=true');
     expect(await screen.findByText('Alle Daten wurden gelöscht.')).toBeInTheDocument();
+  });
+
+  it('checks and saves an API key without ever showing it, and shows the spending', async () => {
+    setup('models');
+    expect(await screen.findByText('Noch keiner eingetragen')).toBeInTheDocument();
+    const field = screen.getByLabelText('Neuer Schlüssel');
+    expect(field).toHaveAttribute('type', 'password');
+    await userEvent.type(field, 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxBad1');
+    await userEvent.click(screen.getByRole('button', { name: 'Prüfen und speichern' }));
+    expect(await screen.findByText(/Anthropic akzeptiert diesen Schlüssel nicht/)).toBeInTheDocument();
+    await userEvent.clear(field);
+    await userEvent.type(field, 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxGood');
+    await userEvent.click(screen.getByRole('button', { name: 'Prüfen und speichern' }));
+    expect(await screen.findByText('Gültig')).toBeInTheDocument();
+    expect(screen.getByText('Endet auf Good, hier eingetragen')).toBeInTheDocument();
+    expect(field).toHaveValue('');
+    expect(screen.getByText('120 Anfragen')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /In der Console öffnen/ })).toHaveAttribute('target', '_blank');
   });
 
   it('chooses automatic deletion in the app, without any word about .env', async () => {

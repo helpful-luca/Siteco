@@ -8,10 +8,12 @@ import shutil
 from dataclasses import dataclass
 
 from docchat.adapters.anthropic.client import AnthropicLLMClient
+from docchat.adapters.anthropic.key_validator import AnthropicKeyValidator
 from docchat.adapters.clamd_scanner import ClamdScanner
 from docchat.adapters.directory_size_meter import DirectorySizeMeter
 from docchat.adapters.fake_llm import FakeLLMClient
 from docchat.adapters.fastembed_embedder import FastEmbedEmbedder
+from docchat.adapters.file_secret_store import FileSecretStore
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.lancedb_vector_store import LanceVectorStore
 from docchat.adapters.local_file_storage import LocalFileStorage
@@ -32,6 +34,7 @@ from docchat.core.config import Settings
 from docchat.domain.enums import ComponentStatus, LlmStatus
 from docchat.domain.ports import (
     Embedder,
+    KeyValidator,
     LLMClient,
     MalwareScanner,
     PageOcr,
@@ -40,6 +43,7 @@ from docchat.domain.ports import (
 )
 from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerService
+from docchat.services.api_key_service import ApiKeyService
 from docchat.services.chat_service import ChatService
 from docchat.services.disk_erasure import DiskErasure
 from docchat.services.document_purge import DocumentPurge
@@ -56,6 +60,7 @@ from docchat.services.preferences_service import PreferencesService
 from docchat.services.retention_sweeper import RetentionSweeper
 from docchat.services.retrieval_service import RetrievalService, RetrievalSettings
 from docchat.services.run_registry import RunRegistry
+from docchat.services.swappable_llm import SwappableLLM
 from docchat.services.upload_service import UploadLimits, UploadService
 from docchat.services.workspace_export import WorkspaceExport
 from docchat.services.workspace_service import WorkspaceParts, WorkspaceService
@@ -80,6 +85,7 @@ class Container:
     chats: ChatService
     answers: AnswerService
     llm_health: LlmHealth
+    api_keys: ApiKeyService
     models: ModelAvailability
     budget: DailyBudget
     preferences: PreferencesService
@@ -169,18 +175,35 @@ def _ocr(settings: Settings, process: IsolatedProcess) -> PageOcr:
     return TesseractPageOcr(process, options)
 
 
-def _llm(settings: Settings) -> tuple[LLMClient | None, LlmStatus]:
-    """Fake for E2E and demos; Claude with a key; without a key none (retrieval-only)."""
-    if settings.llm_provider == "fake":
-        return FakeLLMClient(), LlmStatus.OK
-    if settings.anthropic_api_key is None:
-        return None, LlmStatus.MISSING_KEY
-    client = AnthropicLLMClient(
-        settings.anthropic_api_key.get_secret_value(),
-        sonnet_thinking=settings.sonnet_thinking,
-        concurrency=settings.llm_concurrency,
+def _api_keys(
+    settings: Settings,
+    llm: LLMClient | None,
+    validator: KeyValidator | None,
+) -> tuple[ApiKeyService, LlmHealth, SwappableLLM]:
+    """Fake for E2E and demos (or a test's client): fixed. Otherwise Claude with the key from
+    Settings or ANTHROPIC_API_KEY, swapped when the key changes; without a key none
+    (retrieval-only)."""
+    fixed = llm or (FakeLLMClient() if settings.llm_provider == "fake" else None)
+    health = LlmHealth(LlmStatus.OK if fixed is not None else LlmStatus.MISSING_KEY)
+    handle = SwappableLLM(fixed)
+
+    def build(key: str) -> LLMClient:
+        return AnthropicLLMClient(
+            key, sonnet_thinking=settings.sonnet_thinking, concurrency=settings.llm_concurrency
+        )
+
+    env_key = settings.anthropic_api_key
+    keys = ApiKeyService(
+        FileSecretStore(settings.secrets_dir / "anthropic_api_key"),
+        validator or AnthropicKeyValidator(),
+        health,
+        handle,
+        build,
+        env_key=env_key.get_secret_value() if env_key is not None else None,
+        swaps_client=fixed is None,
     )
-    return client, LlmStatus.UNCHECKED
+    keys.load()
+    return keys, health, handle
 
 
 def build_container(
@@ -191,6 +214,7 @@ def build_container(
     scanner: MalwareScanner | None = None,
     llm: LLMClient | None = None,
     clock: SystemClock | None = None,
+    key_validator: KeyValidator | None = None,
 ) -> Container:
     database = Database(settings.database_path)
     repository = SqliteDocumentRepository(database)
@@ -241,8 +265,7 @@ def build_container(
         repository, storage, scanner or _scanner(settings), worker, clock, ScanRetry()
     )
     runs = RunRegistry(settings.max_concurrent_streams)
-    llm_client, llm_status = (llm, LlmStatus.OK) if llm is not None else _llm(settings)
-    llm_health = LlmHealth(llm_status)
+    api_keys, llm_health, llm_handle = _api_keys(settings, llm, key_validator)
     models = ModelAvailability(settings.enabled_models, settings.default_model, clock)
     ledger = SqliteUsageLedger(database)
     budget = DailyBudget(ledger, clock, settings.daily_budget_usd)
@@ -260,7 +283,7 @@ def build_container(
     run_deps = RunDeps(
         chats=chats,
         retrieval=retrieval,
-        llm=llm_client,
+        llm=llm_handle,
         health=llm_health,
         ledger=ledger,
         clock=clock,
@@ -332,6 +355,7 @@ def build_container(
             budget=budget,
         ),
         llm_health=llm_health,
+        api_keys=api_keys,
         models=models,
         budget=budget,
         preferences=preferences,
@@ -349,6 +373,7 @@ def build_container(
                 ledger=ledger,
                 budget=budget,
                 clock=clock,
+                api_keys=api_keys,
             ),
         ),
         export=WorkspaceExport(
