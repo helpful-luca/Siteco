@@ -38,13 +38,14 @@
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.12);
   /* Reaches 12 px below its layer: for glass that floats close to an edge (the composer). */
   --c-shadow-tight: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 14px -6px rgb(0 0 0 / 0.12);
-  --c-light-key: rgb(150 160 180 / 0.16);
-  --c-light-fill: rgb(150 165 190 / 0.1);
+  --c-light-key: rgb(150 160 180 / 0.2);
+  --c-light-fill: rgb(150 165 190 / 0.12);
 }
 
 .dark {
   color-scheme: dark;
-  --c-canvas: #000000;
+  /* A deep graphite, not black: the glass and the light pool need something to lift off from. */
+  --c-canvas: #121214;
   --c-surface: #1c1c1e;
   --c-surface-raised: #2c2c2e;
   --c-ink: #f5f5f7;
@@ -72,8 +73,8 @@
   --c-glass-dense: rgb(32 32 36 / 0.86);
   --c-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 40px -12px rgb(0 0 0 / 0.7);
   --c-shadow-tight: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 14px -6px rgb(0 0 0 / 0.6);
-  --c-light-key: rgb(120 135 160 / 0.18);
-  --c-light-fill: rgb(80 95 120 / 0.12);
+  --c-light-key: rgb(125 140 170 / 0.22);
+  --c-light-fill: rgb(90 105 135 / 0.14);
 }
 
 /*

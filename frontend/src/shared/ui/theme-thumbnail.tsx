@@ -3,7 +3,7 @@ import { cn } from './cn';
 
 const PALETTES = {
   light: { canvas: '#f2f2f5', panel: '#ffffff', line: '#d9d9de', accent: '#b61918' },
-  dark: { canvas: '#000000', panel: '#1c1c1e', line: '#3a3a3e', accent: '#d63030' },
+  dark: { canvas: '#121214', panel: '#1c1c1e', line: '#3a3a3e', accent: '#d63030' },
 } as const;
 
 function Window({ mode }: { mode: 'light' | 'dark' }) {
