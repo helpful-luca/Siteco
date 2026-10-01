@@ -1,0 +1,34 @@
+{
+  "name": "siteco-docchat-desktop",
+  "productName": "Siteco Document Chat",
+  "version": "1.0.0",
+  "description": "Native macOS window for Siteco Document Chat",
+  "private": true,
+  "license": "MIT",
+  "author": "Luca",
+  "main": "dist/main.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsc -p tsconfig.build.json && node scripts/copy-static.mjs && node scripts/write-build-info.mjs",
+    "start": "npm run build && electron .",
+    "start:dev": "npm run build && electron . --dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "npm run build && playwright test",
+    "icon": "node scripts/make-icon.mjs",
+    "dist": "npm run build && node scripts/make-icon.mjs && electron-builder --publish never",
+    "install-app": "node scripts/install-app.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@resvg/resvg-js": "2.6.2",
+    "@types/node": "24.19.0",
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  }
+}
