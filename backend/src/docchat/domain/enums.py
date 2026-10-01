@@ -18,6 +18,7 @@ class DocumentKind(StrEnum):
     PDF = "pdf"
     TXT = "txt"
     MD = "md"
+    HTML = "html"  # read as text, never rendered
 
 
 class DocumentStatus(StrEnum):

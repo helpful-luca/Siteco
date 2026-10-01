@@ -1,8 +1,9 @@
-"""TXT and Markdown: encoding detection, normalization and Markdown headings as chunk context."""
+"""TXT, Markdown and HTML: encoding detection, normalization and headings as chunk context."""
 
 import re
 from pathlib import Path
 
+from docchat.adapters.html_text import html_to_text
 from docchat.domain.enums import DocumentKind
 from docchat.domain.errors import ErrorCode, IngestionError
 from docchat.domain.parsing import TextContent
@@ -86,6 +87,11 @@ class TextFileParser:
     def parse(self, path: Path, kind: DocumentKind, max_chars: int) -> TextContent:
         if path.stat().st_size > max_chars * _MAX_BYTES_PER_CHAR + len(b"\xef\xbb\xbf"):
             raise IngestionError(ErrorCode.DOCUMENT_TOO_LONG)
+        if kind is DocumentKind.HTML:
+            content = html_to_text(decode_text(path.read_bytes()))
+            if len(content.text) > max_chars:
+                raise IngestionError(ErrorCode.DOCUMENT_TOO_LONG)
+            return content
         text = normalize_text(decode_text(path.read_bytes()))
         if len(text) > max_chars:
             raise IngestionError(ErrorCode.DOCUMENT_TOO_LONG)

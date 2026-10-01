@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { extensionOf, preCheck } from './pre-check';
+import { extensionOf, kindOfFileName, preCheck } from './pre-check';
 
 const MB = 1024 * 1024;
 
 describe('preCheck', () => {
-  it('accepts PDF, text and Markdown in any case', () => {
-    for (const name of ['a.pdf', 'b.TXT', 'c.md', 'd.Markdown']) {
+  it('accepts PDF, text, Markdown and HTML in any case', () => {
+    for (const name of ['a.pdf', 'b.TXT', 'c.md', 'd.Markdown', 'e.html', 'f.HTM']) {
       expect(preCheck({ name, size: 10 }, 1024)).toBeNull();
     }
   });
@@ -28,5 +28,11 @@ describe('preCheck', () => {
   it('reads the extension after the last dot', () => {
     expect(extensionOf('Katalog.2026.PDF')).toBe('.pdf');
     expect(extensionOf('noext')).toBe('');
+  });
+});
+
+describe('kindOfFileName', () => {
+  it('names the kind the server will give the file', () => {
+    expect(['a.PDF', 'b.htm', 'c.markdown', 'd.docx'].map(kindOfFileName)).toEqual(['pdf', 'html', 'md', null]);
   });
 });

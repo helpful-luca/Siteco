@@ -28,6 +28,8 @@ _MEDIA_TYPES = {
     # Markdown is served as plain text, never as HTML.
     DocumentKind.TXT: "text/plain; charset=utf-8",
     DocumentKind.MD: "text/plain; charset=utf-8",
+    # HTML too: the original is shown as source, never rendered (and the sandbox CSP holds).
+    DocumentKind.HTML: "text/plain; charset=utf-8",
 }
 _FILE_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -166,7 +168,8 @@ def get_document_file(
     responses={200: {"content": {"text/plain": {}}}, **_errors(404, 409, 410)},
 )
 def get_document_text(document_id: UUID, documents: DocumentServiceDep) -> PlainTextResponse:
-    """TXT/MD as the decoded, normalized text that sentence offsets refer to (text viewer)."""
+    """TXT/MD/HTML as the decoded, normalized text that sentence offsets refer to (text
+    viewer). For HTML that is the visible text of the page, without markup."""
     return PlainTextResponse(
         documents.text(str(document_id)),
         media_type=_MEDIA_TYPES[DocumentKind.TXT],

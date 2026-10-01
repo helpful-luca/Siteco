@@ -1,7 +1,7 @@
 import type { DocumentKind } from '@/shared/api/types';
 import { cn } from '@/shared/ui';
 
-const LABELS: Record<DocumentKind, string> = { pdf: 'PDF', txt: 'TXT', md: 'MD' };
+const LABELS: Record<DocumentKind, string> = { pdf: 'PDF', txt: 'TXT', md: 'MD', html: 'HTML' };
 
 /** A small page with a folded corner and the file type, like the icons in a Finder list. */
 export function FileIcon({ kind, className }: { kind: DocumentKind | null; className?: string }) {

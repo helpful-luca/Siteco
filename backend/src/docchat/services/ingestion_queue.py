@@ -16,7 +16,13 @@ from docchat.domain.models import Document
 
 MAX_OVERTAKES = 5
 # Rough bytes per page, only used to order the queue before the real page count is known.
-_BYTES_PER_PAGE = {DocumentKind.PDF: 100_000, DocumentKind.TXT: 3_000, DocumentKind.MD: 3_000}
+# HTML carries markup around its text. Every kind needs an entry (a test checks it).
+_BYTES_PER_PAGE = {
+    DocumentKind.PDF: 100_000,
+    DocumentKind.TXT: 3_000,
+    DocumentKind.MD: 3_000,
+    DocumentKind.HTML: 12_000,
+}
 
 
 def queue_priority(document: Document) -> int:

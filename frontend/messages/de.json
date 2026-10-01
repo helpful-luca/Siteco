@@ -35,8 +35,8 @@
     "SERVICE_STARTING": "Die App startet noch. Das dauert meist nur ein paar Sekunden.",
     "INTERNAL_ERROR": "Bei uns ist etwas schiefgelaufen. Versuch es gleich noch einmal.",
     "UPLOAD_TOO_LARGE": "Diese Datei ist größer als {max_mb} MB. Teile sie auf oder nimm eine kleinere Version.",
-    "UNSUPPORTED_TYPE": "Dieses Format wird nicht unterstützt. Möglich sind PDF, TXT und Markdown.",
-    "FILE_CONTENT_MISMATCH": "Der Inhalt passt nicht zur Dateiendung. Speichere die Datei neu als PDF, TXT oder Markdown.",
+    "UNSUPPORTED_TYPE": "Dieses Format wird nicht unterstützt. Möglich sind PDF, TXT, Markdown und HTML.",
+    "FILE_CONTENT_MISMATCH": "Der Inhalt passt nicht zur Dateiendung. Speichere die Datei neu als PDF, TXT, Markdown oder HTML.",
     "EMPTY_FILE": "Diese Datei ist leer. Wähle eine andere Datei.",
     "DUPLICATE_DOCUMENT": "Diese Datei ist schon in deiner Bibliothek. Du kannst sie direkt verwenden.",
     "STORAGE_QUOTA": "Deine Bibliothek hat ihr Limit von {max_mb} MB erreicht. Entferne ein Dokument, um Platz zu schaffen.",
@@ -461,7 +461,8 @@
     "kind": {
       "pdf": "PDF-Dokument",
       "txt": "Textdatei",
-      "md": "Markdown-Datei"
+      "md": "Markdown-Datei",
+      "html": "HTML-Seite"
     },
     "actions": {
       "preview": "Vorschau",
@@ -477,7 +478,7 @@
     },
     "empty": {
       "title": "Deine Bibliothek ist noch leer",
-      "text": "Zieh PDFs, Text- oder Markdown-Dateien hierher oder wähle sie aus. Danach kannst du Fragen dazu stellen.",
+      "text": "Zieh PDFs, Text-, Markdown- oder HTML-Dateien hierher oder wähle sie aus. Danach kannst du Fragen dazu stellen.",
       "choose": "Dateien auswählen",
       "hint": "Bis {limit} pro Datei. Jede Datei wird vor dem Speichern auf Schadsoftware geprüft.",
       "hintNoLimit": "Jede Datei wird vor dem Speichern auf Schadsoftware geprüft."
@@ -496,7 +497,7 @@
     },
     "drop": {
       "title": "Zum Hochladen loslassen",
-      "text": "PDF, TXT und Markdown landen in deiner Bibliothek.",
+      "text": "PDF, TXT, Markdown und HTML landen in deiner Bibliothek.",
       "chatTitle": "Zum Anhängen loslassen",
       "chatText": "Die Dateien gehören zu diesem Chat. Ob sie auch in die Bibliothek sollen, fragen wir gleich."
     },

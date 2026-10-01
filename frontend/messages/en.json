@@ -35,8 +35,8 @@
     "SERVICE_STARTING": "The app is still starting. This usually takes a few seconds.",
     "INTERNAL_ERROR": "Something went wrong on our side. Please try again in a moment.",
     "UPLOAD_TOO_LARGE": "This file is larger than {max_mb} MB. Split it or use a smaller version.",
-    "UNSUPPORTED_TYPE": "This format isn't supported. You can add PDF, TXT and Markdown files.",
-    "FILE_CONTENT_MISMATCH": "The content doesn't match the file extension. Save it again as PDF, TXT or Markdown.",
+    "UNSUPPORTED_TYPE": "This format isn't supported. You can add PDF, TXT, Markdown and HTML files.",
+    "FILE_CONTENT_MISMATCH": "The content doesn't match the file extension. Save it again as PDF, TXT, Markdown or HTML.",
     "EMPTY_FILE": "This file is empty. Choose a different file.",
     "DUPLICATE_DOCUMENT": "This file is already in your library. You can use it right away.",
     "STORAGE_QUOTA": "Your library reached its {max_mb} MB limit. Remove a document to make room.",
@@ -461,7 +461,8 @@
     "kind": {
       "pdf": "PDF document",
       "txt": "Text file",
-      "md": "Markdown file"
+      "md": "Markdown file",
+      "html": "HTML page"
     },
     "actions": {
       "preview": "Preview",
@@ -477,7 +478,7 @@
     },
     "empty": {
       "title": "Your library is empty",
-      "text": "Drag PDFs, text or Markdown files here or choose them. Then you can ask questions about them.",
+      "text": "Drag PDFs, text, Markdown or HTML files here or choose them. Then you can ask questions about them.",
       "choose": "Choose files",
       "hint": "Up to {limit} per file. Every file is checked for malware before it is stored.",
       "hintNoLimit": "Every file is checked for malware before it is stored."
@@ -496,7 +497,7 @@
     },
     "drop": {
       "title": "Release to upload",
-      "text": "PDF, TXT and Markdown go into your library.",
+      "text": "PDF, TXT, Markdown and HTML go into your library.",
       "chatTitle": "Release to attach",
       "chatText": "The files belong to this chat. We will ask whether they should go into the library too."
     },

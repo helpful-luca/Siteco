@@ -24,8 +24,8 @@ HTTP errors: the document ends `failed` with the code.
 | `REQUEST_TOO_LARGE` | 413 | no | backend | composer note, next to the control | Diese Anfrage ist zu groß. Kürze den Text und versuch es erneut. |
 | `RATE_LIMITED` | 429 | yes | backend | countdown (composer, upload row) | Kurze Pause. In 23 Sekunden kannst du weitermachen. |
 | `UPLOAD_TOO_LARGE` | 413 | no | backend | library row | Diese Datei ist größer als 1024 MB. Teile sie auf oder nimm eine kleinere Version. |
-| `UNSUPPORTED_TYPE` | 415 | no | backend | library row | Dieses Format wird nicht unterstützt. Möglich sind PDF, TXT und Markdown. |
-| `FILE_CONTENT_MISMATCH` | 415 | no | backend | library row | Der Inhalt passt nicht zur Dateiendung. Speichere die Datei neu als PDF, TXT oder Markdown. |
+| `UNSUPPORTED_TYPE` | 415 | no | backend | library row | Dieses Format wird nicht unterstützt. Möglich sind PDF, TXT, Markdown und HTML. |
+| `FILE_CONTENT_MISMATCH` | 415 | no | backend | library row | Der Inhalt passt nicht zur Dateiendung. Speichere die Datei neu als PDF, TXT, Markdown oder HTML. |
 | `EMPTY_FILE` | 422 | no | backend | library row | Diese Datei ist leer. Wähle eine andere Datei. |
 | `DUPLICATE_DOCUMENT` | 409 | no | backend | library row | Diese Datei ist schon in deiner Bibliothek. Du kannst sie direkt verwenden. |
 | `STORAGE_QUOTA` | 409 | no | backend | library row | Deine Bibliothek hat ihr Limit von 1024 MB erreicht. Entferne ein Dokument, um Platz zu schaffen. |

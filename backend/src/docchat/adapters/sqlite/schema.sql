@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS preferences (
 CREATE TABLE IF NOT EXISTS documents (
   id            TEXT PRIMARY KEY,
   filename      TEXT NOT NULL,
-  kind          TEXT NOT NULL CHECK (kind IN ('pdf', 'txt', 'md')),
+  kind          TEXT NOT NULL CHECK (kind IN ('pdf', 'txt', 'md', 'html')),
   size_bytes    INTEGER NOT NULL,
   sha256        TEXT NOT NULL UNIQUE,
   page_count    INTEGER,

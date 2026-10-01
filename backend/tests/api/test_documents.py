@@ -403,3 +403,22 @@ def test_text_endpoint_is_only_for_text_documents(client: TestClient) -> None:
     r = client.get(f"/api/documents/{doc_id}/text")
     assert (r.status_code, error(r)["code"]) == (404, "NOT_FOUND")
     assert client.get(f"/api/documents/{uuid4()}/text").status_code == 404
+
+
+def test_html_page_is_read_as_text_and_never_served_as_html(client: TestClient) -> None:
+    hostile = (Path(__file__).parents[1] / "fixtures" / "hostile.html").read_bytes()
+    r = upload(client, "Datenblatt.html", hostile)
+    assert r.status_code == 202, r.text
+    document = wait_until_settled(client, r.json()["document"]["id"])
+    assert (document["kind"], document["status"]) == ("html", "ready")
+    text = client.get(f"/api/documents/{document['id']}/text")
+    assert "Schutzart IP66" in text.text
+    assert "LEAK" not in text.text and "evil.example" not in text.text
+    original = client.get(f"/api/documents/{document['id']}/file")
+    assert original.headers["content-type"].startswith("text/plain")
+    assert "sandbox" in original.headers["content-security-policy"]
+
+
+def test_text_named_html_is_refused(client: TestClient) -> None:
+    r = upload(client, "seite.html", b"Kein Markup, nur Text.")
+    assert (r.status_code, error(r)["code"]) == (415, "FILE_CONTENT_MISMATCH")

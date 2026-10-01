@@ -161,3 +161,37 @@ def test_version_4_documents_become_library_documents(tmp_path: Path) -> None:
         )
         conn.execute("DELETE FROM chats WHERE id = 'c1'")
         assert conn.execute("SELECT COUNT(*) FROM chat_attachments").fetchone()[0] == 0
+
+
+def test_version_5_documents_accept_html_and_keep_their_relations(tmp_path: Path) -> None:
+    """SQLite cannot change a CHECK constraint in place: the table is rebuilt, and the chats
+    that point at its documents must not lose them (no cascade during the rebuild)."""
+    from importlib.resources import files
+
+    schema = files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")
+    path = tmp_path / "v5.db"
+    with sqlite3.connect(path) as conn:
+        conn.executescript(schema.replace(", 'html'", ""))
+        conn.executescript(
+            "PRAGMA foreign_keys = ON;"
+            "INSERT INTO documents (id, filename, kind, size_bytes, sha256, status, created_at,"
+            " updated_at, in_library) VALUES ('d1', 'a.pdf', 'pdf', 1, 'x', 'ready', 't', 't', 0);"
+            "INSERT INTO chats (id, created_at, updated_at) VALUES ('c1', 't', 't');"
+            "INSERT INTO chat_documents VALUES ('c1', 'd1');"
+            "INSERT INTO chat_attachments VALUES ('c1', 'd1', 't');"
+            "PRAGMA user_version = 5;"
+        )
+    db = Database(path)
+    db.migrate()
+    with db.connect() as conn:
+        assert conn.execute("SELECT in_library FROM documents").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM chat_documents").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM chat_attachments").fetchone()[0] == 1
+        conn.execute(
+            "INSERT INTO documents (id, filename, kind, size_bytes, sha256, status, created_at,"
+            " updated_at) VALUES ('d2', 'a.html', 'html', 1, 'y', 'ready', 't', 't')"
+        )
+        assert conn.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+        names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master")}
+    assert "ix_documents_status" in names and "documents_new" not in names

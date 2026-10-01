@@ -2,16 +2,58 @@
 
 import sqlite3
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
+
+# Version 6 documents: the kind may be `html`. SQLite cannot change a CHECK constraint, so the
+# table is rebuilt (create, copy, drop, rename) with foreign keys off for the migration.
+_DOCUMENTS_V6 = """CREATE TABLE documents_new (
+  id            TEXT PRIMARY KEY,
+  filename      TEXT NOT NULL,
+  kind          TEXT NOT NULL CHECK (kind IN ('pdf', 'txt', 'md', 'html')),
+  size_bytes    INTEGER NOT NULL,
+  sha256        TEXT NOT NULL UNIQUE,
+  page_count    INTEGER,
+  chunk_count   INTEGER,
+  char_count    INTEGER,
+  status        TEXT NOT NULL CHECK (status IN
+                ('scanning', 'queued', 'parsing', 'embedding', 'ready', 'failed', 'deleting')),
+  progress      REAL NOT NULL DEFAULT 0,
+  error_code    TEXT,
+  error_params  TEXT NOT NULL DEFAULT '{}',
+  notices       TEXT NOT NULL DEFAULT '[]',
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL,
+  ready_at      TEXT,
+  in_library    INTEGER NOT NULL DEFAULT 1 CHECK (in_library IN (0, 1))
+)"""
+
+
+def _documents_accept_html(conn: sqlite3.Connection) -> None:
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'documents'"
+    ).fetchone()
+    if row is None or "kind IN ('pdf', 'txt', 'md')" not in row[0]:
+        return  # no kind constraint to widen
+    old = {r[1] for r in conn.execute("PRAGMA table_info(documents)")}
+    conn.execute(_DOCUMENTS_V6)
+    columns = ", ".join(
+        r[1] for r in conn.execute("PRAGMA table_info(documents_new)") if r[1] in old
+    )
+    conn.execute(f"INSERT INTO documents_new ({columns}) SELECT {columns} FROM documents")
+    conn.execute("DROP TABLE documents")
+    conn.execute("ALTER TABLE documents_new RENAME TO documents")
+    conn.execute("CREATE INDEX IF NOT EXISTS ix_documents_status ON documents(status)")
+
 
 # Steps from one version to the next for databases created by an older release. A new database
-# gets schema.sql, which already has the latest shape.
-_MIGRATIONS: dict[int, str] = {
+# gets schema.sql, which already has the latest shape. A step is SQL or, where SQL alone cannot
+# say it, a function.
+_MIGRATIONS: dict[int, str | Callable[[sqlite3.Connection], None]] = {
     2: "ALTER TABLE documents ADD COLUMN error_params TEXT NOT NULL DEFAULT '{}';",
     3: "ALTER TABLE messages ADD COLUMN sources_mode TEXT;\n"
     "ALTER TABLE messages ADD COLUMN notices TEXT NOT NULL DEFAULT '[]';",
@@ -26,6 +68,7 @@ _MIGRATIONS: dict[int, str] = {
     "  PRIMARY KEY (chat_id, document_id)\n"
     ");\n"
     "CREATE INDEX ix_chat_attachments_document ON chat_attachments(document_id);",
+    6: _documents_accept_html,
 }
 
 
@@ -75,12 +118,21 @@ class Database:
             conn.execute("PRAGMA journal_mode = WAL")
             if self._version(conn) >= SCHEMA_VERSION:
                 return
+            # A table rebuild drops the old table; with foreign keys on, that would cascade into
+            # every row pointing at it. Checked again below before the commit.
+            conn.execute("PRAGMA foreign_keys = OFF")
             conn.execute("BEGIN IMMEDIATE")
             try:
                 current = self._version(conn)  # another process may have migrated meanwhile
                 if current < SCHEMA_VERSION:
-                    for statement in _statements(self._script(current)):
-                        conn.execute(statement)
+                    for step in self._steps(current):
+                        if callable(step):
+                            step(conn)
+                        else:
+                            for statement in _statements(step):
+                                conn.execute(statement)
+                    if conn.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                        raise sqlite3.IntegrityError("migration left dangling references")
                     conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
                 conn.execute("COMMIT")
             except BaseException:
@@ -88,10 +140,10 @@ class Database:
                 raise
 
     @staticmethod
-    def _script(current: int) -> str:
+    def _steps(current: int) -> list[str | Callable[[sqlite3.Connection], None]]:
         if current == 0:
-            return files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")
-        return "\n".join(_MIGRATIONS[v] for v in range(current + 1, SCHEMA_VERSION + 1))
+            return [files("docchat.adapters.sqlite").joinpath("schema.sql").read_text("utf-8")]
+        return [_MIGRATIONS[v] for v in range(current + 1, SCHEMA_VERSION + 1)]
 
     def vacuum(self) -> None:
         """After a mass deletion: rewrites the file so deleted content is gone from disk too

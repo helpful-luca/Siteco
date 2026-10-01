@@ -19,6 +19,8 @@ from docchat.domain.upload_validation import (
         ("notes.txt", DocumentKind.TXT),
         ("readme.md", DocumentKind.MD),
         ("readme.Markdown", DocumentKind.MD),
+        ("seite.html", DocumentKind.HTML),
+        ("SEITE.HTM", DocumentKind.HTML),
     ],
 )
 def test_allowed_extensions_map_to_kind(name: str, kind: DocumentKind) -> None:
@@ -89,3 +91,32 @@ def test_sanitize_keeps_extension_when_truncating() -> None:
 def test_sanitize_falls_back_to_placeholder() -> None:
     assert sanitize_filename("../\u200b.pdf") == "unbenannt.pdf"
     assert sanitize_filename("///") == "unbenannt"
+
+
+@pytest.mark.parametrize(
+    "head",
+    [
+        b"<!DOCTYPE html><html><body>x</body></html>",
+        b"\xef\xbb\xbf\n  <!doctype HTML>\n<title>x</title>",
+        b"<html lang='de'>",
+        b"<!-- export -->\n<div class=a>Text</div>",
+        b"<p>Nur ein Absatz</p>",
+        "<html>".encode("utf-16"),
+    ],
+)
+def test_html_must_look_like_markup(head: bytes) -> None:
+    assert content_matches_kind(DocumentKind.HTML, head)
+
+
+@pytest.mark.parametrize(
+    "head",
+    [
+        b"%PDF-1.7 binary",
+        b"Nur Text ohne Tags",
+        b"MZ\x90\x00\x03",
+        b"<?php echo 1; ?>",
+        b"a < b > c",
+    ],
+)
+def test_html_that_is_no_markup_is_rejected(head: bytes) -> None:
+    assert not content_matches_kind(DocumentKind.HTML, head)

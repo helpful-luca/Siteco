@@ -2,8 +2,8 @@
  * Checks a file before it is uploaded, to spare a round trip. The backend checks everything again
  * (annex 10, C1 to C4).
  */
-export const ACCEPTED_EXTENSIONS = ['.pdf', '.txt', '.md', '.markdown'] as const;
-export const ACCEPT_ATTRIBUTE = [...ACCEPTED_EXTENSIONS, 'application/pdf', 'text/plain', 'text/markdown'].join(',');
+export const ACCEPTED_EXTENSIONS = ['.pdf', '.txt', '.md', '.markdown', '.html', '.htm'] as const;
+export const ACCEPT_ATTRIBUTE = [...ACCEPTED_EXTENSIONS, 'application/pdf', 'text/plain', 'text/markdown', 'text/html'].join(',');
 
 export type UploadError = {
   code: string;
@@ -19,7 +19,7 @@ export function extensionOf(name: string): string {
   return dot < 0 ? '' : name.slice(dot).toLowerCase();
 }
 
-const KINDS = { '.pdf': 'pdf', '.txt': 'txt', '.md': 'md', '.markdown': 'md' } as const;
+const KINDS = { '.pdf': 'pdf', '.txt': 'txt', '.md': 'md', '.markdown': 'md', '.html': 'html', '.htm': 'html' } as const;
 
 /** The document kind a file name will get on the server, for the icon before it is there. */
 export function kindOfFileName(name: string): (typeof KINDS)[keyof typeof KINDS] | null {

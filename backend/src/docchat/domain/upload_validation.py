@@ -1,5 +1,6 @@
 """Cheap upload checks that run inside the request: extension, magic bytes, display name."""
 
+import re
 import unicodedata
 from urllib.parse import unquote
 
@@ -14,9 +15,14 @@ _EXTENSIONS = {
     ".txt": DocumentKind.TXT,
     ".md": DocumentKind.MD,
     ".markdown": DocumentKind.MD,
+    ".html": DocumentKind.HTML,
+    ".htm": DocumentKind.HTML,
 }
 _MAX_EXTENSION_CHARS = 10
 _UTF16_BOMS = (b"\xff\xfe", b"\xfe\xff")
+# An HTML file starts with markup: a doctype, a comment or a tag, after an optional BOM and
+# whitespace. Text that merely contains "<" is no HTML, and "<?php" is a program.
+_HTML_START = re.compile(rb"\s*<(?:!doctype\s+html|!--|[a-z][a-z0-9]*[\s/>])", re.IGNORECASE)
 
 
 def _split_extension(name: str) -> tuple[str, str]:
@@ -34,7 +40,20 @@ def content_matches_kind(kind: DocumentKind, head: bytes) -> bool:
     """`head` is the start of the file, at least MAGIC_WINDOW bytes unless the file is shorter."""
     if kind is DocumentKind.PDF:
         return b"%PDF-" in head[: MAGIC_WINDOW + len(b"%PDF-") - 1]
-    return head.startswith(_UTF16_BOMS) or b"\x00" not in head
+    is_text = head.startswith(_UTF16_BOMS) or b"\x00" not in head
+    if kind is DocumentKind.HTML:
+        return is_text and _looks_like_html(head)
+    return is_text
+
+
+def _looks_like_html(head: bytes) -> bool:
+    if head.startswith(_UTF16_BOMS):
+        encoding = "utf-16-le" if head.startswith(b"\xff\xfe") else "utf-16-be"
+        usable = len(head) - len(head) % 2
+        head = head[2:usable].decode(encoding, errors="ignore").encode("utf-8")
+    elif head.startswith(b"\xef\xbb\xbf"):
+        head = head[3:]
+    return _HTML_START.match(head) is not None
 
 
 def text_chunk_is_binary(head: bytes, chunk: bytes) -> bool:

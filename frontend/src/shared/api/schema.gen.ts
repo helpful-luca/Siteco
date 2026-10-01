@@ -315,7 +315,8 @@ export interface paths {
         };
         /**
          * Get Document Text
-         * @description TXT/MD as the decoded, normalized text that sentence offsets refer to (text viewer).
+         * @description TXT/MD/HTML as the decoded, normalized text that sentence offsets refer to (text
+         *     viewer). For HTML that is the visible text of the page, without markup.
          */
         get: operations["get_document_text_api_documents__document_id__text_get"];
         put?: never;
@@ -622,7 +623,7 @@ export interface components {
          * DocumentKind
          * @enum {string}
          */
-        DocumentKind: "pdf" | "txt" | "md";
+        DocumentKind: "pdf" | "txt" | "md" | "html";
         /** DocumentListOut */
         DocumentListOut: {
             /** Documents */

@@ -62,3 +62,12 @@ async def test_duplicates_and_discard() -> None:
     assert len(queue) == 1
     queue.discard("a")
     assert len(queue) == 0 and "a" not in queue
+
+
+def test_every_kind_has_a_size_estimate() -> None:
+    from docchat.services.ingestion_queue import queue_priority
+
+    now = datetime(2026, 10, 1, tzinfo=UTC)
+    for kind in DocumentKind:
+        document = Document("d", "a", kind, 50_000, "s", DocumentStatus.QUEUED, now, now)
+        assert queue_priority(document) >= 1
