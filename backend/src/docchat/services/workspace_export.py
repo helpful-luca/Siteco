@@ -1,4 +1,4 @@
-"""Data portability (master spec 10b, 5): a ZIP with every chat as JSON and Markdown, the
+"""Data portability: a ZIP with every chat as JSON and Markdown, the
 preferences and the document list. Document files stay out: they are the user's own
 originals, and a library of up to 20 GB does not belong in a download of this kind."""
 

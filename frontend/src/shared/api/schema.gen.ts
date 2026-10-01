@@ -799,7 +799,7 @@ export interface components {
         };
         /**
          * DocumentStatus
-         * @description `scanning` belongs to the malware check (WP-B). `deleting` hides a row until it is gone.
+         * @description `scanning` belongs to the malware check. `deleting` hides a row until it is gone.
          * @enum {string}
          */
         DocumentStatus: "scanning" | "queued" | "parsing" | "embedding" | "ready" | "failed" | "deleting";
@@ -1085,7 +1085,7 @@ export interface components {
         };
         /**
          * PreferencesBody
-         * @description Always the whole object (annex 11, 3.2).
+         * @description Always the whole object.
          */
         PreferencesBody: {
             /** Compare Models */

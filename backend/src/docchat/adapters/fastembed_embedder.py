@@ -9,7 +9,7 @@ from fastembed import TextEmbedding
 from fastembed.common.model_description import ModelSource, PoolingType
 
 GRANITE_97M = "ibm-granite/granite-embedding-97m-multilingual-r2"
-# Chunks are about 400 tokens; the tokenizer config would allow far more (annex 12, 1b).
+# Chunks are about 400 tokens; the tokenizer config would allow far more.
 MAX_TOKENS = 512
 
 

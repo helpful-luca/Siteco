@@ -1,4 +1,4 @@
-"""Starting answers: every precondition is checked here, before the stream opens (S1).
+"""Starting answers: every precondition is checked here, before the stream opens.
 
 What fails here leaves the API as plain JSON with a status code. Only when all checks pass is
 the question saved, a `streaming` placeholder written and the run task started.
@@ -211,7 +211,7 @@ class AnswerService:
         self._check_budget()
         plan = self._deps.retrieval.plan(chat)
         # The lane that saves the question carries the whole comparison: it needs room for both
-        # answers and counts twice, so a comparison is refused as a whole, never half (F7, F8).
+        # answers and counts twice, so a comparison is refused as a whole, never half.
         # The client starts the second lane only after the first one's `meta`.
         opens_comparison = comparison is not None and existing is None
         control = self._deps.registry.reserve(

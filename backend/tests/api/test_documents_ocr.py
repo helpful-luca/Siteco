@@ -7,8 +7,7 @@ from fastapi.testclient import TestClient
 
 from docchat.core.config import Settings
 from tests.api.test_documents import _chunk_ids, upload, wait_until_settled
-from tests.pdf_factory import build_pdf, text_page
-from tests.scan_factory import scanned_page
+from tests.pdf_factory import build_pdf, scanned_page, text_page
 from tests.support import make_app
 
 pytestmark = pytest.mark.ocr

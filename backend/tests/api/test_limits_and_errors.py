@@ -1,4 +1,4 @@
-"""Own limits and every Claude error path over HTTP (annex 10, P0 of I, H, P5; WP-F)."""
+"""Own limits and every Claude error path over HTTP."""
 
 from collections.abc import Iterator
 from typing import Any
@@ -38,7 +38,7 @@ def test_own_chat_limit_is_429_with_a_countdown(settings: Settings) -> None:
         assert 55 <= seconds <= 60 and body["params"]["scope"] == "chat"
         assert body["retry_after"] == seconds and r.headers["retry-after"] == str(seconds)
         assert len(messages(client, chat_id)) == 2  # the refused question is not saved
-        # Polling and lists are never limited (annex 10, I10).
+        # Polling and lists are never limited.
         for path in ("/api/health/live", "/api/config", "/api/chats", "/api/documents"):
             assert client.get(path).status_code == 200
 
@@ -101,7 +101,7 @@ def test_every_claude_error_ends_the_stream_with_one_error_event(
         add_document(client)
         chat_id = new_chat(client)
         r, events = ask(client, chat_id)
-        assert r.status_code == 200  # the stream was open: errors are events now (S1)
+        assert r.status_code == 200  # the stream was open: errors are events now
         end = terminal(events)
         assert end.name == "error" and end.data["partial"] is False
         body = end.data["error"]

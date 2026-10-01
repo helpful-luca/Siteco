@@ -1,13 +1,8 @@
 """HTML pages as text: what a reader sees, with headings as chunk context.
 
-The page is untrusted data. It is read with the standard library's `html.parser`, a tokenizer
-that never fetches anything, runs no script and builds no tree (deep nesting costs nothing).
-Kept: visible text, headings, list items and table rows. Dropped: scripts, styles, templates,
-embedded objects and SVG, comments, every attribute (so no URLs) and elements marked hidden,
-which are a classic place for instructions aimed at a model rather than at people.
-
-Each block is normalized on its own and blocks are joined by a blank line, so the heading
-offsets stay valid for the final text (normalizing it again changes nothing).
+The page is untrusted, so it goes through `html.parser`, which fetches and runs nothing. Scripts,
+styles, embedded objects, attributes and hidden elements are dropped; hidden text is a classic
+place for instructions aimed at a model rather than at people.
 """
 
 import re

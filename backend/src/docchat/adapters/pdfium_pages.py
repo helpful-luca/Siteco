@@ -136,7 +136,7 @@ def _read_page(pdf: pdfium.PdfDocument, index: int) -> TextSection:
         crop = page.get_cropbox()
         raw = textpage.get_text_range()
         # If pdfium's text and its char list disagree, rectangles would point at the wrong
-        # characters: fall back to page-level highlighting instead (annex 12, 1d).
+        # characters: fall back to page-level highlighting instead.
         precise = len(raw) == textpage.count_chars()
         if precise:
             cleaned = clean_page_text(raw, _off_page_chars(textpage, raw, crop))

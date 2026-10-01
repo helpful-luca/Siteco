@@ -1,4 +1,4 @@
-"""Comparison mode: two lanes answer one question (annex 11, 1.3 and 3.3; annex 10, F4 to F9)."""
+"""Comparison mode: two lanes answer one question."""
 
 from dataclasses import replace
 from pathlib import Path

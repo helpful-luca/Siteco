@@ -1,11 +1,8 @@
-"""Rules for importing a document from a link (feedback 1, item 7). Pure: no network here.
+"""Rules for importing a document from a link (SSRF protection). Pure: no network here.
 
-The server fetches a URL a user typed, so it must never become a way into this machine, the
-local network, Docker's internal services or a cloud metadata endpoint (SSRF). The rules:
-only http and https, no credentials in the URL, no local or internal host names, and every
-address a name resolves to must be public. The fetcher connects to the vetted address itself,
-so a second DNS answer (rebinding) never reaches the network, and every redirect hop is
-checked again.
+Only http and https, no credentials in the URL, no local or internal host names, and every
+address a name resolves to must be public. The fetcher connects to the vetted address and checks
+every redirect hop again.
 """
 
 import ipaddress

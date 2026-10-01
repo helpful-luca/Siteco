@@ -1,12 +1,8 @@
 """Maps Claude's raw stream events to provider-neutral LLM events.
 
-- Text and citations only from `text` blocks; thinking blocks (empty under the default
-  `display: omitted`) and every other block type are ignored and never stored.
-- Citations are passed on by `source` (our chunk id). `search_result_index` counts across all
-  search results of the whole request and is never used.
-- The served model comes from `message_start` and from `fallback` blocks (server-side
-  fallback mid-stream). Usage is cumulative; with fallbacks `usage.iterations` has one entry
-  per attempt and model.
+Text and citations come only from `text` blocks; thinking and other blocks are dropped. Citations
+are matched by `source` (our chunk id), never by `search_result_index`, which counts across the
+whole request.
 """
 
 from typing import Any

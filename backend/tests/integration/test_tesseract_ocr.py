@@ -9,8 +9,7 @@ from docchat.adapters.pdfium_ocr_page import OcrOptions, recognize_page
 from docchat.adapters.process_runner import IsolatedProcess
 from docchat.adapters.tesseract_ocr import TesseractPageOcr
 from docchat.cli import ocr_selftest
-from tests.pdf_factory import PageSpec, build_pdf
-from tests.scan_factory import scanned_page
+from tests.pdf_factory import PageSpec, build_pdf, scanned_page
 
 LINES = ("Die Leuchte Mira hat die Schutzart IP66.", "Sie wiegt nur 7,4 kg und ist robust.")
 

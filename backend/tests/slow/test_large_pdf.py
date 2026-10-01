@@ -1,13 +1,12 @@
 """A generated 1500-page catalog must ingest in reasonable time with flat memory.
 
 Run with `RUN_SLOW=1 uv run pytest tests/slow -s` to see the measurements. The model variant
-also needs the embedding model files (see tests/model).
+also needs the embedding model in EMBEDDING_CACHE_DIR (`python -m docchat.cli.download_model`).
 """
 
 import os
 import time
 import tracemalloc
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -69,11 +68,6 @@ def _ingest(
     assert doc["status"] == "ready", doc
     assert doc["page_count"] == pages
     return duration, doc
-
-
-@pytest.fixture
-def fresh_settings(tmp_path: Path) -> Iterator[Settings]:
-    yield Settings(_env_file=None, data_dir=tmp_path / "data")  # type: ignore[call-arg]
 
 
 def test_1500_pages_ingest_fast_with_flat_memory(tmp_path: Path) -> None:

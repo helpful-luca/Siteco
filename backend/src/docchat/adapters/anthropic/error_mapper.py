@@ -1,5 +1,5 @@
 """Claude API failures to our codes, by `error.type` first: errors inside a stream arrive
-after HTTP 200, so the status code alone says nothing (annex 10, H12)."""
+after HTTP 200, so the status code alone says nothing."""
 
 import re
 

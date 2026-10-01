@@ -6,7 +6,7 @@ from docchat.services.workspace_service import WorkspaceStats
 
 
 class PreferencesBody(BaseModel):
-    """Always the whole object (annex 11, 3.2)."""
+    """Always the whole object."""
 
     model_config = ConfigDict(extra="forbid")
 

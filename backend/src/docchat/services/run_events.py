@@ -1,4 +1,4 @@
-"""What one answer run tells its listener, in order (annex 11, 3.3):
+"""What one answer run tells its listener, in order:
 
     meta, status(retrieving), sources, status(generating), delta/citation..., done | error
 

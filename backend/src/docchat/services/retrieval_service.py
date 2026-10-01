@@ -6,7 +6,7 @@ LanceDB is just the index. Small scopes go to the model completely (full-context
 """
 
 import asyncio
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from docchat.domain.chat_models import Chat
@@ -143,24 +143,6 @@ class RetrievalService:
         ids = [d.id for d in documents if not named or d.id in named]
         found = await asyncio.to_thread(self._vectors.chunks_of_pages, ids, pages)
         return found[: self._settings.max_page_chunks]
-
-    async def search(
-        self, query: str, top_k: int, document_ids: Collection[str] | None = None
-    ) -> Retrieved:
-        """The chat's hybrid search without a chat, for other interfaces (the MCP server).
-        Always ranked, never full-context. Only ready documents, optionally narrowed to
-        `document_ids`; unknown or not ready ids are ignored. Library documents only: chat
-        attachments belong to their chat."""
-        documents = await asyncio.to_thread(self._ready_documents, document_ids)
-        ids = [d.id for d in documents]
-        allowed = {d.id: d for d in documents}
-        chunks = await self._rank(ids, query, top_k) if ids else []
-        kept = tuple(c for c in chunks if c.document_id in allowed)
-        return Retrieved(SourcesMode.RETRIEVAL, kept, allowed, ())
-
-    def _ready_documents(self, only: Collection[str] | None) -> list[Document]:
-        ready = [d for d in self._documents.list_library() if d.status is DocumentStatus.READY]
-        return ready if only is None else [d for d in ready if d.id in set(only)]
 
     async def _rank(
         self,

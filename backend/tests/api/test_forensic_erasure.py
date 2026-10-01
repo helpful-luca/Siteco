@@ -1,4 +1,4 @@
-"""Deleted content must be gone from the disk, not only from the API (master spec 10b, 4).
+"""Deleted content must be gone from the disk, not only from the API.
 
 A document carries a unique marker. It is indexed, cited in an answer (snippet and index),
 then removed by a document delete, a workspace wipe or the retention sweep. Afterwards every

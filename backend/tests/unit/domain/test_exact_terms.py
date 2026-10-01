@@ -6,7 +6,22 @@ from docchat.domain.exact_terms import (
     query_terms,
     rank_exact,
 )
-from tests.unit.domain.chunk_factory import make_chunk
+from docchat.domain.models import Chunk
+
+
+def make_chunk(
+    chunk_id: str, *, text: str = "", page: int | None = 1, document_id: str = "d", ordinal: int = 0
+) -> Chunk:
+    return Chunk(
+        chunk_id=chunk_id,
+        document_id=document_id,
+        ordinal=ordinal,
+        page=page,
+        heading="",
+        text=text,
+        search_text=text,
+        sentences=(),
+    )
 
 
 def test_terms_drop_filler_words_and_keep_codes() -> None:

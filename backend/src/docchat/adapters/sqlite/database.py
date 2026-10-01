@@ -98,8 +98,7 @@ class Database:
         conn = sqlite3.connect(self.path, timeout=5.0, isolation_level=None)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
-        # Freed pages and overwritten cells are zeroed, so deleted text does not linger in the
-        # file (master spec 10b, 4).
+        # Freed pages and overwritten cells are zeroed, so deleted text does not linger.
         conn.execute("PRAGMA secure_delete = ON")
         conn.execute("PRAGMA busy_timeout = 5000")
         try:
@@ -147,8 +146,8 @@ class Database:
         return [_MIGRATIONS[v] for v in range(current + 1, SCHEMA_VERSION + 1)]
 
     def vacuum(self) -> None:
-        """After a mass deletion: rewrites the file so deleted content is gone from disk too
-        (master spec 10b, 4). The caller empties the write-ahead log with `checkpoint`."""
+        """After a mass deletion: rewrites the file so deleted content is gone from disk too.
+        The caller empties the write-ahead log with `checkpoint`."""
         with self.connect() as conn:
             conn.execute("VACUUM")
 

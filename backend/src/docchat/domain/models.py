@@ -37,7 +37,7 @@ class Document:
     error_params: Mapping[str, int | str] = field(default_factory=dict)
     notices: tuple[Notice, ...] = ()
     ready_at: datetime | None = None
-    # False: uploaded into a chat and only searched there (master spec feedback 1).
+    # False: uploaded into a chat and only searched there.
     in_library: bool = True
     source_url: str | None = None  # imported from this link
 

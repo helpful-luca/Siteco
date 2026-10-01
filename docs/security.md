@@ -1,6 +1,6 @@
 # Security and privacy
 
-Proportionate to a local single user app, and honest about what is out of scope. The case brief does not grade production hardening; this is what was done anyway and why.
+Proportionate to a local single user app, and honest about what is out of scope.
 
 ## Threat model
 
@@ -42,11 +42,8 @@ The link is stored with the document (shown in its details); it is never logged.
 
 Static CSP in production: `default-src 'self'`, `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'`, `style-src 'self' 'unsafe-inline'`, `img-src 'self' data: blob:`, `connect-src 'self'`, `worker-src 'self' blob:`, `object-src 'none'`, `frame-ancestors 'none'`, plus `nosniff`, `X-Frame-Options: DENY` and a strict referrer policy. Document downloads carry their own `sandbox; default-src 'none'` policy.
 
-Review notes (accepted, not bugs): `'unsafe-inline'` for scripts is needed because the App Router streams its payload in inline scripts and the theme script must run before first paint; a nonce policy would need dynamic rendering of every page and is listed as not built. `'wasm-unsafe-eval'` is for PDF.js image decoders (WebAssembly only, not JavaScript eval). `data:` and `blob:` images are canvas output of the PDF viewer. The E2E suite asserts the browser makes no request to any other origin.
+Accepted trade-offs: `'unsafe-inline'` for scripts is needed because the App Router streams its payload in inline scripts and the theme script must run before first paint; a nonce policy would need dynamic rendering of every page and is listed as not built. `'wasm-unsafe-eval'` is for PDF.js image decoders (WebAssembly only, not JavaScript eval). `data:` and `blob:` images are canvas output of the PDF viewer. The E2E suite asserts the browser makes no request to any other origin.
 
-## The MCP exception
-
-`/api/mcp` is for MCP clients, which are not browsers: they send no `X-Requested-With` and usually no `Origin`. Like every `/api` request it must carry a loopback `Host` (`localhost`, `127.0.0.1`, `[::1]`; this stops DNS rebinding); for this path the proxy accepts a request without `Origin` or with the app's own origin, and refuses any other `Origin` (including `null`). A web page in a browser always sends an `Origin` on cross-site POST, so it cannot reach the endpoint. Extra headers (`authorization`, `mcp-protocol-version`, `mcp-session-id`) are forwarded for this path only. The tools are read only; `MCP_TOKEN` adds a bearer check. Reviewed again for release: no issue found, no change made. Residual risk: anything on the machine that can call `localhost` can read the library through MCP, which is why the port must not be exposed.
 
 ## GDPR
 

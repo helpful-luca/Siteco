@@ -130,7 +130,7 @@ class ChatService:
 
     def prefer(self, chat_id: str, assistant_id: str) -> None:
         """Keep this answer of a comparison. Only the kept one goes into the history of later
-        questions (annex 11, 1.3)."""
+        questions."""
         self.get(chat_id)
         answer = self._chats.get_message(assistant_id)
         if (

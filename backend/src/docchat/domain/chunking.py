@@ -78,7 +78,7 @@ def chunk_section(
     new_id: Callable[[], str] = lambda: str(uuid4()),
 ) -> list[Chunk]:
     # A PDF page's title (the product) stays out of the search text: on every chunk of a
-    # datasheet it blurs which page answers (measured on the golden set). It reaches Claude in
+    # datasheet it blurs which page answers (measured on test questions). It reaches Claude in
     # the search result's title. A text file's section heading does help and stays.
     header = context_header(
         document_name, section.page, section.heading if section.page is None else ""

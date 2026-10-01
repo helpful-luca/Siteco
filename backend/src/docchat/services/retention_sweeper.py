@@ -1,4 +1,4 @@
-"""Automatic deletion (master spec 10b, 6), chosen in Settings > Data; RETENTION_DAYS is only
+"""Automatic deletion, chosen in Settings > Data; RETENTION_DAYS is only
 the default until then. Off by default. The setting is read at every sweep.
 
 Chats count from their last change, documents from their upload. A chat with a running

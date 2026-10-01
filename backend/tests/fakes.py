@@ -11,7 +11,6 @@ from pathlib import Path
 
 from docchat.domain.api_key import KeyCheck
 from docchat.domain.chunking import section_from_text
-from docchat.domain.enums import SearchMode
 from docchat.domain.errors import AppError, ErrorCode, IngestionError
 from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk
@@ -184,8 +183,6 @@ class FakeVectorStore:
         vector: Sequence[float],
         document_ids: Collection[str],
         limit: int,
-        *,
-        mode: SearchMode = SearchMode.HYBRID,
     ) -> list[Chunk]:
         """Ranks by shared words, then document order: enough to test what surrounds it."""
         self.searches.append((text, tuple(document_ids), limit))

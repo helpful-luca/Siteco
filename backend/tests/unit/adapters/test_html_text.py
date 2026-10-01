@@ -12,7 +12,7 @@ HOSTILE = (Path(__file__).parents[2] / "fixtures" / "hostile.html").read_text("u
 
 def test_hostile_page_keeps_only_the_visible_text() -> None:
     content = html_to_text(HOSTILE)
-    assert "IP66 & liefert 5000 Lumen — geprüft nach EN 60598." in content.text
+    assert "IP66 & liefert 5000 Lumen \u2014 geprüft nach EN 60598." in content.text
     assert "Gewicht | 3,2 kg" in content.text
     assert "Montageanleitung" in content.text
     assert "- Aluminium" in content.text

@@ -15,9 +15,7 @@ from httpx import Response
 from docchat.adapters.fake_llm import FakeLLMClient, FakeScenario
 from docchat.core.config import Settings
 from tests.api.test_documents import upload, wait_until_settled
-from tests.live_server import live_server
-from tests.sse import Event, parse_events
-from tests.support import make_app
+from tests.support import Event, live_server, make_app, parse_events
 
 DATASHEET = (
     "# Mira\n\nDie Leuchte Mira hat die Schutzart IP66. Sie ist schlagfest nach IK08.\n\n"

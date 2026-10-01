@@ -1,10 +1,7 @@
 """Builds the answer text and places citation markers.
 
-Claude attaches citations to the current text block; the text of that block may still be
-streaming. Citations are therefore buffered per block and placed at the end of the block when
-it stops, at the length of the answer text so far. That makes `char_offset` deterministic no
-matter whether a citation arrives before or after the block's text, and it stays correct when
-Claude splits blocks inside tables or lists.
+Claude may send a citation before its block's text has finished streaming, so citations are
+buffered per block and placed when the block stops. That keeps `char_offset` deterministic.
 """
 
 from collections.abc import Collection

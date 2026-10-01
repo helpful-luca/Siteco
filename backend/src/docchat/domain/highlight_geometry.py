@@ -1,10 +1,8 @@
-"""Which sentence rectangles can be trusted. Pure functions, no I/O.
+"""Which sentence rectangles can be trusted.
 
-pdfium returns a sentence's text in the order of the content stream. On plain prose that is
-reading order and the line rectangles mark the sentence. In catalogs (several columns, tables,
-text over images) the stream order jumps around: a "sentence" then collects lines from far
-apart and the mark would cover the wrong places. A wrong mark is worse than none, so such
-sentences get no rectangles and the viewer marks the passage on the page instead.
+In catalogs (columns, tables, text over images) pdfium's stream order jumps around and a
+sentence's rectangles would cover the wrong places. A wrong mark is worse than none, so such
+sentences get no rectangles and the viewer marks the passage instead.
 """
 
 from collections.abc import Sequence

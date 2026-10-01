@@ -10,6 +10,8 @@ import zlib
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
+import pypdfium2 as pdfium
+
 _PASSWORD_PAD = bytes.fromhex("28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A")
 _FILE_ID = bytes.fromhex("0123456789abcdef0123456789abcdef")
 
@@ -214,3 +216,19 @@ class _Rc4Security:
             self.user_entry.hex().encode(),
             self.permissions,
         )
+
+
+def scanned_page(*lines: str, dpi: int = 200, size: float = 14, leading: float = 20) -> PageSpec:
+    """A text page rendered by pdfium and stored as one grayscale image, with no text layer."""
+    pdf = pdfium.PdfDocument(build_pdf([text_page(*lines, size=size, leading=leading)]))
+    try:
+        page = pdf[0]
+        bitmap = page.render(scale=dpi / 72, grayscale=True)
+        pixels = bytes(bitmap.buffer)
+        rows = [
+            pixels[row * bitmap.stride : row * bitmap.stride + bitmap.width]
+            for row in range(bitmap.height)
+        ]
+        return PageSpec(scan=GrayImage(bitmap.width, bitmap.height, b"".join(rows)))
+    finally:
+        pdf.close()

@@ -32,8 +32,8 @@ def test_defaults_until_something_is_saved(service: PreferencesService) -> None:
 
 
 def test_saves_a_cleaned_name(service: PreferencesService) -> None:
-    saved = service.update(replace(service.get(), name=" Luca\u202e ", onboarded=True))
-    assert saved.name == "Luca"
+    saved = service.update(replace(service.get(), name=" Anna\u202e ", onboarded=True))
+    assert saved.name == "Anna"
     assert service.get() == saved
 
 
@@ -93,8 +93,8 @@ def test_retention_must_be_a_sensible_number_of_days(service: PreferencesService
 
 def test_a_row_saved_before_retention_existed_still_loads(store: SqlitePreferencesStore) -> None:
     service = PreferencesService(store, FakeClock(), MODELS, "claude-sonnet-5-5", retention_days=7)
-    service.update(replace(service.get(), name="Luca", onboarded=True))
+    service.update(replace(service.get(), name="Anna", onboarded=True))
     with store._db.connect() as conn:
         conn.execute("UPDATE preferences SET data = json_remove(data, '$.retention_days')")
     prefs = service.get()
-    assert (prefs.name, prefs.retention_days) == ("Luca", 7)
+    assert (prefs.name, prefs.retention_days) == ("Anna", 7)

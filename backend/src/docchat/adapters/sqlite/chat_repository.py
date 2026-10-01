@@ -302,7 +302,7 @@ class SqliteChatRepository:
             conn.execute("COMMIT")
         return changed > 0
 
-    # Redaction (master spec 10b, 4)
+    # Redaction
 
     def _redact(
         self, where: str, params: Sequence[object], gone: Callable[[Message], set[str]]

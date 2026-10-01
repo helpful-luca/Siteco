@@ -1,21 +1,8 @@
 """Builds the Messages API body from a provider-neutral request, per model profile.
 
-Layout (annex 11, 4.2), with two prompt cache breakpoints:
-    system:   static system prompt                              <- breakpoint 1
-    messages: user/assistant history as plain text
-              last assistant answer                             <- breakpoint 2
-              user: [search_result x k] [turn_context] [documents] [question]
-
-Full-context mode (`documents_first`): the documents are static per scope, so they come first
-and a follow-up question reads them from the cache (three breakpoints, the limit is four):
-    system:   static system prompt                              <- breakpoint 1
-    messages: user: [search_result x n]                         <- breakpoint 2 (last document)
-                    [first question]  (or [turn_context] [documents] [question] without history)
-              assistant, user, ... history as plain text
-              last assistant answer                             <- breakpoint 3
-              user: [turn_context] [documents] [question]
-
-Never sent: temperature, top_p, top_k, `thinking: disabled` (all 400 on these models).
+Prompt cache breakpoints sit after the system prompt and after the last answer; in full-context
+mode the documents come first, so a follow-up question reads them from the cache. Sampling
+parameters and `thinking: disabled` are never sent: these models answer them with a 400.
 """
 
 from typing import Any, Literal

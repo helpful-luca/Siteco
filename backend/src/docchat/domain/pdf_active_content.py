@@ -1,24 +1,9 @@
-"""Static check for active PDF content (master spec 6.9), streaming over the raw bytes.
+"""Static check for active PDF content (scripts, launch actions, embedded files, XFA), streaming
+over the raw bytes.
 
-Looks for the PDF names that make a viewer run or open something: JavaScript, launch actions,
-embedded files, rich media and XFA forms, and open and additional actions when the file also
-has an action that opens another file or sends or loads data. An open action that only jumps
-to a page (InDesign and Acrobat set "page 1, fit") is not active content. The file is still
-processed (only text is extracted, the viewer executes nothing); the library shows a notice.
-
-Rules that keep it honest:
-- Names are whole tokens and `#xx` escapes are decoded (`/J#61vaScript` is `/JavaScript`).
-- Bytes inside ordinary streams (images, page content) are skipped: random binary data would
-  otherwise "contain" short names like `/JS` or `/AA`.
-- Object streams (`/Type /ObjStm`) hide dictionaries in compressed data, so they are inflated
-  and scanned too, capped to defuse decompression bombs.
-- A stream starts only at `>> stream` (the end of its dictionary), so the word "stream" inside
-  a string does not switch modes. Known limit: a string that itself contains `>> stream` still
-  can; the worst case is a missed hint, never a blocked document.
-
-Every piece of input is looked at once (an offset walks the buffer, which is sliced once per
-feed), and hostile files with millions of streams hit MAX_STREAMS. When a limit stops the scan,
-LIMIT_REACHED is reported: a file too complex to check gets the notice, the conservative side.
+An open action counts only together with an action that opens another file or sends data; a
+jump to page 1 is harmless. The file is still processed and the library shows a notice; when a
+limit stops the scan, LIMIT_REACHED is reported so a file too complex to check gets the notice.
 """
 
 import re
@@ -33,6 +18,8 @@ TRIGGERED_ACTIONS = frozenset({"GoToR", "GoToE", "SubmitForm", "ImportData", "Re
 _DELIMITERS = frozenset(b"\x00\t\n\x0c\r ()<>[]{}/%")
 _NAME = re.compile(rb"/([^\x00\t\n\x0c\r ()<>\[\]{}/%]*)")
 _ESCAPE = re.compile(rb"#([0-9A-Fa-f]{2})")
+# A stream starts only at the end of its dictionary, so the word "stream" inside a string does
+# not switch modes. A string that itself contains `>> stream` still can: at worst a missed hint.
 _STREAM_START = re.compile(rb">>[\x00\t\n\x0c\r ]{0,16}stream(?:\r\n|\n|\r)")
 _STREAM_START_TAIL = 2 + 16 + len(b"stream\r")  # bytes kept back that may start a match
 _STREAM_END = b"endstream"
@@ -87,10 +74,6 @@ class ActiveContentScan:
         self._inflate_budget = max_inflated
         self._streams_left = max_streams
         self._stopped = False
-
-    @property
-    def stopped(self) -> bool:
-        return self._stopped
 
     def stop(self) -> None:
         """Gives up (a limit was reached); the result then contains LIMIT_REACHED."""
@@ -153,7 +136,8 @@ class ActiveContentScan:
         return match.end(), True
 
     def _consume_stream(self, buffer: bytes, pos: int, *, final: bool) -> tuple[int, bool]:
-        """Skips (or inflates) stream data up to `endstream`."""
+        """Skips stream data up to `endstream`: random bytes would otherwise "contain" names like
+        `/JS`. Object streams hide dictionaries in compressed data, so those are inflated."""
         end = buffer.find(_STREAM_END, pos)
         if end == -1:
             cut = len(buffer) if final else max(pos, len(buffer) - len(_STREAM_END) + 1)

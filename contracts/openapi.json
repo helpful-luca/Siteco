@@ -698,7 +698,7 @@
         "type": "object"
       },
       "DocumentStatus": {
-        "description": "`scanning` belongs to the malware check (WP-B). `deleting` hides a row until it is gone.",
+        "description": "`scanning` belongs to the malware check. `deleting` hides a row until it is gone.",
         "enum": [
           "scanning",
           "queued",
@@ -1783,7 +1783,7 @@
       },
       "PreferencesBody": {
         "additionalProperties": false,
-        "description": "Always the whole object (annex 11, 3.2).",
+        "description": "Always the whole object.",
         "properties": {
           "compare_models": {
             "items": {

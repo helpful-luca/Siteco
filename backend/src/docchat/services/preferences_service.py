@@ -1,5 +1,5 @@
 """Preferences: read with defaults, validate, save. The backend is the truth for every window
-(browser and desktop); the UI mirrors the render-critical values as cookies (annex 11, 5.1)."""
+(browser and desktop); the UI mirrors the render-critical values as cookies."""
 
 import logging
 from collections.abc import Sequence

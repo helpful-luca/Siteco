@@ -42,8 +42,8 @@ def build_openapi() -> dict[str, Any]:
     )
     schemas = spec.setdefault("components", {}).setdefault("schemas", {})
     schemas.update(extra.get("$defs", {}))
-    # Status and retryable per code: `docs/errors.md` is generated from this, so the catalog
-    # cannot drift from `domain/errors.py` (the contract itself has a drift test).
+    # Status and retryable per code, so the frontend error catalog is checked against
+    # `domain/errors.py` (the contract itself has a drift test).
     schemas["ErrorCode"]["x-error-specs"] = {
         code.value: {"status": spec.status, "retryable": spec.retryable}
         for code, spec in ERROR_SPECS.items()

@@ -1,4 +1,4 @@
-"""Payloads of the answer stream (annex 11, 3.3). One model per SSE event name.
+"""Payloads of the answer stream. One model per SSE event name.
 
 The stream is `text/event-stream`; these models only exist so the frontend gets exact types
 from the contract.

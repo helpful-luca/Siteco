@@ -18,7 +18,8 @@ COPY src/docchat/__init__.py src/docchat/__init__.py
 COPY src/docchat/adapters/__init__.py src/docchat/adapters/fastembed_embedder.py src/docchat/adapters/
 COPY src/docchat/cli/__init__.py src/docchat/cli/download_model.py src/docchat/cli/
 ENV EMBEDDING_CACHE_DIR=/opt/models PYTHONPATH=/app/src
-RUN /app/.venv/bin/python -m docchat.cli.download_model
+# Some cache files are written owner-only; the runtime user must be able to read all of them.
+RUN /app/.venv/bin/python -m docchat.cli.download_model && chmod -R a+rX /opt/models
 
 # Application installed as a regular (non-editable) package into the venv.
 FROM deps AS app
@@ -31,9 +32,9 @@ ARG APP_VERSION=0.1.0
 ENV PATH=/app/.venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     ORT_DISABLE_TELEMETRY=1 HF_HUB_OFFLINE=1 EMBEDDING_CACHE_DIR=/opt/models DATA_DIR=/data \
     GIT_SHA=$GIT_SHA APP_VERSION=$APP_VERSION
-# OCR for scanned pages (master spec 6.8): Tesseract 5.5 with German and English models from
-# Debian trixie, built for amd64 and arm64. About 110 MB; no telemetry; it only ever reads the
-# rendered page from stdin. Versions pinned; bump them together with the base image.
+# OCR for scanned pages: Tesseract 5.5 with German and English models from Debian trixie, built
+# for amd64 and arm64. About 110 MB; it only ever reads the rendered page from stdin. Versions
+# pinned; bump them together with the base image.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        tesseract-ocr=5.5.0-1+b1 tesseract-ocr-deu=1:4.1.0-2 tesseract-ocr-eng=1:4.1.0-2 \

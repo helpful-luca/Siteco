@@ -1,4 +1,4 @@
-"""Our own limits (annex 11, 6): requests per minute and the optional daily budget.
+"""Our own limits: requests per minute and the optional daily budget.
 
 Both are global, because there is one local workspace. The minute windows live in memory (a
 restart resets them, on purpose); the budget reads the usage ledger in SQLite, so it survives.
@@ -75,8 +75,8 @@ def _next_utc_midnight(now: datetime) -> datetime:
 
 
 class DailyBudget:
-    """Optional cost brake in USD per UTC day (`DAILY_BUDGET_USD`, off by default, decision
-    Luca). The check uses what was spent so far; a running answer may go slightly over."""
+    """Optional cost brake in USD per UTC day (`DAILY_BUDGET_USD`, off by default). The check
+    uses what was spent so far; a running answer may go slightly over."""
 
     def __init__(self, ledger: UsageLedger, clock: Clock, limit_usd: float | None) -> None:
         self._ledger = ledger

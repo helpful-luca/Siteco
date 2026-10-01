@@ -1,7 +1,7 @@
 """Chats, messages and answer streams. Only translation between HTTP and the chat services.
 
 Answer routes are server-sent event streams. Their preconditions run in a dependency, before
-the response starts, so every refusal is a normal JSON error with a status code (S1); once the
+the response starts, so every refusal is a normal JSON error with a status code; once the
 stream is open, failures arrive as one `error` event.
 """
 

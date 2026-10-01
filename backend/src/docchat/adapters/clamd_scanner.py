@@ -1,11 +1,7 @@
-"""MalwareScanner over clamd's INSTREAM command (TCP).
+"""MalwareScanner over clamd's INSTREAM command (TCP), see clamd(8).
 
-Protocol (clamd(8)): send `zINSTREAM\\0`, then the file as frames of a 4-byte big-endian length
-plus data, then a zero-length frame. clamd answers one NUL-terminated line:
-`stream: OK`, `stream: <signature> FOUND` or `<reason> ERROR`.
-
-Implemented here instead of a PyPI client: the maintained options are none (`clamd` and
-`pyclamd` have had no release for years and block the event loop), and the protocol is small.
+Implemented here because the PyPI clients (`clamd`, `pyclamd`) are unmaintained and block the
+event loop, and the protocol is small.
 """
 
 import asyncio

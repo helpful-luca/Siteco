@@ -1,6 +1,6 @@
 """The user's preferences: one row per workspace, the truth for browser and desktop window.
 
-The name is only used to greet the user. It never reaches the model (annex 11, 5.4)."""
+The name is only used to greet the user. It never reaches the model."""
 
 import re
 import unicodedata
@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from docchat.domain.enums import AnswerStyle, Effort, Locale, Theme
 
 NAME_MAX_CHARS = 40
-# Automatic deletion (master spec 10b, 6): 0 is off. The UI offers off, 30, 90 and 365 days.
+# Automatic deletion: 0 is off. The UI offers off, 30, 90 and 365 days.
 RETENTION_MAX_DAYS = 3650
 DEFAULT_COMPARE_MODELS = ("claude-sonnet-5-5", "claude-haiku-4-5")
 

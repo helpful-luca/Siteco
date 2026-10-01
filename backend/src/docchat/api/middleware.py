@@ -15,7 +15,8 @@ from docchat.domain.errors import ErrorCode
 log = logging.getLogger("docchat.access")
 
 _REQUEST_ID = re.compile(r"req_[a-z0-9]{8}")
-_TOKEN_EXEMPT_PREFIXES = ("/api/health/",)
+_HEALTH_PREFIX = "/api/health/"
+_TOKEN_EXEMPT_PREFIXES = (_HEALTH_PREFIX,)
 
 
 def _header(scope: Scope, name: bytes) -> str:
@@ -64,7 +65,10 @@ class RequestContextMiddleware:
             response = error_response(ErrorCode.INTERNAL_ERROR, "Unexpected server error.")
             await response(scope, receive, send_with_request_id)
         finally:
-            log.info(
+            # Health checks poll every few seconds: only their failures are logged at INFO.
+            quiet = scope["path"].startswith(_HEALTH_PREFIX) and status < 400
+            log.log(
+                logging.DEBUG if quiet else logging.INFO,
                 "request",
                 extra={
                     "method": scope["method"],
@@ -99,9 +103,9 @@ class InternalTokenMiddleware:
 
 
 class BodyLimitMiddleware:
-    """JSON bodies are small (annex 10, P5). The declared length is checked before anything is
-    read, the received bytes while reading (a chunked body declares none). Uploads have their
-    own limit in the upload service and are exempt."""
+    """JSON bodies are small. The declared length is checked before anything is read, the
+    received bytes while reading (a chunked body declares none). Uploads have their own limit in
+    the upload service and are exempt."""
 
     def __init__(self, app: ASGIApp, max_bytes: int, exempt: tuple[tuple[str, str], ...]) -> None:
         self.app = app

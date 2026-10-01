@@ -1,10 +1,7 @@
 """One answer, from retrieval to the saved message, as its own asyncio task.
 
-The task owns the answer's life: it emits events into a queue, retries before the first
-delta, and always ends with exactly one terminal event and one final save, whether the answer
-completes, fails, is stopped (`stopped`) or loses its listener (`interrupted`). The SSE
-response only reads the queue, so nothing depends on how a web framework finalizes a
-cancelled generator.
+The task always ends with exactly one terminal event and one final save, whether the answer
+completes, fails, is stopped or loses its listener. The SSE response only reads its queue.
 """
 
 import asyncio
@@ -209,7 +206,7 @@ class AnswerRun:
 
     async def _execute(self) -> None:
         self._control.started = True
-        self._emit(self.meta)  # always first, even for a run stopped before it began (S3)
+        self._emit(self.meta)  # always first, even for a run stopped before it began
         try:
             if self._control.stop_reason is not None:
                 final, terminal = self._stopped()  # stopped before it could begin
@@ -456,7 +453,7 @@ class AnswerRun:
         self._emit_citations()  # a block the stream never closed
         done_notices = self._switch_notice()
         if stop_reason == "refusal":
-            # Mid-stream refusal output is not an answer: the partial text is discarded (S9).
+            # Mid-stream refusal output is not an answer: the partial text is discarded.
             done_notices.append(Notice(NoticeCode.LLM_REFUSED))
             self._notices += done_notices
             self._assembler = AnswerAssembler(())
@@ -523,7 +520,7 @@ class AnswerRun:
 
     def _redact_vanished_sources(self, message: Message) -> None:
         """A source deleted while this answer ran was redacted before the answer was saved:
-        the answer must not bring its text back (master spec 10b, 4)."""
+        the answer must not bring its text back."""
         cited = {s.document_id for s in message.sources if s.document_id}
         if not cited:
             return

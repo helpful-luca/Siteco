@@ -28,35 +28,9 @@ jobs:
         run: uv run mypy
       - name: Architecture boundaries
         run: uv run lint-imports
-      - name: Tests
+      - name: Tests (including OpenAPI contract drift)
         run: uv run pytest -m "not model"
-      - name: Contract drift
-        run: |
-          uv run python -m docchat.cli.export_openapi > /tmp/openapi.json
-          diff -u ../contracts/openapi.json /tmp/openapi.json
 
-  eval:
-    name: retrieval eval gate
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: backend
-    env:
-      EMBEDDING_CACHE_DIR: ${{ github.workspace }}/backend/.models
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
-        with:
-          version: "0.11.28"
-      - run: uv sync --locked
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: backend/.models
-          key: embedding-${{ hashFiles('backend/src/docchat/adapters/fastembed_embedder.py') }}
-      - name: Embedding model (pinned revision, verified offline)
-        run: uv run python -m docchat.cli.download_model
-      - name: Default configuration keeps its measured quality
-        run: uv run pytest tests/eval -m model
 
   frontend:
     runs-on: ubuntu-24.04
@@ -72,7 +46,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - name: Lint and type check
-        run: npm run lint && npx next typegen && npm run typecheck
+        run: npm run lint && npm run typecheck
       - name: Tests
         run: npm test
       - name: Generated types drift

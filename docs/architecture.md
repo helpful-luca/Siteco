@@ -41,7 +41,7 @@ PDF pages keep only the text inside their CropBox (catalogs exported as spreads 
 
 PDF, TXT, Markdown and HTML are accepted. HTML is read with the standard library's `html.parser` into its visible text (no scripts, styles, embeds, attributes or hidden elements; headings become chunk context) and is never rendered.
 
-A file uploaded in a chat is an attachment of that chat (`documents.in_library = 0`, row in `chat_attachments`): the library and MCP do not list it, the chat always searches it. The chat asks whether it should also go into the library; that, or "Add to library" later, flips the flag. Deleting the chat (or removing the attachment) deletes documents that neither the library nor another chat holds, through the same purge as a library delete.
+A file uploaded in a chat is an attachment of that chat (`documents.in_library = 0`, row in `chat_attachments`): the library does not list it, the chat always searches it. The chat asks whether it should also go into the library; that, or "Add to library" later, flips the flag. Deleting the chat (or removing the attachment) deletes documents that neither the library nor another chat holds, through the same purge as a library delete.
 
 ## Answering
 
@@ -64,7 +64,5 @@ Pydantic produces `contracts/openapi.json`; `frontend/src/shared/api/schema.gen.
 
 ## Other parts
 
-- MCP server on `/api/mcp` (stateless streamable HTTP, two read only tools): [mcp.md](mcp.md).
-- macOS desktop app (Electron) in `desktop/`: a window around the same stack, started by Docker.
-- Retrieval eval in `eval/` and `backend/src/docchat/cli/`: [evaluation.md](evaluation.md).
-- Decisions with rejected alternatives: [decisions.md](decisions.md). Error codes: [errors.md](errors.md).
+- Desktop app (Electron, macOS and Windows) in `desktop/`: a native window around the same Docker stack. See [desktop/README.md](../desktop/README.md).
+- Decisions with rejected alternatives: [decisions.md](decisions.md).

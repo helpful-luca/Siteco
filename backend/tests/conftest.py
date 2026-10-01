@@ -27,7 +27,7 @@ def settings(tmp_path: Path) -> Settings:
     )
 
 
-_OPT_IN = {"slow": "RUN_SLOW", "docker": "RUN_DOCKER", "live": "RUN_LIVE"}
+_OPT_IN = {"slow": "RUN_SLOW", "live": "RUN_LIVE"}
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

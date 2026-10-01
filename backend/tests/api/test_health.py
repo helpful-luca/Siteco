@@ -1,6 +1,12 @@
+import logging
+
+import pytest
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
+from docchat.api.middleware import RequestContextMiddleware
 from docchat.core.config import Settings
 from tests.fakes import FakeEmbedder
 from tests.support import make_app
@@ -33,6 +39,21 @@ def test_ready_503_when_model_failed(settings: Settings) -> None:
     assert r.json()["ready"] is False
     assert r.json()["checks"]["embedding_model"] == "failed"
     assert r.json()["checks"]["vector_store"] == "failed"
+
+
+def test_only_failed_health_checks_reach_the_info_log(caplog: pytest.LogCaptureFixture) -> None:
+    app = FastAPI()
+    app.get("/api/health/live")(lambda: {})
+    app.get("/api/health/ready")(lambda: JSONResponse({}, status_code=503))
+    app.get("/api/config")(lambda: {})
+    app.add_middleware(RequestContextMiddleware)
+    with TestClient(app) as c, caplog.at_level(logging.INFO, logger="docchat.access"):
+        c.get("/api/health/live")
+        c.get("/api/health/ready")
+        c.get("/api/config")
+    access = [r for r in caplog.records if r.name == "docchat.access"]
+    routes = [getattr(r, "route", None) for r in access if r.levelno >= logging.INFO]
+    assert routes == ["/api/health/ready", "/api/config"]
 
 
 def test_config_reports_retrieval_only_without_key(settings: Settings) -> None:

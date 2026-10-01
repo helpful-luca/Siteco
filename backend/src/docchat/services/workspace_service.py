@@ -1,6 +1,6 @@
-"""The workspace as a whole: what it holds, and deleting all of it (master spec 10b, 4).
+"""The workspace as a whole: what it holds, and deleting all of it.
 
-There is exactly one workspace per installation (annex 11, 1.1)."""
+There is exactly one workspace per installation."""
 
 import asyncio
 import logging
@@ -94,7 +94,7 @@ class WorkspaceService:
         """Deletes every document (files, index, rows), chat and message; with
         `reset_preferences` also name and settings, including the API key from Settings.
         Running answers are stopped first. Idempotent: a failed run can simply be repeated.
-        The usage ledger stays (annex 11)."""
+        The usage ledger stays."""
         p = self._p
         await p.runs.stop_all_and_wait()
         try:

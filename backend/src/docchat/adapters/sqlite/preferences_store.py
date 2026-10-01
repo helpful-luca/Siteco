@@ -1,4 +1,4 @@
-"""The single preferences row, stored as JSON (annex 11, 2.2)."""
+"""The single preferences row, stored as JSON."""
 
 import json
 from dataclasses import asdict

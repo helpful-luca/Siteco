@@ -1,7 +1,7 @@
 """LanceDB table `chunks`: vectors, BM25 full text index and highlight data.
 
 One connection and one table handle per process. Writes (add, delete, optimize) are serialized
-by a lock, because concurrent deletes and optimize can cause commit conflicts (annex 12, 1c).
+by a lock, because concurrent deletes and optimize can cause commit conflicts.
 Filters are built only from validated UUIDs, so they cannot be injected.
 """
 
@@ -20,7 +20,6 @@ import pyarrow as pa
 from lancedb.index import FTS
 from lancedb.rerankers import RRFReranker
 
-from docchat.domain.enums import SearchMode
 from docchat.domain.highlight_geometry import trusted_rects
 from docchat.domain.models import Chunk, Sentence
 
@@ -51,11 +50,8 @@ def _schema(dim: int) -> pa.Schema:
     )
 
 
-def _fts_config(language: str | None) -> FTS:
-    """BM25 index of `search_text`. `None`: no stemming and no stop words, only lower case and
-    folding (the eval compares German, English and none; annex 11, 5.3)."""
-    if language is None:
-        return FTS(stem=False, remove_stop_words=False, ascii_folding=True, lower_case=True)
+def _fts_config(language: str) -> FTS:
+    """BM25 index of `search_text`."""
     return FTS(
         language=language, stem=True, remove_stop_words=True, ascii_folding=True, lower_case=True
     )
@@ -132,12 +128,6 @@ class LanceVectorStore:
             table.create_index("search_text", config=_fts_config(self.fts_language))
         self._table, self._dim = table, dim
 
-    def rebuild_text_index(self, language: str | None) -> None:
-        """Replaces the BM25 index with another stemmer. For the eval only: the app keeps the
-        language it was configured with (`FTS_LANGUAGE`)."""
-        with self._write_lock:
-            self._require().create_index("search_text", config=_fts_config(language), replace=True)
-
     def _require(self) -> Any:
         if self._table is None:
             raise RuntimeError("vector store not open")
@@ -191,7 +181,7 @@ class LanceVectorStore:
 
     def purge_deleted(self) -> None:
         """Deleted rows are only marked until compaction rewrites their fragments, and old
-        versions keep the files. After a deletion (GDPR, master spec 10b, 4): compact, then
+        versions keep the files. After a deletion (GDPR): compact, then
         remove every old version and leftover file now. Safe under the write lock, because this
         process is the only writer; a search in flight on an old version may fail once."""
         with self._write_lock:
@@ -217,25 +207,22 @@ class LanceVectorStore:
         vector: Sequence[float],
         document_ids: Collection[str],
         limit: int,
-        *,
-        mode: SearchMode = SearchMode.HYBRID,
     ) -> list[Chunk]:
-        """Vector and BM25 (German stemming) fused by reciprocal rank, or one of them alone for
-        the eval. The filter runs before ranking (`prefilter=True`), otherwise top-k could come
-        back short or empty."""
+        """Vector and BM25 (German stemming) fused by reciprocal rank. The filter runs before
+        ranking (`prefilter=True`), otherwise top-k could come back short or empty."""
         if not document_ids:
             return []
-        table = self._require()
-        if mode is SearchMode.DENSE:
-            query = table.search(list(vector), query_type="vector")
-        elif mode is SearchMode.BM25:
-            query = table.search(text, query_type="fts", fts_columns="search_text")
-        else:
-            query = table.search(query_type="hybrid").vector(list(vector)).text(text)
-        query = query.where(_in_filter(document_ids), prefilter=True)
-        if mode is SearchMode.HYBRID:
-            query = query.rerank(RRFReranker())
-        rows = query.limit(limit).select(_READ_COLUMNS).to_list()
+        rows = (
+            self._require()
+            .search(query_type="hybrid")
+            .vector(list(vector))
+            .text(text)
+            .where(_in_filter(document_ids), prefilter=True)
+            .rerank(RRFReranker())
+            .limit(limit)
+            .select(_READ_COLUMNS)
+            .to_list()
+        )
         return [_row_to_chunk(r) for r in rows]
 
     def chunks_of_pages(self, document_ids: Collection[str], pages: Collection[int]) -> list[Chunk]:

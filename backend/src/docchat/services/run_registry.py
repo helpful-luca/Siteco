@@ -52,7 +52,7 @@ class RunRegistry:
 
     def reserve(self, chat_id: str, lane: Lane, *, slots: int = 1) -> RunControl:
         """Reserves the lane. `slots` free places are required: the first lane of a comparison
-        needs room for its sibling too (annex 10, F8), but reserves only its own."""
+        needs room for its sibling too, but reserves only its own."""
         with self._lock:
             if chat_id in self._closed:
                 raise AppError(ErrorCode.CHAT_NOT_FOUND)

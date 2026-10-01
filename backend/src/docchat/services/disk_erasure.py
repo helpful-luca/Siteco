@@ -1,4 +1,4 @@
-"""Makes deletions final on disk (master spec 10b, 4).
+"""Makes deletions final on disk.
 
 Deleting rows is not enough: the search index keeps old versions for a while, and SQLite's
 write-ahead log still holds the pages from before. After a deletion the index is purged at

@@ -44,7 +44,7 @@ class FakeScenario(StrEnum):
     EMPTY = "empty"  # end_turn without any text
     NO_CITATIONS = "no_citations"  # an answer without citations
     HANG = "hang"  # never sends a token (first-token timeout)
-    # Claude's errors before the first token, one per code (annex 10, H1 to H11)
+    # Claude's errors before the first token, one per code
     AUTH = "auth"
     BILLING = "billing"
     FORBIDDEN = "forbidden"

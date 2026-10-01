@@ -1,4 +1,4 @@
-"""What a workspace export looks like (master spec 10b, 5): chats as JSON and Markdown.
+"""What a workspace export looks like: chats as JSON and Markdown.
 
 Pure functions; the service packs their output into a ZIP."""
 

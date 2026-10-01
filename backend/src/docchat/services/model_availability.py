@@ -1,9 +1,8 @@
 """Which enabled models can answer right now.
 
-A model Claude says it does not know (`not_found_error`: a retired model, a typo in the
-configuration, missing access) is marked unavailable for a while (annex 10, B15), then tried
-again, so a short outage of one model does not last until the next restart. There is no silent
-rerouting: questions with it are refused and name a fallback instead.
+A model Claude does not know (`not_found_error`) is marked unavailable for a while and then tried
+again, so a short outage does not last until the next restart. Questions to it are refused with
+a suggested fallback, never silently rerouted.
 """
 
 import threading

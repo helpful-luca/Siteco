@@ -34,7 +34,7 @@ from docchat.services.run_events import (
     StatusEvent,
 )
 from tests.services.chat_support import ChatHarness, build_chat_harness
-from tests.waiting import PATIENCE_S, eventually
+from tests.support import PATIENCE_S, eventually
 
 MIRA = (
     "Die Leuchte Mira hat die Schutzart IP66. Sie ist schlagfest nach IK08.",
@@ -526,7 +526,7 @@ async def test_a_request_cancelled_during_preparation_leaves_nothing_taken(
     assert _answers(h, chat.id)[0].status is MessageStatus.INTERRUPTED
 
 
-# Review fixes: saving, deletion during preparation, stale plans, queue time, atomic inserts
+# Saving, deletion during preparation, stale plans, queue time, atomic inserts
 
 
 async def test_a_failing_usage_ledger_keeps_the_completed_answer(
@@ -645,7 +645,7 @@ async def test_the_first_token_timeout_is_not_retried(tmp_path: Path) -> None:
     assert len(llm.requests) == 1
 
 
-# Own rate limit and model availability (WP-F)
+# Own rate limit and model availability
 
 
 async def test_chat_rate_limit_refuses_before_anything_is_saved(tmp_path: Path) -> None:

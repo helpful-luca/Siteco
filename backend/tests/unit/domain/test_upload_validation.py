@@ -70,7 +70,7 @@ def test_undecodable_or_blank_header_is_none(raw: str) -> None:
     ("raw", "clean"),
     [
         ("../../etc/passwd.pdf", "passwd.pdf"),
-        ("C:\\Users\\luca\\Datenblatt.pdf", "Datenblatt.pdf"),
+        ("C:\\Users\\anna\\Datenblatt.pdf", "Datenblatt.pdf"),
         ("a\u202etxt.pdf", "atxt.pdf"),  # bidi override removed
         ("line\nbreak\t.pdf", "linebreak.pdf"),
         ("  spaced name .pdf  ", "spaced name .pdf"),

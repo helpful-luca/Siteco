@@ -23,7 +23,7 @@ class DocumentKind(StrEnum):
 
 
 class DocumentStatus(StrEnum):
-    """`scanning` belongs to the malware check (WP-B). `deleting` hides a row until it is gone."""
+    """`scanning` belongs to the malware check. `deleting` hides a row until it is gone."""
 
     SCANNING = "scanning"
     QUEUED = "queued"
@@ -99,14 +99,6 @@ class SourcesMode(StrEnum):
     RETRIEVAL = "retrieval"
     FULL_CONTEXT = "full_context"
     RETRIEVAL_ONLY = "retrieval_only"
-
-
-class SearchMode(StrEnum):
-    """How chunks are ranked. Answers always use hybrid; the eval compares all three."""
-
-    HYBRID = "hybrid"  # vector and BM25, fused by reciprocal rank
-    DENSE = "dense"  # vector only
-    BM25 = "bm25"  # full text only
 
 
 class RunPhase(StrEnum):

@@ -1,14 +1,9 @@
 """Which line breaks of a PDF page end a unit (a sentence, a table row, a list item).
 
-pdfium gives lines, not paragraphs or table cells. Splitting only at sentence punctuation glues
-a whole spec table or a price list into one "sentence" of hundreds of characters, so a citation
-of one row would mark the whole table. The layout tells them apart: a line break is only a soft
-wrap inside a paragraph when the next line continues right below in the same column and type,
-both lines are one run of text (a table row has gaps between its cells), and the next line's
-first word would not have fitted at the end of the line with room to spare (otherwise the break
-was intended). Layout programs balance the lines of a paragraph, so a line may end a word or two
-short of the margin: the spare room must be a clear share of the column. A heading in larger
-type is cut off by the size change, a heading over two lines stays one unit.
+pdfium gives lines, not paragraphs or cells, and splitting only at punctuation would turn a
+whole table into one sentence. A break counts as a soft wrap only when the layout says so: the
+next line continues right below in the same column and type, and its first word would not have
+fitted on the line before.
 """
 
 from collections.abc import Sequence

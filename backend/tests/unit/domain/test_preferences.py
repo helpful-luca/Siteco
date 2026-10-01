@@ -20,8 +20,8 @@ def test_defaults_are_not_onboarded_and_use_the_default_model() -> None:
 @pytest.mark.parametrize(
     ("raw", "clean"),
     [
-        ("  Luca  ", "Luca"),
-        ("Lu\u0000ca", "Luca"),
+        ("  Anna  ", "Anna"),
+        ("An\u0000na", "Anna"),
         ("Anna\u202eMaria", "AnnaMaria"),  # bidi override
         ("Zero\u200bWidth", "ZeroWidth"),
         ("Jean  \t Luc", "Jean Luc"),

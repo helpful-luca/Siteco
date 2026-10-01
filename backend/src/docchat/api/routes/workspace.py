@@ -1,4 +1,4 @@
-"""Preferences and the workspace as a whole (annex 11, 3.2; master spec 10b)."""
+"""Preferences and the workspace as a whole."""
 
 from typing import Annotated, Any
 

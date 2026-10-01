@@ -1,13 +1,8 @@
 """Text cleanup for search and display, with an offset map back to the raw PDF text.
 
-pdfium marks a hyphenated line break as U+FFFE (or U+0002) instead of "-\\r\\n", so "Schutz-art"
-arrives as "Schutz\\ufffeart". The marker is removed to make the word searchable. Every cleaned
-character remembers the raw index it came from, so sentence spans can still be mapped to the
-character positions pdfium uses for line rectangles.
-
-`hidden` raw positions are left out: text the reader never sees on the page (beyond its edge).
-A line that only had hidden text disappears with its line break, and spaces next to hidden text
-go with it.
+pdfium marks a hyphenated line break as U+FFFE (or U+0002); the marker is removed so the word is
+searchable. Each cleaned character keeps its raw index, so sentence spans still map to pdfium's
+line rectangles. Text beyond the page edge (`hidden`) is left out.
 """
 
 import re

@@ -13,7 +13,7 @@ class ErrorCode(StrEnum):
     SERVICE_STARTING = "SERVICE_STARTING"
     INTERNAL_ERROR = "INTERNAL_ERROR"
     REQUEST_TOO_LARGE = "REQUEST_TOO_LARGE"
-    # Our own limits (annex 11, 6): 429 means "wait a moment", never "Claude is busy"
+    # Our own limits: 429 means "wait a moment", never "Claude is busy"
     RATE_LIMITED = "RATE_LIMITED"
     # Upload (synchronous checks in the request)
     UPLOAD_TOO_LARGE = "UPLOAD_TOO_LARGE"
@@ -50,7 +50,7 @@ class ErrorCode(StrEnum):
     # Malware scan (stored like ingestion errors; params carry the signature name)
     MALWARE_DETECTED = "MALWARE_DETECTED"
     MALWARE_SCAN_FAILED = "MALWARE_SCAN_FAILED"
-    # Chats and answers (checked before the stream opens, annex 10 S1)
+    # Chats and answers (checked before the stream opens)
     CHAT_NOT_FOUND = "CHAT_NOT_FOUND"
     CHAT_BUSY = "CHAT_BUSY"
     CHAT_LIMIT = "CHAT_LIMIT"
@@ -104,7 +104,7 @@ class NoticeCode(StrEnum):
     LLM_REFUSED = "LLM_REFUSED"
     LLM_NOT_CONFIGURED = "LLM_NOT_CONFIGURED"
     MODEL_SWITCHED = "MODEL_SWITCHED"
-    # Viewer: the exact sentence cannot be marked on this page (annex 10, L4)
+    # Viewer: the exact sentence cannot be marked on this page
     HIGHLIGHT_UNAVAILABLE = "HIGHLIGHT_UNAVAILABLE"
 
 

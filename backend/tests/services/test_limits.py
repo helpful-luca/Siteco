@@ -1,4 +1,4 @@
-"""Own rate limits and the optional daily budget (annex 11, 6) with a clock the tests move."""
+"""Own rate limits and the optional daily budget with a clock the tests move."""
 
 import threading
 from datetime import UTC, datetime, timedelta

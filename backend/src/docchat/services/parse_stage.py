@@ -176,7 +176,7 @@ class ParseStage:
         if sink.chunks == 0:
             raise IngestionError(ErrorCode.PDF_NO_TEXT if without_text else ErrorCode.PDF_CORRUPT)
         notices = []
-        # Static check for scripts, launch actions and attachments (master spec 6.9). Only a
+        # Static check for scripts, launch actions and attachments. Only a
         # hint: the text is extracted and the viewer runs nothing.
         if await asyncio.to_thread(self._active_content.find, path):
             notices.append(Notice(NoticeCode.PDF_ACTIVE_CONTENT))

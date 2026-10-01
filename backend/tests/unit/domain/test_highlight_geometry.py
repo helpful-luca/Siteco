@@ -1,7 +1,5 @@
 from docchat.domain.highlight_geometry import trusted_rects
 
-LINE = (0.1, 0.10, 0.5, 0.012)
-
 
 def lines(count: int, *, start: float = 0.1) -> list[tuple[float, float, float, float]]:
     return [(0.1, start + i * 0.015, 0.5, 0.012) for i in range(count)]

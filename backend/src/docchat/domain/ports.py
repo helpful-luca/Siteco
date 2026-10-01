@@ -12,7 +12,7 @@ from typing import Protocol
 
 from docchat.domain.api_key import KeyCheck
 from docchat.domain.chat_models import Chat, ChatSummary, Message
-from docchat.domain.enums import DocumentKind, DocumentStatus, Lane, SearchMode
+from docchat.domain.enums import DocumentKind, DocumentStatus, Lane
 from docchat.domain.errors import ErrorCode
 from docchat.domain.llm import LLMEvent, LLMRequest
 from docchat.domain.malware import ScanVerdict
@@ -55,7 +55,7 @@ class DocumentRepository(Protocol):
         ...
 
     def list_library(self) -> list[Document]:
-        """Only library documents: what the Library page, `all` scopes and MCP see."""
+        """Only library documents: what the Library page and `all` scopes see."""
         ...
 
     def list_attachments(self, chat_id: str) -> list[Document]: ...
@@ -246,8 +246,6 @@ class VectorStore(Protocol):
         vector: Sequence[float],
         document_ids: Collection[str],
         limit: int,
-        *,
-        mode: SearchMode = SearchMode.HYBRID,
     ) -> list[Chunk]:
         """Hybrid search (vector plus full text, fused by rank) within the given documents,
         best first. The filter is applied before ranking, so `limit` results come back
@@ -472,13 +470,4 @@ class KeyValidator(Protocol):
     async def check(self, key: str, workspace_id: str | None = None) -> KeyCheck:
         """A free call with the key (and workspace id): valid, refused, needs a workspace, or
         no answer right now."""
-        ...
-
-
-class AnswerJudge(Protocol):
-    """Grades one answer for the generation eval (an LLM judge; never used by the app)."""
-
-    def judge(self, question: str, answer: str, evidence: str, *, answerable: bool) -> bool:
-        """Answerable: is the answer correct and supported by the evidence? Unanswerable: does
-        it say honestly that the documents do not contain it?"""
         ...

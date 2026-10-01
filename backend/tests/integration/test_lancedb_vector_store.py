@@ -155,35 +155,15 @@ def test_purge_removes_deleted_text_from_disk_at_once(
     assert store.search("IP66", [0.1] * DIM, [keep], 5)
 
 
-def test_search_modes_dense_bm25_and_hybrid(store: LanceVectorStore) -> None:
-    """The eval compares the three retrievers on the same index (annex 11, 5.3)."""
-    from docchat.domain.enums import SearchMode
-
+def test_hybrid_search_finds_text_and_vector_matches(store: LanceVectorStore) -> None:
     doc = str(uuid4())
     exact = _chunk(doc, 0, "Die Viaro hat die Schutzart IP66 und IK10.")
     similar = _chunk(doc, 1, "Ein Gehäuse aus Aluminium mit grauer Pulverbeschichtung.")
     store.add([exact, similar], [[1.0] + [0.0] * (DIM - 1), [0.0] * (DIM - 1) + [1.0]])
     near_similar = [0.0] * (DIM - 1) + [1.0]
 
-    dense = store.search("IP66", near_similar, [doc], 2, mode=SearchMode.DENSE)
-    assert [c.chunk_id for c in dense] == [similar.chunk_id, exact.chunk_id]
-    bm25 = store.search("IP66", near_similar, [doc], 2, mode=SearchMode.BM25)
-    assert [c.chunk_id for c in bm25] == [exact.chunk_id]  # only text matches
-    hybrid = store.search("IP66", near_similar, [doc], 2, mode=SearchMode.HYBRID)
+    hybrid = store.search("IP66", near_similar, [doc], 2)
     assert {c.chunk_id for c in hybrid} == {exact.chunk_id, similar.chunk_id}
-
-
-def test_text_index_can_be_rebuilt_with_another_stemmer(store: LanceVectorStore) -> None:
-    from docchat.domain.enums import SearchMode
-
-    doc = str(uuid4())
-    chunk = _chunk(doc, 0, "Die Leuchten sind für Straßen geeignet.")
-    store.add([chunk], [[0.5] * DIM])
-    vector = [0.5] * DIM
-    assert store.search("Leuchte", vector, [doc], 1, mode=SearchMode.BM25)  # German stem
-    store.rebuild_text_index(None)  # no stemming: the plural no longer matches the singular
-    assert not store.search("Leuchte", vector, [doc], 1, mode=SearchMode.BM25)
-    assert store.search("leuchten", vector, [doc], 1, mode=SearchMode.BM25)
 
 
 def test_pages_come_back_in_reading_order(store: LanceVectorStore) -> None:

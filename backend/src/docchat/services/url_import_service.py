@@ -1,14 +1,7 @@
-"""Import a document from a link (feedback 1, item 7).
+"""Imports a document from a link as a background job; the UI polls its progress.
 
-The backend downloads the file and feeds the same path as an upload (size and magic checks,
-quarantine, malware scan, parsing, ingestion). A download can take minutes for a large
-catalog, so it runs as a job in the background; the UI polls its progress. Jobs live in
-memory: a restart ends a running download, and the user starts it again.
-
-Security (SSRF): the URL and every redirect target are checked by the rules in
-`domain.url_import`; each hop's name is resolved once, every address must be public, and the
-fetcher connects to that vetted address (no second lookup, so DNS rebinding cannot redirect
-the connection). No cookies, no credentials, no proxy from the environment.
+The download takes the same path as an upload. Jobs live in memory, so a restart ends a running
+download. No cookies, no credentials and no proxy from the environment.
 """
 
 import asyncio

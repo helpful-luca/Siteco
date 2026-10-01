@@ -1,4 +1,4 @@
-.PHONY: up down dev-clamav dev-api dev-web test lint api-types fresh-clone eval eval-gate eval-generation e2e
+.PHONY: up down dev-clamav dev-api dev-web install test lint api-types e2e
 
 up:
 	docker compose up --build
@@ -16,32 +16,24 @@ dev-api: dev-clamav
 dev-web:
 	cd frontend && BACKEND_URL=http://127.0.0.1:8000 npm run dev
 
-test:
-	cd backend && uv run pytest -m "not model"
-	cd frontend && npm run test
+# Installs the frontend and desktop dependencies once, as `make test` and `make lint` need them.
+install:
+	test -d frontend/node_modules || npm --prefix frontend ci
+	test -d desktop/node_modules || npm --prefix desktop ci
 
-lint:
+test: install
+	cd backend && uv run pytest -m "not model"
+	cd frontend && npm test
+	cd desktop && npm test
+
+lint: install
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run lint-imports
 	cd frontend && npm run lint && npm run typecheck
+	cd desktop && npm run typecheck
 
 api-types:
 	cd backend && uv run python -m docchat.cli.export_openapi > ../contracts/openapi.json
 	cd frontend && npx openapi-typescript ../contracts/openapi.json -o src/shared/api/schema.gen.ts
-
-fresh-clone:
-	./scripts/fresh-clone-test.sh
-
-# Retrieval eval with the real pipeline in a temp dir; writes eval/results/latest.json.
-eval:
-	cd backend && EMBEDDING_CACHE_DIR=$${EMBEDDING_CACHE_DIR:-.models} uv run python -m docchat.cli.run_eval
-
-# The CI gate: the default configuration must keep its measured quality.
-eval-gate:
-	cd backend && EMBEDDING_CACHE_DIR=$${EMBEDDING_CACHE_DIR:-.models} uv run pytest tests/eval -m model
-
-# Answers by Haiku, Sonnet and Opus judged by Claude (costs money, needs ANTHROPIC_API_KEY).
-eval-generation:
-	cd backend && RUN_LIVE=1 EMBEDDING_CACHE_DIR=$${EMBEDDING_CACHE_DIR:-.models} uv run python -m docchat.cli.run_generation_eval
 
 # Browser E2E against the Docker stack, with the fake model and without a key (needs Docker and Chrome or Chromium).
 e2e:

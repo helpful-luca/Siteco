@@ -1,10 +1,9 @@
-"""The Claude key from Settings (feedback 1): stored on this machine, checked with a free call
-before it is saved, used from the next question on. A key from Settings wins over
-ANTHROPIC_API_KEY; deleting it falls back to the environment. The key is never logged and
-never returned, only its last four characters.
+"""The Claude key entered in Settings, checked with a free call before it is saved.
 
-Keys of an organization's default workspace need a workspace id on every request. It is
-saved with the key (next to it, not secret) or comes from ANTHROPIC_WORKSPACE_ID."""
+A key from Settings wins over ANTHROPIC_API_KEY; deleting it falls back to the environment. The
+key is never logged or returned, only its last four characters. A default-workspace key also
+needs a workspace id, saved next to it or taken from ANTHROPIC_WORKSPACE_ID.
+"""
 
 import asyncio
 import logging

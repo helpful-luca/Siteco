@@ -1,13 +1,7 @@
-"""Accepts one upload: cheap checks first, then the body is streamed to a temp file.
+"""Accepts one upload: cheap checks first, then the body is streamed into the quarantine.
 
-Order (annex 10, C): name and extension, declared size, quota and free disk, uploads per minute,
-magic bytes while streaming, byte count, duplicate by SHA-256, atomic rename into the quarantine,
-row `scanning`.
-
-An upload into a chat (`chat_id`) is an attachment: searched in that chat only, not listed in the
-library. The same bytes again attach the existing document instead of failing as a duplicate;
-uploaded in the library they move an attachment into the library.
-The malware scan and everything that opens the document happen later in background workers.
+An upload into a chat is an attachment, searched in that chat only. Scanning and parsing happen
+later in background workers.
 """
 
 import asyncio
@@ -239,7 +233,7 @@ class UploadService:
         )
 
     async def _retry(self, failed: Document, sink: UploadSink) -> Document:
-        """Same bytes as a failed document: scan and process that one again (annex 10, C6).
+        """Same bytes as a failed document: scan and process that one again.
 
         Reset the row first, so a concurrent delete either wins before (then this is a
         duplicate of nothing: DUPLICATE_DOCUMENT) or is detected after the file was put back.

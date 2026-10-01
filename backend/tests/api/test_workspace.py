@@ -17,7 +17,7 @@ from tests.support import make_app
 VALID: dict[str, Any] = {
     "locale": "en",
     "theme": "dark",
-    "name": "Luca",
+    "name": "Anna",
     "default_model": "claude-opus-5-5",
     "effort": "medium",
     "style": "detailed",
@@ -52,8 +52,8 @@ def test_preferences_round_trip(client: TestClient) -> None:
 
 
 def test_name_is_cleaned(client: TestClient) -> None:
-    r = client.put("/api/preferences", json=VALID | {"name": "  Lu\u0000ca\u202e \u200b"})
-    assert r.json()["name"] == "Luca"
+    r = client.put("/api/preferences", json=VALID | {"name": "  An\u0000na\u202e \u200b"})
+    assert r.json()["name"] == "Anna"
 
 
 @pytest.mark.parametrize(
@@ -111,7 +111,7 @@ def test_delete_everything(client: TestClient, settings: Settings) -> None:
     assert client.delete("/api/workspace").status_code == 204
     assert client.get("/api/documents").json()["documents"] == []
     assert client.get("/api/chats").json()["chats"] == []
-    assert client.get("/api/preferences").json()["name"] == "Luca"
+    assert client.get("/api/preferences").json()["name"] == "Anna"
     uploads = Path(settings.uploads_dir)
     assert [p for p in uploads.rglob("*") if p.is_file()] == []
 

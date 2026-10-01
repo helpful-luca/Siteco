@@ -1,9 +1,8 @@
 """Priority queue for the ingestion worker: small documents overtake large ones, a few times.
 
-The priority is the page count. Uploads never open a PDF (that only happens in the parser
-process), so until the pages are counted the size of the file stands in for it. To keep a steady
-stream of small uploads from starving a catalog, a document that has been overtaken
-MAX_OVERTAKES times is served next. Queues are short, so a plain list is fine.
+The priority is the page count, or the file size until the pages are counted. A document that has
+been overtaken MAX_OVERTAKES times is served next, so a stream of small uploads cannot starve a
+catalog.
 """
 
 import asyncio

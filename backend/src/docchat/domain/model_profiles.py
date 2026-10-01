@@ -1,7 +1,7 @@
 """What each Claude model accepts, and what it costs.
 
 Every model gets its own request rules: sending one body blindly to another model is an
-immediate 400 (annex 12, 1a point 4). There is no pricing API, so prices are constants with
+immediate 400. There is no pricing API, so prices are constants with
 their source and date.
 """
 

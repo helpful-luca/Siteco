@@ -127,7 +127,7 @@ async def test_delete_everything_leaves_no_file_vector_or_row(world: World) -> N
     world.document(DocumentStatus.QUEUED)
     world.document(DocumentStatus.FAILED)
     world.chat_citing(ready)
-    world.preferences.update(replace(world.preferences.get(), name="Luca", onboarded=True))
+    world.preferences.update(replace(world.preferences.get(), name="Anna", onboarded=True))
     quarantined = world.h.storage.quarantined_path(str(uuid4()), DocumentKind.PDF)
     quarantined.parent.mkdir(parents=True, exist_ok=True)
     quarantined.write_bytes(b"%PDF")
@@ -144,12 +144,12 @@ async def test_delete_everything_leaves_no_file_vector_or_row(world: World) -> N
     with world.h.database.connect() as conn:
         for table in ("documents", "chats", "messages", "chat_documents"):
             assert conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0, table
-    assert world.preferences.get().name == "Luca"  # kept unless asked
+    assert world.preferences.get().name == "Anna"  # kept unless asked
     assert world.h.vectors.purged == 1  # once for the whole wipe, not per document
 
 
 async def test_delete_everything_can_reset_the_preferences(world: World) -> None:
-    world.preferences.update(replace(world.preferences.get(), name="Luca", onboarded=True))
+    world.preferences.update(replace(world.preferences.get(), name="Anna", onboarded=True))
     await world.workspace.wipe(reset_preferences=True)
     prefs = world.preferences.get()
     assert prefs.name == "" and not prefs.onboarded
@@ -248,7 +248,7 @@ async def test_export_holds_chats_preferences_and_the_document_list(world: World
     document = world.document()
     world.chat_citing(document)
     world.chat_citing(document)
-    world.preferences.update(replace(world.preferences.get(), name="Luca", onboarded=True))
+    world.preferences.update(replace(world.preferences.get(), name="Anna", onboarded=True))
 
     chunks, handle = await world.export.build()
     archive = zipfile.ZipFile(io.BytesIO(b"".join(chunks)))
@@ -262,7 +262,7 @@ async def test_export_holds_chats_preferences_and_the_document_list(world: World
     ]  # fmt: skip
     for name in names:
         assert not name.startswith("/") and ".." not in name and "\\" not in name
-    assert json.loads(archive.read("preferences.json"))["name"] == "Luca"
+    assert json.loads(archive.read("preferences.json"))["name"] == "Anna"
     [listed] = json.loads(archive.read("documents.json"))["documents"]
     assert listed["filename"] == document.filename
     record = json.loads(archive.read(chats[0]))

@@ -1,4 +1,4 @@
-"""Deleting a document removes its text from the answers that cited it (master spec 10b, 4).
+"""Deleting a document removes its text from the answers that cited it.
 
 File name, page and the position of each chip stay, so the answer still shows where a
 source was; the cited sentence and the snippet are gone."""
