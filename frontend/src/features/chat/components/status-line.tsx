@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Spinner } from '@/shared/ui';
 import type { Answer } from '../answer';
 
 /** 8 s without the first text: say it takes longer (annex 10, S5). */
@@ -25,10 +24,8 @@ export function StatusLine({ phase, startedAt }: { phase: NonNullable<Answer['ph
   const label = phase === 'retrying' ? t('retrying') : phase === 'generating' ? t('generating') : t('retrieving');
   return (
     <div className="flex h-7 items-center gap-2 text-footnote text-ink-muted">
-      <span aria-hidden className="flex">
-        <Spinner label="" className="size-3.5" />
-      </span>
-      <span>{label}</span>
+      {/* A light passing over the words instead of a spinner; static under reduced motion. */}
+      <span className="shimmer-text font-medium">{label}</span>
       {slow && <span className="text-ink-muted/80">{t('slow')}</span>}
     </div>
   );
