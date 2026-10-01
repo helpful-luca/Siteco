@@ -224,3 +224,19 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 148 | Server identity | `/api/health/live` answering `app: siteco-docchat` is trusted; accepted risk that another local process on the port could fake it | Shared secret or TLS pinning for localhost | Local single-user app; the renderer is sandboxed and its bridge is only `{ isDesktop, platform }`, so a fake server gains nothing beyond a web page |
 | 149 | Docker CLI lookup | Fixed absolute candidates, including user-writable `~/.docker/bin` and `~/Applications` | Only root-owned paths | Whoever can write there already runs code as this user; same threat model as the shell's PATH |
 | 150 | Compose files | `--file compose.yaml` explicitly, and a folder with a compose override file is refused with its own message | Silently ignoring the override | COMPOSE_FILE (also from .env) cannot swap the file; the person learns why their override is not used |
+
+## MCP server (work package K)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 151 | MCP library | Official `mcp` 2.2.0 pinned, `MCPServer` (renamed from FastMCP in 2.x) | `fastmcp` 4 (second package); FastMCP v1 API | Official SDK, no extra dependency; its only telemetry is local OpenTelemetry spans without an exporter |
+| 152 | Mounting | Own pure ASGI `McpGateway` inside the API middlewares routes exactly `/api/mcp` to the MCP app; its lifespan runs inside the app lifespan | `app.mount("/api/mcp")` or a mount at `/` | A mount redirects `/api/mcp` to `/api/mcp/`; a root mount would answer unknown `/api/*` paths without the error envelope |
+| 153 | Transport mode | Stateless, JSON responses, only `POST` (others 405) | Sessions with SSE | One call is one answer; no sessions to expire, no open streams; works the same behind the proxy |
+| 154 | Same retrieval | `RetrievalService.search` shares `_rank` with the chat's retrieval; `LibrarySearch` service on top; tools are thin | A second search path in the API layer | One ranking, one set of eval numbers; always ranked, never full-context, so a small library does not dump whole documents |
+| 155 | Limits | `top_k` clamped to 1..10 (default 5), query 1..500 characters, at most 50 `document_ids`; invalid input is a tool error | Rejecting an oversized `top_k` | An agent that asks for 50 still gets a useful answer |
+| 156 | Source id | The chunk id | A hash of document and offsets | Already stable and unique in the index; a re-index makes new ids, which is correct |
+| 157 | Proxy guard for `/api/mcp` | No `X-Requested-With` required; Host must be loopback; `Origin` absent or the app origin; the CSRF guard stays for every other path | Opening the whole API to header-less POSTs; requiring the header from MCP clients | MCP clients cannot send it. A browser always sends Origin (cross-site) and a rebinding page has a foreign Host, so both threats stay covered |
+| 158 | Backend check | `McpGateway` also refuses a non-loopback `Origin` and checks `MCP_TOKEN` | Relying on the proxy alone | The backend port is reachable without Docker (`make dev-api`) |
+| 159 | Token | Optional `MCP_TOKEN`, bearer, constant-time compare, off by default; the proxy forwards `Authorization` and the MCP headers for this path only | Always on; OAuth | Local single-user app; OAuth is scope creep (research 02, 9b) |
+| 160 | Claude Desktop | Config through the `mcp-remote` bridge | Documenting a URL entry in `claude_desktop_config.json` | The file starts commands; remote URLs are added as connectors, which need a public HTTPS address |
+

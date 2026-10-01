@@ -21,9 +21,14 @@ Open http://localhost:3000.
 | `ANTHROPIC_API_KEY` | no | empty | Claude API key, read only by the backend container |
 | `APP_PORT` | no | `3000` | Host port of the web app |
 | `INTERNAL_TOKEN` | no | empty | Optional shared secret between web app and backend |
+| `MCP_TOKEN` | no | empty | Optional bearer token for the MCP endpoint (see docs/mcp.md) |
 | `LOG_LEVEL` | no | `INFO` | Backend log level |
 | `MALWARE_SCAN` | no | `required` | `off` skips the virus scan (development only, the app shows a hint) |
 | `OCR` | no | `on` | Tesseract (German and English) reads scanned pages; `off` leaves them unsearchable |
+
+## MCP server
+
+Claude Code and Claude Desktop can search your library: `claude mcp add --transport http docchat http://localhost:3000/api/mcp`. Details in [docs/mcp.md](docs/mcp.md).
 
 ## Development
 
