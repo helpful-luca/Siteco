@@ -1,8 +1,3 @@
-# AI working folder and confidential case brief (never commit)
-brain/
-siteco-case-ai-document-chat.html
-*.case.html
-
 # Secrets
 .env
 .env.*
@@ -35,6 +30,3 @@ backend/.models/
 .DS_Store
 .idea/
 .vscode/
-
-# Local Claude Code state and agent worktrees
-.claude/
