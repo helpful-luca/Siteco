@@ -16,18 +16,25 @@ from tests.support import make_app
 
 GOOD = "sk-ant-api03-" + "g" * 60 + "Ok42"
 BAD = "sk-ant-api03-" + "b" * 60 + "No00"
+NO_WS = "sk-ant-api03-" + "w" * 60 + "Ws00"
 
 
 @pytest.fixture
 def client(settings: Settings) -> Iterator[TestClient]:
-    validator = FakeKeyValidator({BAD: KeyCheck.INVALID})
+    validator = FakeKeyValidator({BAD: KeyCheck.INVALID, NO_WS: KeyCheck.NEEDS_WORKSPACE})
     with TestClient(make_app(settings, key_validator=validator)) as c:
         yield c
 
 
 def test_without_a_key_the_app_is_retrieval_only(client: TestClient) -> None:
     body = client.get("/api/settings/api-key").json()
-    assert body == {"configured": False, "source": None, "suffix": None, "status": "missing_key"}
+    assert body == {
+        "configured": False,
+        "source": None,
+        "suffix": None,
+        "status": "missing_key",
+        "workspace_id": None,
+    }
     assert client.get("/api/config").json()["features"]["retrieval_only"] is True
 
 
@@ -36,7 +43,13 @@ def test_a_saved_key_applies_without_a_restart_and_is_never_returned(
 ) -> None:
     r = client.put("/api/settings/api-key", json={"key": GOOD})
     assert r.status_code == 200, r.text
-    assert r.json() == {"configured": True, "source": "settings", "suffix": "Ok42", "status": "ok"}
+    assert r.json() == {
+        "configured": True,
+        "source": "settings",
+        "suffix": "Ok42",
+        "status": "ok",
+        "workspace_id": None,
+    }
     assert GOOD not in r.text
     assert GOOD not in client.get("/api/settings/api-key").text
     config = client.get("/api/config").json()
@@ -86,3 +99,19 @@ def test_the_month_spend_comes_from_the_usage_ledger(client: TestClient) -> None
     body = client.get("/api/workspace").json()
     assert body["usage_today"]["cost_usd"] == pytest.approx(0.5 if today.day > 1 else 0.75)
     assert body["usage_month"] == {"cost_usd": pytest.approx(0.75), "requests": 2}
+
+
+def test_a_key_that_needs_a_workspace_is_explained_and_works_with_the_id(
+    client: TestClient, settings: Settings
+) -> None:
+    r = client.put("/api/settings/api-key", json={"key": NO_WS})
+    assert (r.status_code, r.json()["error"]["code"]) == (422, "LLM_KEY_NEEDS_WORKSPACE")
+    assert not (settings.data_dir / "secrets" / "anthropic_api_key").exists()
+    r = client.put("/api/settings/api-key", json={"key": NO_WS, "workspace_id": "wrkspc_01Ab"})
+    assert r.status_code == 200, r.text
+    assert (r.json()["status"], r.json()["workspace_id"]) == ("ok", "wrkspc_01Ab")
+    assert client.get("/api/settings/api-key").json()["workspace_id"] == "wrkspc_01Ab"
+    stored = settings.data_dir / "secrets" / "anthropic_workspace_id"
+    assert stored.read_text() == "wrkspc_01Ab"
+    client.delete("/api/settings/api-key")
+    assert not stored.exists()

@@ -60,11 +60,12 @@ async def run(
         ocr="off",
         llm_provider="anthropic",
         anthropic_api_key=SecretStr(key),
+        anthropic_workspace_id=os.environ.get("ANTHROPIC_WORKSPACE_ID") or None,
         rate_chat_per_min=0,  # our own limit is for people, not for this run
     )
     container = build_container(settings, scanner=TrustedCorpusScanner())  # our own files
     await container.start()
-    judge = ClaudeAnswerJudge(key, judge_model)
+    judge = ClaudeAnswerJudge(key, judge_model, workspace_id=settings.anthropic_workspace_id)
     evaluator = GenerationEvaluator(container.chats, container.answers, container.vectors, judge)
     try:
         corpus = await ingest(container, golden, eval_dir)

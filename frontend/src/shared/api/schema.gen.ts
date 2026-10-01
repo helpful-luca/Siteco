@@ -454,7 +454,8 @@ export interface paths {
         /**
          * Put Api Key
          * @description Checks the key with a free call, then stores it on this machine and uses it from the
-         *     next question on. 422 `API_KEY_INVALID` when Anthropic refuses it (nothing is stored).
+         *     next question on. 422 `API_KEY_INVALID` when Anthropic refuses it, 422
+         *     `LLM_KEY_NEEDS_WORKSPACE` when it only works with a workspace id (nothing is stored).
          */
         put: operations["put_api_key_api_settings_api_key_put"];
         post?: never;
@@ -525,6 +526,11 @@ export interface components {
              * @description Never returned, never logged.
              */
             key: string;
+            /**
+             * Workspace Id
+             * @description Only for keys of an organization's default workspace (sent as `anthropic-workspace-id`). Empty or missing removes a stored one.
+             */
+            workspace_id?: string | null;
         };
         /**
          * ApiKeyOut
@@ -541,6 +547,11 @@ export interface components {
              * @description The last four characters, for recognizing it.
              */
             suffix: string | null;
+            /**
+             * Workspace Id
+             * @description From Settings or ANTHROPIC_WORKSPACE_ID; not a secret.
+             */
+            workspace_id?: string | null;
         };
         /** AskIn */
         AskIn: {
@@ -827,7 +838,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "URL_INVALID" | "URL_BLOCKED" | "URL_UNREACHABLE" | "URL_TIMEOUT" | "URL_TOO_LARGE" | "URL_UNSUPPORTED_TYPE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "API_KEY_INVALID" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
+        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "URL_INVALID" | "URL_BLOCKED" | "URL_UNREACHABLE" | "URL_TIMEOUT" | "URL_TOO_LARGE" | "URL_UNSUPPORTED_TYPE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "API_KEY_INVALID" | "LLM_KEY_NEEDS_WORKSPACE" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
@@ -967,7 +978,7 @@ export interface components {
          * LlmStatus
          * @enum {string}
          */
-        LlmStatus: "missing_key" | "unchecked" | "ok" | "invalid_key";
+        LlmStatus: "missing_key" | "unchecked" | "ok" | "invalid_key" | "needs_workspace";
         /**
          * Locale
          * @enum {string}

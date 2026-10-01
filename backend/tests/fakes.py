@@ -241,15 +241,21 @@ class FakeSleep:
 
 
 class FakeKeyValidator:
-    """Answers key checks from a table (unknown keys are valid); records what was checked."""
+    """Answers key checks from a table (unknown keys are valid); records what was checked.
+    A key that needs a workspace is valid once a workspace id comes with it."""
 
     def __init__(self, verdicts: dict[str, KeyCheck] | None = None) -> None:
         self.verdicts = verdicts or {}
         self.checked: list[str] = []
+        self.workspaces: list[str | None] = []
 
-    async def check(self, key: str) -> KeyCheck:
+    async def check(self, key: str, workspace_id: str | None = None) -> KeyCheck:
         self.checked.append(key)
-        return self.verdicts.get(key, KeyCheck.VALID)
+        self.workspaces.append(workspace_id)
+        verdict = self.verdicts.get(key, KeyCheck.VALID)
+        if verdict is KeyCheck.NEEDS_WORKSPACE and workspace_id:
+            return KeyCheck.VALID
+        return verdict
 
 
 class FakeResolver:

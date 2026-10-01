@@ -149,6 +149,13 @@ async def test_dropped_connection_mid_stream_is_unreachable() -> None:
             "prompt is too long: 1 > 0",
             ErrorCode.LLM_CONTEXT_TOO_LARGE,
         ),
+        (
+            400,
+            "invalid_request_error",
+            "This API key is not scoped to a workspace, so this request must include the "
+            "anthropic-workspace-id header.",
+            ErrorCode.LLM_KEY_NEEDS_WORKSPACE,
+        ),
         (401, "authentication_error", "invalid x-api-key", ErrorCode.LLM_AUTH),
         (402, "billing_error", "billing", ErrorCode.LLM_BILLING),
         (403, "permission_error", "no", ErrorCode.LLM_FORBIDDEN),
@@ -239,3 +246,37 @@ async def test_count_tokens_uses_the_free_counting_endpoint() -> None:
     )  # fmt: skip
     assert await client.count_tokens(request) == 1234
     assert seen["model"] == "claude-haiku-4-5" and "max_tokens" not in seen
+
+
+async def test_a_key_without_workspace_mid_stream_is_named_and_logged_without_the_key(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    message = (
+        "This API key is not scoped to a workspace, so this request must include the "
+        "anthropic-workspace-id header. Key: sk-ant-api03-secret"
+    )
+    sdk = FakeSdk(status_error(400, "invalid_request_error", message))
+    with caplog.at_level("WARNING", logger="docchat.llm"), pytest.raises(LLMError) as info:
+        await collect(AnthropicLLMClient("key", sdk=sdk), llm_request())
+    assert info.value.code is ErrorCode.LLM_KEY_NEEDS_WORKSPACE
+    [record] = [r for r in caplog.records if r.getMessage() == "llm_error"]
+    assert record.error_type == "invalid_request_error"  # type: ignore[attr-defined]
+    assert "anthropic-workspace-id" in record.error_message  # type: ignore[attr-defined]
+    assert "secret" not in record.error_message  # type: ignore[attr-defined]
+
+
+def test_a_bad_request_log_carries_type_and_a_short_message() -> None:
+    from docchat.adapters.anthropic.error_mapper import error_details
+
+    details = error_details(status_error(400, "invalid_request_error", "x" * 1000))
+    assert details["error_type"] == "invalid_request_error"
+    assert len(details["error_message"]) == 300
+
+
+def test_the_workspace_id_is_sent_as_a_header_on_every_request() -> None:
+    from docchat.adapters.anthropic.client import WORKSPACE_HEADER, sdk_client
+
+    assert sdk_client("k", workspace_id="wrkspc_01X").default_headers[WORKSPACE_HEADER] == (
+        "wrkspc_01X"
+    )
+    assert WORKSPACE_HEADER not in sdk_client("k").default_headers

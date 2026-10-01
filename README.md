@@ -134,6 +134,7 @@ Claude Code and Claude Desktop can search your library: `claude mcp add --transp
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | no | empty | Claude API key, read only by the backend container; a key entered in Settings > Models wins |
+| `ANTHROPIC_WORKSPACE_ID` | no | empty | Only for keys of an organization's default workspace that Anthropic refuses without one; can also be entered in Settings > Models next to the key |
 | `APP_PORT` | no | `3000` | Host port of the web app |
 | `INTERNAL_TOKEN` | no | empty | Optional shared secret between web app and backend |
 | `MCP_TOKEN` | no | empty | Optional bearer token for the MCP endpoint (see docs/mcp.md) |

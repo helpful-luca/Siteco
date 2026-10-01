@@ -196,9 +196,12 @@ def _api_keys(
     health = LlmHealth(LlmStatus.OK if fixed is not None else LlmStatus.MISSING_KEY)
     handle = SwappableLLM(fixed)
 
-    def build(key: str) -> LLMClient:
+    def build(key: str, workspace_id: str | None) -> LLMClient:
         return AnthropicLLMClient(
-            key, sonnet_thinking=settings.sonnet_thinking, concurrency=settings.llm_concurrency
+            key,
+            workspace_id=workspace_id,
+            sonnet_thinking=settings.sonnet_thinking,
+            concurrency=settings.llm_concurrency,
         )
 
     env_key = settings.anthropic_api_key
@@ -209,6 +212,8 @@ def _api_keys(
         handle,
         build,
         env_key=env_key.get_secret_value() if env_key is not None else None,
+        workspace_store=FileSecretStore(settings.secrets_dir / "anthropic_workspace_id"),
+        env_workspace_id=settings.anthropic_workspace_id,
         swaps_client=fixed is None,
     )
     keys.load()

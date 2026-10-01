@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     anthropic_api_key: SecretStr | None = None
+    # For keys of an organization's default workspace (sent as `anthropic-workspace-id`).
+    anthropic_workspace_id: str | None = None
     llm_provider: Literal["anthropic", "fake"] = "anthropic"
 
     # Models and answers (annex 11, 4). No sampling parameters on purpose.
@@ -97,7 +99,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     @field_validator(
-        "anthropic_api_key", "internal_token", "mcp_token", "daily_budget_usd", mode="before"
+        "anthropic_api_key",
+        "anthropic_workspace_id",
+        "internal_token",
+        "mcp_token",
+        "daily_budget_usd",
+        mode="before",
     )
     @classmethod
     def _blank_is_none(cls, value: object) -> object:

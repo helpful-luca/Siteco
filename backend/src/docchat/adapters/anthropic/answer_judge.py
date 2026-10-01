@@ -5,6 +5,8 @@ hand (research 02, section 6)."""
 import anthropic
 from pydantic import BaseModel
 
+from docchat.adapters.anthropic.client import WORKSPACE_HEADER
+
 JUDGE_MODEL = "claude-opus-5-5"
 
 _ANSWERABLE = """You grade an answer of a document chat assistant.
@@ -43,8 +45,11 @@ class Verdict(BaseModel):
 
 
 class ClaudeAnswerJudge:
-    def __init__(self, api_key: str, model: str = JUDGE_MODEL) -> None:
-        self._client = anthropic.Anthropic(api_key=api_key, max_retries=3)
+    def __init__(
+        self, api_key: str, model: str = JUDGE_MODEL, *, workspace_id: str | None = None
+    ) -> None:
+        headers = {WORKSPACE_HEADER: workspace_id} if workspace_id else None
+        self._client = anthropic.Anthropic(api_key=api_key, max_retries=3, default_headers=headers)
         self.model = model
 
     def judge(self, question: str, answer: str, evidence: str, *, answerable: bool) -> bool:

@@ -12,6 +12,7 @@ class LlmStatus(StrEnum):
     UNCHECKED = "unchecked"
     OK = "ok"
     INVALID_KEY = "invalid_key"
+    NEEDS_WORKSPACE = "needs_workspace"  # the key works only with a workspace id
 
 
 class DocumentKind(StrEnum):

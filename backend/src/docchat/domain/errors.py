@@ -68,6 +68,9 @@ class ErrorCode(StrEnum):
     # Claude API, mapped by `error.type` (mid-stream errors arrive with HTTP 200)
     LLM_AUTH = "LLM_AUTH"
     API_KEY_INVALID = "API_KEY_INVALID"
+    # A key of the default workspace of an organization with several: every call needs the
+    # `anthropic-workspace-id` header. When saving the key and in answers.
+    LLM_KEY_NEEDS_WORKSPACE = "LLM_KEY_NEEDS_WORKSPACE"
     LLM_BILLING = "LLM_BILLING"
     LLM_FORBIDDEN = "LLM_FORBIDDEN"
     MODEL_UNAVAILABLE = "MODEL_UNAVAILABLE"
@@ -167,6 +170,7 @@ ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     # Anthropic errors are 5xx before the stream opens: our own 429 means "you", not "Claude".
     ErrorCode.LLM_AUTH: ErrorSpec(503, False),
     ErrorCode.API_KEY_INVALID: ErrorSpec(422, False),
+    ErrorCode.LLM_KEY_NEEDS_WORKSPACE: ErrorSpec(422, False),
     ErrorCode.LLM_BILLING: ErrorSpec(503, False),
     ErrorCode.LLM_FORBIDDEN: ErrorSpec(503, False),
     ErrorCode.MODEL_UNAVAILABLE: ErrorSpec(503, False),

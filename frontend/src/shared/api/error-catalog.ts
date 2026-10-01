@@ -71,6 +71,7 @@ export const ERROR_SURFACES: Record<AnyErrorCode, readonly ErrorSurface[]> = {
   COMPARE_SAME_MODEL: ['answer'],
   TOKEN_BUDGET_EXCEEDED: ['banner', 'composer'],
   API_KEY_INVALID: ['form'],
+  LLM_KEY_NEEDS_WORKSPACE: ['form', 'banner', 'answer'],
   LLM_AUTH: ['banner', 'answer'],
   LLM_BILLING: ['banner', 'answer'],
   LLM_FORBIDDEN: ['answer'],
@@ -102,6 +103,7 @@ export const CLIENT_ERROR_SPECS: Record<ClientErrorCode, { status: number | null
 /** Codes that mean `/api/config` changed: the key was rejected, a model is gone, the budget. */
 export const CONFIG_CHANGING_CODES: ReadonlySet<string> = new Set([
   'LLM_AUTH',
+  'LLM_KEY_NEEDS_WORKSPACE',
   'MODEL_UNAVAILABLE',
   'TOKEN_BUDGET_EXCEEDED',
 ]);

@@ -493,6 +493,8 @@ class AnswerRun:
     def _llm_failed(self, error: LLMError) -> tuple[Message, RunEvent]:
         if error.code is ErrorCode.LLM_AUTH:
             self._deps.health.mark_invalid()
+        elif error.code is ErrorCode.LLM_KEY_NEEDS_WORKSPACE:
+            self._deps.health.mark_needs_workspace()
         self._emit_citations()
         params: dict[str, Any] = {}
         if error.code is ErrorCode.MODEL_UNAVAILABLE:

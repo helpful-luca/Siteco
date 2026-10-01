@@ -8,6 +8,12 @@ class ApiKeyIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     key: str = Field(max_length=600, description="Never returned, never logged.")
+    workspace_id: str | None = Field(
+        default=None,
+        max_length=200,
+        description="Only for keys of an organization's default workspace (sent as "
+        "`anthropic-workspace-id`). Empty or missing removes a stored one.",
+    )
 
 
 class ApiKeyOut(BaseModel):
@@ -17,6 +23,9 @@ class ApiKeyOut(BaseModel):
     source: KeySource | None = Field(description="settings wins over env (ANTHROPIC_API_KEY).")
     suffix: str | None = Field(description="The last four characters, for recognizing it.")
     status: LlmStatus
+    workspace_id: str | None = Field(
+        default=None, description="From Settings or ANTHROPIC_WORKSPACE_ID; not a secret."
+    )
 
     @classmethod
     def from_state(cls, state: KeyState) -> "ApiKeyOut":
@@ -25,4 +34,5 @@ class ApiKeyOut(BaseModel):
             source=state.source,
             suffix=state.suffix,
             status=state.status,
+            workspace_id=state.workspace_id,
         )

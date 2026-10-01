@@ -24,8 +24,9 @@ def get_api_key(container: ContainerDep) -> ApiKeyOut:
 @router.put("/api-key", response_model=ApiKeyOut, responses=_errors())
 async def put_api_key(body: ApiKeyIn, container: ContainerDep) -> ApiKeyOut:
     """Checks the key with a free call, then stores it on this machine and uses it from the
-    next question on. 422 `API_KEY_INVALID` when Anthropic refuses it (nothing is stored)."""
-    return ApiKeyOut.from_state(await container.api_keys.save(body.key))
+    next question on. 422 `API_KEY_INVALID` when Anthropic refuses it, 422
+    `LLM_KEY_NEEDS_WORKSPACE` when it only works with a workspace id (nothing is stored)."""
+    return ApiKeyOut.from_state(await container.api_keys.save(body.key, body.workspace_id))
 
 
 @router.delete("/api-key", response_model=ApiKeyOut)

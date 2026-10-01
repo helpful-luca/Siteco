@@ -69,6 +69,7 @@ HTTP errors: the document ends `failed` with the code.
 | `TOKEN_BUDGET_EXCEEDED` | 429 | yes | backend | global banner, composer note | Das Tagesbudget dieser Demo ist aufgebraucht. Ab 02:00 Uhr kannst du wieder fragen. |
 | `LLM_AUTH` | 503 | no | backend | global banner, inline in the answer | Der Claude API-Schlüssel wird nicht akzeptiert. Prüf ihn unter Einstellungen > Modelle. |
 | `API_KEY_INVALID` | 422 | no | backend | next to the control | Anthropic akzeptiert diesen Schlüssel nicht. Prüf ihn in der Anthropic Console und füg ihn noch einmal ein. |
+| `LLM_KEY_NEEDS_WORKSPACE` | 422 | no | backend | next to the control, global banner, inline in the answer | Dieser API-Schlüssel gehört zu keinem Workspace. Erstell in der Anthropic Console einen Schlüssel in einem Workspace oder trag die Workspace-ID unter Einstellungen > Modelle ein. |
 | `LLM_BILLING` | 503 | no | backend | global banner, inline in the answer | Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Prüfe die Abrechnung in der Claude Console. |
 | `LLM_FORBIDDEN` | 503 | no | backend | inline in the answer | Dieser API-Schlüssel darf das gewählte Modell nicht nutzen. Wähle ein anderes Modell oder prüfe die Freigaben in der Claude Console. |
 | `MODEL_UNAVAILABLE` | 503 | no | backend | inline in the answer, composer note | Claude Sonnet 5.5 ist gerade nicht verfügbar. Wähle ein anderes Modell. |

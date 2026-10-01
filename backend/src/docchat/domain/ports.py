@@ -469,8 +469,9 @@ class SecretStore(Protocol):
 
 
 class KeyValidator(Protocol):
-    async def check(self, key: str) -> KeyCheck:
-        """A free call with the key: valid, refused, or no answer right now."""
+    async def check(self, key: str, workspace_id: str | None = None) -> KeyCheck:
+        """A free call with the key (and workspace id): valid, refused, needs a workspace, or
+        no answer right now."""
         ...
 
 

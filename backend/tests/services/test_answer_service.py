@@ -352,6 +352,22 @@ async def test_rejected_key_switches_to_sources_only(tmp_path: Path) -> None:
     assert isinstance(done, DoneEvent) and done.status is MessageStatus.SOURCES_ONLY
 
 
+async def test_a_key_without_workspace_switches_to_sources_only(tmp_path: Path) -> None:
+    class NoWorkspaceLLM(FakeLLMClient):
+        async def stream(self, request: Any) -> Any:  # type: ignore[override]
+            raise LLMError(ErrorCode.LLM_KEY_NEEDS_WORKSPACE)
+            yield  # pragma: no cover
+
+    h = build_chat_harness(tmp_path, llm=NoWorkspaceLLM())
+    h.add_document(MIRA)
+    chat = h.new_chat()
+    error = terminal(await h.ask(chat))
+    assert isinstance(error, ErrorEvent) and error.code is ErrorCode.LLM_KEY_NEEDS_WORKSPACE
+    assert h.health.status is LlmStatus.NEEDS_WORKSPACE
+    done = terminal(await h.ask(chat, "Noch einmal?"))
+    assert isinstance(done, DoneEvent) and done.status is MessageStatus.SOURCES_ONLY
+
+
 async def test_first_token_timeout(tmp_path: Path) -> None:
     llm = FakeLLMClient(delay_s=1.0)
     h = build_chat_harness(tmp_path, llm=llm, timings=RunTimings(ttft_timeout_s=0.05))

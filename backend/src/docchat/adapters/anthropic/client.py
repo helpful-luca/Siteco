@@ -9,7 +9,7 @@ from typing import Any
 import anthropic
 import httpx2
 
-from docchat.adapters.anthropic.error_mapper import map_error
+from docchat.adapters.anthropic.error_mapper import error_details, map_error
 from docchat.adapters.anthropic.request_builder import SonnetThinking, build_request
 from docchat.adapters.anthropic.stream_mapper import StreamMapper
 from docchat.domain.errors import ErrorCode
@@ -21,10 +21,17 @@ log = logging.getLogger("docchat.llm")
 # The SDK default is 10 minutes per attempt; the service adds 60 s to the first delta and
 # 180 s in total on top.
 TIMEOUT = anthropic.Timeout(60.0, connect=5.0, read=60.0, write=10.0, pool=5.0)
+WORKSPACE_HEADER = "anthropic-workspace-id"
 
 
-def _sdk_client(api_key: str) -> Any:
-    return anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=TIMEOUT)
+def sdk_client(
+    api_key: str, *, workspace_id: str | None = None, timeout: anthropic.Timeout = TIMEOUT
+) -> anthropic.AsyncAnthropic:
+    """The SDK client for answers, token counts and the key check: one auth path for all."""
+    headers = {WORKSPACE_HEADER: workspace_id} if workspace_id else None
+    return anthropic.AsyncAnthropic(
+        api_key=api_key, max_retries=0, timeout=timeout, default_headers=headers
+    )
 
 
 class AnthropicLLMClient:
@@ -32,11 +39,12 @@ class AnthropicLLMClient:
         self,
         api_key: str,
         *,
+        workspace_id: str | None = None,
         sonnet_thinking: SonnetThinking = "adaptive",
         concurrency: int = 4,
         sdk: Any = None,  # tests pass a stand-in with the same `beta.messages.create`
     ) -> None:
-        self._sdk = sdk or _sdk_client(api_key)
+        self._sdk = sdk or sdk_client(api_key, workspace_id=workspace_id)
         self._sonnet_thinking = sonnet_thinking
         self._semaphore = asyncio.Semaphore(concurrency)
         self._running = 0
@@ -59,8 +67,16 @@ class AnthropicLLMClient:
             result = await self._sdk.messages.count_tokens(
                 model=body["model"], system=body["system"], messages=body["messages"]
             )
-        except (anthropic.APIError, httpx2.TransportError):
-            log.warning("count_tokens_failed", extra={"model": request.model})
+        except (anthropic.APIError, httpx2.TransportError) as exc:
+            # The answer request that follows fails the same way and reports it.
+            log.warning(
+                "count_tokens_failed",
+                extra={
+                    "model": request.model,
+                    "code": map_error(exc).code.value,
+                    **error_details(exc),
+                },
+            )
             return None
         return int(result.input_tokens)
 
@@ -100,6 +116,7 @@ class AnthropicLLMClient:
                         "code": error.code.value,
                         "model": model,
                         "anthropic_request_id": error.upstream_request_id,
+                        **error_details(exc),
                     },
                 )
                 raise error from exc

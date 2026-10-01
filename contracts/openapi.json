@@ -17,6 +17,19 @@
             "maxLength": 600,
             "title": "Key",
             "type": "string"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only for keys of an organization's default workspace (sent as `anthropic-workspace-id`). Empty or missing removes a stored one.",
+            "title": "Workspace Id"
           }
         },
         "required": [
@@ -57,6 +70,18 @@
             ],
             "description": "The last four characters, for recognizing it.",
             "title": "Suffix"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "From Settings or ANTHROPIC_WORKSPACE_ID; not a secret.",
+            "title": "Workspace Id"
           }
         },
         "required": [
@@ -805,6 +830,7 @@
           "TOKEN_BUDGET_EXCEEDED",
           "LLM_AUTH",
           "API_KEY_INVALID",
+          "LLM_KEY_NEEDS_WORKSPACE",
           "LLM_BILLING",
           "LLM_FORBIDDEN",
           "MODEL_UNAVAILABLE",
@@ -911,6 +937,10 @@
           "LLM_FORBIDDEN": {
             "retryable": false,
             "status": 503
+          },
+          "LLM_KEY_NEEDS_WORKSPACE": {
+            "retryable": false,
+            "status": 422
           },
           "LLM_OVERLOADED": {
             "retryable": true,
@@ -1391,7 +1421,8 @@
           "missing_key",
           "unchecked",
           "ok",
-          "invalid_key"
+          "invalid_key",
+          "needs_workspace"
         ],
         "title": "LlmStatus",
         "type": "string"
@@ -4240,7 +4271,7 @@
         ]
       },
       "put": {
-        "description": "Checks the key with a free call, then stores it on this machine and uses it from the\nnext question on. 422 `API_KEY_INVALID` when Anthropic refuses it (nothing is stored).",
+        "description": "Checks the key with a free call, then stores it on this machine and uses it from the\nnext question on. 422 `API_KEY_INVALID` when Anthropic refuses it, 422\n`LLM_KEY_NEEDS_WORKSPACE` when it only works with a workspace id (nothing is stored).",
         "operationId": "put_api_key_api_settings_api_key_put",
         "requestBody": {
           "content": {

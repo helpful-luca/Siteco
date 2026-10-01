@@ -13,6 +13,7 @@ services:
       DATA_DIR: /data
       # Compose fills this from the shell or from .env, whichever is set.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_WORKSPACE_ID: ${ANTHROPIC_WORKSPACE_ID:-}   # only for keys that ask for one
       LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}   # `fake`: answers without Claude (tests, demo)
       OCR: ${OCR:-on}      # Tesseract for scanned pages; `off` leaves them unsearchable
       CLAMD_HOST: clamav

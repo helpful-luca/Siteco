@@ -32,6 +32,9 @@ _BY_STATUS = {
     529: ErrorCode.LLM_OVERLOADED,
 }
 _BILLING = re.compile(r"credit balance|spend limit|billing", re.IGNORECASE)
+_WORKSPACE = re.compile(r"anthropic-workspace-id|not scoped to a workspace", re.IGNORECASE)
+_KEY_LIKE = re.compile(r"sk-ant-[\w-]+")
+_DETAIL_CHARS = 300
 _TOO_LONG = re.compile(r"prompt is too long|context (window|length)", re.IGNORECASE)
 _DEFAULT_RETRY_AFTER = {ErrorCode.LLM_RATE_LIMITED: 30, ErrorCode.LLM_OVERLOADED: 5}
 
@@ -51,11 +54,27 @@ def _status_code(exc: anthropic.APIStatusError) -> ErrorCode:
     if code is None:
         code = ErrorCode.LLM_UNAVAILABLE if exc.status_code >= 500 else ErrorCode.LLM_BAD_REQUEST
     if code is ErrorCode.LLM_BAD_REQUEST:
+        if needs_workspace(exc):
+            return ErrorCode.LLM_KEY_NEEDS_WORKSPACE
         if _BILLING.search(exc.message):
             return ErrorCode.LLM_BILLING
         if _TOO_LONG.search(exc.message):
             return ErrorCode.LLM_CONTEXT_TOO_LARGE
     return code
+
+
+def needs_workspace(exc: anthropic.APIStatusError) -> bool:
+    """The key belongs to no workspace, so every request must name one in a header."""
+    return exc.type in (None, "invalid_request_error") and bool(_WORKSPACE.search(exc.message))
+
+
+def error_details(exc: Exception) -> dict[str, str]:
+    """Anthropic's error type and a shortened message for the log, never a key. The messages
+    describe the request (field names, limits), not the documents or the question."""
+    if not isinstance(exc, anthropic.APIStatusError):
+        return {"error_type": type(exc).__name__}
+    message = _KEY_LIKE.sub("[key]", exc.message)[:_DETAIL_CHARS]
+    return {"error_type": exc.type or str(exc.status_code), "error_message": message}
 
 
 def _request_id(exc: anthropic.APIStatusError) -> str | None:

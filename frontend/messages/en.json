@@ -74,6 +74,7 @@
     "COMPARE_SAME_MODEL": "Both columns use the same model. Choose two different models to compare.",
     "TOKEN_BUDGET_EXCEEDED": "This demo's daily budget is used up. You can ask again from {time}.",
     "LLM_AUTH": "The Claude API key isn't accepted. Check it under Settings > Models.",
+    "LLM_KEY_NEEDS_WORKSPACE": "This API key doesn't belong to a workspace. Create a key in a workspace in the Anthropic Console, or enter the workspace ID under Settings > Models.",
     "LLM_BILLING": "The API account's credit or spend limit has been reached. Check billing in the Claude Console.",
     "LLM_FORBIDDEN": "This API key can't use the selected model. Pick another model or check access in the Claude Console.",
     "MODEL_UNAVAILABLE": "{model} isn't available right now. Choose another model.",

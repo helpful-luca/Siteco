@@ -74,6 +74,7 @@
     "COMPARE_SAME_MODEL": "Beide Spalten nutzen dasselbe Modell. Wähle für den Vergleich zwei unterschiedliche Modelle.",
     "TOKEN_BUDGET_EXCEEDED": "Das Tagesbudget dieser Demo ist aufgebraucht. Ab {time} Uhr kannst du wieder fragen.",
     "LLM_AUTH": "Der Claude API-Schlüssel wird nicht akzeptiert. Prüf ihn unter Einstellungen > Modelle.",
+    "LLM_KEY_NEEDS_WORKSPACE": "Dieser API-Schlüssel gehört zu keinem Workspace. Erstell in der Anthropic Console einen Schlüssel in einem Workspace oder trag die Workspace-ID unter Einstellungen > Modelle ein.",
     "LLM_BILLING": "Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Prüfe die Abrechnung in der Claude Console.",
     "LLM_FORBIDDEN": "Dieser API-Schlüssel darf das gewählte Modell nicht nutzen. Wähle ein anderes Modell oder prüfe die Freigaben in der Claude Console.",
     "MODEL_UNAVAILABLE": "{model} ist gerade nicht verfügbar. Wähle ein anderes Modell.",

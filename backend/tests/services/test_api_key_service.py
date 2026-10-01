@@ -21,6 +21,7 @@ GOOD = "sk-ant-api03-" + "a" * 40 + "Wx9Z"
 BAD = "sk-ant-api03-" + "b" * 40 + "Bad1"
 OFFLINE = "sk-ant-api03-" + "c" * 40 + "Off1"
 ENV = "sk-ant-api03-" + "e" * 40 + "Env7"
+NO_WS = "sk-ant-api03-" + "w" * 40 + "NoWs"
 
 
 class ClosableFake(FakeLLMClient):
@@ -35,23 +36,36 @@ class ClosableFake(FakeLLMClient):
 class Built:
     def __init__(self) -> None:
         self.keys: list[str] = []
+        self.workspaces: list[str | None] = []
         self.clients: list[ClosableFake] = []
 
-    def __call__(self, key: str) -> LLMClient:
+    def __call__(self, key: str, workspace_id: str | None) -> LLMClient:
         self.keys.append(key)
+        self.workspaces.append(workspace_id)
         self.clients.append(ClosableFake())
         return self.clients[-1]
 
 
 def service(
-    tmp_path: Path, *, env: str | None = None
+    tmp_path: Path, *, env: str | None = None, env_workspace: str | None = None
 ) -> tuple[ApiKeyService, LlmHealth, SwappableLLM, Built, FileSecretStore]:
     store = FileSecretStore(tmp_path / "secrets" / "anthropic_api_key")
     health = LlmHealth(LlmStatus.MISSING_KEY)
     llm = SwappableLLM()
     built = Built()
-    validator = FakeKeyValidator({BAD: KeyCheck.INVALID, OFFLINE: KeyCheck.UNREACHABLE})
-    keys = ApiKeyService(store, validator, health, llm, built, env_key=env)
+    validator = FakeKeyValidator(
+        {BAD: KeyCheck.INVALID, OFFLINE: KeyCheck.UNREACHABLE, NO_WS: KeyCheck.NEEDS_WORKSPACE}
+    )
+    keys = ApiKeyService(
+        store,
+        validator,
+        health,
+        llm,
+        built,
+        env_key=env,
+        workspace_store=FileSecretStore(tmp_path / "secrets" / "anthropic_workspace_id"),
+        env_workspace_id=env_workspace,
+    )
     keys.load()
     return keys, health, llm, built, store
 
@@ -159,7 +173,7 @@ async def test_save_and_delete_at_once_leave_file_and_memory_in_step(tmp_path: P
     gone, the key still in use (or the other way round)."""
     keys, _, llm, _, store = service(tmp_path)
 
-    async def slow_check(key: str) -> KeyCheck:
+    async def slow_check(key: str, workspace_id: str | None = None) -> KeyCheck:
         await asyncio.sleep(0.05)
         return KeyCheck.VALID
 
@@ -170,3 +184,45 @@ async def test_save_and_delete_at_once_leave_file_and_memory_in_step(tmp_path: P
     assert (store.load() is None) == (llm.current is None)
     if state.suffix is not None:
         assert store.load() is not None and store.load().endswith(state.suffix)
+
+
+async def test_a_key_that_needs_a_workspace_is_refused_with_its_own_code(tmp_path: Path) -> None:
+    keys, health, llm, _, store = service(tmp_path)
+    with pytest.raises(AppError) as info:
+        await keys.save(NO_WS)
+    assert info.value.code is ErrorCode.LLM_KEY_NEEDS_WORKSPACE
+    assert store.load() is None and llm.current is None
+    assert health.status is LlmStatus.MISSING_KEY
+
+
+async def test_key_and_workspace_id_are_saved_together_and_survive_a_restart(
+    tmp_path: Path,
+) -> None:
+    keys, _, _, built, _ = service(tmp_path)
+    state = await keys.save(NO_WS, " wrkspc_01Abc ")
+    assert (state.status, state.workspace_id) == (LlmStatus.OK, "wrkspc_01Abc")
+    assert built.workspaces[-1] == "wrkspc_01Abc"
+    restarted, _, _, built_again, _ = service(tmp_path)
+    assert restarted.state().workspace_id == "wrkspc_01Abc"
+    assert built_again.workspaces == ["wrkspc_01Abc"]
+    cleared = await restarted.save(GOOD)
+    assert cleared.workspace_id is None and built_again.workspaces[-1] is None
+
+
+async def test_the_environment_workspace_id_applies_without_a_stored_one(tmp_path: Path) -> None:
+    keys, _, _, built, _ = service(tmp_path, env=ENV, env_workspace="wrkspc_env")
+    assert (keys.state().workspace_id, built.workspaces) == ("wrkspc_env", ["wrkspc_env"])
+    assert (await keys.save(NO_WS)).workspace_id == "wrkspc_env"
+    await keys.save(GOOD, "wrkspc_own")
+    assert (await keys.delete()).workspace_id == "wrkspc_env"
+    assert not (tmp_path / "secrets" / "anthropic_workspace_id").exists()
+
+
+@pytest.mark.parametrize("workspace_id", ["wrk spc", "wrkspc\nX-Evil: 1", "ü" * 3, "x" * 129])
+async def test_a_workspace_id_that_cannot_be_a_header_is_refused(
+    tmp_path: Path, workspace_id: str
+) -> None:
+    keys, *_ = service(tmp_path)
+    with pytest.raises(AppError) as info:
+        await keys.save(GOOD, workspace_id)
+    assert info.value.code is ErrorCode.VALIDATION_ERROR

@@ -10,7 +10,11 @@ class LlmHealth:
     @property
     def available(self) -> bool:
         """False without a key or after the key was rejected: answers are retrieval-only."""
-        return self.status not in (LlmStatus.MISSING_KEY, LlmStatus.INVALID_KEY)
+        return self.status not in (
+            LlmStatus.MISSING_KEY,
+            LlmStatus.INVALID_KEY,
+            LlmStatus.NEEDS_WORKSPACE,
+        )
 
     def mark_ok(self) -> None:
         if self.status is LlmStatus.UNCHECKED:
@@ -18,3 +22,6 @@ class LlmHealth:
 
     def mark_invalid(self) -> None:
         self.status = LlmStatus.INVALID_KEY
+
+    def mark_needs_workspace(self) -> None:
+        self.status = LlmStatus.NEEDS_WORKSPACE
