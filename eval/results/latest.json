@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "created_at": "2026-10-01T06:59:01Z",
-  "commit": "677f333-dirty",
+  "created_at": "2026-10-01T07:05:37Z",
+  "commit": "0e8ef49",
   "config_hash": "1b80bebe77c08f2f",
   "settings": {
     "embedding_model": "ibm-granite/granite-embedding-97m-multilingual-r2",
@@ -42,8 +42,8 @@
         "hit_at_5": 0.8929,
         "mrr_at_10": 0.6575,
         "in_sources": 0.9286,
-        "latency_p50_ms": 11.8,
-        "latency_p95_ms": 13.7
+        "latency_p50_ms": 10.0,
+        "latency_p95_ms": 11.8
       },
       "by_category": {
         "factual": {
@@ -52,8 +52,8 @@
           "hit_at_5": 0.8889,
           "mrr_at_10": 0.7889,
           "in_sources": 0.8889,
-          "latency_p50_ms": 11.8,
-          "latency_p95_ms": 13.1
+          "latency_p50_ms": 10.5,
+          "latency_p95_ms": 11.6
         },
         "exact_code": {
           "questions": 8,
@@ -61,8 +61,8 @@
           "hit_at_5": 0.875,
           "mrr_at_10": 0.6076,
           "in_sources": 1.0,
-          "latency_p50_ms": 11.2,
-          "latency_p95_ms": 12.4
+          "latency_p50_ms": 10.0,
+          "latency_p95_ms": 11.6
         },
         "cross_lingual": {
           "questions": 6,
@@ -70,8 +70,8 @@
           "hit_at_5": 0.8333,
           "mrr_at_10": 0.325,
           "in_sources": 0.8333,
-          "latency_p50_ms": 11.5,
-          "latency_p95_ms": 13.7
+          "latency_p50_ms": 9.9,
+          "latency_p95_ms": 11.0
         },
         "follow_up": {
           "questions": 5,
@@ -79,8 +79,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.9,
           "in_sources": 1.0,
-          "latency_p50_ms": 12.6,
-          "latency_p95_ms": 14.0
+          "latency_p50_ms": 11.0,
+          "latency_p95_ms": 12.1
         }
       }
     },
@@ -95,8 +95,8 @@
         "hit_at_5": 0.8929,
         "mrr_at_10": 0.6921,
         "in_sources": 0.9286,
-        "latency_p50_ms": 11.0,
-        "latency_p95_ms": 13.2
+        "latency_p50_ms": 10.6,
+        "latency_p95_ms": 12.6
       },
       "by_category": {
         "factual": {
@@ -105,8 +105,8 @@
           "hit_at_5": 0.8889,
           "mrr_at_10": 0.8444,
           "in_sources": 0.8889,
-          "latency_p50_ms": 11.2,
-          "latency_p95_ms": 14.4
+          "latency_p50_ms": 10.2,
+          "latency_p95_ms": 11.5
         },
         "exact_code": {
           "questions": 8,
@@ -114,8 +114,8 @@
           "hit_at_5": 0.875,
           "mrr_at_10": 0.6181,
           "in_sources": 1.0,
-          "latency_p50_ms": 10.9,
-          "latency_p95_ms": 12.6
+          "latency_p50_ms": 10.3,
+          "latency_p95_ms": 11.4
         },
         "cross_lingual": {
           "questions": 6,
@@ -123,8 +123,8 @@
           "hit_at_5": 0.8333,
           "mrr_at_10": 0.3889,
           "in_sources": 0.8333,
-          "latency_p50_ms": 11.1,
-          "latency_p95_ms": 12.4
+          "latency_p50_ms": 10.8,
+          "latency_p95_ms": 11.5
         },
         "follow_up": {
           "questions": 5,
@@ -132,8 +132,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.9,
           "in_sources": 1.0,
-          "latency_p50_ms": 10.4,
-          "latency_p95_ms": 11.5
+          "latency_p50_ms": 12.5,
+          "latency_p95_ms": 13.3
         }
       }
     },
@@ -149,7 +149,7 @@
         "mrr_at_10": 0.6775,
         "in_sources": 0.9643,
         "latency_p50_ms": 11.2,
-        "latency_p95_ms": 14.7
+        "latency_p95_ms": 12.5
       },
       "by_category": {
         "factual": {
@@ -158,8 +158,8 @@
           "hit_at_5": 0.8889,
           "mrr_at_10": 0.8444,
           "in_sources": 0.8889,
-          "latency_p50_ms": 10.5,
-          "latency_p95_ms": 11.8
+          "latency_p50_ms": 11.3,
+          "latency_p95_ms": 12.5
         },
         "exact_code": {
           "questions": 8,
@@ -167,8 +167,8 @@
           "hit_at_5": 0.875,
           "mrr_at_10": 0.6181,
           "in_sources": 1.0,
-          "latency_p50_ms": 10.9,
-          "latency_p95_ms": 13.5
+          "latency_p50_ms": 11.2,
+          "latency_p95_ms": 11.8
         },
         "cross_lingual": {
           "questions": 6,
@@ -176,8 +176,8 @@
           "hit_at_5": 0.8333,
           "mrr_at_10": 0.321,
           "in_sources": 1.0,
-          "latency_p50_ms": 12.1,
-          "latency_p95_ms": 23.1
+          "latency_p50_ms": 11.0,
+          "latency_p95_ms": 12.3
         },
         "follow_up": {
           "questions": 5,
@@ -185,8 +185,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.9,
           "in_sources": 1.0,
-          "latency_p50_ms": 13.6,
-          "latency_p95_ms": 14.9
+          "latency_p50_ms": 11.1,
+          "latency_p95_ms": 12.2
         }
       }
     },
@@ -201,8 +201,8 @@
         "hit_at_5": 0.8571,
         "mrr_at_10": 0.6726,
         "in_sources": 0.8929,
-        "latency_p50_ms": 11.1,
-        "latency_p95_ms": 13.6
+        "latency_p50_ms": 10.4,
+        "latency_p95_ms": 14.4
       },
       "by_category": {
         "factual": {
@@ -211,8 +211,8 @@
           "hit_at_5": 0.7778,
           "mrr_at_10": 0.6852,
           "in_sources": 0.7778,
-          "latency_p50_ms": 10.1,
-          "latency_p95_ms": 12.5
+          "latency_p50_ms": 10.3,
+          "latency_p95_ms": 11.7
         },
         "exact_code": {
           "questions": 8,
@@ -220,8 +220,8 @@
           "hit_at_5": 0.875,
           "mrr_at_10": 0.625,
           "in_sources": 0.875,
-          "latency_p50_ms": 10.9,
-          "latency_p95_ms": 12.3
+          "latency_p50_ms": 11.1,
+          "latency_p95_ms": 15.4
         },
         "cross_lingual": {
           "questions": 6,
@@ -229,8 +229,8 @@
           "hit_at_5": 0.8333,
           "mrr_at_10": 0.6111,
           "in_sources": 1.0,
-          "latency_p50_ms": 11.1,
-          "latency_p95_ms": 12.3
+          "latency_p50_ms": 9.7,
+          "latency_p95_ms": 10.5
         },
         "follow_up": {
           "questions": 5,
@@ -238,8 +238,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.8,
           "in_sources": 1.0,
-          "latency_p50_ms": 13.3,
-          "latency_p95_ms": 15.0
+          "latency_p50_ms": 10.6,
+          "latency_p95_ms": 13.6
         }
       }
     },
@@ -254,8 +254,8 @@
         "hit_at_5": 0.7857,
         "mrr_at_10": 0.6757,
         "in_sources": 0.8571,
-        "latency_p50_ms": 1.9,
-        "latency_p95_ms": 2.3
+        "latency_p50_ms": 2.1,
+        "latency_p95_ms": 2.6
       },
       "by_category": {
         "factual": {
@@ -264,8 +264,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.8148,
           "in_sources": 1.0,
-          "latency_p50_ms": 2.1,
-          "latency_p95_ms": 2.9
+          "latency_p50_ms": 2.2,
+          "latency_p95_ms": 2.7
         },
         "exact_code": {
           "questions": 8,
@@ -273,8 +273,8 @@
           "hit_at_5": 0.875,
           "mrr_at_10": 0.7679,
           "in_sources": 1.0,
-          "latency_p50_ms": 1.9,
-          "latency_p95_ms": 2.2
+          "latency_p50_ms": 2.3,
+          "latency_p95_ms": 2.5
         },
         "cross_lingual": {
           "questions": 6,
@@ -282,8 +282,8 @@
           "hit_at_5": 0.1667,
           "mrr_at_10": 0.0738,
           "in_sources": 0.3333,
-          "latency_p50_ms": 1.8,
-          "latency_p95_ms": 1.9
+          "latency_p50_ms": 1.9,
+          "latency_p95_ms": 2.1
         },
         "follow_up": {
           "questions": 5,
@@ -291,8 +291,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 1.0,
           "in_sources": 1.0,
-          "latency_p50_ms": 1.8,
-          "latency_p95_ms": 2.1
+          "latency_p50_ms": 2.0,
+          "latency_p95_ms": 2.2
         }
       }
     },
@@ -307,8 +307,8 @@
         "hit_at_5": 0.75,
         "mrr_at_10": 0.6135,
         "in_sources": 0.8571,
-        "latency_p50_ms": 2.2,
-        "latency_p95_ms": 3.3
+        "latency_p50_ms": 2.1,
+        "latency_p95_ms": 2.7
       },
       "by_category": {
         "factual": {
@@ -318,7 +318,7 @@
           "mrr_at_10": 0.8056,
           "in_sources": 1.0,
           "latency_p50_ms": 2.2,
-          "latency_p95_ms": 2.6
+          "latency_p95_ms": 3.3
         },
         "exact_code": {
           "questions": 8,
@@ -326,8 +326,8 @@
           "hit_at_5": 0.875,
           "mrr_at_10": 0.7679,
           "in_sources": 0.875,
-          "latency_p50_ms": 2.7,
-          "latency_p95_ms": 3.3
+          "latency_p50_ms": 2.1,
+          "latency_p95_ms": 2.4
         },
         "cross_lingual": {
           "questions": 6,
@@ -335,7 +335,7 @@
           "hit_at_5": 0.0,
           "mrr_at_10": 0.0891,
           "in_sources": 0.5,
-          "latency_p50_ms": 2.0,
+          "latency_p50_ms": 1.9,
           "latency_p95_ms": 2.4
         },
         "follow_up": {
@@ -344,8 +344,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.65,
           "in_sources": 1.0,
-          "latency_p50_ms": 2.1,
-          "latency_p95_ms": 4.0
+          "latency_p50_ms": 2.0,
+          "latency_p95_ms": 2.1
         }
       }
     },
@@ -360,8 +360,8 @@
         "hit_at_5": 0.7857,
         "mrr_at_10": 0.6352,
         "in_sources": 0.8214,
-        "latency_p50_ms": 1.9,
-        "latency_p95_ms": 2.3
+        "latency_p50_ms": 2.1,
+        "latency_p95_ms": 2.4
       },
       "by_category": {
         "factual": {
@@ -370,8 +370,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.8611,
           "in_sources": 1.0,
-          "latency_p50_ms": 2.0,
-          "latency_p95_ms": 2.3
+          "latency_p50_ms": 2.2,
+          "latency_p95_ms": 2.4
         },
         "exact_code": {
           "questions": 8,
@@ -379,8 +379,8 @@
           "hit_at_5": 0.875,
           "mrr_at_10": 0.7656,
           "in_sources": 0.875,
-          "latency_p50_ms": 2.0,
-          "latency_p95_ms": 2.2
+          "latency_p50_ms": 2.1,
+          "latency_p95_ms": 2.3
         },
         "cross_lingual": {
           "questions": 6,
@@ -388,8 +388,8 @@
           "hit_at_5": 0.1667,
           "mrr_at_10": 0.096,
           "in_sources": 0.3333,
-          "latency_p50_ms": 1.9,
-          "latency_p95_ms": 2.1
+          "latency_p50_ms": 2.0,
+          "latency_p95_ms": 2.4
         },
         "follow_up": {
           "questions": 5,
@@ -397,8 +397,8 @@
           "hit_at_5": 1.0,
           "mrr_at_10": 0.6667,
           "in_sources": 1.0,
-          "latency_p50_ms": 1.9,
-          "latency_p95_ms": 2.0
+          "latency_p50_ms": 2.0,
+          "latency_p95_ms": 2.2
         }
       }
     }
