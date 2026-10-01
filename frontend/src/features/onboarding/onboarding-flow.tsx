@@ -51,21 +51,18 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
 
   return (
     <MotionConfig reducedMotion="user">
-      <form
-        onSubmit={submit}
-        className="glass-dense relative flex w-[min(640px,calc(100vw-var(--spacing)*8))] flex-col overflow-hidden rounded-panel"
-      >
-        <div className="flex items-center justify-between px-6 pt-4 sm:px-8">
-          <p className="text-caption text-ink-muted" aria-live="polite">
-            {t('progress', { current: step + 1, total: STEPS.length })}
-          </p>
-          {/* Pulled out by its own padding, so the label (not the pill) sits on the gutter. */}
-          <Button variant="ghost" size="sm" className="-mr-3" onClick={() => onSkip({ locale: values.locale, theme: values.theme })}>
-            {t('skip')}
-          </Button>
-        </div>
+      {/*
+        A full window like Apple's setup assistant: one decision per screen in a centred column,
+        a large title, Skip on the left of the bottom bar, Back and Continue on the right. The top
+        56 px stay free for the window buttons and the drag strip of the desktop app.
+      */}
+      <form onSubmit={submit} className="flex min-h-0 w-full flex-1 flex-col pt-[calc(var(--spacing)*14+var(--window-top))]">
+        <p className="sr-only" aria-live="polite">
+          {t('progress', { current: step + 1, total: STEPS.length })}
+        </p>
 
-        <div className="relative min-h-75 overflow-hidden px-6 pt-6 pb-4 sm:px-8">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain px-gutter">
+          <div aria-hidden className="min-h-6 flex-2" />
           <AnimatePresence mode="popLayout" initial={false} custom={direction}>
             <motion.div
               key={current}
@@ -79,9 +76,13 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
               animate="center"
               exit="exit"
               transition={SPRING}
-              className="flex flex-col items-center text-center"
+              className="mx-auto flex w-full max-w-xl flex-col items-center text-center"
             >
-              <h2 ref={headingRef} tabIndex={-1} className="text-title-1 font-semibold outline-none">
+              <h2
+                ref={headingRef}
+                tabIndex={-1}
+                className="text-title-1 font-semibold outline-none sm:text-large-title"
+              >
                 {current === 'language' ? (
                   <Typewriter label={t('language.title')} words={GREETINGS[initial.locale]} />
                 ) : (
@@ -89,7 +90,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                 )}
               </h2>
               {/* One or two short lines: each line of the copy is its own balanced block. */}
-              <p className="mt-3 max-w-[56ch] text-body text-ink-muted">
+              <p className="mt-3 max-w-[48ch] text-reading text-ink-muted">
                 {t(`${current}.subtitle`)
                   .split('\n')
                   .map((line) => (
@@ -99,20 +100,22 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                   ))}
               </p>
 
-              <div className="mt-8 w-full">
+              <div className="mt-10 w-full sm:mt-12">
                 {current === 'language' && (
-                  <ChoiceCards
-                    label={t('language.label')}
-                    value={values.locale}
-                    onValueChange={(locale) => {
-                      setValues((v) => ({ ...v, locale }));
-                      onLocaleChange(locale);
-                    }}
-                    choices={[
-                      { value: 'de', title: 'Deutsch', icon: <Flag country="de" /> },
-                      { value: 'en', title: 'English', icon: <Flag country="us" /> },
-                    ]}
-                  />
+                  <div className="mx-auto max-w-md">
+                    <ChoiceCards
+                      label={t('language.label')}
+                      value={values.locale}
+                      onValueChange={(locale) => {
+                        setValues((v) => ({ ...v, locale }));
+                        onLocaleChange(locale);
+                      }}
+                      choices={[
+                        { value: 'de', title: 'Deutsch', icon: <Flag country="de" className="h-8" /> },
+                        { value: 'en', title: 'English', icon: <Flag country="us" className="h-8" /> },
+                      ]}
+                    />
+                  </div>
                 )}
 
                 {current === 'appearance' && (
@@ -126,7 +129,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                     choices={(['light', 'dark', 'system'] as const).map((theme) => ({
                       value: theme,
                       title: t(`appearance.${theme}`),
-                      visual: <ThemeThumbnail theme={theme} />,
+                      visual: <ThemeThumbnail theme={theme} className="h-20 sm:h-28" />,
                     }))}
                   />
                 )}
@@ -143,18 +146,23 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
                       maxLength={NAME_MAX_CODE_POINTS}
                       autoComplete="given-name"
                       placeholder={t('name.placeholder')}
-                      className="h-12 rounded-control bg-fill px-4 text-center text-title-3 ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-accent"
+                      className="h-14 rounded-card bg-surface px-4 text-center text-title-3 shadow-[0_1px_2px_rgb(0_0_0/0.04)] ring-1 ring-inset ring-hairline outline-none transition-shadow placeholder:text-ink-muted focus:ring-2 focus:ring-accent dark:bg-fill"
                     />
-                    <p className="text-caption text-ink-muted">{t('name.privacy')}</p>
+                    <p className="text-footnote text-ink-muted">{t('name.privacy')}</p>
                   </div>
                 )}
               </div>
             </motion.div>
           </AnimatePresence>
+          <div aria-hidden className="min-h-6 flex-3" />
         </div>
 
-        <div className="flex items-center justify-between gap-4 px-6 pt-4 pb-6 sm:px-8">
-          <div className="flex gap-1.5" aria-hidden>
+        <div className="relative flex shrink-0 items-center justify-between gap-4 px-gutter pt-4 pb-6 sm:pb-8">
+          {/* Pulled out by its own padding, so the label (not the pill) sits on the gutter. */}
+          <Button variant="ghost" className="-ml-4 text-ink-muted hover:text-ink pointer-coarse:-ml-5" onClick={() => onSkip({ locale: values.locale, theme: values.theme })}>
+            {t('skip')}
+          </Button>
+          <div className="absolute left-1/2 hidden -translate-x-1/2 gap-1.5 sm:flex" aria-hidden>
             {STEPS.map((name, index) => (
               <span
                 key={name}
@@ -167,7 +175,7 @@ export function OnboardingFlow({ initial, onLocaleChange, onThemeChange, onFinis
           </div>
           <div className="flex gap-2">
             {step > 0 && (
-              <Button variant="ghost" onClick={() => go(-1)}>
+              <Button variant="secondary" onClick={() => go(-1)}>
                 {t('back')}
               </Button>
             )}

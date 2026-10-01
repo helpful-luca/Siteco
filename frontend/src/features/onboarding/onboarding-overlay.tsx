@@ -19,7 +19,7 @@ type Props = {
   onDone: (outcome: OnboardingOutcome) => void;
 };
 
-/** Full-window setup layer above the dimmed app. Language and theme apply while choosing. */
+/** Full-window setup over the app, on the canvas with its light pool. Language and theme apply while choosing. */
 export function OnboardingOverlay({ open, initial, onDone }: Props) {
   const router = useRouter();
   const t = useTranslations('onboarding');
@@ -33,10 +33,11 @@ export function OnboardingOverlay({ open, initial, onDone }: Props) {
       onOpenChange={(next) => !next && onDone({ kind: 'skipped', current: { ...live.current } })}
     >
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 bg-black/25 backdrop-blur-md transition-opacity duration-300 data-starting-style:opacity-0 data-ending-style:opacity-0 dark:bg-black/55" />
+        {/* The setup owns the whole window like Apple's setup assistant: the app appears behind it on finish. */}
+        <Dialog.Backdrop className="setup-canvas fixed inset-0 transition-opacity duration-500 ease-out-soft data-starting-style:opacity-0 data-ending-style:opacity-0" />
         <Dialog.Popup
           aria-label={t('language.title')}
-          className="fixed inset-0 grid place-items-center p-4 outline-none transition-[opacity,scale] duration-300 ease-out-soft data-starting-style:scale-[0.98] data-starting-style:opacity-0 data-ending-style:opacity-0"
+          className="fixed inset-0 flex outline-none transition-[opacity,scale] duration-500 ease-out-soft data-starting-style:scale-[0.99] data-starting-style:opacity-0 data-ending-style:scale-[1.01] data-ending-style:opacity-0"
         >
           <OnboardingFlow
             initial={initial}

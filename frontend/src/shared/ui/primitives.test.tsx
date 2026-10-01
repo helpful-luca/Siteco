@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { Badge, Button, Dialog, SegmentedControl, Switch } from '@/shared/ui';
+import { Badge, Button, ChoiceCards, Dialog, SegmentedControl, Switch, ThemeThumbnail } from '@/shared/ui';
 
 describe('Button', () => {
   it('renders a native button with the variant as data attribute', () => {
@@ -91,5 +91,28 @@ describe('Dialog', () => {
     expect(await screen.findByRole('dialog', { name: 'Einstellungen' })).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+});
+
+describe('ChoiceCards', () => {
+  it('names picture choices by their title and moves the choice with arrow keys', async () => {
+    const onValueChange = vi.fn();
+    render(
+      <ChoiceCards
+        label="Erscheinungsbild"
+        value="light"
+        onValueChange={onValueChange}
+        choices={(['light', 'dark'] as const).map((theme) => ({
+          value: theme,
+          title: theme === 'light' ? 'Hell' : 'Dunkel',
+          visual: <ThemeThumbnail theme={theme} />,
+        }))}
+      />,
+    );
+    const light = screen.getByRole('radio', { name: 'Hell' });
+    expect(light).toHaveAttribute('aria-checked', 'true');
+    light.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(onValueChange).toHaveBeenCalledWith('dark');
   });
 });

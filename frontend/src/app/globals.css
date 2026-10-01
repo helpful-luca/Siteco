@@ -205,6 +205,10 @@ html[data-desktop]
   --text-title-1: 32px;
   --text-title-1--line-height: 38px;
   --text-title-1--letter-spacing: -0.022em;
+  /* The setup assistant's titles, the one place for a large title. */
+  --text-large-title: 40px;
+  --text-large-title--line-height: 48px;
+  --text-large-title--letter-spacing: -0.025em;
 
   --shadow-float: var(--c-shadow);
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
@@ -347,6 +351,14 @@ html[data-desktop]
       radial-gradient(45% 45% at 0% 100%, var(--c-light-fill), transparent 70%),
       var(--c-canvas);
     background-attachment: fixed;
+  }
+
+  /* The setup assistant covers the app with the canvas and its light pool (a full window, not a dialog). */
+  .setup-canvas {
+    background:
+      radial-gradient(75% 60% at 50% -14%, var(--c-light-key), transparent 72%),
+      radial-gradient(45% 45% at 0% 100%, var(--c-light-fill), transparent 70%),
+      var(--c-canvas);
   }
 
   /*

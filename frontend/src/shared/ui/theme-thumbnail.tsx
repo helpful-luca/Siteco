@@ -1,4 +1,5 @@
 import type { Theme } from '@/shared/preferences/cookies';
+import { cn } from './cn';
 
 const PALETTES = {
   light: { canvas: '#f2f2f5', panel: '#ffffff', line: '#d9d9de', accent: '#b61918' },
@@ -25,9 +26,9 @@ function Window({ mode }: { mode: 'light' | 'dark' }) {
 }
 
 /** Miniature app window so the choice is seen, not only named. */
-export function ThemeThumbnail({ theme }: { theme: Theme }) {
+export function ThemeThumbnail({ theme, className }: { theme: Theme; className?: string }) {
   return (
-    <div aria-hidden className="h-19 w-full overflow-hidden rounded-inner ring-1 ring-hairline">
+    <div aria-hidden className={cn('h-19 w-full overflow-hidden rounded-inner ring-1 ring-hairline', className)}>
       {theme === 'system' ? (
         <div className="flex h-full">
           <div className="w-1/2 overflow-hidden">
