@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,7 +52,8 @@ describe('RightPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Quelle 1' }));
     expect(screen.getByRole('complementary', { name: 'Mira.pdf' })).toHaveTextContent('Seite 4 von 12');
     await user.keyboard('{Escape}');
-    expect(screen.queryByRole('complementary')).toBeNull();
+    // It slides out first, then leaves the document.
+    await waitFor(() => expect(screen.queryByRole('complementary')).toBeNull());
     expect(screen.getByRole('button', { name: 'Quelle 1' })).toHaveFocus();
   });
 

@@ -1,13 +1,20 @@
 'use client';
 
 import { X } from 'lucide-react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import { Fragment, useEffect, useRef } from 'react';
 import { useMediaQuery } from '@/shared/lib/use-media-query';
 import { Button, cn, SideSheet } from '@/shared/ui';
 import { useUI, type PanelContent } from './ui-context';
 
-/** Slot for sources, previews and artifacts: a column on wide windows, a sheet otherwise. */
+/** Opening and closing the column: a spring without overshoot; reduced motion makes it a cut. */
+const SLIDE = { type: 'spring', duration: 0.4, bounce: 0 } as const;
+
+/**
+ * Slot for sources, previews and artifacts: a column on wide windows that slides in from the
+ * right (the chat makes room as it comes), a sheet otherwise.
+ */
 export function RightPanel() {
   const { panel, closePanel } = useUI();
   const wide = useMediaQuery('(min-width: 1280px)');
@@ -35,23 +42,43 @@ export function RightPanel() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, wide, closePanel]);
 
-  if (!panel) return null;
   if (wide) {
     return (
-      <aside
-        ref={column}
-        tabIndex={-1}
-        data-right-panel
-        aria-label={panel.title}
-        className={cn(
-          'flex shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline outline-none',
-          panel.size === 'wide' ? 'w-panel-wide' : 'w-panel',
-        )}
-      >
-        <PanelBody panel={panel} onClose={closePanel} />
-      </aside>
+      <MotionConfig reducedMotion="user">
+        <AnimatePresence initial={false}>
+          {panel && (
+            // The wrapper carries the 12 px gap, so the chat column widens and narrows smoothly.
+            <motion.div
+              key="right-panel"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 'auto', opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={SLIDE}
+              className="-ml-3 flex shrink-0 justify-end overflow-hidden"
+            >
+              <motion.aside
+                ref={column}
+                tabIndex={-1}
+                data-right-panel
+                aria-label={panel.title}
+                initial={{ x: 48 }}
+                animate={{ x: 0 }}
+                exit={{ x: 48 }}
+                transition={SLIDE}
+                className={cn(
+                  'ml-3 flex shrink-0 flex-col overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-hairline outline-none',
+                  panel.size === 'wide' ? 'w-panel-wide' : 'w-panel',
+                )}
+              >
+                <PanelBody panel={panel} onClose={closePanel} />
+              </motion.aside>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </MotionConfig>
     );
   }
+  if (!panel) return null;
   return (
     <SideSheet side="right" label={panel.title} open onOpenChange={(open) => !open && closePanel()}>
       <div
