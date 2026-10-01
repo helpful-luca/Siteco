@@ -30,6 +30,7 @@ from docchat.cli.eval_results_file import (
     FullContextOut,
     Stemming,
 )
+from docchat.cli.trusted_corpus_scanner import TrustedCorpusScanner
 from docchat.core.config import Settings
 from docchat.core.container import Container, build_container
 from docchat.core.retrieval_fingerprint import retrieval_fingerprint
@@ -200,12 +201,11 @@ async def run(eval_dir: Path, data_dir: Path) -> EvalResultsFile:
     settings = Settings(
         _env_file=None,  # type: ignore[call-arg]
         data_dir=data_dir,
-        malware_scan="off",  # the files are ours and checksummed
         ocr="off",
         llm_provider="fake",
         anthropic_api_key=None,
     )
-    container = build_container(settings)
+    container = build_container(settings, scanner=TrustedCorpusScanner())  # our own files
     await container.start()
     try:
         corpus = await ingest(container, golden, eval_dir)

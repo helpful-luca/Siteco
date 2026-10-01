@@ -663,11 +663,6 @@ export interface components {
         ErrorStage: "retrieval" | "llm" | "persist";
         /** Features */
         Features: {
-            /**
-             * Malware Scan
-             * @enum {string}
-             */
-            malware_scan: "required" | "off";
             /** Retrieval Only */
             retrieval_only: boolean;
         };

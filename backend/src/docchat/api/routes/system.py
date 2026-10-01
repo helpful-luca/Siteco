@@ -74,7 +74,6 @@ def config(container: ContainerDep) -> ConfigOut:
         ),
         features=Features(
             retrieval_only=not container.llm_health.available,
-            malware_scan=settings.malware_scan,
         ),
         models=[
             ModelInfo.from_profile(p, available=container.models.is_available(p.id))

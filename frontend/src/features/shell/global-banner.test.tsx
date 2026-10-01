@@ -25,7 +25,7 @@ function config(patch: Partial<ConfigOut> = {}): ConfigOut {
       daily_budget_usd: null,
     },
     budget: null,
-    features: { retrieval_only: false, malware_scan: 'required' },
+    features: { retrieval_only: false },
     models: [],
     default_model: 'claude-sonnet-5-5',
     ...patch,

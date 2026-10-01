@@ -7,7 +7,7 @@ from docchat.core.config import Settings
 from docchat.core.container import build_container
 from docchat.domain.ports import Embedder, LLMClient, MalwareScanner
 from docchat.main import create_app
-from tests.fakes import FakeEmbedder
+from tests.fakes import FakeEmbedder, FakeScanner
 
 
 def make_app(
@@ -19,6 +19,10 @@ def make_app(
     clock: SystemClock | None = None,
 ) -> FastAPI:
     container = build_container(
-        settings, embedder=embedder or FakeEmbedder(), scanner=scanner, llm=llm, clock=clock
+        settings,
+        embedder=embedder or FakeEmbedder(),
+        scanner=scanner or FakeScanner(),
+        llm=llm,
+        clock=clock,
     )
     return create_app(settings, container)

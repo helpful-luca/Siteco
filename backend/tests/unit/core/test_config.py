@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import pytest
 
+from docchat.adapters.clamd_scanner import ClamdScanner
 from docchat.core.config import Settings
+from docchat.core.container import build_container
+from tests.fakes import FakeEmbedder
 
 
 def test_defaults_work_without_any_environment() -> None:
@@ -40,3 +45,14 @@ def test_ocr_is_on_by_default_with_german_and_english(monkeypatch: pytest.Monkey
     assert (s.ocr, s.ocr_languages, s.ocr_page_timeout_s) == ("on", "deu+eng", 60)
     monkeypatch.setenv("OCR", "off")
     assert Settings(_env_file=None).ocr == "off"
+
+
+def test_the_malware_scan_cannot_be_switched_off(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """There is no `MALWARE_SCAN=off` any more: the app always wires clamd."""
+    monkeypatch.setenv("MALWARE_SCAN", "off")
+    settings = Settings(_env_file=None, data_dir=tmp_path, ocr="off")
+    assert not hasattr(settings, "malware_scan")
+    container = build_container(settings, embedder=FakeEmbedder())
+    assert isinstance(container.scans.scanner, ClamdScanner)

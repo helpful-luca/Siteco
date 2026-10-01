@@ -138,13 +138,12 @@ Claude Code and Claude Desktop can search your library: `claude mcp add --transp
 | `INTERNAL_TOKEN` | no | empty | Optional shared secret between web app and backend |
 | `MCP_TOKEN` | no | empty | Optional bearer token for the MCP endpoint (see docs/mcp.md) |
 | `LOG_LEVEL` | no | `INFO` | Backend log level |
-| `MALWARE_SCAN` | no | `required` | `off` skips the virus scan (development only, the app shows a hint) |
 | `OCR` | no | `on` | Tesseract (German and English) reads scanned pages; `off` leaves them unsearchable |
 | `LLM_PROVIDER` | no | `anthropic` | `fake` answers without Claude (tests, demo) |
 
 ## Development
 
-    make dev-api     # FastAPI with hot reload on 127.0.0.1:8000
+    make dev-api     # clamd from compose.dev.yaml (127.0.0.1:3310), then FastAPI with hot reload on 127.0.0.1:8000
     make dev-web     # Next.js dev server on localhost:3000
     make test        # backend and frontend tests
     make lint        # linters, type checks and architecture boundaries

@@ -32,7 +32,7 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | # | Topic | Pick | Rejected | Reason |
 |---|---|---|---|---|
 | 21 | Scan placement | Row `scanning`, file in `data/quarantine/`, a background scan worker moves it into the library and queues it | Scanning inside the upload request | clamd needs a few seconds (more on slow machines) after start; the request must not wait and the file must never skip the scan |
-| 22 | `MALWARE_SCAN=off` | Wires a scanner that always answers clean, so every upload still passes `scanning` | A second upload path without the scan | One code path; `off` is for development only and `/api/config` exposes it for a permanent hint |
+| 22 | `MALWARE_SCAN=off` (superseded by 172) | Wires a scanner that always answers clean, so every upload still passes `scanning` | A second upload path without the scan | One code path; `off` is for development only and `/api/config` exposes it for a permanent hint |
 | 23 | clamd client | INSTREAM over TCP implemented in the adapter with asyncio streams, answer read while sending | `clamd` or `pyclamd` from PyPI | Both have had no release for years and block the event loop; the protocol is four framing rules |
 | 24 | Image | `clamav/clamav:1.5.4-debian13-slim` | `clamav/clamav:1.5` (Alpine) | Only the Debian tags are multi-arch (amd64, arm64); the non-`_base` image ships signatures, so an offline start works and `freshclam` updates when online |
 | 25 | Scanner not reachable | Retry with backoff (1 s doubling to 15 s), notice `SCANNER_STARTING`, after 10 minutes `SCANNER_UNAVAILABLE`, never bypassed | Failing the document | A starting scanner is normal; the file just waits |
@@ -261,3 +261,4 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | # | Topic | Pick | Rejected | Reason |
 |---|---|---|---|---|
 | 171 | Quality page | Removed with `GET /api/eval` and the results baked into the image; runner, CI gate and evaluation.md stay | Keeping the page | Luca: the numbers belong in the README and CI, not in the product |
+| 172 | Malware scan always on | `MALWARE_SCAN` removed; `make dev-api` starts clamd from `compose.dev.yaml` on 127.0.0.1:3310; tests inject a fake scanner through the container; the eval runners pass a trusted corpus scanner | An `off` switch for development | A switch that skips the scan is one typo away from production; development scans like the real stack |

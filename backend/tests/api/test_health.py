@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
 from docchat.core.config import Settings
-from tests.fakes import FakeEmbedder, FakeScanner
+from tests.fakes import FakeEmbedder
 from tests.support import make_app
 
 
@@ -53,7 +53,7 @@ def test_config_reports_retrieval_only_without_key(settings: Settings) -> None:
             "daily_budget_usd": None,
         },
         "budget": None,
-        "features": {"retrieval_only": True, "malware_scan": "off"},
+        "features": {"retrieval_only": True},
         "models": None,
         "default_model": "claude-sonnet-5-5",
     }
@@ -66,9 +66,3 @@ def test_config_with_key_is_unchecked_and_never_leaks_it(settings: Settings) -> 
     assert r.json()["llm_status"] == "unchecked"
     assert r.json()["features"]["retrieval_only"] is False
     assert "sk-ant-test-123" not in r.text
-
-
-def test_config_reports_the_malware_scan_mode(settings: Settings) -> None:
-    required = settings.model_copy(update={"malware_scan": "required"})
-    with TestClient(make_app(required, scanner=FakeScanner())) as c:
-        assert c.get("/api/config").json()["features"]["malware_scan"] == "required"

@@ -17,13 +17,12 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
-    # No clamd in unit tests: tests that need a scanner pass a fake one to build_container.
+    # No clamd in unit tests: `make_app` wires a clean FakeScanner unless a test passes one.
     # OCR is off unless a test asks for it: the `ocr` tests need the Tesseract binary.
     return Settings(
         _env_file=None,
         data_dir=tmp_path / "data",
         anthropic_api_key=None,
-        malware_scan="off",
         ocr="off",
     )
 

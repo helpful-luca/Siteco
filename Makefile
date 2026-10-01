@@ -1,4 +1,4 @@
-.PHONY: up down dev-api dev-web test lint api-types fresh-clone eval eval-gate eval-generation e2e
+.PHONY: up down dev-clamav dev-api dev-web test lint api-types fresh-clone eval eval-gate eval-generation e2e
 
 up:
 	docker compose up --build
@@ -6,9 +6,12 @@ up:
 down:
 	docker compose down
 
-# No clamd outside Docker: MALWARE_SCAN defaults to off here (the UI shows a hint).
-dev-api:
-	cd backend && DATA_DIR=data EMBEDDING_CACHE_DIR=.models MALWARE_SCAN=$${MALWARE_SCAN:-off} uv run uvicorn docchat.main:create_app --factory --reload --host 127.0.0.1 --port 8000
+# The malware scan is always on: clamd from compose.dev.yaml, published on 127.0.0.1:3310.
+dev-clamav:
+	docker compose -f compose.yaml -f compose.dev.yaml up -d clamav
+
+dev-api: dev-clamav
+	cd backend && DATA_DIR=data EMBEDDING_CACHE_DIR=.models CLAMD_HOST=127.0.0.1 CLAMD_PORT=3310 uv run uvicorn docchat.main:create_app --factory --reload --host 127.0.0.1 --port 8000
 
 dev-web:
 	cd frontend && BACKEND_URL=http://127.0.0.1:8000 npm run dev

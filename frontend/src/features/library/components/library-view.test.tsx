@@ -16,7 +16,7 @@ const CONFIG = {
   commit: 'x',
   llm_status: 'missing_key',
   limits: { max_upload_mb: 1024, max_pdf_pages: 5000, max_storage_mb: 20480 },
-  features: { retrieval_only: true, malware_scan: 'required' },
+  features: { retrieval_only: true },
 };
 
 const viewer = vi.hoisted(() => ({ props: null as Record<string, unknown> | null }));

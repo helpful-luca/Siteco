@@ -38,7 +38,7 @@ const CONFIG: ConfigOut = {
     daily_budget_usd: null,
   },
   budget: null,
-  features: { retrieval_only: false, malware_scan: 'required' },
+  features: { retrieval_only: false },
   models: [
     { ...MODEL, id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5', tier: 'fast', input_usd_per_mtok: 1, output_usd_per_mtok: 5, efforts: [], default_effort: null },
     { ...MODEL, id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', tier: 'balanced', input_usd_per_mtok: 2, output_usd_per_mtok: 10 },

@@ -79,8 +79,7 @@ class Settings(BaseSettings):
     embed_batch_size: int = 32
     index_write_batch: int = 256
 
-    # Malware scan (master spec 6.9). `off` is for development only; the UI then shows a hint.
-    malware_scan: Literal["required", "off"] = "required"
+    # Malware scan (master spec 6.9), always on. Outside Docker see compose.dev.yaml.
     clamd_host: str = "clamav"
     clamd_port: int = 3310
     clamd_scan_timeout_s: int = 900  # above clamd's MaxScanTime (600 s)

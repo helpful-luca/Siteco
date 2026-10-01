@@ -17,6 +17,7 @@ from pydantic import SecretStr
 from docchat.adapters.anthropic.answer_judge import JUDGE_MODEL, ClaudeAnswerJudge
 from docchat.cli.eval_results_file import GenerationModelOut, GenerationResultsFile
 from docchat.cli.run_eval import EVAL_DIR, commit, ingest, load_eval_set
+from docchat.cli.trusted_corpus_scanner import TrustedCorpusScanner
 from docchat.core.config import Settings
 from docchat.core.container import build_container
 from docchat.services.generation_eval import GenerationEvaluator, ModelScore
@@ -56,13 +57,12 @@ async def run(
     settings = Settings(
         _env_file=None,  # type: ignore[call-arg]
         data_dir=data_dir,
-        malware_scan="off",
         ocr="off",
         llm_provider="anthropic",
         anthropic_api_key=SecretStr(key),
         rate_chat_per_min=0,  # our own limit is for people, not for this run
     )
-    container = build_container(settings)
+    container = build_container(settings, scanner=TrustedCorpusScanner())  # our own files
     await container.start()
     judge = ClaudeAnswerJudge(key, judge_model)
     evaluator = GenerationEvaluator(container.chats, container.answers, container.vectors, judge)

@@ -16,7 +16,6 @@ from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.lancedb_vector_store import LanceVectorStore
 from docchat.adapters.local_file_storage import LocalFileStorage
 from docchat.adapters.no_page_ocr import NoPageOcr
-from docchat.adapters.noop_malware_scanner import NoopMalwareScanner
 from docchat.adapters.pdf_active_content_detector import PdfActiveContentDetector
 from docchat.adapters.pdfium_ocr_page import OcrOptions
 from docchat.adapters.pdfium_parser import TASKS_PER_PROCESS, PdfiumParser
@@ -151,8 +150,6 @@ def _default_threads() -> int:
 
 
 def _scanner(settings: Settings) -> MalwareScanner:
-    if settings.malware_scan == "off":
-        return NoopMalwareScanner()
     return ClamdScanner(
         settings.clamd_host,
         settings.clamd_port,

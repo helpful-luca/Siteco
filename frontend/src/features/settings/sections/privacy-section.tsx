@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useConfig } from '@/shared/api/use-config';
 import { FormGroup, FormText } from '@/shared/ui';
 import { useWorkspace } from '../queries';
 import { sectionHref } from '../sections';
@@ -10,9 +9,7 @@ import { sectionHref } from '../sections';
 /** Plain-language privacy notice (master spec 10b, 3; Art. 13 GDPR). */
 export function PrivacySection() {
   const t = useTranslations('settings.privacy');
-  const { data: config } = useConfig();
   const { data: workspace } = useWorkspace();
-  const scanOn = config?.features.malware_scan !== 'off';
   const retention = workspace?.retention_days ?? null;
 
   return (
@@ -36,7 +33,7 @@ export function PrivacySection() {
         <FormText>{t('telemetryText')}</FormText>
       </FormGroup>
       <FormGroup title={t('scan')}>
-        <FormText className={scanOn ? undefined : 'text-danger'}>{scanOn ? t('scanOn') : t('scanOff')}</FormText>
+        <FormText>{t('scanOn')}</FormText>
       </FormGroup>
       <FormGroup title={t('rights')}>
         <FormText>{t('rightsText')}</FormText>

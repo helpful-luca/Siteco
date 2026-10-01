@@ -15,7 +15,6 @@ export function AboutSection() {
   const onboarding = useOnboarding();
   const modelPrice = useModelPrice();
   if (!config) return null;
-  const scanOn = config.features.malware_scan !== 'off';
 
   const value = (text: string, tone?: 'danger') => (
     <span className={tone === 'danger' ? 'text-body text-danger' : 'text-body text-ink-muted'}>{text}</span>
@@ -32,7 +31,7 @@ export function AboutSection() {
         <FormRow label={t('claude')}>
           {value(t(`llm.${config.llm_status}`), config.llm_status === 'invalid_key' ? 'danger' : undefined)}
         </FormRow>
-        <FormRow label={t('scan')}>{value(scanOn ? t('scanOn') : t('scanOff'), scanOn ? undefined : 'danger')}</FormRow>
+        <FormRow label={t('scan')}>{value(t('scanOn'))}</FormRow>
       </FormGroup>
 
       <FormGroup title={t('models')} footer={t('modelsFooter')}>

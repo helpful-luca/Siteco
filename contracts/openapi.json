@@ -992,22 +992,13 @@
       },
       "Features": {
         "properties": {
-          "malware_scan": {
-            "enum": [
-              "required",
-              "off"
-            ],
-            "title": "Malware Scan",
-            "type": "string"
-          },
           "retrieval_only": {
             "title": "Retrieval Only",
             "type": "boolean"
           }
         },
         "required": [
-          "retrieval_only",
-          "malware_scan"
+          "retrieval_only"
         ],
         "title": "Features",
         "type": "object"

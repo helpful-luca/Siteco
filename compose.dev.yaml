@@ -1,0 +1,10 @@
+# Development overlay: publishes clamd on the loopback interface only, so `make dev-api`
+# (the backend outside Docker) scans uploads like the full stack does.
+#
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d clamav
+#
+# Never use this file for the app itself: clamd has no authentication.
+services:
+  clamav:
+    ports:
+      - "127.0.0.1:3310:3310"
