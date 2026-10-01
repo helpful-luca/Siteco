@@ -1,6 +1,6 @@
 # Siteco Document Chat
 
-[![CI](https://github.com/luca-sktn/Siteco/actions/workflows/ci.yml/badge.svg)](https://github.com/luca-sktn/Siteco/actions/workflows/ci.yml)
+[![CI](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml/badge.svg)](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml)
 
 Upload PDFs, text and Markdown files, ask questions in German or English, and get streamed answers whose claims link to the exact sentence in the original file, highlighted in the PDF. It runs locally with `docker compose up`: parsing, OCR, malware scan, embeddings and search stay on your machine, only the question and the best passages go to Claude.
 
@@ -10,7 +10,7 @@ Upload PDFs, text and Markdown files, ask questions in German or English, and ge
 
 Prerequisites: Docker with Compose v2 and about 4 GB of free memory (backend up to 2 GB, virus scanner about 1 GB). Works on arm64 and amd64.
 
-    git clone https://github.com/luca-sktn/Siteco.git && cd Siteco
+    git clone https://github.com/helpful-luca/Siteco.git && cd Siteco
     docker compose up --build
 
 Open http://localhost:3000. The first build downloads dependencies, the web font and the local embedding model (about 400 MB) and verifies that the model works offline; allow a few minutes. After that the app runs offline, except for calls to the Claude API.
