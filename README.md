@@ -1,17 +1,31 @@
+<div align="center">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/banner-dark.svg">
   <img src="docs/images/banner-light.svg" alt="Document Chat" width="100%">
 </picture>
 
+<br>
+
 [![CI](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml/badge.svg)](https://github.com/helpful-luca/Siteco/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey)
+
+[Getting started](#getting-started) · [Features](#features) · [How it works](#how-it-works) · [Decisions](#key-decisions) · [Tests](#tests) · [Next steps](#next-steps)
+
+</div>
+
+<br>
 
 Upload PDFs and text files, ask questions in German or English, and every answer points to the exact sentence it comes from. Your files stay on your machine; only the question and the relevant passages are sent to Claude.
 
 ![Answer with citations and the cited sentence highlighted in the PDF](docs/images/citation-highlight.jpg)
 
 ## Getting started
-
-There are three ways to run the app. All of them use Docker.
 
 | | Command | Result |
 |---|---|---|
@@ -105,18 +119,18 @@ The backend is split into `api`, `services`, `domain` and `adapters`; import-lin
 
 ## Key decisions
 
-| Topic | Chosen | Rejected | Why |
+| Area | Choice | Instead of | Reason |
 |---|---|---|---|
-| Citations | Claude `search_result` blocks with native citations | The model writes `[1]` itself | Exact cited sentences; documents stay data, not instructions |
-| Retrieval | Hybrid: vectors and BM25 | Vectors only | Finds exact codes like IP66 and works across languages |
-| Embeddings | IBM Granite multilingual, local | API embeddings, bge-m3 | Good German, runs offline on CPU, only one API key needed |
-| Index | LanceDB embedded, SQLite as source of truth | Qdrant, Chroma | No extra service; search only sees finished documents |
-| PDF parsing | pypdfium2 in a separate process | PyMuPDF (AGPL), Docling (needs torch) | Line positions for highlighting; a broken file can be stopped |
-| Streaming | Own SSE endpoint and Next.js proxy | Vercel AI SDK, Next.js `rewrites()` | Full control; `rewrites()` buffered the stream |
-| Model | Claude Sonnet 5.5, switchable per message | One fixed model | Good quality and cost for reading; cost shown per answer |
-| Chunking | Page, paragraph, sentence | Semantic chunking | Sentences are what gets cited and highlighted |
-| Answer safety | No images or HTML in answers, strict CSP | Sanitising afterwards | A prompt injection cannot leak data through an image |
-| Uploads | One file per request, quarantine until scanned | Multipart, scan later | Size is checked while reading; nothing unscanned is used |
+| Citations | `search_result` blocks with Claude's native citations, mapped back by chunk id | Prompting for `[1]` markers | Claude returns the exact cited span, nothing to parse. Document text stays out of the instructions |
+| Search | Vectors plus BM25 with German stemming, merged with reciprocal rank fusion | Vectors only | Vectors miss literal codes like `IP66`, BM25 misses questions in the other language |
+| Embeddings | Granite 97M multilingual, ONNX on CPU, baked into the image | API embeddings, bge-m3 | Works offline, handles German well, Apache 2.0, and you only need one API key |
+| Storage | SQLite as source of truth, LanceDB embedded as the index | Qdrant, Chroma | No extra service. Search only returns documents SQLite marks as `ready` |
+| PDF parsing | pypdfium2 in a separate worker process | PyMuPDF (AGPL), Docling (pulls in torch) | Line rectangles for highlighting; a hanging PDF is killed together with its process |
+| Streaming | SSE over POST through an own Next.js route | Vercel AI SDK, Next.js `rewrites()` | `rewrites()` buffered the whole stream; the own route passes it through as it arrives |
+| Chunking | About 400 tokens by page, paragraph and sentence, never across pages | Semantic chunking | A sentence is the unit that gets cited, and the page number stays exact for the viewer |
+| Default model | Sonnet 5.5 at low effort, Haiku and Opus selectable per message | One fixed model | Good enough for reading comprehension at a fair price; cost is shown per answer |
+| Rendering | Markdown without images or raw HTML, static CSP | Sanitising HTML afterwards | A prompt injection has no image URL to leak data through |
+| Uploads | Raw body per file, quarantined until ClamAV reports clean | Multipart, scanning later | The size limit is enforced while streaming; unscanned bytes are never served |
 
 All decisions: [docs/decisions.md](docs/decisions.md).
 
