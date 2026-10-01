@@ -76,8 +76,8 @@ class FakeTicker:
         self.current += seconds
 
 
-def page(number: int, text: str) -> TextSection:
-    return section_from_text(text, page=number)
+def page(number: int, text: str, heading: str = "") -> TextSection:
+    return section_from_text(text, page=number, heading=heading)
 
 
 class FakePdfParser:
@@ -85,6 +85,7 @@ class FakePdfParser:
 
     def __init__(self) -> None:
         self.pages: dict[str, list[str]] = {}
+        self.titles: dict[str, dict[int, str]] = {}  # file name -> page -> title
         self.open_error: dict[str, IngestionError] = {}
         self.failing_batches: dict[str, dict[int, bool]] = {}  # first page index -> timed out
         self.calls: list[tuple[str, int, int]] = []
@@ -105,7 +106,12 @@ class FakePdfParser:
         if first in failing:
             raise PageBatchFailed(timed_out=failing[first])
         texts = self.pages[path.name][first : first + count]
-        return PageBatch(sections=tuple(page(first + i + 1, t) for i, t in enumerate(texts)))
+        titles = self.titles.get(path.name, {})
+        return PageBatch(
+            sections=tuple(
+                page(first + i + 1, t, titles.get(first + i + 1, "")) for i, t in enumerate(texts)
+            )
+        )
 
     async def close(self) -> None:
         return None

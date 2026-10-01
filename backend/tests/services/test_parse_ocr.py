@@ -89,3 +89,18 @@ async def test_a_scan_only_pdf_becomes_searchable(tmp_path: Path) -> None:
     ready = harness.reload(doc)
     assert ready is not None and ready.status is DocumentStatus.READY
     assert harness.vectors.count(doc.id) == 1
+
+
+async def test_pages_without_a_title_keep_the_title_of_the_page_before(tmp_path: Path) -> None:
+    harness = build_harness(tmp_path, batch_pages=2)
+    doc = harness.add_document(pages=[TEXT, "", TEXT, TEXT])
+    path = harness.storage.path_for(doc.id, doc.kind)
+    harness.pdf.titles[path.name] = {1: "Highbay 11 midi", 4: "Highbay 11 maxi"}
+    await harness.worker.process(doc.id)
+    chunks = sorted((c for c, _ in harness.vectors.rows.values()), key=lambda c: c.ordinal)
+    assert [(c.page, c.heading) for c in chunks] == [
+        (1, "Highbay 11 midi"),
+        (3, "Highbay 11 midi"),  # a continuation page after a photo, in the next batch
+        (4, "Highbay 11 maxi"),
+    ]
+    assert "Highbay" not in chunks[1].search_text  # the title reaches Claude, not the index

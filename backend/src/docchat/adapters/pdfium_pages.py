@@ -14,6 +14,7 @@ import pypdfium2.raw as pdfium_c
 from docchat.domain.errors import ErrorCode, IngestionError
 from docchat.domain.line_breaks import PageLine, line_break_cuts
 from docchat.domain.models import Rect
+from docchat.domain.page_title import page_title
 from docchat.domain.parsing import PageBatch, SentenceSpan, TextSection
 from docchat.domain.sentences import split_sentences
 from docchat.domain.text_cleanup import CleanText, clean_page_text
@@ -110,11 +111,6 @@ def _page_lines(
     return lines
 
 
-def _layout_cuts(textpage: pdfium.PdfTextPage, cleaned: CleanText, crop_top: float) -> list[int]:
-    """Sentence cuts at line breaks that end a heading, a table row, a list item or a paragraph."""
-    return line_break_cuts(cleaned.text, _page_lines(textpage, cleaned, crop_top))
-
-
 def _off_page_chars(
     textpage: pdfium.PdfTextPage, raw: str, crop: tuple[float, float, float, float]
 ) -> frozenset[int]:
@@ -147,7 +143,10 @@ def _read_page(pdf: pdfium.PdfDocument, index: int) -> TextSection:
         else:
             cleaned = clean_page_text(textpage.get_text_bounded(*crop))
         rotation = page.get_rotation()
-        cuts = _layout_cuts(textpage, cleaned, crop[3]) if precise else []
+        # The layout cuts sentences at line breaks that end a heading, a table row, a list
+        # item or a paragraph, and names the page by its title.
+        lines = _page_lines(textpage, cleaned, crop[3]) if precise else []
+        cuts = line_break_cuts(cleaned.text, lines)
         sentences = []
         for start, end in split_sentences(cleaned.text, cuts):
             rects: tuple[Rect, ...] = ()
@@ -162,6 +161,7 @@ def _read_page(pdf: pdfium.PdfDocument, index: int) -> TextSection:
             text=cleaned.text,
             sentences=tuple(sentences),
             page=index + 1,
+            heading=page_title(cleaned.text, lines),
             precise_highlight=precise,
         )
     finally:

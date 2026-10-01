@@ -1,8 +1,11 @@
-"""Parse pass: file -> sections -> chunks in the spool. Pages are parsed in batches."""
+"""Parse pass: file -> sections -> chunks in the spool. Pages are parsed in batches.
+
+A PDF page without a title of its own (a continuation page of a product, a page of a chapter)
+keeps the title of the page before it as its heading, like a section of a text file."""
 
 import asyncio
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from docchat.domain.chunking import chunk_section
@@ -141,6 +144,7 @@ class ParseStage:
         ocr_pages = 0
         skipped: list[int] = []
         failed_batches = 0
+        title = ""  # the last page title, for the pages after it that have none
         step = self._limits.batch_pages
         for first in range(0, pages, step):
             last = min(first + step, pages)
@@ -163,7 +167,11 @@ class ParseStage:
             )
             ocr_pages += recognized
             without_text.extend(s.page for s in sections if not s.has_text and s.page)
-            await asyncio.to_thread(sink.add, [s for s in sections if s.has_text])
+            titled = []
+            for section in (s for s in sections if s.has_text):
+                title = section.heading or title
+                titled.append(replace(section, heading=title))
+            await asyncio.to_thread(sink.add, titled)
             await report(last / pages)
         if sink.chunks == 0:
             raise IngestionError(ErrorCode.PDF_NO_TEXT if without_text else ErrorCode.PDF_CORRUPT)

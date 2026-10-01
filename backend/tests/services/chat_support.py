@@ -75,6 +75,7 @@ class ChatHarness:
         filename: str = "Datenblatt Mira.pdf",
         char_count: int | None = None,
         attach_to: str | None = None,
+        headings: Sequence[str] = (),
     ) -> Document:
         """A processed document; with `attach_to` uploaded into that chat (not the library)."""
         doc_id = str(uuid4())
@@ -97,7 +98,7 @@ class ChatHarness:
                 document_id=doc_id,
                 ordinal=i,
                 page=i + 1,
-                heading="",
+                heading=headings[i] if i < len(headings) else "",
                 text=text,
                 search_text=text,
                 sentences=tuple(

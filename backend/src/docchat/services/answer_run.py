@@ -110,8 +110,13 @@ class RunInput:
 MAX_PAGE_SOURCES = 12  # full-context mode: chunks of the asked page shown up front
 
 
-def _title(document: Document, page: int | None) -> str:
-    return f"{document.filename}, S. {page}" if page is not None else document.filename
+def _title(document: Document, chunk: Chunk) -> str:
+    """File, heading (product or section) and, for PDFs, the page last: the system prompt
+    matches asked pages at the end of the title."""
+    parts = [document.filename, chunk.heading] if chunk.heading else [document.filename]
+    if chunk.page is not None:
+        parts.append(f"S. {chunk.page}")
+    return ", ".join(parts)
 
 
 def _sources(retrieved: Retrieved) -> tuple[tuple[SourceSnapshot, ...], tuple[SearchResult, ...]]:
@@ -129,7 +134,7 @@ def _sources(retrieved: Retrieved) -> tuple[tuple[SourceSnapshot, ...], tuple[Se
                 snippet=snippet(chunk.text),
             )
         )
-        results.append(SearchResult(chunk.chunk_id, _title(document, chunk.page), _blocks(chunk)))
+        results.append(SearchResult(chunk.chunk_id, _title(document, chunk), _blocks(chunk)))
     return tuple(snapshots), tuple(results)
 
 

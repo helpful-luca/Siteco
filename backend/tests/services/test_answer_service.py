@@ -708,6 +708,21 @@ async def test_a_404_without_not_found_error_does_not_mark_the_model(tmp_path: P
     assert h.models.is_available("claude-sonnet-5-5") is True
 
 
+async def test_the_title_names_the_product_of_the_page(h: ChatHarness) -> None:
+    # A chunk with only table rows still says whose rows they are; the page stays last.
+    h.add_document(
+        ("Lichtstrom 34.500 lm.", "Zubehör: Deckenbügel."),
+        filename="Katalog.pdf",
+        headings=("Highbay 11 midi", ""),
+    )
+    await h.ask(h.new_chat(), "Was steht auf Seite 1 und 2?")
+    assert h.llm is not None
+    assert [r.title for r in h.llm.requests[0].search_results] == [
+        "Katalog.pdf, Highbay 11 midi, S. 1",
+        "Katalog.pdf, S. 2",
+    ]
+
+
 async def test_full_context_request_sends_the_documents_first(h: ChatHarness) -> None:
     h.add_document(MIRA)
     await h.ask(h.new_chat(), "Was steht auf Seite 2?")

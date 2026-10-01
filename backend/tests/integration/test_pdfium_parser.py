@@ -214,3 +214,18 @@ def test_the_size_of_a_line_comes_from_a_visible_character() -> None:
     assert _middle_char(clean_page_text("ab cd"), 0, "ab cd") == 3
     row = "4000 80 11500 64 180"
     assert not row[_middle_char(clean_page_text(row), 0, row)].isspace()
+
+
+def test_the_line_in_clearly_larger_type_is_the_page_title(tmp_path: Path) -> None:
+    page = PageSpec(
+        lines=[
+            TextLine("Highbay 11 midi", x=72, y=740, size=22),
+            TextLine("Technische Daten der Hallenleuchte mit 34.500 lm.", x=72, y=700, size=10),
+            TextLine("Zubehör und Bestellnummern stehen in der Tabelle.", x=72, y=686, size=10),
+        ]
+    )
+    plain = text_page("Seite ohne Titel, nur Fließtext in einer Größe.")
+    first, second = pdfium_pages.parse_pages(
+        _write(tmp_path, build_pdf([page, plain])), 0, 2
+    ).sections
+    assert (first.heading, second.heading) == ("Highbay 11 midi", "")
