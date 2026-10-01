@@ -21,12 +21,29 @@ def test_a_plain_pdf_has_no_active_content() -> None:
     assert scan(PLAIN) == frozenset()
 
 
-@pytest.mark.parametrize(
-    "name", ["JavaScript", "JS", "Launch", "EmbeddedFile", "OpenAction", "AA", "RichMedia", "XFA"]
-)
+@pytest.mark.parametrize("name", ["JavaScript", "JS", "Launch", "EmbeddedFile", "RichMedia", "XFA"])
 def test_each_active_name_is_found(name: str) -> None:
     data = b"1 0 obj << /Type /Catalog /" + name.encode() + b" 5 0 R >> endobj"
     assert scan(data) == {name}
+
+
+def test_an_open_action_that_only_jumps_to_a_page_is_not_active() -> None:
+    # InDesign and Acrobat set "open at page 1, fit": the Siteco catalog has it.
+    data = (
+        b"1 0 obj << /Type /Catalog /OpenAction 5 0 R /PageLayout /TwoPageRight >> endobj\n"
+        b"5 0 obj << /D [7 0 R /Fit] /S /GoTo >> endobj\n"
+        b"9 0 obj << /Type /Annot /Subtype /Link /A << /S /URI /URI (https://siteco.com) >> >>"
+    )
+    assert scan(data) == frozenset()
+
+
+@pytest.mark.parametrize("action", ["GoToR", "GoToE", "SubmitForm", "ImportData", "Rendition"])
+@pytest.mark.parametrize("trigger", ["OpenAction", "AA"])
+def test_open_and_additional_actions_count_when_they_run_or_open_something(
+    trigger: str, action: str
+) -> None:
+    data = b"1 0 obj << /" + trigger.encode() + b" << /S /" + action.encode() + b" >> >> endobj"
+    assert scan(data) == {trigger, action}
 
 
 def test_names_only_match_as_whole_tokens() -> None:
@@ -54,8 +71,8 @@ def test_bytes_inside_ordinary_streams_are_ignored() -> None:
 
 
 def test_names_after_a_stream_are_found_again() -> None:
-    data = b"<< /Length 3 >>\nstream\nabc\nendstream\n<< /OpenAction 1 0 R >>"
-    assert scan(data, piece=4) == {"OpenAction"}
+    data = b"<< /Length 3 >>\nstream\nabc\nendstream\n<< /Launch 1 0 R >>"
+    assert scan(data, piece=4) == {"Launch"}
 
 
 def test_compressed_object_streams_are_inflated() -> None:
@@ -79,8 +96,8 @@ def test_inflating_stops_at_the_cap() -> None:
 
 
 def test_broken_compressed_data_is_skipped() -> None:
-    data = b"<< /Type /ObjStm >>\nstream\nnot zlib at all\nendstream\n<< /AA 1 >>"
-    assert scan(data) == {"AA"}
+    data = b"<< /Type /ObjStm >>\nstream\nnot zlib at all\nendstream\n<< /XFA 1 >>"
+    assert scan(data) == {"XFA"}
 
 
 def test_the_result_does_not_depend_on_the_read_size() -> None:
@@ -99,17 +116,17 @@ def test_the_result_does_not_depend_on_the_read_size() -> None:
 
 
 def test_many_tiny_streams_are_scanned_in_linear_time() -> None:
-    data = b"<<>>stream\nendstream\n" * 300_000 + b"<< /AA 1 >>"  # about 6 MB
+    data = b"<<>>stream\nendstream\n" * 300_000 + b"<< /XFA 1 >>"  # about 6 MB
     started = time.perf_counter()
-    assert scan(data, piece=1024 * 1024, max_streams=10**9) == {"AA"}
+    assert scan(data, piece=1024 * 1024, max_streams=10**9) == {"XFA"}
     assert time.perf_counter() - started < 5
 
 
 def test_too_many_streams_stop_the_scan_with_a_conservative_result() -> None:
-    data = b"<<>>stream\nendstream\n" * 50 + b"<< /AA 1 >>"
+    data = b"<<>>stream\nendstream\n" * 50 + b"<< /XFA 1 >>"
     assert scan(data, max_streams=10) == {LIMIT_REACHED}
 
 
 def test_the_word_stream_in_a_string_does_not_start_a_stream() -> None:
-    data = b"<< /Title (a stream\n) /OpenAction 1 0 R >>"
-    assert scan(data) == {"OpenAction"}
+    data = b"<< /Title (a stream\n) /Launch 1 0 R >>"
+    assert scan(data) == {"Launch"}

@@ -106,7 +106,7 @@
     "URL_UNSUPPORTED_TYPE": "Hinter dem Link liegt kein PDF, keine Webseite und keine Text- oder Markdown-Datei. Nimm einen Link, der direkt auf ein solches Dokument zeigt."
   },
   "notices": {
-    "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne Text, vermutlich gescannt. Diese Seite wird nicht durchsucht.} other {# Seiten ohne Text, vermutlich gescannt. Diese Seiten werden nicht durchsucht.}}",
+    "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne lesbaren Text, etwa ein Foto oder ein Scan. Diese Seite wird nicht durchsucht.} other {# Seiten ohne lesbaren Text, etwa Fotos oder Scans. Diese Seiten werden nicht durchsucht.}}",
     "PAGES_SKIPPED": "{count, plural, one {# Seite ließ sich nicht lesen und fehlt in der Suche.} other {# Seiten ließen sich nicht lesen und fehlen in der Suche.}}",
     "PDF_ACTIVE_CONTENT": "Dieses PDF enthält aktive Inhalte wie Skripte. Die App liest nur den Text, ausgeführt wird nichts.",
     "SCANNER_STARTING": "Die Virenprüfung startet noch. Die Datei wird gleich geprüft.",

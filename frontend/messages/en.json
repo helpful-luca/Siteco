@@ -106,7 +106,7 @@
     "URL_UNSUPPORTED_TYPE": "The link doesn't lead to a PDF, a web page or a text or Markdown file. Use a link that points straight to such a document."
   },
   "notices": {
-    "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no text, probably scanned. It won't be searched.} other {# pages have no text, probably scanned. They won't be searched.}}",
+    "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no readable text, such as a photo or a scan. It won't be searched.} other {# pages have no readable text, such as photos or scans. They won't be searched.}}",
     "PAGES_SKIPPED": "{count, plural, one {# page couldn't be read and is missing from search.} other {# pages couldn't be read and are missing from search.}}",
     "PDF_ACTIVE_CONTENT": "This PDF contains active content such as scripts. The app only reads the text and runs nothing.",
     "SCANNER_STARTING": "The virus check is still starting. The file will be checked in a moment.",

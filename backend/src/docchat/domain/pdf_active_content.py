@@ -1,7 +1,9 @@
 """Static check for active PDF content (master spec 6.9), streaming over the raw bytes.
 
 Looks for the PDF names that make a viewer run or open something: JavaScript, launch actions,
-embedded files, open and additional actions, rich media and XFA forms. The file is still
+embedded files, rich media and XFA forms, and open and additional actions when the file also
+has an action that opens another file or sends or loads data. An open action that only jumps
+to a page (InDesign and Acrobat set "page 1, fit") is not active content. The file is still
 processed (only text is extracted, the viewer executes nothing); the library shows a notice.
 
 Rules that keep it honest:
@@ -23,9 +25,10 @@ import re
 import zlib
 from collections.abc import Callable
 
-ACTIVE_NAMES = frozenset(
-    {"JavaScript", "JS", "Launch", "EmbeddedFile", "OpenAction", "AA", "RichMedia", "XFA"}
-)
+ACTIVE_NAMES = frozenset({"JavaScript", "JS", "Launch", "EmbeddedFile", "RichMedia", "XFA"})
+# Active only together with an action of one of these kinds (or one of ACTIVE_NAMES).
+TRIGGERS = frozenset({"OpenAction", "AA"})
+TRIGGERED_ACTIONS = frozenset({"GoToR", "GoToE", "SubmitForm", "ImportData", "Rendition"})
 
 _DELIMITERS = frozenset(b"\x00\t\n\x0c\r ()<>[]{}/%")
 _NAME = re.compile(rb"/([^\x00\t\n\x0c\r ()<>\[\]{}/%]*)")
@@ -73,6 +76,8 @@ class ActiveContentScan:
         self, max_inflated: int = _DEFAULT_MAX_INFLATED, max_streams: int = MAX_STREAMS
     ) -> None:
         self._found: set[str] = set()
+        self._triggers: set[str] = set()
+        self._actions: set[str] = set()
         self._buffer = b""
         self._in_stream = False
         self._object_stream_ahead = False
@@ -105,11 +110,17 @@ class ActiveContentScan:
             self._process(final=True)
             self._outside.feed(b"", final=True)
             self._end_stream()
+        if self._triggers and (self._actions or self._found - {LIMIT_REACHED}):
+            return frozenset(self._found | self._triggers | self._actions)
         return frozenset(self._found)
 
     def _on_name(self, name: str) -> None:
         if name in ACTIVE_NAMES:
             self._found.add(name)
+        elif name in TRIGGERS:
+            self._triggers.add(name)
+        elif name in TRIGGERED_ACTIONS:
+            self._actions.add(name)
 
     def _on_outside_name(self, name: str) -> None:
         if name == "ObjStm":
