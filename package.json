@@ -1,0 +1,21 @@
+{
+  "name": "siteco-docchat",
+  "private": true,
+  "description": "Orchestration scripts: development servers and the macOS app (desktop/)",
+  "scripts": {
+    "postinstall": "npm --prefix desktop ci --no-fund --no-audit",
+    "dev:api": "make dev-api",
+    "dev:web": "cd frontend && NEXT_TELEMETRY_DISABLED=1 BACKEND_URL=http://127.0.0.1:8000 npm run dev",
+    "dev:app": "wait-on --timeout 180000 http-get://localhost:3000/healthz && npm --prefix desktop run start:dev",
+    "dev": "concurrently --kill-others --names api,web,app --prefix-colors blue,green,magenta \"npm:dev:api\" \"npm:dev:web\" \"npm:dev:app\"",
+    "app": "npm --prefix desktop run start",
+    "app:build": "npm --prefix desktop run dist",
+    "app:install": "npm --prefix desktop run install-app",
+    "test:desktop": "npm --prefix desktop test",
+    "test:desktop:e2e": "npm --prefix desktop run test:e2e"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.5",
+    "wait-on": "9.5.1"
+  }
+}
