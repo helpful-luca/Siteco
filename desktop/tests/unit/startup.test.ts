@@ -118,4 +118,40 @@ describe('runStartup', () => {
     expect(await runStartup(down)).toBe(false);
     expect(down.states.at(-1)).toMatchObject({ step: 'error', error: 'dev-not-running' });
   });
+
+  describe('on Windows', () => {
+    it('names the missing requirement when Docker Desktop does not start', async () => {
+      const d = deps({
+        dockerRunning: vi.fn(async () => false),
+        waitForDocker: vi.fn(async () => false),
+        diagnose: vi.fn(async () => 'wsl-missing' as const),
+      });
+      expect(await runStartup(d)).toBe(false);
+      expect(d.states.at(-1)).toEqual({ step: 'error', error: 'wsl-missing', details: [] });
+    });
+
+    it('keeps the general error when nothing is missing or the check fails', async () => {
+      const quiet = deps({ dockerRunning: vi.fn(async () => false), launchDocker: vi.fn(async () => false), diagnose: vi.fn(async () => undefined) });
+      await runStartup(quiet);
+      expect(quiet.states.at(-1)).toMatchObject({ error: 'docker-not-running' });
+      const broken = deps({ dockerRunning: vi.fn(async () => false), launchDocker: vi.fn(async () => false), diagnose: vi.fn(async () => Promise.reject(new Error('x'))) });
+      await runStartup(broken);
+      expect(broken.states.at(-1)).toMatchObject({ error: 'docker-not-running' });
+    });
+
+    it('says the Windows version is too old before asking to install Docker', async () => {
+      const old = deps({ locateDocker: vi.fn(async () => undefined), diagnose: vi.fn(async () => 'windows-too-old' as const) });
+      await runStartup(old);
+      expect(old.states.at(-1)).toMatchObject({ error: 'windows-too-old' });
+      const wsl = deps({ locateDocker: vi.fn(async () => undefined), diagnose: vi.fn(async () => 'wsl-missing' as const) });
+      await runStartup(wsl);
+      expect(wsl.states.at(-1)).toMatchObject({ error: 'docker-missing' });
+    });
+
+    it('does not diagnose when Docker runs', async () => {
+      const d = deps({ diagnose: vi.fn(async () => 'wsl-missing' as const) });
+      expect(await runStartup(d)).toBe(true);
+      expect(d.diagnose).not.toHaveBeenCalled();
+    });
+  });
 });

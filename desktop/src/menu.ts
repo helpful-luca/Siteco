@@ -9,9 +9,41 @@ export interface MenuActions {
   stopServices: () => void;
 }
 
-/** The native menu bar (DE/EN). No Help menu: the app explains itself, the README is on GitHub. */
-export function menuTemplate(t: Messages, actions: MenuActions): MenuItemConstructorOptions[] {
+const separator: MenuItemConstructorOptions = { type: 'separator' };
+
+/**
+ * Windows has no app menu bar (the window is frameless): the app's commands live in one menu
+ * that the "more" button in the title bar opens. The same items carry the shortcuts.
+ */
+export function popupMenuTemplate(t: Messages, actions: MenuActions): MenuItemConstructorOptions[] {
   const m = t.menu;
+  return [
+    { label: m.settings, accelerator: 'CmdOrCtrl+,', enabled: actions.appReady, click: actions.openSettings },
+    separator,
+    { label: m.reload, role: 'reload' },
+    { label: m.actualSize, role: 'resetZoom' },
+    { label: m.zoomIn, role: 'zoomIn' },
+    { label: m.zoomOut, role: 'zoomOut' },
+    { label: m.fullScreen, role: 'togglefullscreen' },
+    ...(actions.dev ? [separator, { label: m.devTools, role: 'toggleDevTools' } as MenuItemConstructorOptions] : []),
+    separator,
+    { label: m.about, role: 'about' },
+    ...(actions.dev ? [] : [{ label: m.stopServices, click: actions.stopServices }]),
+    { label: m.quitWindows, role: 'quit' },
+  ];
+}
+
+/** The native menu bar (DE/EN). No Help menu: the app explains itself, the README is on GitHub. */
+export function menuTemplate(
+  t: Messages,
+  actions: MenuActions,
+  platform: NodeJS.Platform = process.platform,
+): MenuItemConstructorOptions[] {
+  const m = t.menu;
+  if (platform !== 'darwin') {
+    // Hidden menu bar: only here for the keyboard shortcuts of the popup's items.
+    return [{ label: t.appName, submenu: popupMenuTemplate(t, actions) }];
+  }
   const appMenu: MenuItemConstructorOptions[] = [
     { label: m.about, role: 'about' },
     { type: 'separator' },

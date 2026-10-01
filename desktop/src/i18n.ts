@@ -35,6 +35,7 @@ const de = {
     minimize: 'Im Dock ablegen',
     zoom: 'Zoomen',
     front: 'Alle nach vorne bringen',
+    quitWindows: 'Beenden',
   },
   about: {
     credits: 'Fragen an deine Dokumente, mit Quellen. Läuft lokal in Docker.',
@@ -95,6 +96,18 @@ const de = {
         title: 'Die App läuft nicht',
         body: 'Starte das Backend und next dev mit npm run dev, dann versuche es erneut.',
       },
+      'windows-too-old': {
+        title: 'Diese Windows-Version ist zu alt',
+        body: 'Docker Desktop braucht Windows 10 22H2 oder Windows 11. Installiere die Updates unter Einstellungen > Windows Update und versuche es dann erneut.',
+      },
+      'virtualization-off': {
+        title: 'Die Virtualisierung ist ausgeschaltet',
+        body: 'Docker braucht die Virtualisierung des Prozessors (Intel VT-x oder AMD-V). Schalte sie im BIOS oder UEFI ein, starte den Rechner neu und versuche es erneut.',
+      },
+      'wsl-missing': {
+        title: 'WSL 2 fehlt',
+        body: 'Docker Desktop braucht das Windows-Subsystem für Linux. Öffne PowerShell als Administrator, führe wsl --install aus und starte den Rechner neu.',
+      },
     },
   },
 };
@@ -131,6 +144,7 @@ const en: Messages = {
     minimize: 'Minimize',
     zoom: 'Zoom',
     front: 'Bring all to front',
+    quitWindows: 'Quit',
   },
   about: {
     credits: 'Ask your documents, with sources. Runs locally in Docker.',
@@ -190,6 +204,18 @@ const en: Messages = {
       'dev-not-running': {
         title: 'The app is not running',
         body: 'Start the backend and next dev with npm run dev, then try again.',
+      },
+      'windows-too-old': {
+        title: 'This Windows version is too old',
+        body: 'Docker Desktop needs Windows 10 22H2 or Windows 11. Install the updates in Settings > Windows Update, then try again.',
+      },
+      'virtualization-off': {
+        title: 'Virtualization is turned off',
+        body: 'Docker needs the processor’s virtualization (Intel VT-x or AMD-V). Turn it on in the BIOS or UEFI, restart the computer and try again.',
+      },
+      'wsl-missing': {
+        title: 'WSL 2 is missing',
+        body: 'Docker Desktop needs the Windows Subsystem for Linux. Open PowerShell as administrator, run wsl --install and restart the computer.',
       },
     },
   },

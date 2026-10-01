@@ -38,6 +38,9 @@ describe('messages', () => {
       'compose-failed',
       'not-responding',
       'dev-not-running',
+      'windows-too-old',
+      'virtualization-off',
+      'wsl-missing',
     ];
     for (const error of errors) expect(MESSAGES.de.splash.errors[error].title).toBeTruthy();
   });

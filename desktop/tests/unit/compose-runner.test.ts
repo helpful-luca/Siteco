@@ -46,6 +46,23 @@ describe('composeEnv', () => {
   });
 });
 
+describe('composeEnv on Windows', () => {
+  const docker = 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe';
+  const base = { Path: 'C:\\Windows\\system32;C:\\Windows', USERPROFILE: 'C:\\Users\\test', COMPOSE_FILE: 'x.yaml' };
+
+  it('keeps one Path variable with the docker folder first, separated by semicolons', () => {
+    const env = composeEnv(base, docker, 3000, 'win32');
+    const keys = Object.keys(env).filter((key) => key.toUpperCase() === 'PATH');
+    expect(keys).toEqual(['Path']);
+    const path = env.Path?.split(';') ?? [];
+    expect(path[0]).toBe('C:\\Program Files\\Docker\\Docker\\resources\\bin');
+    expect(path).toContain('C:\\Windows\\system32');
+    expect(path.some((entry) => entry.startsWith('/'))).toBe(false);
+    expect(env.APP_PORT).toBe('3000');
+    expect(env.COMPOSE_FILE).toBeUndefined();
+  });
+});
+
 describe('composePhase', () => {
   it('maps plain compose output to a friendly phase', () => {
     expect(composePhase(' clamav Pulling ')).toBe('pulling');
@@ -66,6 +83,10 @@ describe('composeFailure', () => {
       'port-busy',
     );
     expect(composeFailure(['listen tcp 127.0.0.1:3000: bind: address already in use'])).toBe('port-busy');
+    expect(
+      composeFailure(['Error response from daemon: Ports are not available: exposing port TCP 127.0.0.1:3000 -> 0.0.0.0:0']),
+    ).toBe('port-busy');
+    expect(composeFailure(['bind: Only one usage of each socket address is normally permitted.'])).toBe('port-busy');
   });
 
   it('falls back to a general failure', () => {

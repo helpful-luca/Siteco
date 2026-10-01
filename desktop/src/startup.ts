@@ -2,6 +2,7 @@ import { composeFailure, composePhase, type ComposePhase } from './compose-runne
 import type { RunResult } from './process-runner';
 import type { ProjectResolution } from './project-dir';
 import type { ProbeResult } from './server-probe';
+import type { WindowsProblem } from './windows-prereqs';
 
 export type StartupError =
   | 'docker-missing'
@@ -11,7 +12,8 @@ export type StartupError =
   | 'port-busy'
   | 'compose-failed'
   | 'not-responding'
-  | 'dev-not-running';
+  | 'dev-not-running'
+  | WindowsProblem;
 
 /** What the splash shows. `details` are the last output lines for the Details disclosure. */
 export type StartupState =
@@ -37,6 +39,8 @@ export interface StartupDeps {
   /** The compose project folder, asking once with a folder picker when needed. */
   resolveProject: () => Promise<ProjectResolution>;
   composeUp: (docker: string, projectDir: string, onLine: (line: string) => void) => Promise<RunResult>;
+  /** Windows: names a missing requirement (version, virtualization, WSL 2) when Docker fails. */
+  diagnose?: () => Promise<WindowsProblem | undefined>;
   onState: (state: StartupState) => void;
 }
 
@@ -61,13 +65,20 @@ export async function runStartup(deps: StartupDeps): Promise<boolean> {
     return (await deps.waitForApp()) ? ready() : fail('dev-not-running');
   }
 
+  const diagnose = async () => (deps.diagnose ? await deps.diagnose().catch(() => undefined) : undefined);
+
   const docker = await deps.locateDocker();
-  if (!docker) return fail('docker-missing');
+  if (!docker) {
+    // Docker cannot be installed on a Windows that is too old: say that first.
+    const problem = await diagnose();
+    return fail(problem === 'windows-too-old' ? problem : 'docker-missing');
+  }
 
   if (!(await deps.dockerRunning(docker))) {
     deps.onState({ step: 'docker-starting' });
-    if (!(await deps.launchDocker())) return fail('docker-not-running');
-    if (!(await deps.waitForDocker(docker))) return fail('docker-not-running');
+    if (!(await deps.launchDocker()) || !(await deps.waitForDocker(docker))) {
+      return fail((await diagnose()) ?? 'docker-not-running');
+    }
   }
 
   const project = await deps.resolveProject();

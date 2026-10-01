@@ -1,4 +1,4 @@
-import { dirname } from 'node:path';
+import { posix, win32 } from 'node:path';
 import { runProcess, type RunResult } from './process-runner';
 
 export type ComposeAction = 'up' | 'stop';
@@ -25,16 +25,27 @@ export function composeArgs(action: ComposeAction): string[] {
 }
 
 /**
- * Environment for docker compose. A Finder-launched app has a minimal PATH, so the docker
- * folder and Docker Desktop's helpers go first. Variables that would make compose read
- * another file or project are dropped; APP_PORT carries the configured port.
+ * Environment for docker compose. An app started from the Finder or the Start menu has a
+ * minimal PATH, so the docker folder (and on a Mac Docker Desktop's helpers) goes first.
+ * Variables that would make compose read another file or project are dropped; APP_PORT carries
+ * the configured port. Windows spells it `Path` and separates with `;`: exactly one key stays.
  */
-export function composeEnv(base: NodeJS.ProcessEnv, docker: string, port: number): NodeJS.ProcessEnv {
+export function composeEnv(
+  base: NodeJS.ProcessEnv,
+  docker: string,
+  port: number,
+  platform: NodeJS.Platform = process.platform,
+): NodeJS.ProcessEnv {
   const { COMPOSE_FILE: _file, COMPOSE_PROJECT_NAME: _project, COMPOSE_PROFILES: _profiles, ...rest } = base;
-  const path = [dirname(docker), DOCKER_DESKTOP_BIN, ...SYSTEM_PATH, ...(base.PATH ?? '').split(':')].filter(
+  const windows = platform === 'win32';
+  const pathKeys = Object.keys(rest).filter((key) => key.toUpperCase() === 'PATH');
+  const inherited = pathKeys.map((key) => rest[key] ?? '').join(windows ? ';' : ':');
+  for (const key of pathKeys) delete rest[key];
+  const front = windows ? [win32.dirname(docker)] : [posix.dirname(docker), DOCKER_DESKTOP_BIN, ...SYSTEM_PATH];
+  const path = [...front, ...inherited.split(windows ? ';' : ':')].filter(
     (entry, index, all) => entry !== '' && all.indexOf(entry) === index,
   );
-  return { ...rest, PATH: path.join(':'), APP_PORT: String(port) };
+  return { ...rest, [windows ? 'Path' : 'PATH']: path.join(windows ? ';' : ':'), APP_PORT: String(port) };
 }
 
 /** Friendly phase for one line of `--progress plain` output, if the line says anything. */
@@ -47,7 +58,8 @@ export function composePhase(line: string): ComposePhase | undefined {
 
 export function composeFailure(tail: string[]): ComposeFailure {
   const text = tail.join('\n');
-  return /port is already allocated|address already in use/i.test(text) ? 'port-busy' : 'compose-failed';
+  const busy = /port is already allocated|address already in use|ports are not available|only one usage of each socket address/i;
+  return busy.test(text) ? 'port-busy' : 'compose-failed';
 }
 
 /** The compose file must be ours (top-level `name: siteco-docchat`) before the app runs it. */

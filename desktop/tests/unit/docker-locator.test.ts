@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dockerCandidates, locateDocker, locateDockerApp } from '../../src/docker-locator';
+import { dockerAppCandidates, dockerCandidates, locateDocker, locateDockerApp } from '../../src/docker-locator';
 
 const HOME = '/Users/test';
 
@@ -46,5 +46,31 @@ describe('locateDockerApp', () => {
       '/Users/test/Applications/Docker.app',
     );
     expect(await locateDockerApp(HOME, async () => false)).toBeUndefined();
+  });
+});
+
+describe('on Windows', () => {
+  const ENV = { ProgramFiles: 'D:\\Programme', LOCALAPPDATA: 'C:\\Users\\test\\AppData\\Local' };
+
+  it('looks for docker.exe in Docker Desktop resources, Program Files first', () => {
+    expect(dockerCandidates('C:\\Users\\test', 'win32', ENV)).toEqual([
+      'D:\\Programme\\Docker\\Docker\\resources\\bin\\docker.exe',
+      'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe',
+      'C:\\Users\\test\\AppData\\Local\\Programs\\Docker\\Docker\\resources\\bin\\docker.exe',
+      'C:\\ProgramData\\DockerDesktop\\version-bin\\docker.exe',
+    ]);
+  });
+
+  it('falls back to the default folder without ProgramFiles and drops duplicates', () => {
+    const paths = dockerCandidates('C:\\Users\\test', 'win32', {});
+    expect(paths[0]).toBe('C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe');
+    expect(new Set(paths).size).toBe(paths.length);
+    expect(paths.every((path) => path.endsWith('docker.exe'))).toBe(true);
+  });
+
+  it('finds Docker Desktop.exe to start the engine', async () => {
+    const app = 'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe';
+    expect(dockerAppCandidates('C:\\Users\\test', 'win32', {})).toContain(app);
+    expect(await locateDockerApp('C:\\Users\\test', async (p) => p === app, 'win32', {})).toBe(app);
   });
 });
