@@ -1,8 +1,7 @@
 {
   "app": {
     "name": "Siteco Document Chat",
-    "description": "Dokumente hochladen, Fragen stellen, Antworten mit Quellen bekommen.",
-    "greeting": "Hallo. Was möchtest du heute wissen?"
+    "description": "Dokumente hochladen, Fragen stellen, Antworten mit Quellen bekommen."
   },
   "startup": {
     "starting": "Die App startet gerade.",
@@ -29,12 +28,12 @@
     "workspaceSettings": "Workspace-ID eintragen"
   },
   "errors": {
-    "VALIDATION_ERROR": "Da hat etwas mit der Anfrage nicht gepasst. Lade die Seite neu und versuch es noch einmal.",
+    "VALIDATION_ERROR": "Die Anfrage ließ sich nicht verarbeiten. Lade die Seite neu und versuch es noch einmal.",
     "NOT_FOUND": "Das gibt es nicht mehr, vielleicht wurde es in einem anderen Fenster gelöscht. Lade die Seite neu.",
     "METHOD_NOT_ALLOWED": "Diese Aktion ist hier nicht möglich. Lade die Seite neu und versuch es noch einmal.",
     "UNAUTHORIZED_CLIENT": "Der Server hat diese Anfrage abgewiesen. Prüf INTERNAL_TOKEN in der .env und starte die App neu.",
     "SERVICE_STARTING": "Die App startet noch. Das dauert meist nur ein paar Sekunden.",
-    "INTERNAL_ERROR": "Bei uns ist etwas schiefgelaufen. Versuch es gleich noch einmal.",
+    "INTERNAL_ERROR": "Im Server ist ein Fehler aufgetreten. Versuch es gleich noch einmal.",
     "UPLOAD_TOO_LARGE": "Diese Datei ist größer als {max_mb} MB. Teile sie auf oder nimm eine kleinere Version.",
     "UNSUPPORTED_TYPE": "Dieses Format wird nicht unterstützt. Möglich sind PDF, TXT, Markdown und HTML.",
     "FILE_CONTENT_MISMATCH": "Der Inhalt passt nicht zur Dateiendung. Speichere die Datei neu als PDF, TXT, Markdown oder HTML.",
@@ -43,16 +42,16 @@
     "STORAGE_QUOTA": "Deine Bibliothek hat ihr Limit von {max_mb} MB erreicht. Entferne ein Dokument, um Platz zu schaffen.",
     "STORAGE_FULL": "Auf dem Rechner ist kein Speicherplatz mehr frei. Gib etwas Platz frei oder entferne Dokumente.",
     "UPLOAD_INCOMPLETE": "Der Upload wurde unterbrochen. Versuch es noch einmal.",
-    "DOCUMENT_NOT_READY": "Dieses Dokument wird noch verarbeitet. Gleich ist es bereit.",
+    "DOCUMENT_NOT_READY": "Dieses Dokument wird noch verarbeitet. Versuch es gleich noch einmal.",
     "DOCUMENT_FILE_MISSING": "Die Originaldatei ist nicht mehr da. Lade das Dokument erneut hoch.",
     "DELETE_FAILED": "Das Löschen hat nicht ganz geklappt. Versuch es noch einmal, bereits Gelöschtes bleibt gelöscht.",
     "RANGE_NOT_SATISFIABLE": "Dieser Teil der Datei existiert nicht. Lade die Ansicht neu.",
     "PDF_ENCRYPTED": "Dieses PDF ist passwortgeschützt. Speichere eine Kopie ohne Passwort und lade sie hoch.",
     "PDF_CORRUPT": "Dieses PDF lässt sich nicht öffnen, vielleicht ist es beschädigt. Exportiere es neu und versuch es erneut.",
-    "PDF_NO_TEXT": "In diesem PDF haben wir keinen lesbaren Text gefunden, vermutlich ist es ein Scan. Nimm eine Version mit Textebene oder eine schärfere Kopie.",
+    "PDF_NO_TEXT": "Dieses PDF enthält keinen lesbaren Text, vermutlich ist es ein Scan. Nimm eine Version mit Textebene oder eine schärfere Kopie.",
     "PDF_TOO_MANY_PAGES": "Dieses PDF hat mehr Seiten, als die App verarbeiten kann. Teile es in kleinere Dateien auf.",
-    "TEXT_ENCODING_UNSUPPORTED": "Die Zeichenkodierung dieser Datei können wir nicht lesen. Speichere sie als UTF-8 und lade sie erneut hoch.",
-    "DOCUMENT_EMPTY": "In dieser Datei haben wir keinen Text gefunden. Wähle eine Datei mit Text.",
+    "TEXT_ENCODING_UNSUPPORTED": "Die Zeichenkodierung dieser Datei wird nicht unterstützt. Speichere sie als UTF-8 und lade sie erneut hoch.",
+    "DOCUMENT_EMPTY": "Diese Datei enthält keinen Text. Wähle eine Datei mit Text.",
     "DOCUMENT_TOO_LONG": "Dieses Dokument ist zu lang. Teile es in kleinere Dateien auf.",
     "PROCESSING_TIMEOUT": "Die Verarbeitung hat zu lange gedauert. Versuch es noch einmal oder teile die Datei auf.",
     "PROCESSING_FAILED": "Beim Verarbeiten ist etwas schiefgelaufen. Versuch es noch einmal.",
@@ -68,7 +67,7 @@
     "CONCURRENCY_LIMIT": "Es laufen schon {max} Antworten gleichzeitig. Sobald eine fertig ist, kannst du weitermachen.",
     "NO_DOCUMENTS": "Lade zuerst ein Dokument hoch. Danach kannst du Fragen dazu stellen.",
     "DOCUMENTS_NOT_READY": "Deine Dokumente werden noch verarbeitet. Sobald eins bereit ist, kannst du fragen.",
-    "QUESTION_EMPTY": "Schreib eine Frage, dann geht es los.",
+    "QUESTION_EMPTY": "Schreib zuerst eine Frage.",
     "QUESTION_TOO_LONG": "Die Frage ist länger als {max} Zeichen. Kürze sie.",
     "MODEL_NOT_ALLOWED": "Dieses Modell steht hier nicht zur Wahl. Wähle oben ein anderes.",
     "COMPARE_SAME_MODEL": "Beide Spalten nutzen dasselbe Modell. Wähle für den Vergleich zwei unterschiedliche Modelle.",
@@ -83,10 +82,10 @@
     "LLM_UNAVAILABLE": "Bei Claude gab es gerade ein Problem. Versuch es gleich noch einmal.",
     "LLM_TIMEOUT": "Claude hat zu lange nicht geantwortet. Versuch es noch einmal.",
     "LLM_UNREACHABLE": "Claude ist gerade nicht erreichbar. Prüf die Internetverbindung und versuch es erneut.",
-    "LLM_BAD_REQUEST": "Die Anfrage an Claude war fehlerhaft. Das liegt an der App. Starte einen neuen Chat und versuch es dort.",
+    "LLM_BAD_REQUEST": "Claude konnte die Anfrage nicht verarbeiten. Starte einen neuen Chat und versuch es dort.",
     "LLM_CONTEXT_TOO_LARGE": "Dieser Chat ist zu lang geworden. Starte einen neuen.",
     "LLM_EMPTY_ANSWER": "Es kam keine Antwort zurück. Versuch es noch einmal.",
-    "BACKEND_UNAVAILABLE": "Der Server antwortet gerade nicht. Wir versuchen es automatisch weiter.",
+    "BACKEND_UNAVAILABLE": "Der Server antwortet gerade nicht. Die App versucht es automatisch weiter.",
     "FORBIDDEN_ORIGIN": "Diese Anfrage kam nicht aus der App und wurde blockiert. Lade die App neu und versuch es noch einmal.",
     "NETWORK_ERROR": "Die App ist gerade nicht erreichbar. Prüf, ob sie noch läuft, und versuch es erneut.",
     "UNKNOWN_ERROR": "Etwas Unerwartetes ist passiert. Versuch es noch einmal.",
@@ -94,7 +93,7 @@
     "goHome": "Zur Startseite",
     "STREAM_INTERRUPTED": "Die Verbindung ist abgerissen, bevor die Antwort fertig war. Versuch es noch einmal.",
     "REQUEST_TOO_LARGE": "Diese Anfrage ist zu groß. Kürze den Text und versuch es erneut.",
-    "RATE_LIMITED": "Kurze Pause. {seconds, plural, =0 {Gleich} one {In einer Sekunde} other {In # Sekunden}} kannst du weitermachen.",
+    "RATE_LIMITED": "Zu viele Anfragen. {seconds, plural, =0 {Gleich} one {In einer Sekunde} other {In # Sekunden}} kannst du weitermachen.",
     "pageNotFound": "Seite nicht gefunden",
     "pageNotFoundText": "Vielleicht hat sich die Adresse geändert.",
     "API_KEY_INVALID": "Anthropic akzeptiert diesen API-Key nicht. Prüf ihn in der Claude Console und füg ihn noch einmal ein.",
@@ -259,14 +258,16 @@
     "closePanel": "Bereich schließen",
     "skipToContent": "Zum Inhalt springen",
     "window": {
-      "menu": "Menü"
+      "minimize": "Minimieren",
+      "maximize": "Maximieren",
+      "restore": "Wiederherstellen",
+      "close": "Schließen"
     }
   },
   "chat": {
     "greeting": "Hallo",
-    "prompt": "Was möchtest du heute wissen?",
     "dropTitle": "Dokumente hinzufügen",
-    "dropText": "Zieh Dateien hierher oder wähle sie aus. Die Dateien gehören zu diesem Chat, auf Wunsch auch in deine Bibliothek.",
+    "dropText": "Zieh Dateien hierher oder wähle sie aus.",
     "hint": "Sobald ein Dokument bereit ist, kannst du hier Fragen dazu stellen.",
     "untitled": "Neuer Chat",
     "suggestionsLabel": "Vorschläge",
@@ -280,7 +281,6 @@
       "week": "Diese Woche",
       "older": "Älter",
       "empty": "Noch keine Chats",
-      "emptyHint": "Neue Chats erscheinen hier.",
       "noMatch": "Keine passenden Chats",
       "loadError": "Die Chats ließen sich nicht laden.",
       "retry": "Erneut versuchen",
@@ -429,7 +429,8 @@
       "tokensValue": "{input} rein, {output} raus",
       "cost": "Kosten"
     },
-    "emptyChat": "Frag etwas zu deinen Dokumenten. Die Anhänge dieses Chats sind immer dabei."
+    "emptyChat": "Frag etwas zu deinen Dokumenten. Die Anhänge dieses Chats sind immer dabei.",
+    "ready": "{count, plural, one {# Dokument bereit} other {# Dokumente bereit}}"
   },
   "library": {
     "title": "Bibliothek",
@@ -622,7 +623,7 @@
   },
   "errorScreen": {
     "title": "Diese Ansicht lässt sich gerade nicht anzeigen",
-    "text": "Deine Dokumente und Chats sind sicher. Versuch es noch einmal.",
+    "text": "Deine Dokumente und Chats bleiben erhalten. Versuch es noch einmal.",
     "retry": "Erneut versuchen",
     "home": "Zum neuen Chat"
   },

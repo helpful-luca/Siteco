@@ -15,7 +15,7 @@ describe('desktop window chrome', () => {
     expect(strip).toContain('app-region: drag');
     expect(strip).toContain('position: fixed');
     expect(strip).toContain('z-index: -1');
-    expect(strip).toContain("height: calc(var(--spacing) * 14 + var(--window-bar))");
+    expect(strip).toContain("height: calc(var(--spacing) * 14 + var(--window-top))");
   });
 
   it('keeps every kind of control out of the drag area', () => {
@@ -27,19 +27,10 @@ describe('desktop window chrome', () => {
     expect(noDrag).toContain('app-region: no-drag');
   });
 
-  it('makes room for the traffic lights on a Mac window, not in full screen', () => {
-    const mac = rule("html[data-desktop][data-platform='darwin']:not([data-full-screen])");
-    // The narrow-window top bar centres on the lights' axis (y = 40) and starts right of them.
-    expect(mac).toContain('--titlebar-inset: 16px');
-    expect(mac).toContain('--traffic-lights: 88px');
-    // The drawer sidebar sits where the wide sidebar does, so its first row holds the lights.
-    expect(mac).toContain('--sheet-inset: 12px');
-    expect(css).toContain("@custom-variant mac-window (&:where(html[data-desktop][data-platform='darwin']:not([data-full-screen]) *));");
-  });
-
-  it('gives Windows a 32 px title band for the native caption buttons, not in full screen', () => {
-    const windows = rule("html[data-desktop][data-platform='win32']:not([data-full-screen])");
-    expect(windows).toContain('--window-bar: 32px');
-    expect(css).toContain("@custom-variant win-window (&:where(html[data-desktop][data-platform='win32']:not([data-full-screen]) *));");
+  it('keeps room for the own window buttons in frameless windows (macOS, Windows), also in full screen', () => {
+    const frameless = rule("html[data-desktop]:is([data-platform='darwin'], [data-platform='win32'])");
+    expect(frameless).toContain('--window-top: 20px');
+    expect(frameless).toContain('--window-controls: 60px');
+    expect(css).not.toContain('data-full-screen');
   });
 });

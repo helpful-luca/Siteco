@@ -26,9 +26,8 @@ export function SideSheet({ side, label, open, onOpenChange, className, children
           initialFocus={popup}
           aria-label={label}
           className={cn(
-            // Below the Windows title band (--window-bar), so its caption buttons stay usable. In
-            // a Mac window the inset matches the wide sidebar's, so the lights sit on its first row.
-            'fixed top-[calc(var(--sheet-inset)+var(--window-bar))] bottom-(--sheet-inset) flex outline-none',
+            // Below the desktop window's buttons (--window-top), so they stay visible and usable.
+            'fixed top-[calc(var(--sheet-inset)+var(--window-top))] bottom-(--sheet-inset) flex outline-none',
             'transition-[translate,opacity] duration-300 ease-out-soft',
             'data-starting-style:opacity-0 data-ending-style:opacity-0',
             side === 'left'

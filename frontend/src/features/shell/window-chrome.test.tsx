@@ -1,41 +1,67 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import de from '../../../messages/de.json';
-import { WindowDragStrip, WindowTitleBar } from './window-chrome';
+import type { DesktopWindowControls } from '@/shared/desktop/desktop-script';
+import { WindowControls, WindowDragStrip } from './window-chrome';
 
-const renderBar = () =>
+const renderControls = () =>
   render(
     <NextIntlClientProvider locale="de" messages={de}>
-      <WindowTitleBar />
+      <WindowControls />
     </NextIntlClientProvider>,
   );
+
+function bridge(): DesktopWindowControls & { emit: (maximized: boolean) => void } {
+  let listener: (maximized: boolean) => void = () => {};
+  return {
+    minimize: vi.fn(async () => {}),
+    toggleMaximize: vi.fn(async () => {}),
+    close: vi.fn(async () => {}),
+    isMaximized: vi.fn(async () => false),
+    onMaximizedChange: vi.fn((callback) => {
+      listener = callback;
+      return () => {};
+    }),
+    emit: (maximized) => listener(maximized),
+  };
+}
 
 afterEach(() => {
   delete window.desktop;
 });
 
-describe('WindowTitleBar', () => {
-  it('draws nothing in a browser or on a Mac (native traffic lights)', () => {
-    const { container } = renderBar();
-    expect(container).toBeEmptyDOMElement();
-    window.desktop = { isDesktop: true, platform: 'darwin', window: { openMenu: vi.fn(async () => {}) } };
-    const mac = renderBar();
-    expect(mac.container).toBeEmptyDOMElement();
+describe('WindowControls', () => {
+  it('draws nothing in a browser or with a system frame (Linux)', () => {
+    expect(renderControls().container).toBeEmptyDOMElement();
+    window.desktop = { isDesktop: true, platform: 'linux', window: bridge() };
+    expect(renderControls().container).toBeEmptyDOMElement();
   });
 
-  it('shows the app name and the app menu on Windows, never drawn window buttons', async () => {
-    const openMenu = vi.fn(async () => {});
-    window.desktop = { isDesktop: true, platform: 'win32', window: { openMenu } };
-    renderBar();
-    expect(screen.getByText('Siteco Document Chat')).toBeInTheDocument();
-    // Minimize, maximize and close are the native caption buttons (titleBarOverlay).
-    expect(screen.getAllByRole('button')).toHaveLength(1);
-    const menu = screen.getByRole('button', { name: 'Menü' });
-    expect(menu.closest('[data-no-drag]')).not.toBeNull();
-    await userEvent.setup().click(menu);
-    expect(openMenu).toHaveBeenCalled();
+  it.each(['darwin', 'win32'])('draws maximize, minimize and close in the top right corner on %s', async (platform) => {
+    const controls = bridge();
+    window.desktop = { isDesktop: true, platform, window: controls };
+    renderControls();
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual(['Maximieren', 'Minimieren', 'Schließen']);
+    expect(buttons[0].closest('[data-no-drag]')).toHaveClass('fixed', 'top-0', 'right-0');
+
+    const user = userEvent.setup();
+    await user.click(buttons[0]);
+    await user.click(buttons[1]);
+    await user.click(buttons[2]);
+    expect(controls.toggleMaximize).toHaveBeenCalled();
+    expect(controls.minimize).toHaveBeenCalled();
+    expect(controls.close).toHaveBeenCalled();
+  });
+
+  it('turns maximize into restore while the window is maximized or full screen', async () => {
+    const controls = bridge();
+    window.desktop = { isDesktop: true, platform: 'darwin', window: controls };
+    renderControls();
+    await act(async () => controls.emit(true));
+    expect(screen.getByRole('button', { name: 'Wiederherstellen' })).toBeInTheDocument();
   });
 });
 

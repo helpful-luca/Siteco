@@ -1,8 +1,7 @@
 {
   "app": {
     "name": "Siteco Document Chat",
-    "description": "Upload documents, ask questions, get answers with sources.",
-    "greeting": "Hello. What would you like to know today?"
+    "description": "Upload documents, ask questions, get answers with sources."
   },
   "startup": {
     "starting": "The app is starting.",
@@ -29,12 +28,12 @@
     "workspaceSettings": "Enter workspace ID"
   },
   "errors": {
-    "VALIDATION_ERROR": "Something about this request didn't work. Reload the page and try again.",
+    "VALIDATION_ERROR": "The request couldn't be processed. Reload the page and try again.",
     "NOT_FOUND": "This no longer exists, it may have been deleted in another window. Reload the page.",
     "METHOD_NOT_ALLOWED": "This action isn't possible here. Reload the page and try again.",
     "UNAUTHORIZED_CLIENT": "The server rejected this request. Check INTERNAL_TOKEN in .env and restart the app.",
     "SERVICE_STARTING": "The app is still starting. This usually takes a few seconds.",
-    "INTERNAL_ERROR": "Something went wrong on our side. Try again in a moment.",
+    "INTERNAL_ERROR": "The server ran into an error. Try again in a moment.",
     "UPLOAD_TOO_LARGE": "This file is larger than {max_mb} MB. Split it or use a smaller version.",
     "UNSUPPORTED_TYPE": "This format isn't supported. You can add PDF, TXT, Markdown and HTML files.",
     "FILE_CONTENT_MISMATCH": "The content doesn't match the file extension. Save it again as PDF, TXT, Markdown or HTML.",
@@ -43,32 +42,32 @@
     "STORAGE_QUOTA": "Your library reached its {max_mb} MB limit. Remove a document to make room.",
     "STORAGE_FULL": "The disk is full. Free up some space or remove documents.",
     "UPLOAD_INCOMPLETE": "The upload was interrupted. Try again.",
-    "DOCUMENT_NOT_READY": "This document is still being processed. It'll be ready shortly.",
+    "DOCUMENT_NOT_READY": "This document is still being processed. Try again shortly.",
     "DOCUMENT_FILE_MISSING": "The original file is gone. Add the document again.",
     "DELETE_FAILED": "Deleting didn't fully work. Try again, anything already removed stays removed.",
     "RANGE_NOT_SATISFIABLE": "This part of the file doesn't exist. Reload the view.",
     "PDF_ENCRYPTED": "This PDF is password protected. Save a copy without a password and add it again.",
     "PDF_CORRUPT": "This PDF can't be opened and may be damaged. Export it again and retry.",
-    "PDF_NO_TEXT": "We couldn't find readable text in this PDF, it's probably a scan. Use a version with a text layer or a sharper copy.",
+    "PDF_NO_TEXT": "This PDF has no readable text, it's probably a scan. Use a version with a text layer or a sharper copy.",
     "PDF_TOO_MANY_PAGES": "This PDF has more pages than the app can process. Split it into smaller files.",
-    "TEXT_ENCODING_UNSUPPORTED": "We can't read this file's text encoding. Save it as UTF-8 and add it again.",
-    "DOCUMENT_EMPTY": "We couldn't find any text in this file. Choose a file that contains text.",
+    "TEXT_ENCODING_UNSUPPORTED": "This file's text encoding isn't supported. Save it as UTF-8 and add it again.",
+    "DOCUMENT_EMPTY": "This file contains no text. Choose a file that contains text.",
     "DOCUMENT_TOO_LONG": "This document is too long. Split it into smaller files.",
     "PROCESSING_TIMEOUT": "Processing took too long. Try again or split the file.",
     "PROCESSING_FAILED": "Something went wrong while processing. Try again.",
-    "PROCESSING_INTERRUPTED": "Processing was interrupted by a restart. Just start it again.",
+    "PROCESSING_INTERRUPTED": "Processing was interrupted by a restart. Start it again.",
     "MALWARE_DETECTED": "The virus check found malware in this file and deleted it right away. Get a clean copy from a trusted source.",
-    "MALWARE_SCAN_FAILED": "The virus check could not check this file, so it was not added to be safe. Try again.",
+    "MALWARE_SCAN_FAILED": "The virus check couldn't scan this file, so it wasn't added. Try again.",
     "CHAT_NOT_FOUND": "This chat no longer exists. It may have been deleted in another window.",
     "CHAT_BUSY": "An answer is still being written in this chat. Wait a moment or stop it.",
     "CHAT_LIMIT": "You have {max} chats. Delete older ones to start a new chat.",
     "MESSAGE_LIMIT": "This chat has gotten very long. Start a new chat for more questions.",
-    "MESSAGE_NOT_LATEST": "You can only regenerate the answer to the latest question. Just ask your question again.",
+    "MESSAGE_NOT_LATEST": "You can only regenerate the answer to the latest question. Ask your question again.",
     "DUPLICATE_REQUEST": "This question is already on its way.",
     "CONCURRENCY_LIMIT": "{max} answers are already running. You can continue as soon as one finishes.",
     "NO_DOCUMENTS": "Add a document first. Then you can ask questions about it.",
     "DOCUMENTS_NOT_READY": "Your documents are still being processed. You can ask as soon as one is ready.",
-    "QUESTION_EMPTY": "Type a question to get started.",
+    "QUESTION_EMPTY": "Type a question first.",
     "QUESTION_TOO_LONG": "Your question is longer than {max} characters. Shorten it.",
     "MODEL_NOT_ALLOWED": "This model isn't available here. Choose another one above.",
     "COMPARE_SAME_MODEL": "Both columns use the same model. Choose two different models to compare.",
@@ -83,10 +82,10 @@
     "LLM_UNAVAILABLE": "Claude had a problem just now. Try again shortly.",
     "LLM_TIMEOUT": "Claude took too long to respond. Try again.",
     "LLM_UNREACHABLE": "Can't reach Claude right now. Check your internet connection and try again.",
-    "LLM_BAD_REQUEST": "The request to Claude was invalid. That's on the app. Start a new chat and try there.",
+    "LLM_BAD_REQUEST": "Claude couldn't process the request. Start a new chat and try there.",
     "LLM_CONTEXT_TOO_LARGE": "This chat has gotten too long. Start a new one.",
     "LLM_EMPTY_ANSWER": "No answer came back. Try again.",
-    "BACKEND_UNAVAILABLE": "The server isn't responding right now. We'll keep trying automatically.",
+    "BACKEND_UNAVAILABLE": "The server isn't responding right now. The app keeps trying automatically.",
     "FORBIDDEN_ORIGIN": "This request didn't come from the app and was blocked. Reload the app and try again.",
     "NETWORK_ERROR": "Can't reach the app right now. Check that it's still running and try again.",
     "UNKNOWN_ERROR": "Something unexpected happened. Try again.",
@@ -94,7 +93,7 @@
     "goHome": "Go to start",
     "STREAM_INTERRUPTED": "The connection dropped before the answer was finished. Try again.",
     "REQUEST_TOO_LARGE": "This request is too large. Shorten the text and try again.",
-    "RATE_LIMITED": "Quick pause. You can continue {seconds, plural, =0 {in a moment} one {in one second} other {in # seconds}}.",
+    "RATE_LIMITED": "Too many requests. You can continue {seconds, plural, =0 {in a moment} one {in one second} other {in # seconds}}.",
     "pageNotFound": "Page not found",
     "pageNotFoundText": "The address may have changed.",
     "API_KEY_INVALID": "Anthropic doesn't accept this API key. Check it in the Claude Console and paste it again.",
@@ -259,28 +258,29 @@
     "closePanel": "Close panel",
     "skipToContent": "Skip to content",
     "window": {
-      "menu": "Menu"
+      "minimize": "Minimize",
+      "maximize": "Maximize",
+      "restore": "Restore",
+      "close": "Close"
     }
   },
   "chat": {
     "greeting": "Hello",
-    "prompt": "What would you like to know today?",
     "dropTitle": "Add documents",
-    "dropText": "Drag files here or choose them. They belong to this chat, and to your library if you like.",
+    "dropText": "Drag files here or choose them.",
     "hint": "As soon as a document is ready, you can ask questions about it here.",
     "untitled": "New chat",
     "suggestionsLabel": "Suggestions",
     "suggestions": {
       "summary": "Summarize the key points",
-      "specs": "Which technical data are mentioned?",
-      "norms": "Which standards and regulations come up?"
+      "specs": "What technical data is listed?",
+      "norms": "Which standards and regulations are mentioned?"
     },
     "list": {
       "today": "Today",
       "week": "This week",
       "older": "Older",
       "empty": "No chats yet",
-      "emptyHint": "New chats appear here.",
       "noMatch": "No matching chats",
       "loadError": "The chats could not be loaded.",
       "retry": "Try again",
@@ -429,7 +429,8 @@
       "tokensValue": "{input} in, {output} out",
       "cost": "Cost"
     },
-    "emptyChat": "Ask about your documents. This chat's attachments are always included."
+    "emptyChat": "Ask about your documents. This chat's attachments are always included.",
+    "ready": "{count, plural, one {# document ready} other {# documents ready}}"
   },
   "library": {
     "title": "Library",
@@ -622,7 +623,7 @@
   },
   "errorScreen": {
     "title": "This view can't be shown right now",
-    "text": "Your documents and chats are safe. Try again.",
+    "text": "Your documents and chats are kept. Try again.",
     "retry": "Try again",
     "home": "Go to a new chat"
   },

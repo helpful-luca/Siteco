@@ -38,6 +38,17 @@
     }
   }
 
+  /** Frameless splash on macOS and Windows: minimize and close (closing quits the app). */
+  function showWindowButtons() {
+    const minimize = el('window-minimize');
+    const close = el('window-close');
+    minimize.setAttribute('aria-label', copy.minimize);
+    close.setAttribute('aria-label', copy.close);
+    minimize.addEventListener('click', () => void bridge.action('minimize'));
+    close.addEventListener('click', () => void bridge.action('quit'));
+    el('window-buttons').hidden = false;
+  }
+
   /** @param {string} error */
   function actionsFor(error) {
     if (error === 'docker-missing') return [['download-docker', copy.downloadDocker, true], ['retry', copy.retry, false]];
@@ -87,6 +98,7 @@
     document.documentElement.lang = init.lang;
     document.title = init.appName;
     el('details-label').textContent = copy.details;
+    if (init.windowButtons) showWindowButtons();
     render(init.state);
     bridge.onState(render);
   });

@@ -12,8 +12,8 @@ export interface MenuActions {
 const separator: MenuItemConstructorOptions = { type: 'separator' };
 
 /**
- * Windows has no app menu bar (the window is frameless): the app's commands live in one menu
- * that the "more" button in the title bar opens. The same items carry the shortcuts.
+ * The app's commands outside macOS, which has no menu bar there (frameless window): a hidden
+ * menu that only carries the keyboard shortcuts.
  */
 export function popupMenuTemplate(t: Messages, actions: MenuActions): MenuItemConstructorOptions[] {
   const m = t.menu;

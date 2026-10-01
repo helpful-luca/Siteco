@@ -57,10 +57,7 @@ export function ChatList() {
     return (
       <div className="flex gap-2 px-2 text-ink-muted">
         <MessagesSquare aria-hidden className="mt-px size-4 shrink-0 opacity-60" />
-        <div>
-          <p className="text-footnote text-ink/80">{chats.length > 0 ? t('noMatch') : t('empty')}</p>
-          {chats.length === 0 && <p className="mt-0.5 text-caption">{t('emptyHint')}</p>}
-        </div>
+        <p className="text-footnote text-ink/80">{chats.length > 0 ? t('noMatch') : t('empty')}</p>
       </div>
     );
   }

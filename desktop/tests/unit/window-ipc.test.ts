@@ -22,8 +22,13 @@ describe('isFromAppWindow', () => {
 
 describe('WINDOW_CHANNELS', () => {
   it('is the small fixed set the preload repeats', () => {
-    // The window buttons are native on both platforms: only the app menu (Windows) and the
-    // full screen state (the page drops the title bar inset) cross the bridge.
-    expect(Object.values(WINDOW_CHANNELS).sort()).toEqual(['window:full-screen', 'window:menu']);
+    // The page's own window buttons, nothing else.
+    expect(Object.values(WINDOW_CHANNELS).sort()).toEqual([
+      'window:close',
+      'window:is-maximized',
+      'window:maximized',
+      'window:minimize',
+      'window:toggle-maximize',
+    ]);
   });
 });

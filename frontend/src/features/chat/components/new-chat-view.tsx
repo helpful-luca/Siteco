@@ -182,7 +182,7 @@ export function NewChatView() {
             </>
           )}
         </h2>
-        <p className="mt-2 text-reading text-ink-muted">{t('prompt')}</p>
+        {readyCount > 0 && <p className="mt-2 text-reading text-ink-muted">{t('ready', { count: readyCount })}</p>}
 
         {hasDocuments ? (
           readyCount > 0 && (

@@ -65,23 +65,17 @@
   --c-light-fill: rgb(80 95 120 / 0.1);
 }
 
-/* Desktop windows with their native buttons showing (not in full screen). */
-@custom-variant mac-window (&:where(html[data-desktop][data-platform='darwin']:not([data-full-screen]) *));
-@custom-variant win-window (&:where(html[data-desktop][data-platform='win32']:not([data-full-screen]) *));
-
 /*
- * Electron marks <html data-desktop data-platform> before first paint (shared/desktop) and
- * data-full-screen while the window is in full screen. Only native window buttons:
- * macOS: the traffic lights sit on the sidebar's first row (desktop/src/window-chrome.ts), on
- * the y = 40 axis of every toolbar row. Narrow windows (no sidebar) move the top bar right of the
- * lights and centre it on the same axis; the drawer sidebar sits where the wide one does.
- * Windows: a 32 px title band above the app holds the native caption buttons (titleBarOverlay).
+ * Electron marks <html data-desktop data-platform> before first paint (shared/desktop). On macOS
+ * and Windows the window is frameless: no title bar, the page draws its own window buttons in the
+ * top right corner (shell/window-chrome.tsx), 12 px circles centred 20 px below the top. The
+ * shell's top margin grows by --window-top so the floating panels start below them, and bars
+ * that reach the right edge keep --window-controls free for them. Also in full screen.
  */
 :root {
-  --titlebar-inset: 0px;
-  --traffic-lights: 0px;
   --sheet-inset: 8px;
-  --window-bar: 0px;
+  --window-top: 0px;
+  --window-controls: 0px;
   /* Page gutter: the one left edge for banner, title, toolbar and content (`px-gutter`). */
   --gutter: 16px;
 }
@@ -98,20 +92,17 @@
   }
 }
 
-html[data-desktop][data-platform='darwin']:not([data-full-screen]) {
-  --titlebar-inset: 16px;
-  --traffic-lights: 88px;
-  --sheet-inset: 12px;
-}
+/* The frameless desktop window (macOS, Windows), for layout that follows its window buttons. */
+@custom-variant frameless (&:where(html[data-desktop]:is([data-platform='darwin'], [data-platform='win32']) *));
 
-html[data-desktop][data-platform='win32']:not([data-full-screen]) {
-  --window-bar: 32px;
+html[data-desktop]:is([data-platform='darwin'], [data-platform='win32']) {
+  --window-top: 20px;
+  --window-controls: 60px;
 }
 
 /*
- * The top strip moves the window: 56 px, down to the end of the first row (the sidebar row with
- * the traffic lights, the chat header, the side panel header), plus the Windows title band. One fixed element, first in <body> and painted
- * first (z-index -1, under the page): however Chromium orders the regions (document or paint
+ * The top strip moves the window: the window buttons' margin plus the first row (sidebar row,
+ * chat header, side panel header). One fixed element, first in <body> and painted first (z-index -1, under the page): however Chromium orders the regions (document or paint
  * order), the strip is added to the drag area first and every control cut out after it. The
  * page lies above it, so it never receives a click itself.
  */
@@ -124,7 +115,7 @@ html[data-desktop] .window-drag-strip {
   position: fixed;
   inset: 0 0 auto;
   z-index: -1;
-  height: calc(var(--spacing) * 14 + var(--window-bar));
+  height: calc(var(--spacing) * 14 + var(--window-top));
   -webkit-app-region: drag;
   app-region: drag;
 }
@@ -295,15 +286,21 @@ html[data-desktop]
   }
 
   /*
-   * Line breaks: headings and short centred lines balance their lines, running text avoids a
-   * lone last word (no widows). Utilities (`text-wrap`, `text-nowrap`) still win over this layer.
+   * Line breaks: all text avoids a lone last word (no widows). `text-wrap` is inherited, so it is
+   * set once on <body> and reaches every footer, note and label, whatever its element. Headings
+   * and short centred lines balance their lines. Utilities (`text-wrap`, `text-nowrap`) still win
+   * over this layer.
    */
-  :where(h1, h2, h3, h4, h5, h6, caption, figcaption, legend, .text-center) {
-    text-wrap: balance;
+  body {
+    text-wrap: pretty;
   }
 
-  :where(p, li, dd, dt, blockquote, td, th, label) {
-    text-wrap: pretty;
+  /*
+   * Footers, notes and hints (footnote and caption size, one to three lines) balance too: `pretty`
+   * still leaves a lone word on a two-line note.
+   */
+  :where(h1, h2, h3, h4, h5, h6, caption, figcaption, legend, .text-center, .text-footnote, .text-caption) {
+    text-wrap: balance;
   }
 
   :where(.text-center) :where(p, span) {

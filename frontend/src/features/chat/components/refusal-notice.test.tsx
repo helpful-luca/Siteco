@@ -68,13 +68,13 @@ describe('RefusalNotice in the composer', () => {
 
   it('counts our own rate limit down, keeps the question and blocks sending until it is over', () => {
     const { onSubmit, send } = setup(rateLimited());
-    expect(screen.getByText('Kurze Pause. In 23 Sekunden kannst du weitermachen.')).toBeInTheDocument();
+    expect(screen.getByText('Zu viele Anfragen. In 23 Sekunden kannst du weitermachen.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Deine Frage' })).toHaveValue('Welche Schutzart hat die Mira?');
     send();
     expect(onSubmit).not.toHaveBeenCalled();
 
     act(() => vi.advanceTimersByTime(22_000));
-    expect(screen.getByText('Kurze Pause. In einer Sekunde kannst du weitermachen.')).toBeInTheDocument();
+    expect(screen.getByText('Zu viele Anfragen. In einer Sekunde kannst du weitermachen.')).toBeInTheDocument();
     send();
     expect(onSubmit).not.toHaveBeenCalled();
 
@@ -92,7 +92,7 @@ describe('RefusalNotice in the composer', () => {
       act(() => vi.advanceTimersByTime(1_000));
       if (region?.textContent) heard.add(region.textContent);
     }
-    expect([...heard]).toEqual(['Kurze Pause. In 23 Sekunden kannst du weitermachen.', de.chat.composer.waitOver]);
+    expect([...heard]).toEqual(['Zu viele Anfragen. In 23 Sekunden kannst du weitermachen.', de.chat.composer.waitOver]);
     expect(document.querySelector('#n')).not.toHaveAttribute('role');
   });
 

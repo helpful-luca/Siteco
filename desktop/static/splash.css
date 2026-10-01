@@ -252,3 +252,42 @@ summary:focus-visible {
   word-break: break-all;
   user-select: text;
 }
+
+/* Own window buttons in the top right corner, like the app window (frameless on macOS and Windows). */
+.window-buttons {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 0 0;
+  box-sizing: border-box;
+}
+
+.window-buttons[hidden] {
+  display: none;
+}
+
+.window-button {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.window-button:hover {
+  opacity: 0.8;
+}
+
+.window-button.minimize {
+  background: #febc2e;
+}
+
+.window-button.close {
+  background: #ff5f57;
+}

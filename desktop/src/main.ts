@@ -20,13 +20,13 @@ import { appUrl, loadConfig, saveConfig, type AppConfig } from './config';
 import { dockerRunning, launchDockerApp, waitForDocker } from './docker-engine';
 import { locateDocker, locateDockerApp } from './docker-locator';
 import { MESSAGES, pickLang } from './i18n';
-import { menuTemplate, popupMenuTemplate } from './menu';
+import { menuTemplate } from './menu';
 import { checkProjectDir, firstProjectDir, resolveProjectDir } from './project-dir';
 import { RetryBudget } from './retry-budget';
 import { probeServer, waitForApp } from './server-probe';
 import { isSplashAction, SPLASH_CHANNELS, type SplashAction } from './splash-ipc';
 import { runStartup, type StartupState } from './startup';
-import { splashChrome, windowChrome } from './window-chrome';
+import { ownWindowButtons, windowChrome } from './window-chrome';
 import { isFromAppWindow, WINDOW_CHANNELS } from './window-ipc';
 import { diagnoseThisWindows } from './windows-prereqs';
 import { DEFAULT_WINDOW, restoreBounds } from './window-state';
@@ -47,8 +47,6 @@ import {
 const DOCKER_DOWNLOAD_URL = 'https://www.docker.com/products/docker-desktop/';
 /** Matches the app's canvas token (globals.css), so no white flash before the first paint. */
 const CANVAS = { light: '#f2f2f5', dark: '#000000' } as const;
-/** Ink on the canvas, for the native caption buttons on Windows (splash and app window). */
-const INK = { light: '#1d1d1f', dark: '#f5f5f7' } as const;
 const SPLASH_SIZE = { width: 520, height: 380 } as const;
 /** The only files the splash scheme serves, with their types. */
 const SPLASH_FILES = new Map([
@@ -91,10 +89,6 @@ const loadRetries = new RetryBudget(MAX_LOAD_FAILURES);
 
 function canvasColor(): string {
   return nativeTheme.shouldUseDarkColors ? CANVAS.dark : CANVAS.light;
-}
-
-function inkColor(): string {
-  return nativeTheme.shouldUseDarkColors ? INK.dark : INK.light;
 }
 
 function updateConfig(patch: Partial<AppConfig>): void {
@@ -141,7 +135,7 @@ function buildMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(t, menuActions())));
 }
 
-// Window bridge: the app menu (Windows) and the full screen state ------------------------------
+// Window bridge: the page's own window buttons ----------------------------------------------------
 
 function registerWindowIpc(): void {
   const fromApp = (event: Electron.IpcMainInvokeEvent) =>
@@ -154,14 +148,42 @@ function registerWindowIpc(): void {
       mainWindow?.webContents,
       APP_ORIGIN,
     );
-  ipcMain.handle(WINDOW_CHANNELS.menu, (event) => {
-    if (!fromApp(event) || !mainWindow) return;
-    Menu.buildFromTemplate(popupMenuTemplate(t, menuActions())).popup({ window: mainWindow });
+  ipcMain.handle(WINDOW_CHANNELS.minimize, (event) => {
+    const win = fromApp(event) ? mainWindow : undefined;
+    if (!win) return;
+    // A full screen window cannot be minimized: it leaves full screen first.
+    if (win.isFullScreen()) {
+      win.once('leave-full-screen', () => win.minimize());
+      win.setFullScreen(false);
+    } else {
+      win.minimize();
+    }
   });
+  ipcMain.handle(WINDOW_CHANNELS.toggleMaximize, (event) => {
+    const win = fromApp(event) ? mainWindow : undefined;
+    if (!win) return;
+    if (win.isFullScreen()) win.setFullScreen(false);
+    else if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+  });
+  ipcMain.handle(WINDOW_CHANNELS.close, (event) => {
+    if (fromApp(event)) mainWindow?.close();
+  });
+  ipcMain.handle(WINDOW_CHANNELS.isMaximized, (event) => (fromApp(event) && mainWindow ? isExpanded(mainWindow) : false));
 }
 
-function sendFullScreen(win: BrowserWindow): void {
-  if (!win.isDestroyed()) win.webContents.send(WINDOW_CHANNELS.fullScreen, win.isFullScreen());
+/** Maximized or full screen: the green button restores the window. */
+function isExpanded(win: BrowserWindow): boolean {
+  return win.isMaximized() || win.isFullScreen();
+}
+
+function sendMaximized(win: BrowserWindow): void {
+  if (!win.isDestroyed()) win.webContents.send(WINDOW_CHANNELS.maximized, isExpanded(win));
+}
+
+/** macOS hides its traffic lights: the page draws the window buttons on both platforms. */
+function hideNativeButtons(win: BrowserWindow): void {
+  if (process.platform === 'darwin') win.setWindowButtonVisibility(false);
 }
 
 // Splash ----------------------------------------------------------------------------------------
@@ -183,10 +205,11 @@ function showSplash(): BrowserWindow {
     maximizable: false,
     fullscreenable: false,
     title: t.appName,
-    ...splashChrome(process.platform, canvasColor(), inkColor()),
+    ...windowChrome(process.platform),
     backgroundColor: canvasColor(),
     webPreferences: { ...secureWebPreferences, spellcheck: false, preload: join(__dirname, 'splash-preload.js') },
   });
+  hideNativeButtons(win);
   win.once('ready-to-show', () => win.show());
   win.on('closed', () => {
     splash = undefined;
@@ -230,6 +253,8 @@ async function onSplashAction(action: SplashAction): Promise<void> {
     }
     case 'download-docker':
       return shell.openExternal(DOCKER_DOWNLOAD_URL);
+    case 'minimize':
+      return splash?.minimize();
     case 'quit':
       app.quit();
   }
@@ -240,7 +265,7 @@ function registerSplashIpc(): void {
     splash !== undefined && event.sender === splash.webContents && isSplashUrl(event.senderFrame?.url ?? '');
   ipcMain.handle(SPLASH_CHANNELS.init, (event) => {
     if (!fromSplash(event)) return undefined;
-    return { lang, port, messages: t.splash, appName: t.appName, state: lastState };
+    return { lang, port, messages: t.splash, appName: t.appName, state: lastState, windowButtons: ownWindowButtons(process.platform) };
   });
   ipcMain.handle(SPLASH_CHANNELS.action, (event, action: unknown) => {
     if (!fromSplash(event) || !isSplashAction(action)) return;
@@ -289,14 +314,16 @@ function openMainWindow(): void {
     minHeight: DEFAULT_WINDOW.minHeight,
     show: false,
     title: t.appName,
-    ...windowChrome(process.platform, { color: canvasColor(), symbolColor: inkColor() }),
+    ...windowChrome(process.platform),
     backgroundColor: canvasColor(),
     webPreferences: { ...secureWebPreferences, preload: join(__dirname, 'preload.js') },
   });
+  hideNativeButtons(win);
   if (bounds.maximized) win.maximize();
-  win.on('enter-full-screen', () => sendFullScreen(win));
-  win.on('leave-full-screen', () => sendFullScreen(win));
-  win.webContents.on('did-finish-load', () => sendFullScreen(win));
+  for (const change of ['maximize', 'unmaximize', 'enter-full-screen', 'leave-full-screen'] as const) {
+    win.on(change as 'maximize', () => sendMaximized(win));
+  }
+  win.webContents.on('did-finish-load', () => sendMaximized(win));
   win.once('ready-to-show', () => {
     loadRetries.reset();
     win.show();
@@ -402,11 +429,6 @@ if (!app.requestSingleInstanceLock()) {
 
   nativeTheme.on('updated', () => {
     for (const win of BrowserWindow.getAllWindows()) win.setBackgroundColor(canvasColor());
-    if (process.platform === 'win32') {
-      for (const win of [splash, mainWindow]) {
-        if (win && !win.isDestroyed()) win.setTitleBarOverlay({ color: canvasColor(), symbolColor: inkColor() });
-      }
-    }
   });
 
   app.on('before-quit', () => {

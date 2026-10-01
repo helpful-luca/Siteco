@@ -24,8 +24,8 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
   const t = useTranslations('shell');
   const { sidebarOpen, setSidebarOpen } = useUI();
   return (
-    // On Windows the title band with the native caption buttons sits above (--window-bar).
-    <div className="flex h-dvh gap-3 pt-(--window-bar) lg:p-3 lg:pt-[calc(var(--spacing)*3+var(--window-bar))]">
+    // In the frameless desktop window the panels start below the window buttons (--window-top).
+    <div className="flex h-dvh gap-3 lg:p-3 lg:pt-[calc(var(--spacing)*3+var(--window-top))]">
       <a
         href="#main"
         className="sr-only z-50 rounded-control bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -43,10 +43,11 @@ function Frame({ chatList, children }: { chatList?: ReactNode; children: ReactNo
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/*
-          Narrow bar: icon glyphs sit on the page gutter (16 px), buttons are 44 px on touch. In a
-          Mac window it starts right of the traffic lights and centres on their axis.
+          Narrow bar: icon glyphs sit on the page gutter (16 px), buttons are 44 px on touch. In the
+          desktop window it centres on the window buttons' axis (y = 20) and keeps its right end free
+          for them.
         */}
-        <div className="drag-region flex h-[calc(var(--spacing)*12+var(--titlebar-inset))] shrink-0 items-center justify-between px-2 pt-(--titlebar-inset) pl-[calc(var(--spacing)*2+var(--traffic-lights))] pointer-coarse:h-[calc(var(--spacing)*14+var(--titlebar-inset))] pointer-coarse:px-0.5 lg:hidden">
+        <div className="drag-region flex h-12 shrink-0 frameless:h-10 items-center justify-between px-2 pr-[calc(var(--spacing)*2+var(--window-controls))] pointer-coarse:h-14 pointer-coarse:px-0.5 pointer-coarse:pr-[calc(var(--spacing)*0.5+var(--window-controls))] lg:hidden">
           <Button icon variant="ghost" aria-label={t('openSidebar')} onClick={() => setSidebarOpen(true)}>
             <PanelLeft />
           </Button>

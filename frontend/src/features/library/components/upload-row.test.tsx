@@ -42,7 +42,7 @@ describe('UploadRow', () => {
       item({ code: 'RATE_LIMITED', params: { seconds: 20, scope: 'upload' }, retryable: true, retryAt: Date.now() + 20_000 }),
     );
     expect(screen.getAllByText(de.library.status.uploadPaused).length).toBeGreaterThan(0);
-    expect(screen.getByText('Kurze Pause. In 20 Sekunden kannst du weitermachen.')).toBeInTheDocument();
+    expect(screen.getByText('Zu viele Anfragen. In 20 Sekunden kannst du weitermachen.')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull(); // a pause is no failure
     fireEvent.click(retry());
     expect(onRetry).not.toHaveBeenCalled();

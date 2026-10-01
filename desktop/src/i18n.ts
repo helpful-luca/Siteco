@@ -63,6 +63,8 @@ const de = {
     chooseFolder: 'Ordner wählen',
     downloadDocker: 'Docker herunterladen',
     quit: 'Beenden',
+    minimize: 'Minimieren',
+    close: 'Schließen',
     errors: {
       'docker-missing': {
         title: 'Docker wurde nicht gefunden',
@@ -172,6 +174,8 @@ const en: Messages = {
     chooseFolder: 'Choose folder',
     downloadDocker: 'Download Docker',
     quit: 'Quit',
+    minimize: 'Minimize',
+    close: 'Close',
     errors: {
       'docker-missing': {
         title: 'Docker was not found',

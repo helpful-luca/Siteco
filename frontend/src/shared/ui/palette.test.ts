@@ -5,8 +5,11 @@ import { describe, expect, it } from 'vitest';
 /*
  * The palette is graphite plus Siteco red. The old sodium amber and any other orange must not come
  * back: not as a token, not hardcoded in a component, an SVG or the desktop splash. The highlight
- * yellow (cited passages) and the flags sit above this band and stay allowed.
+ * yellow (cited passages) and the flags sit above this band and stay allowed. The one exception is
+ * the yellow minimize button of the window buttons, a system colour of the window chrome.
  */
+
+const WINDOW_MINIMIZE = '#febc2e';
 
 // Vitest runs from the frontend root.
 const ROOTS = ['src', 'public', '../desktop/src', '../desktop/static', '../desktop/assets'];
@@ -84,7 +87,7 @@ describe('palette', () => {
       const text = readFileSync(path, 'utf8');
       for (const match of text.matchAll(COLOR)) {
         const rgb = parse(match[0]);
-        if (rgb && isAmber(rgb)) offenders.push(`${relative(process.cwd(), path)}: ${match[0]}`);
+        if (rgb && isAmber(rgb) && match[0].toLowerCase() !== WINDOW_MINIMIZE) offenders.push(`${relative(process.cwd(), path)}: ${match[0]}`);
       }
       if (OLD_CLASSES.test(text)) offenders.push(`${relative(process.cwd(), path)}: ${text.match(OLD_CLASSES)![0]}`);
     }

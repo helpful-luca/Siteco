@@ -75,7 +75,7 @@ export function FormText({ children, className }: { children: ReactNode; classNa
   return (
     <div
       className={cn(
-        'relative px-4 py-3 text-body',
+        'relative px-4 py-3 text-body text-balance',
         'not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-4',
         'not-first:before:h-px not-first:before:bg-hairline',
         className,

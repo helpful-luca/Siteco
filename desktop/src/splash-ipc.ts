@@ -5,7 +5,7 @@ export const SPLASH_CHANNELS = {
   action: 'splash:action',
 } as const;
 
-export const SPLASH_ACTIONS = ['retry', 'choose-folder', 'download-docker', 'quit'] as const;
+export const SPLASH_ACTIONS = ['retry', 'choose-folder', 'download-docker', 'minimize', 'quit'] as const;
 export type SplashAction = (typeof SPLASH_ACTIONS)[number];
 
 export function isSplashAction(value: unknown): value is SplashAction {
