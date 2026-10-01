@@ -213,3 +213,4 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 137 | Gate | `tests/eval` marked `model`, own CI job with the pinned model in a cache, thresholds a little below the measured values | Asserting the committed JSON | Only a fresh run proves the code still reaches the numbers |
 | 138 | Results in the image | `eval/results` as the named build context `eval`, `eval/.dockerignore` keeps the documents out | Mounting the folder | The image is self-contained; the backend build context stays `./backend` |
 | 139 | Lance warnings | `LANCEDB_LOG=error` by default | Selecting `_score` and `_distance` | Every hybrid search logged two deprecation warnings; selecting the columns breaks the hybrid query |
+| 140 | Default stemmer after the eval | German stays | Switching to no stemming (one question more in the sources) | One question is 3.6 points on 28; German matches compounds like "Straßenleuchten" (spike 12); revisit with a larger set |

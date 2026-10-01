@@ -404,3 +404,12 @@ class EvalResultsReader(Protocol):
     def read(self, name: str) -> Mapping[str, Any] | None:
         """The JSON object in `<name>.json`; None when it is missing or not a JSON object."""
         ...
+
+
+class AnswerJudge(Protocol):
+    """Grades one answer for the generation eval (an LLM judge; never used by the app)."""
+
+    def judge(self, question: str, answer: str, evidence: str, *, answerable: bool) -> bool:
+        """Answerable: is the answer correct and supported by the evidence? Unanswerable: does
+        it say honestly that the documents do not contain it?"""
+        ...
