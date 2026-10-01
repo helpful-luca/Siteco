@@ -507,8 +507,7 @@
       "title": "Your library is empty",
       "text": "Drag PDFs, text, Markdown or HTML files here or choose them.",
       "choose": "Choose files",
-      "hint": "Up to {limit} per file. Every file is checked for malware before it is stored.",
-      "hintNoLimit": "Every file is checked for malware before it is stored."
+      "hint": "Up to {limit} per file."
     },
     "noResults": {
       "title": "No results",

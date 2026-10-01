@@ -34,9 +34,9 @@ export function LibraryEmpty({
         </Button>
         <Button onClick={onLink}>{tImport('link')}</Button>
       </div>
-      <p className="mt-4 max-w-[48ch] text-caption text-ink-muted">
-        {maxUploadMb ? t('hint', { limit: uploadLimit(maxUploadMb) }) : t('hintNoLimit')}
-      </p>
+      {maxUploadMb ? (
+        <p className="mt-4 max-w-[48ch] text-caption text-ink-muted">{t('hint', { limit: uploadLimit(maxUploadMb) })}</p>
+      ) : null}
     </div>
   );
 }
