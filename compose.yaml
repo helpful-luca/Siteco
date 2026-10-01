@@ -22,7 +22,7 @@ services:
       - appdata:/data
     mem_limit: 2g
     pids_limit: 256
-    # Hardening (master spec 10): no capabilities, no privilege escalation, immutable root
+    # Hardening: no capabilities, no privilege escalation, immutable root
     # filesystem. Writable: the data volume and a small tmpfs for temporary files.
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]

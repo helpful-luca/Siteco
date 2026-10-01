@@ -3,7 +3,7 @@
   "private": true,
   "description": "Orchestration scripts: development servers and the desktop app (desktop/, macOS and Windows)",
   "scripts": {
-    "postinstall": "npm --prefix desktop ci --no-fund --no-audit",
+    "postinstall": "npm --prefix frontend ci --no-fund --no-audit && npm --prefix desktop ci --no-fund --no-audit",
     "dev:api": "make dev-api",
     "dev:web": "cd frontend && NEXT_TELEMETRY_DISABLED=1 BACKEND_URL=http://127.0.0.1:8000 npm run dev",
     "dev:app": "wait-on --timeout 180000 http-get://localhost:3000/healthz && npm --prefix desktop run start:dev",
@@ -12,7 +12,6 @@
     "app:build": "npm --prefix desktop run dist",
     "app:install": "npm --prefix desktop run install-app",
     "test:desktop": "npm --prefix desktop test",
-    "test:desktop:e2e": "npm --prefix desktop run test:e2e",
     "app:build:win": "npm --prefix desktop run dist:win"
   },
   "devDependencies": {

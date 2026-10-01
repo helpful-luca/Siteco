@@ -1,5 +1,0 @@
-brain
-.env
-.git
-**/node_modules
-**/.venv
