@@ -13,6 +13,7 @@ from enum import StrEnum
 
 from docchat.domain.enums import Locale
 from docchat.domain.errors import ErrorCode
+from docchat.domain.exact_terms import is_rare, query_terms
 from docchat.domain.history import estimate_tokens
 from docchat.domain.llm import (
     CitationDelta,
@@ -27,6 +28,7 @@ from docchat.domain.llm import (
     TextDelta,
     UsageReported,
 )
+from docchat.domain.page_reference import find_page_request
 from docchat.domain.usage import ModelUsage, TokenUsage
 
 
@@ -98,6 +100,39 @@ def _citable(results: Sequence[SearchResult]) -> tuple[SearchResult, int] | None
                     return result, index
     first = next((r for r in results if r.sentences), None)
     return (first, 0) if first is not None else None
+
+
+def _on_page(result: SearchResult, pages: Sequence[int]) -> bool:
+    return any(result.title.endswith(f", S. {page}") for page in pages)
+
+
+def _term_score(sentence: str, terms: Sequence[str]) -> float:
+    lowered = sentence.lower()
+    return sum(lowered.count(t) * (2.0 if is_rare(t) else 1.0) for t in terms)
+
+
+def _most_relevant(request: LLMRequest) -> tuple[SearchResult, int] | None:
+    """What a model would cite: the page that was asked, else the sentence with the most of the
+    question's words (rare words and codes count double), else the first real sentence. The demo
+    thereby shows what retrieval delivers, not just the first source."""
+    results = request.search_results
+    if request.requested_pages or find_page_request(request.question):
+        pages = request.requested_pages or find_page_request(request.question).pages  # type: ignore[union-attr]
+        on_page = [r for r in results if _on_page(r, pages)]
+        if pick := _citable(on_page):
+            return pick
+    terms = query_terms(request.question)
+    best: tuple[float, SearchResult, int] | None = None
+    for result in results:
+        for index, sentence in enumerate(result.sentences):
+            score = _term_score(sentence, terms)
+            if score and _is_sentence(sentence, strict=True):
+                score += 0.5  # a full sentence reads better than a table row with the term
+            if score and (best is None or score > best[0]):
+                best = (score, result, index)
+    if best is not None:
+        return best[1], best[2]
+    return _citable(results)
 
 
 class FakeLLMClient:
@@ -175,7 +210,7 @@ class FakeLLMClient:
             model = _FALLBACK_MODEL.get(request.model, "claude-opus-4-8")
             yield ModelResolved(model)
 
-        pick = _citable(request.search_results)
+        pick = _most_relevant(request)
         if pick is None:
             body = _NOTHING[request.ui_language]
         else:

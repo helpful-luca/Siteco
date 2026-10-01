@@ -9,6 +9,7 @@ import re
 from collections.abc import Callable, Iterable
 from uuid import uuid4
 
+from docchat.domain.highlight_geometry import trusted_rects
 from docchat.domain.models import Chunk, Sentence
 from docchat.domain.parsing import SentenceSpan, TextSection
 from docchat.domain.sentences import split_sentences
@@ -86,7 +87,7 @@ def chunk_section(
                 text=section.text[span.start : span.end],
                 char_start=section.offset + span.start,
                 char_end=section.offset + span.end,
-                rects=span.rects,
+                rects=trusted_rects(span.rects),
             )
             for i, span in enumerate(group)
         )

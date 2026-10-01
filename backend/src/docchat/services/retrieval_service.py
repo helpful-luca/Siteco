@@ -6,13 +6,23 @@ LanceDB is just the index. Small scopes go to the model completely (full-context
 """
 
 import asyncio
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
 from docchat.domain.chat_models import Chat
 from docchat.domain.enums import ChatScope, DocumentStatus, SourcesMode
 from docchat.domain.errors import AppError, ErrorCode, NoticeCode
+from docchat.domain.exact_terms import (
+    fuse,
+    is_keyword_query,
+    is_rare,
+    missing_from,
+    query_phrase,
+    query_terms,
+    rank_exact,
+)
 from docchat.domain.models import Chunk, Document, Notice
+from docchat.domain.page_reference import find_page_request, named_document_ids
 from docchat.domain.ports import DocumentRepository, Embedder, VectorStore
 from docchat.domain.retrieval import fits_full_context, is_summary_request, select_sources
 
@@ -32,7 +42,12 @@ class RetrievalSettings:
     candidates: int = 20
     top_k: int = 8
     per_document_cap: int = 5
-    full_context_max_tokens: int = 20_000
+    full_context_max_tokens: int = 150_000
+    exact_candidates: int = 200  # substring hits read per term, then ranked
+    exact_top: int = 8  # hits of the substring search that take part in the fusion
+    keyword_exact_weight: float = 3.0  # RRF weight: a lookup puts exact hits before the rest
+    sentence_exact_weight: float = 1.0
+    max_page_chunks: int = 30
 
 
 @dataclass(frozen=True)
@@ -50,6 +65,7 @@ class Retrieved:
     chunks: tuple[Chunk, ...]
     documents: dict[str, Document]
     notices: tuple[Notice, ...]
+    requested_pages: tuple[int, ...] = ()  # "Seite 56" in the question, even if not found
 
 
 class RetrievalService:
@@ -102,16 +118,31 @@ class RetrievalService:
         documents = await asyncio.to_thread(self._still_ready, plan)
         ids = [d.id for d in documents]
         notices = list(plan.notices)
+        request = find_page_request(question)
+        pages = request.pages if request else ()
         if plan.mode is SourcesMode.FULL_CONTEXT:
             chunks = await asyncio.to_thread(self._vectors.chunks_of, ids)
         else:
-            chunks = await self._rank(ids, query, self._settings.top_k)
-            if is_summary_request(question):
-                notices.append(Notice(NoticeCode.SUMMARY_PARTIAL))
+            chunks = await self._page_chunks(documents, question, pages) if pages else []
+            if not chunks:
+                chunks = await self._rank(
+                    ids, query, self._settings.top_k, question=question, follow_up=query != question
+                )
+                if is_summary_request(question):
+                    notices.append(Notice(NoticeCode.SUMMARY_PARTIAL))
         allowed = {d.id: d for d in documents}
         # The index may still hold chunks of a document deleted a moment ago: SQLite wins.
         kept = tuple(c for c in chunks if c.document_id in allowed)
-        return Retrieved(plan.mode, kept, allowed, tuple(notices))
+        return Retrieved(plan.mode, kept, allowed, tuple(notices), pages)
+
+    async def _page_chunks(
+        self, documents: Sequence[Document], question: str, pages: tuple[int, ...]
+    ) -> list[Chunk]:
+        """Everything on the asked pages, in reading order: the named document, else all."""
+        named = set(named_document_ids(question, {d.id: d.filename for d in documents}))
+        ids = [d.id for d in documents if not named or d.id in named]
+        found = await asyncio.to_thread(self._vectors.chunks_of_pages, ids, pages)
+        return found[: self._settings.max_page_chunks]
 
     async def search(
         self, query: str, top_k: int, document_ids: Collection[str] | None = None
@@ -131,14 +162,50 @@ class RetrievalService:
         ready = [d for d in self._documents.list_library() if d.status is DocumentStatus.READY]
         return ready if only is None else [d for d in ready if d.id in set(only)]
 
-    async def _rank(self, ids: list[str], query: str, top_k: int) -> list[Chunk]:
+    async def _rank(
+        self,
+        ids: list[str],
+        query: str,
+        top_k: int,
+        *,
+        question: str | None = None,
+        follow_up: bool = False,
+    ) -> list[Chunk]:
         vector = await asyncio.to_thread(self._embedder.embed_query, query)
         ranked = await asyncio.to_thread(
             self._vectors.search, query, vector, ids, self._settings.candidates
         )
+        ranked = await self._with_exact_hits(ranked, ids, question or query, follow_up)
         return select_sources(
             ranked,
             top_k=top_k,
             per_document_cap=self._settings.per_document_cap,
             multiple_documents=len(ids) > 1,
         )
+
+    async def _with_exact_hits(
+        self, hybrid: list[Chunk], ids: list[str], question: str, follow_up: bool
+    ) -> list[Chunk]:
+        """Merges a literal, case-insensitive substring search into the hybrid result. A short
+        lookup ("Bemessungslebensdauer", "IP66") ranks exact hits first; in a longer question
+        only codes and compounds the hybrid result lacks are added. A follow-up's few words say
+        little without the previous question, so it is never treated as a lookup."""
+        terms = query_terms(question)
+        keyword = is_keyword_query(question, terms) and not follow_up
+        wanted = terms if keyword else tuple(t for t in terms if is_rare(t))
+        wanted = wanted if keyword else missing_from(hybrid, wanted)
+        if not wanted:
+            return hybrid
+        if keyword and (phrase := query_phrase(question)):
+            wanted = (phrase, *wanted)
+        found: dict[str, Chunk] = {}
+        for term in wanted:
+            hits = await asyncio.to_thread(
+                self._vectors.find_text, term, ids, self._settings.exact_candidates
+            )
+            found.update((c.chunk_id, c) for c in hits)
+        exact = rank_exact(list(found.values()), wanted)[: self._settings.exact_top]
+        weight = (
+            self._settings.keyword_exact_weight if keyword else self._settings.sentence_exact_weight
+        )
+        return fuse(hybrid, exact, exact_weight=weight)

@@ -178,7 +178,7 @@ def _ocr(settings: Settings, process: IsolatedProcess) -> PageOcr:
     if shutil.which("tesseract") is None:
         # Local development without Tesseract; the Docker image always has it.
         log.warning("ocr_unavailable")
-        return NoPageOcr()
+        return NoPageOcr(engine_missing=True)
     options = OcrOptions(languages=settings.ocr_languages, timeout_s=settings.ocr_page_timeout_s)
     return TesseractPageOcr(process, options)
 

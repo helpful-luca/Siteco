@@ -6,6 +6,7 @@ Filters are built only from validated UUIDs, so they cannot be injected.
 """
 
 import json
+import re
 import threading
 from collections.abc import Collection, Sequence
 from dataclasses import asdict
@@ -20,6 +21,7 @@ from lancedb.index import FTS
 from lancedb.rerankers import RRFReranker
 
 from docchat.domain.enums import SearchMode
+from docchat.domain.highlight_geometry import trusted_rects
 from docchat.domain.models import Chunk, Sentence
 
 TABLE = "chunks"
@@ -70,6 +72,16 @@ def _in_filter(document_ids: Collection[str]) -> str:
     return "document_id IN ({})".format(", ".join(f"'{_uuid(d)}'" for d in document_ids))
 
 
+_PLAIN_TERM = re.compile(r"[0-9A-Za-z\u00c0-\u00ff.\-/, ]{1,80}")
+
+
+def _like_term(term: str) -> str:
+    """A lower case term or phrase that is safe inside a LIKE pattern: no quote, `%` or `_`."""
+    if _PLAIN_TERM.fullmatch(term) is None:
+        raise ValueError("not a plain search term")
+    return term.lower()
+
+
 def _sentences_json(sentences: Sequence[Sentence]) -> str:
     return json.dumps([asdict(s) for s in sentences], ensure_ascii=False, separators=(",", ":"))
 
@@ -81,7 +93,7 @@ def _row_to_chunk(row: dict[str, Any]) -> Chunk:
             text=s["text"],
             char_start=s["char_start"],
             char_end=s["char_end"],
-            rects=tuple((r[0], r[1], r[2], r[3]) for r in s["rects"]),
+            rects=trusted_rects([(r[0], r[1], r[2], r[3]) for r in s["rects"]]),
         )
         for s in json.loads(row["sentences"])
     )
@@ -224,6 +236,36 @@ class LanceVectorStore:
         if mode is SearchMode.HYBRID:
             query = query.rerank(RRFReranker())
         rows = query.limit(limit).select(_READ_COLUMNS).to_list()
+        return [_row_to_chunk(r) for r in rows]
+
+    def chunks_of_pages(self, document_ids: Collection[str], pages: Collection[int]) -> list[Chunk]:
+        if not document_ids or not pages:
+            return []
+        numbers = ", ".join(str(int(p)) for p in pages)
+        rows = (
+            self._require()
+            .search()
+            .where(f"{_in_filter(document_ids)} AND page IN ({numbers})")
+            .select(_READ_COLUMNS)
+            .limit(None)
+            .to_list()
+        )
+        order = {d: i for i, d in enumerate(document_ids)}
+        chunks = [_row_to_chunk(r) for r in rows]
+        return sorted(chunks, key=lambda c: (order[c.document_id], c.page or 0, c.ordinal))
+
+    def find_text(self, term: str, document_ids: Collection[str], limit: int) -> list[Chunk]:
+        pattern = _like_term(term)
+        if not document_ids:
+            return []
+        rows = (
+            self._require()
+            .search()
+            .where(f"{_in_filter(document_ids)} AND lower(text) LIKE '%{pattern}%'")
+            .select(_READ_COLUMNS)
+            .limit(limit)
+            .to_list()
+        )
         return [_row_to_chunk(r) for r in rows]
 
     def chunks_of(self, document_ids: Collection[str]) -> list[Chunk]:

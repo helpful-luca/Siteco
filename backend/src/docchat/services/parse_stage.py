@@ -176,6 +176,8 @@ class ParseStage:
             notices.append(Notice(NoticeCode.PAGES_OCR, {"count": ocr_pages}))
         if without_text:
             notices.append(Notice(NoticeCode.PAGES_WITHOUT_TEXT, {"count": len(without_text)}))
+            if self._ocr.engine_missing:
+                notices.append(Notice(NoticeCode.OCR_ENGINE_MISSING))
         if skipped:
             notices.append(Notice(NoticeCode.PAGES_SKIPPED, {"count": len(skipped)}))
         return ParseOutcome(pages, sink.chunks, sink.chars, tuple(notices))

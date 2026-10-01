@@ -68,6 +68,20 @@ async def test_without_ocr_nothing_is_recognized_and_no_stage_is_shown(tmp_path:
     assert harness.ocr.calls == []
 
 
+async def test_a_missing_engine_is_said_plainly_once(tmp_path: Path) -> None:
+    ocr = FakePageOcr({}, available=False)
+    ocr.engine_missing = True
+    harness = build_harness(tmp_path, ocr=ocr)
+    doc = harness.add_document(pages=[TEXT, "", ""])
+    await harness.worker.process(doc.id)
+    ready = harness.reload(doc)
+    assert ready is not None
+    assert ready.notices == (
+        Notice(NoticeCode.PAGES_WITHOUT_TEXT, {"count": 2}),
+        Notice(NoticeCode.OCR_ENGINE_MISSING),
+    )
+
+
 async def test_a_scan_only_pdf_becomes_searchable(tmp_path: Path) -> None:
     harness = build_harness(tmp_path, ocr=FakePageOcr({1: SCANNED}))
     doc = harness.add_document(pages=[""])

@@ -686,3 +686,16 @@ async def test_a_404_without_not_found_error_does_not_mark_the_model(tmp_path: P
     end = terminal(await h.ask(h.new_chat()))
     assert isinstance(end, ErrorEvent) and end.code is ErrorCode.MODEL_UNAVAILABLE
     assert h.models.is_available("claude-sonnet-5-5") is True
+
+
+async def test_full_context_request_sends_the_documents_first(h: ChatHarness) -> None:
+    h.add_document(MIRA)
+    await h.ask(h.new_chat(), "Was steht auf Seite 2?")
+    assert h.llm is not None
+    request = h.llm.requests[0]
+    assert request.documents_first is True
+    assert request.requested_pages == (2,)
+    assert [r.title for r in request.search_results] == [
+        "Datenblatt Mira.pdf, S. 1",
+        "Datenblatt Mira.pdf, S. 2",
+    ]

@@ -139,6 +139,7 @@ Claude Code and Claude Desktop can search your library: `claude mcp add --transp
 | `MCP_TOKEN` | no | empty | Optional bearer token for the MCP endpoint (see docs/mcp.md) |
 | `LOG_LEVEL` | no | `INFO` | Backend log level |
 | `OCR` | no | `on` | Tesseract (German and English) reads scanned pages; `off` leaves them unsearchable |
+| `FULL_CONTEXT_MAX_TOKENS` | no | `150000` | Documents in a chat's scope up to this size (about four characters per token) are sent to Claude completely, page by page, and cached for follow-up questions; larger scopes use search (page and exact term lookups included). `0` always searches |
 | `LLM_PROVIDER` | no | `anthropic` | `fake` answers without Claude (tests, demo) |
 
 ## Development
@@ -150,6 +151,8 @@ Claude Code and Claude Desktop can search your library: `claude mcp add --transp
     make api-types   # regenerate contracts/openapi.json and the TypeScript types
     make fresh-clone # prove a clean clone starts without .env
     make e2e         # browser E2E against the Docker stack (fake model, then no key)
+
+Scanned PDFs are read by Tesseract inside the Docker image. For local development without Docker install it once: `brew install tesseract tesseract-lang`. Without it the library says so on documents that have pages without text.
 
 ## Desktop app (macOS and Windows)
 

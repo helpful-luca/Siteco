@@ -86,6 +86,7 @@ class NoticeCode(StrEnum):
 
     PAGES_WITHOUT_TEXT = "PAGES_WITHOUT_TEXT"
     PAGES_OCR = "PAGES_OCR"
+    OCR_ENGINE_MISSING = "OCR_ENGINE_MISSING"  # no Tesseract on this machine (dev only)
     OCR_RUNNING = "OCR_RUNNING"  # while parsing: a scanned page is being recognized
     PAGES_SKIPPED = "PAGES_SKIPPED"
     PDF_ACTIVE_CONTENT = "PDF_ACTIVE_CONTENT"

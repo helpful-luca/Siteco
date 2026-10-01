@@ -79,3 +79,51 @@ async def test_a_scenario_can_be_limited_to_one_model() -> None:
         assert error.code == "LLM_OVERLOADED"
     else:
         raise AssertionError("the haiku lane should fail")
+
+
+def _many(question: str, *results: tuple[str, tuple[str, ...]], **changes: object) -> LLMRequest:
+    return LLMRequest(
+        model="claude-sonnet-5-5",
+        effort=None,
+        history=(),
+        search_results=tuple(SearchResult(f"c{i}", t, s) for i, (t, s) in enumerate(results)),
+        question=question,
+        ui_language="de",
+        answer_style="concise",
+        max_tokens=100,
+        **changes,  # type: ignore[arg-type]
+    )
+
+
+async def _cited(request: LLMRequest) -> str:
+    events = await _events(request)
+    [citation] = [e for e in events if isinstance(e, CitationDelta)]
+    return citation.source
+
+
+async def test_answers_from_the_page_that_was_asked() -> None:
+    request = _many(
+        "Was steht auf Seite 3?",
+        ("Katalog.pdf, S. 2", ("Auf dieser Seite geht es um etwas anderes.",)),
+        ("Katalog.pdf, S. 3", ("Hier stehen die Daten der Leuchte Trunking Flex.",)),
+    )
+    assert await _cited(request) == "c1"
+
+
+async def test_answers_from_the_passage_that_contains_the_term() -> None:
+    request = _many(
+        "Bemessungslebensdauer",
+        ("Katalog.pdf, S. 1", ("Das ist ein langer Satz ohne das gesuchte Wort.",)),
+        (
+            "Katalog.pdf, S. 9",
+            ("Eine Zeile.", "Die Bemessungslebensdauer beträgt 50.000 h bei L90B10."),
+        ),
+    )
+    events = await _events(request)
+    [citation] = [e for e in events if isinstance(e, CitationDelta)]
+    assert (citation.source, citation.block_start) == ("c1", 1)
+
+
+async def test_without_a_match_it_keeps_the_first_sentence() -> None:
+    request = _many("Wie alt ist der Mond?", ("A.pdf", ("Erster echter Satz im Dokument hier.",)))
+    assert await _cited(request) == "c0"

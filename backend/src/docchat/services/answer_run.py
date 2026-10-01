@@ -234,10 +234,10 @@ class AnswerRun:
         self._emit(SourcesEvent(self._mode, self._sources, retrieved.notices))
         if llm is None:
             return self._sources_only()
-        return await self._generate(llm, search_results)
+        return await self._generate(llm, search_results, retrieved)
 
     async def _generate(
-        self, llm: LLMClient, search_results: tuple[SearchResult, ...]
+        self, llm: LLMClient, search_results: tuple[SearchResult, ...], retrieved: Retrieved
     ) -> tuple[Message, RunEvent]:
         spec = self._spec
         request = LLMRequest(
@@ -250,6 +250,8 @@ class AnswerRun:
             answer_style=spec.style,
             max_tokens=spec.max_tokens,
             allow_fallbacks=spec.allow_fallbacks,
+            requested_pages=retrieved.requested_pages,
+            documents_first=retrieved.mode is SourcesMode.FULL_CONTEXT,
         )
         timings = self._deps.timings
         deadline = self._started + timings.total_timeout_s

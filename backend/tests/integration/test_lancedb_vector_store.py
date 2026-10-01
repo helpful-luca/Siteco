@@ -184,3 +184,46 @@ def test_text_index_can_be_rebuilt_with_another_stemmer(store: LanceVectorStore)
     store.rebuild_text_index(None)  # no stemming: the plural no longer matches the singular
     assert not store.search("Leuchte", vector, [doc], 1, mode=SearchMode.BM25)
     assert store.search("leuchten", vector, [doc], 1, mode=SearchMode.BM25)
+
+
+def test_pages_come_back_in_reading_order(store: LanceVectorStore) -> None:
+    doc, other = str(uuid4()), str(uuid4())
+    first, second, third = (_chunk(doc, o) for o in (0, 1, 2))  # pages 1, 2, 3
+    twin = Chunk(**{**second.__dict__, "chunk_id": str(uuid4()), "ordinal": 5})  # page 2 again
+    store.add([third, twin, first, second], [[0.1] * DIM] * 4)
+    store.add([_chunk(other, 1)], [[0.1] * DIM])
+    found = store.chunks_of_pages([doc], [2, 3])
+    assert [c.chunk_id for c in found] == [second.chunk_id, twin.chunk_id, third.chunk_id]
+    assert store.chunks_of_pages([doc], [99]) == []
+
+
+def test_find_text_matches_inside_compounds_without_case(store: LanceVectorStore) -> None:
+    doc = str(uuid4())
+    hit = _chunk(doc, 0, "Die Bemessungslebensdauer (L90B10) beträgt 50.000 h.")
+    miss = _chunk(doc, 1, "Nichts davon.")
+    store.add([hit, miss], [[0.1] * DIM] * 2)
+    assert [c.chunk_id for c in store.find_text("lebensdauer", [doc], 10)] == [hit.chunk_id]
+    assert [c.chunk_id for c in store.find_text("l90b10", [doc], 10)] == [hit.chunk_id]
+    assert store.find_text("50.000", [doc], 10)[0].chunk_id == hit.chunk_id
+    assert store.find_text("lebensdauer", [str(uuid4())], 10) == []
+
+
+def test_find_text_refuses_anything_but_a_plain_term(store: LanceVectorStore) -> None:
+    doc = str(uuid4())
+    with pytest.raises(ValueError):
+        store.find_text("x' OR '1'='1", [doc], 10)
+    with pytest.raises(ValueError):
+        store.find_text("100%", [doc], 10)
+
+
+def test_untrustworthy_rectangles_are_dropped_when_a_chunk_is_read(store: LanceVectorStore) -> None:
+    doc = str(uuid4())
+    text = "Tabellenzeile mit Werten."
+    jumpy = tuple((0.1, y, 0.5, 0.012) for y in (0.5, 0.1, 0.7, 0.2, 0.8, 0.3))
+    chunk = Chunk(
+        chunk_id=str(uuid4()), document_id=doc, ordinal=0, page=1, heading="", text=text,
+        search_text=text, sentences=(Sentence(0, text, 0, len(text), jumpy),),
+    )  # fmt: skip
+    store.add([chunk], [[0.1] * DIM])
+    read = store.get_chunk(doc, chunk.chunk_id)
+    assert read is not None and read.sentences[0].rects == ()

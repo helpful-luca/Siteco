@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     retrieval_candidates: int = 20
     top_k: int = 8
     per_document_cap: int = 5
-    full_context_max_tokens: int = 20_000
+    full_context_max_tokens: int = 150_000
     history_max_turns: int = 6
     history_max_tokens: int = 6000
 

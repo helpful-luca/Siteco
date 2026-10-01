@@ -1063,7 +1063,7 @@ export interface components {
          * @description Hints that are not errors. The UI translates them via `notices.<CODE>`.
          * @enum {string}
          */
-        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_OCR" | "OCR_RUNNING" | "PAGES_SKIPPED" | "PDF_ACTIVE_CONTENT" | "SCANNER_STARTING" | "SCANNER_UNAVAILABLE" | "SOURCES_PARTIAL" | "SUMMARY_PARTIAL" | "NO_CITATIONS" | "ANSWER_TRUNCATED" | "LLM_REFUSED" | "LLM_NOT_CONFIGURED" | "MODEL_SWITCHED" | "HIGHLIGHT_UNAVAILABLE";
+        NoticeCode: "PAGES_WITHOUT_TEXT" | "PAGES_OCR" | "OCR_ENGINE_MISSING" | "OCR_RUNNING" | "PAGES_SKIPPED" | "PDF_ACTIVE_CONTENT" | "SCANNER_STARTING" | "SCANNER_UNAVAILABLE" | "SOURCES_PARTIAL" | "SUMMARY_PARTIAL" | "NO_CITATIONS" | "ANSWER_TRUNCATED" | "LLM_REFUSED" | "LLM_NOT_CONFIGURED" | "MODEL_SWITCHED" | "HIGHLIGHT_UNAVAILABLE";
         /** NoticeOut */
         NoticeOut: {
             code: components["schemas"]["NoticeCode"];

@@ -1705,6 +1705,7 @@
         "enum": [
           "PAGES_WITHOUT_TEXT",
           "PAGES_OCR",
+          "OCR_ENGINE_MISSING",
           "OCR_RUNNING",
           "PAGES_SKIPPED",
           "PDF_ACTIVE_CONTENT",

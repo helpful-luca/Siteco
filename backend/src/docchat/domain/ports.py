@@ -254,6 +254,16 @@ class VectorStore(Protocol):
         whenever the documents have that many chunks (BM25 only returns text matches)."""
         ...
 
+    def chunks_of_pages(self, document_ids: Collection[str], pages: Collection[int]) -> list[Chunk]:
+        """The chunks on these pages, per document in the order given, then page and reading
+        order (for questions like "what is on page 56")."""
+        ...
+
+    def find_text(self, term: str, document_ids: Collection[str], limit: int) -> list[Chunk]:
+        """Chunks whose text contains `term`, case-insensitive and also inside longer words
+        (German compounds). `term` is a plain word or code; anything else is a ValueError."""
+        ...
+
     def chunks_of(self, document_ids: Collection[str]) -> list[Chunk]:
         """All chunks of the given documents, in document order (for the full-context mode)."""
         ...
@@ -281,6 +291,11 @@ class PageOcr(Protocol):
     @property
     def available(self) -> bool:
         """False when OCR is switched off or Tesseract is missing."""
+        ...
+
+    @property
+    def engine_missing(self) -> bool:
+        """True when OCR is on but Tesseract is not installed (local development only)."""
         ...
 
     async def recognize(self, path: Path, page: int) -> TextSection | None: ...

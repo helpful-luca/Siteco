@@ -117,6 +117,7 @@
     "LLM_NOT_CONFIGURED": "Ohne API-Schlüssel gibt es keine Antwort, nur die passenden Stellen aus deinen Dokumenten.",
     "MODEL_SWITCHED": "Diese Antwort hat {new} geschrieben statt {old}.",
     "PAGES_OCR": "{count, plural, one {# gescannte Seite wurde per Texterkennung gelesen. Markierungen dort können etwas ungenauer sein.} other {# gescannte Seiten wurden per Texterkennung gelesen. Markierungen dort können etwas ungenauer sein.}}",
+    "OCR_ENGINE_MISSING": "Tesseract ist auf diesem Rechner nicht installiert, daher wird kein gescannter Text gelesen. Installiere es mit: brew install tesseract tesseract-lang",
     "OCR_RUNNING": "Texterkennung für gescannte Seiten, Seite {page} von {pages}.",
     "HIGHLIGHT_UNAVAILABLE": "Die Stelle lässt sich hier nicht markieren. Du findest sie auf Seite {page}."
   },

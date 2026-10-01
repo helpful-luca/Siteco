@@ -115,3 +115,61 @@ def test_history_is_plain_text_without_search_results() -> None:
 def test_without_history_there_is_only_the_current_turn() -> None:
     body = build("claude-sonnet-5-5", history=())
     assert len(body["messages"]) == 1
+
+
+def _breakpoints(body: dict[str, Any]) -> int:
+    text = str(body)
+    return text.count("'cache_control'")
+
+
+def _two_documents() -> tuple[SearchResult, ...]:
+    return (
+        SearchResult("k1", "Katalog.pdf, S. 1", ("Satz eins.",)),
+        SearchResult("k2", "Katalog.pdf, S. 2", ("Satz zwei.", "Satz drei.")),
+    )
+
+
+def test_full_context_puts_the_cached_documents_before_the_question() -> None:
+    body = build(
+        "claude-sonnet-5-5",
+        history=(),
+        search_results=_two_documents(),
+        documents_first=True,
+        requested_pages=(2,),
+    )
+    [message] = body["messages"]
+    kinds = [b["type"] for b in message["content"]]
+    assert kinds == ["search_result", "search_result", "text", "text"]
+    first, last, context, question = message["content"]
+    assert "cache_control" not in first and last["cache_control"] == {"type": "ephemeral"}
+    assert all(b["citations"] == {"enabled": True} for b in (first, last))
+    assert "page_request: 2" in context["text"] and "documents_first" in context["text"]
+    assert question["text"] == "Welche Schutzart?"
+    assert _breakpoints(body) == 2  # system and documents
+
+
+def test_a_follow_up_repeats_the_same_cached_prefix() -> None:
+    docs = _two_documents()
+    one = build("claude-sonnet-5-5", history=(), search_results=docs, documents_first=True)
+    two = build(
+        "claude-sonnet-5-5",
+        history=(HistoryTurn("Welche Schutzart?", "IP66."),),
+        search_results=docs,
+        documents_first=True,
+        question="Und die Farbtemperatur?",
+    )
+    one_prefix = one["messages"][0]["content"][:2]
+    assert two["messages"][0]["content"][:2] == one_prefix
+    assert two["messages"][0]["content"][2] == {"type": "text", "text": "Welche Schutzart?"}
+    assert [m["role"] for m in two["messages"]] == ["user", "assistant", "user"]
+    assert two["messages"][1]["content"][0]["cache_control"] == {"type": "ephemeral"}
+    assert [b["type"] for b in two["messages"][2]["content"]] == ["text", "text"]
+    assert _breakpoints(two) == 3  # system, documents, last answer; never more than 4
+
+
+def test_retrieval_layout_is_unchanged_without_documents_first() -> None:
+    body = build("claude-sonnet-5-5", history=())
+    kinds = [b["type"] for b in body["messages"][-1]["content"]]
+    assert kinds == ["search_result", "text", "text"]
+    assert "cache_control" not in body["messages"][-1]["content"][0]
+    assert "documents_first" not in str(body["messages"])

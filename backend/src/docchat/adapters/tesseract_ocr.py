@@ -16,6 +16,7 @@ _PROCESS_MARGIN_S = 15
 
 class TesseractPageOcr:
     available = True
+    engine_missing = False
 
     def __init__(self, process: IsolatedProcess, options: OcrOptions) -> None:
         self._process = process

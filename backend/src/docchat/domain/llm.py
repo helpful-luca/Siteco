@@ -33,6 +33,10 @@ class LLMRequest:
     answer_style: AnswerStyle
     max_tokens: int
     allow_fallbacks: bool = True  # off in the comparison mode, so both columns stay honest
+    requested_pages: tuple[int, ...] = ()  # "Seite 56": the PDF pages the question asks about
+    # Full-context mode: the documents open the conversation (cached, same bytes every turn),
+    # history and question follow, so follow-up questions read the documents from the cache.
+    documents_first: bool = False
 
 
 @dataclass(frozen=True)

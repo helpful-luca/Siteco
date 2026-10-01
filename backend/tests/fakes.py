@@ -117,6 +117,7 @@ class FakePageOcr:
     def __init__(self, texts: dict[int, str] | None = None, *, available: bool = True) -> None:
         self.texts = texts or {}
         self.available = available
+        self.engine_missing = False
         self.calls: list[int] = []
         self.during: Callable[[int], object] | None = None  # runs while a page is recognized
 
@@ -186,6 +187,21 @@ class FakeVectorStore:
         candidates = [c for c, _ in self.rows.values() if c.document_id in document_ids]
         ranked = sorted(candidates, key=lambda c: (-len(words & _words(c.text)), c.ordinal))
         return ranked[:limit]
+
+    def chunks_of_pages(self, document_ids: Collection[str], pages: Collection[int]) -> list[Chunk]:
+        order = {d: i for i, d in enumerate(document_ids)}
+        chunks = [
+            c for c, _ in self.rows.values() if c.document_id in order and c.page in set(pages)
+        ]
+        return sorted(chunks, key=lambda c: (order[c.document_id], c.page or 0, c.ordinal))
+
+    def find_text(self, term: str, document_ids: Collection[str], limit: int) -> list[Chunk]:
+        found = [
+            c
+            for c, _ in self.rows.values()
+            if c.document_id in document_ids and term.lower() in c.text.lower()
+        ]
+        return sorted(found, key=lambda c: c.ordinal)[:limit]
 
     def chunks_of(self, document_ids: Collection[str]) -> list[Chunk]:
         order = {d: i for i, d in enumerate(document_ids)}

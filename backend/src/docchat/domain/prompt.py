@@ -5,6 +5,8 @@ names, ids or languages in it. Everything that changes per turn goes into the la
 The user's name is never part of any prompt.
 """
 
+from collections.abc import Sequence
+
 from docchat.domain.enums import AnswerStyle, Locale
 
 SYSTEM_PROMPT = """\
@@ -24,6 +26,12 @@ knowledge about products, values, specifications, prices, dates or legal require
 clearly which part is missing.
 - If two results contradict each other, show both values with their sources instead of \
 choosing one.
+- If <turn_context> has page_request, the user asks what is on those PDF pages. Describe \
+the results whose title ends with exactly those page numbers; if there are none, say that \
+the page is not in the documents.
+- If <turn_context> has sources: documents_first, the complete documents were given as \
+search results at the very start of this conversation; use them for every question, not \
+only the first.
 - Keep numbers, units, product codes and article numbers exactly as written in the \
 documents (for example IP66, IK08, 4000 K, EN 13201-2). Never convert or round them \
 unless the user asks.
@@ -58,7 +66,19 @@ results.
 """
 
 
-def turn_context(ui_language: Locale, style: AnswerStyle) -> str:
-    """The per-turn settings, placed in the last user turn so the system prompt stays cached."""
+def turn_context(
+    ui_language: Locale,
+    style: AnswerStyle,
+    *,
+    pages: Sequence[int] = (),
+    documents_first: bool = False,
+) -> str:
+    """The per-turn settings, placed in the last user turn so the system prompt stays cached.
+    `pages`: the PDF pages the question asks about; `documents_first`: the whole documents
+    sit at the start of the conversation (full-context mode)."""
     settings = f"ui_language: {ui_language.value}; answer_style: {style.value}"
+    if pages:
+        settings += "; page_request: " + ", ".join(str(p) for p in pages)
+    if documents_first:
+        settings += "; sources: documents_first"
     return f"<turn_context>{settings}</turn_context>"

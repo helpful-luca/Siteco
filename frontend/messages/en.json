@@ -117,6 +117,7 @@
     "LLM_NOT_CONFIGURED": "Without an API key there is no answer, only the matching passages from your documents.",
     "MODEL_SWITCHED": "This answer was written by {new} instead of {old}.",
     "PAGES_OCR": "{count, plural, one {# scanned page was read with text recognition. Highlights there may be less exact.} other {# scanned pages were read with text recognition. Highlights there may be less exact.}}",
+    "OCR_ENGINE_MISSING": "Tesseract is not installed on this machine, so scanned text is not read. Install it with: brew install tesseract tesseract-lang",
     "OCR_RUNNING": "Recognizing text on scanned pages, page {page} of {pages}.",
     "HIGHLIGHT_UNAVAILABLE": "The passage can't be highlighted here. It is on page {page}."
   },
