@@ -140,7 +140,7 @@ Claude Code and Claude Desktop can search your library: `claude mcp add --transp
 | `MCP_TOKEN` | no | empty | Optional bearer token for the MCP endpoint (see docs/mcp.md) |
 | `LOG_LEVEL` | no | `INFO` | Backend log level |
 | `OCR` | no | `on` | Tesseract (German and English) reads scanned pages; `off` leaves them unsearchable |
-| `FULL_CONTEXT_MAX_TOKENS` | no | `150000` | Documents in a chat's scope up to this size (about four characters per token) are sent to Claude completely, page by page, and cached for follow-up questions; larger scopes use search (page and exact term lookups included). `0` always searches |
+| `FULL_CONTEXT_MAX_TOKENS` | no | `50000` | Documents in a chat's scope up to this size are sent to Claude completely, page by page, and cached for follow-up questions (the size is estimated at two and a half characters per token, then counted by Claude). Larger scopes use search (RAG, page and exact term lookups included), which keeps a question on a catalog at about 8k input tokens. `0` always searches |
 | `LLM_PROVIDER` | no | `anthropic` | `fake` answers without Claude (tests, demo) |
 
 ## Development

@@ -4,6 +4,7 @@ import hashlib
 import re
 from collections.abc import Iterable, Sequence
 
+from docchat.domain.context_budget import conservative_tokens
 from docchat.domain.models import Chunk
 
 SNIPPET_CHARS = 240
@@ -25,20 +26,19 @@ def follow_up_query(previous_question: str | None, question: str) -> str:
     return f"{previous_question}\n{question}"
 
 
-def estimate_tokens_for_chars(char_count: int) -> int:
-    """Same estimate as the history budget: about four characters per token."""
-    return (char_count + 3) // 4
-
-
 def is_summary_request(question: str) -> bool:
     return _SUMMARY.search(question) is not None
 
 
 def fits_full_context(char_counts: Iterable[int], max_tokens: int) -> bool:
-    """True if all documents together fit the full-context budget. 0 turns the mode off."""
+    """True if all documents together may fit the full-context budget. 0 turns the mode off.
+
+    Conservative like the budget check before the request: a scope that looks too large goes
+    straight to search, without a token count or a failed try.
+    """
     if max_tokens <= 0:
         return False
-    return sum(estimate_tokens_for_chars(c) for c in char_counts) <= max_tokens
+    return sum(conservative_tokens(c) for c in char_counts) <= max_tokens
 
 
 def _fingerprint(text: str) -> str:

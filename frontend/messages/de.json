@@ -111,7 +111,7 @@
     "SCANNER_STARTING": "Die Virenprüfung startet noch. Die Datei wird gleich geprüft.",
     "SCANNER_UNAVAILABLE": "Die Virenprüfung ist gerade nicht erreichbar. Die Datei wartet, bis sie wieder läuft.",
     "SOURCES_PARTIAL": "{count, plural, one {# Dokument wird noch verarbeitet und ist in dieser Antwort nicht dabei.} other {# Dokumente werden noch verarbeitet und sind in dieser Antwort nicht dabei.}}",
-    "CONTEXT_REDUCED": "Die Dokumente sind zu groß für dieses Modell. Die Antwort stützt sich auf die passendsten Stellen.",
+    "CONTEXT_REDUCED": "Die Antwort stützt sich auf die passendsten Stellen der Dokumente.",
     "SUMMARY_PARTIAL": "Für eine Zusammenfassung ist das zu viel Text. Die Antwort stützt sich auf die passendsten Stellen.",
     "NO_CITATIONS": "Diese Antwort enthält keine Quellenangaben. Prüf sie besonders sorgfältig.",
     "ANSWER_TRUNCATED": "Die Antwort war sehr lang und wurde gekürzt.",

@@ -16,7 +16,7 @@ _CACHE_LIMIT = 64
 
 
 class ContextBudget:
-    def __init__(self, max_tokens: int = 150_000, history_margin: int = 8_000) -> None:
+    def __init__(self, max_tokens: int = 50_000, history_margin: int = 8_000) -> None:
         self._max_tokens = max_tokens
         self._history_margin = history_margin
         self._counted: dict[tuple[str, str], int] = {}

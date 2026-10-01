@@ -42,7 +42,7 @@ class RetrievalSettings:
     candidates: int = 20
     top_k: int = 8
     per_document_cap: int = 5
-    full_context_max_tokens: int = 150_000
+    full_context_max_tokens: int = 50_000
     exact_candidates: int = 200  # substring hits read per term, then ranked
     exact_top: int = 8  # hits of the substring search that take part in the fusion
     keyword_exact_weight: float = 3.0  # RRF weight: a lookup puts exact hits before the rest

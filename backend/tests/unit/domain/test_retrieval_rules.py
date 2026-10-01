@@ -41,8 +41,9 @@ def test_duplicate_texts_are_skipped() -> None:
 
 
 def test_full_context_budget() -> None:
-    assert fits_full_context([40_000, 40_000], 20_000)
-    assert not fits_full_context([40_000, 40_004], 20_000)
+    # Conservative: two and a half characters per token (German compounds, catalog tables).
+    assert fits_full_context([25_000, 25_000], 20_000)
+    assert not fits_full_context([25_000, 25_003], 20_000)
     assert not fits_full_context([10], 0)
 
 

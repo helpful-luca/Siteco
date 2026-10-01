@@ -760,14 +760,15 @@ async def test_a_page_question_shows_that_page_up_front_capped(h: ChatHarness) -
     assert len(answer_of(h, events).sources) <= 13  # the page chunks plus a cited one
 
 
-async def test_a_scope_too_large_for_the_model_is_searched_and_says_so(h: ChatHarness) -> None:
+async def test_a_scope_too_large_for_the_model_is_searched_quietly(h: ChatHarness) -> None:
+    # Search is the normal path (RAG), not a degraded one: no notice.
     h.add_document(MANY_PAGES)
     assert h.llm is not None
     h.llm.token_count = 9_999_999  # what the counting API reports
     events = await h.ask(h.new_chat(), "Welche Schutzart hat Modell7?")
     first = of(events, SourcesEvent)[0]
     assert first.mode is SourcesMode.RETRIEVAL
-    assert [n.code for n in first.notices] == [NoticeCode.CONTEXT_REDUCED]
+    assert first.notices == ()
     assert h.llm.requests[0].documents_first is False
     assert len(h.llm.requests[0].search_results) <= 8
     assert answer_of(h, events).sources_mode is SourcesMode.RETRIEVAL
@@ -782,6 +783,17 @@ async def test_counted_tokens_are_cached_per_scope_and_model(h: ChatHarness) -> 
     await h.ask(chat, "Und Modell9?")
     assert len(h.llm.counted) == 1
     assert h.llm.requests[1].documents_first is True
+
+
+async def test_a_scope_that_looks_too_large_is_searched_without_counting(tmp_path: Path) -> None:
+    # 60k characters are 15k tokens at four per token (inside the harness budget of 20k) but
+    # 24k at two and a half: the plan picks search before any request, so a large document never
+    # costs a count or a failed full-context try.
+    h = build_chat_harness(tmp_path)
+    h.add_document(MIRA, char_count=60_000)
+    events = await h.ask(h.new_chat())
+    assert of(events, SourcesEvent)[0].mode is SourcesMode.RETRIEVAL
+    assert h.llm is not None and h.llm.counted == []
 
 
 async def test_without_a_count_the_estimate_is_conservative(tmp_path: Path) -> None:
@@ -810,5 +822,5 @@ async def test_context_too_large_before_the_first_delta_retries_with_search(
     done = terminal(events)
     assert isinstance(done, DoneEvent) and done.status is MessageStatus.COMPLETE
     saved = answer_of(h, events)
-    assert NoticeCode.CONTEXT_REDUCED in [n.code for n in saved.notices]
+    assert NoticeCode.CONTEXT_REDUCED not in [n.code for n in saved.notices]
     assert saved.sources_mode is SourcesMode.RETRIEVAL

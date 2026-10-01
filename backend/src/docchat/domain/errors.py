@@ -98,7 +98,7 @@ class NoticeCode(StrEnum):
     # Answers
     SOURCES_PARTIAL = "SOURCES_PARTIAL"
     SUMMARY_PARTIAL = "SUMMARY_PARTIAL"
-    CONTEXT_REDUCED = "CONTEXT_REDUCED"  # the documents were too large for the model: search
+    CONTEXT_REDUCED = "CONTEXT_REDUCED"  # no longer sent; answers saved with it still show it
     NO_CITATIONS = "NO_CITATIONS"
     ANSWER_TRUNCATED = "ANSWER_TRUNCATED"
     LLM_REFUSED = "LLM_REFUSED"

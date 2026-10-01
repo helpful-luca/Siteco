@@ -231,13 +231,10 @@ class AnswerRun:
             log.exception("answer_failed", extra=self._log_fields())
             return self._failed(ErrorCode.INTERNAL_ERROR, ErrorStage.LLM)
 
-    async def _retrieve(self, plan: RetrievalPlan, *, reduced: bool = False) -> Retrieved:
+    async def _retrieve(self, plan: RetrievalPlan) -> Retrieved:
+        """Search is the normal path (RAG), so falling back to it from full context says nothing."""
         spec = self._spec
-        retrieved = await self._deps.retrieval.retrieve(plan, spec.query, spec.question.content)
-        if reduced:
-            notices = (*retrieved.notices, Notice(NoticeCode.CONTEXT_REDUCED))
-            retrieved = replace(retrieved, notices=notices)
-        return retrieved
+        return await self._deps.retrieval.retrieve(plan, spec.query, spec.question.content)
 
     def _adopt(self, retrieved: Retrieved) -> tuple[SearchResult, ...]:
         """Takes the retrieved chunks as this run's sources; returns what the model gets."""
@@ -263,7 +260,7 @@ class AnswerRun:
                 fits = llm is not None and await self._fits(llm, retrieved)
                 if not fits:  # too large for this model, or nothing to generate: search
                     retrieval_plan = replace(spec.plan, mode=SourcesMode.RETRIEVAL)
-                    retrieved = await self._retrieve(retrieval_plan, reduced=llm is not None)
+                    retrieved = await self._retrieve(retrieval_plan)
         except Exception:
             log.exception("retrieval_failed", extra=self._log_fields())
             return self._failed(ErrorCode.INTERNAL_ERROR, ErrorStage.RETRIEVAL)
@@ -311,7 +308,7 @@ class AnswerRun:
                 if self._too_large_for_full_context(error, request):
                     try:
                         retrieval_plan = replace(self._spec.plan, mode=SourcesMode.RETRIEVAL)
-                        retrieved = await self._retrieve(retrieval_plan, reduced=True)
+                        retrieved = await self._retrieve(retrieval_plan)
                     except Exception:
                         log.exception("retrieval_failed", extra=self._log_fields())
                         return self._failed(ErrorCode.INTERNAL_ERROR, ErrorStage.RETRIEVAL)

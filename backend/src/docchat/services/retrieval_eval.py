@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from docchat.domain.chunking import estimate_tokens
+from docchat.domain.context_budget import conservative_tokens
 from docchat.domain.enums import SearchMode
 from docchat.domain.eval_metrics import QuestionOutcome
 from docchat.domain.eval_set import EvalQuestion
@@ -115,7 +116,11 @@ class RetrievalEvaluator:
                 continue
             document_id = corpus.documents[documents.pop()]
             whole = self._vectors.chunks_of([document_id])
-            if _tokens(whole) > self._settings.full_context_max_tokens:
+            # Eligible like in the app: the plan's conservative estimate, not the reported size.
+            if (
+                conservative_tokens(sum(len(c.text) for c in whole))
+                > self._settings.full_context_max_tokens
+            ):
                 continue
             query = follow_up_query(question.previous, question.question)
             ranked, _ = self._search(query, [document_id], SearchMode.HYBRID)
