@@ -34,10 +34,10 @@ export function OnboardingOverlay({ open, initial, onDone }: Props) {
     >
       <Dialog.Portal>
         {/* The setup owns the whole window like Apple's setup assistant: the app appears behind it on finish. */}
-        <Dialog.Backdrop className="setup-canvas fixed inset-0 transition-opacity duration-500 ease-out-soft data-starting-style:opacity-0 data-ending-style:opacity-0" />
+        <Dialog.Backdrop className="setup-canvas fixed inset-0 z-60 transition-opacity duration-500 ease-out-soft data-starting-style:opacity-0 data-ending-style:opacity-0" />
         <Dialog.Popup
           aria-label={t('language.title')}
-          className="fixed inset-0 flex outline-none transition-[opacity,scale] duration-500 ease-out-soft data-starting-style:scale-[0.99] data-starting-style:opacity-0 data-ending-style:scale-[1.01] data-ending-style:opacity-0"
+          className="fixed inset-0 z-60 flex outline-none transition-[opacity,scale] duration-500 ease-out-soft data-starting-style:scale-[0.99] data-starting-style:opacity-0 data-ending-style:scale-[1.01] data-ending-style:opacity-0"
         >
           <OnboardingFlow
             initial={initial}
