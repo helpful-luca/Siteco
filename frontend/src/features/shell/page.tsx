@@ -10,6 +10,8 @@ type Props = {
   className?: string;
   /** Banners this page shows in its own words (see GlobalBanner `omit`). */
   omitBanners?: readonly string[];
+  /** Banners shown without their button, because it would lead to this page (GlobalBanner `withoutAction`). */
+  bannersWithoutAction?: readonly string[];
   children: ReactNode;
 };
 
@@ -17,7 +19,7 @@ type Props = {
  * The page column inside <main>. Banner, title, toolbar and content share one left edge
  * (`px-gutter`), and the first line starts 12 px below the top like the sidebar's first row.
  */
-export function Page({ width = 'page', center = false, className, omitBanners, children }: Props) {
+export function Page({ width = 'page', center = false, className, omitBanners, bannersWithoutAction, children }: Props) {
   return (
     <div
       className={cn(
@@ -26,7 +28,7 @@ export function Page({ width = 'page', center = false, className, omitBanners, c
         className,
       )}
     >
-      <GlobalBanner className="mb-6" omit={omitBanners} />
+      <GlobalBanner className="mb-6" omit={omitBanners} withoutAction={bannersWithoutAction} />
       {center ? (
         <>
           <div aria-hidden className="min-h-6 flex-2" />

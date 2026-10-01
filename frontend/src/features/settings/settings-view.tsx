@@ -43,8 +43,8 @@ export function SettingsView({ section }: { section: Section | null }) {
   const Content = CONTENT[active];
 
   return (
-    // Models is where the key is entered: a banner pointing there would point at itself.
-    <Page omitBanners={active === 'models' ? KEY_BANNERS : undefined}>
+    // Models is where the key is entered: the key notice stays, its button would point at itself.
+    <Page bannersWithoutAction={active === 'models' ? KEY_BANNERS : undefined}>
       <div className="@container">
         <div className="grid gap-x-10 @2xl:grid-cols-[13rem_minmax(0,1fr)]">
           <nav

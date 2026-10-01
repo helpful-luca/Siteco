@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
+import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { accountStatus } from '@/shared/api/account-status';
 import { connection } from '@/shared/api/connection';
 import type { ConfigOut } from '@/shared/api/types';
 import de from '../../../messages/de.json';
 import { ConnectionWatcher } from './connection-watcher';
-import { GlobalBanner } from './global-banner';
+import { GlobalBanner, KEY_BANNERS } from './global-banner';
 
 function config(patch: Partial<ConfigOut> = {}): ConfigOut {
   return {
@@ -32,14 +33,14 @@ function config(patch: Partial<ConfigOut> = {}): ConfigOut {
   };
 }
 
-function setup(cfg: ConfigOut = config()) {
+function setup(cfg: ConfigOut = config(), banner: ComponentProps<typeof GlobalBanner> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
   client.setQueryData(['config'], cfg);
   const invalidate = vi.spyOn(client, 'invalidateQueries');
   render(
     <NextIntlClientProvider locale="de" messages={de} timeZone="Europe/Berlin">
       <QueryClientProvider client={client}>
-        <GlobalBanner />
+        <GlobalBanner {...banner} />
         <ConnectionWatcher />
       </QueryClientProvider>
     </NextIntlClientProvider>,
@@ -72,6 +73,12 @@ describe('GlobalBanner', () => {
   it('explains a missing key as a quiet note', () => {
     setup(config({ llm_status: 'missing_key' }));
     expect(screen.getByRole('note')).toHaveTextContent(de.banner.missingKey);
+  });
+
+  it('still names a missing key on the page where it is entered, without a button to itself', () => {
+    setup(config({ llm_status: 'missing_key' }), { withoutAction: KEY_BANNERS });
+    expect(screen.getByRole('note')).toHaveTextContent(de.banner.missingKey);
+    expect(screen.queryByRole('link', { name: 'API-Key eintragen' })).toBeNull();
   });
 
   it('tells how to fix a key that was rejected at runtime', () => {

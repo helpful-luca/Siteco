@@ -28,7 +28,15 @@ export const KEY_BANNERS = ['invalidKey', 'missingKey', 'needsWorkspace'] as con
  * important first: the backend is away, the browser is offline, the key was rejected or is
  * missing, the daily budget is used up, the Claude account hit its credit limit.
  */
-export function GlobalBanner({ className, omit = [] }: { className?: string; omit?: readonly string[] }) {
+type BannerProps = {
+  className?: string;
+  /** Banners this page does not show at all. */
+  omit?: readonly string[];
+  /** Banners shown without their button, on the page the button would lead to. */
+  withoutAction?: readonly string[];
+};
+
+export function GlobalBanner({ className, omit = [], withoutAction = [] }: BannerProps) {
   const t = useTranslations('banner');
   const locale = useLocale();
   const { data: config } = useConfig();
@@ -87,8 +95,9 @@ export function GlobalBanner({ className, omit = [] }: { className?: string; omi
     banners.push({ key: 'billing', icon: <CreditCard aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('billing'), hint: t('billingHint'), live: true });
   }
 
-  const banner = banners.find((b) => !omit.includes(b.key));
-  if (!banner) return null;
+  const found = banners.find((b) => !omit.includes(b.key));
+  if (!found) return null;
+  const banner = withoutAction.includes(found.key) ? { ...found, action: undefined } : found;
   return (
     <div
       role={banner.live ? 'status' : 'note'}
