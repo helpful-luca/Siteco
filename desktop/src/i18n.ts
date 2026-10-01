@@ -44,7 +44,7 @@ const de = {
     pickProjectTitle: 'Projektordner wählen',
     pickProjectMessage: 'Wähle den Ordner von Siteco Document Chat, in dem compose.yaml liegt.',
     pickProjectButton: 'Ordner wählen',
-    stopFailedTitle: 'Die Dienste konnten nicht beendet werden.',
+    stopFailedTitle: 'Die Dienste konnten nicht beendet werden',
     stopFailedDetail: 'Du kannst sie in Docker Desktop beenden.',
     ok: 'OK',
   },
@@ -66,11 +66,11 @@ const de = {
     errors: {
       'docker-missing': {
         title: 'Docker wurde nicht gefunden',
-        body: 'Siteco Document Chat läuft in Docker. Installiere Docker Desktop und versuche es dann erneut.',
+        body: 'Siteco Document Chat läuft in Docker. Installiere Docker Desktop und versuch es dann erneut.',
       },
       'docker-not-running': {
         title: 'Docker startet nicht',
-        body: 'Öffne Docker Desktop, warte, bis es bereit ist, und versuche es dann erneut.',
+        body: 'Öffne Docker Desktop, warte, bis es bereit ist, und versuch es dann erneut.',
       },
       'project-missing': {
         title: 'Projektordner nicht gefunden',
@@ -78,11 +78,11 @@ const de = {
       },
       'project-override': {
         title: 'Zusätzliche Compose-Datei gefunden',
-        body: 'Im Projektordner liegt eine compose.override-Datei. Die App startet nur die geprüfte compose.yaml. Entferne die Datei und versuche es erneut.',
+        body: 'Im Projektordner liegt eine compose.override-Datei. Die App startet nur die geprüfte compose.yaml. Entferne die Datei und versuch es erneut.',
       },
       'port-busy': {
         title: 'Port {port} ist belegt',
-        body: 'Ein anderes Programm nutzt localhost:{port}. Beende es und versuche es erneut.',
+        body: 'Ein anderes Programm nutzt localhost:{port}. Beende es und versuch es erneut.',
       },
       'compose-failed': {
         title: 'Die Dienste konnten nicht starten',
@@ -94,15 +94,15 @@ const de = {
       },
       'dev-not-running': {
         title: 'Die App läuft nicht',
-        body: 'Starte das Backend und next dev mit npm run dev, dann versuche es erneut.',
+        body: 'Starte das Backend und next dev mit npm run dev, dann versuch es erneut.',
       },
       'windows-too-old': {
         title: 'Diese Windows-Version ist zu alt',
-        body: 'Docker Desktop braucht Windows 10 22H2 oder Windows 11. Installiere die Updates unter Einstellungen > Windows Update und versuche es dann erneut.',
+        body: 'Docker Desktop braucht Windows 10 22H2 oder Windows 11. Installiere die Updates unter Einstellungen > Windows Update und versuch es dann erneut.',
       },
       'virtualization-off': {
         title: 'Die Virtualisierung ist ausgeschaltet',
-        body: 'Docker braucht die Virtualisierung des Prozessors (Intel VT-x oder AMD-V). Schalte sie im BIOS oder UEFI ein, starte den Rechner neu und versuche es erneut.',
+        body: 'Docker braucht die Virtualisierung des Prozessors (Intel VT-x oder AMD-V). Schalte sie im BIOS oder UEFI ein, starte den Rechner neu und versuch es erneut.',
       },
       'wsl-missing': {
         title: 'WSL 2 fehlt',
@@ -153,7 +153,7 @@ const en: Messages = {
     pickProjectTitle: 'Choose the project folder',
     pickProjectMessage: 'Choose the Siteco Document Chat folder that contains compose.yaml.',
     pickProjectButton: 'Choose folder',
-    stopFailedTitle: 'The services could not be stopped.',
+    stopFailedTitle: 'The services could not be stopped',
     stopFailedDetail: 'You can stop them in Docker Desktop.',
     ok: 'OK',
   },

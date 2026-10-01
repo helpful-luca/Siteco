@@ -123,7 +123,8 @@ pre {
   width: 33%;
   height: 100%;
   border-radius: 999px;
-  background: var(--accent);
+  /* Progress is neutral like in the app; red stays for the one action. */
+  background: var(--ink-muted);
   animation: sweep 1.4s ease-in-out infinite;
 }
 
