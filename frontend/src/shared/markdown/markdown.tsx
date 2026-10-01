@@ -126,7 +126,7 @@ function defaultsFor(t: Translate, source: string, blockAction: Props['blockActi
 
 /**
  * Markdown for answers: GFM tables, lists and code, but no HTML, no images and only http(s) and
- * mailto links (annex 11, 8.4). Safe by default: raw HTML is skipped, never rendered.
+ * mailto links. Safe by default: raw HTML is skipped, never rendered.
  */
 export function Markdown({ text, streaming = false, remarkPlugins = NONE, components, blockAction, className }: Props) {
   const t = useTranslations('markdown');

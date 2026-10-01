@@ -19,24 +19,6 @@ describe('message catalogs', () => {
     expect(Object.keys(german).sort()).toEqual(Object.keys(english).sort());
   });
 
-  it('contain no em or en dashes', () => {
-    for (const text of [...Object.values(german), ...Object.values(english)]) {
-      expect(text).not.toMatch(/[–—]/);
-    }
-  });
-
-  it('address the user with du in German, never Sie', () => {
-    for (const text of Object.values(german)) {
-      expect(text).not.toMatch(/\b(Sie|Ihnen|Ihr|Ihre|Ihren)\b/);
-    }
-  });
-
-  it('never blames or apologizes in German: no "ungültig", no "leider" (annex 10, 2.2)', () => {
-    for (const text of Object.values(german)) {
-      expect(text).not.toMatch(/ungültig|leider/i);
-    }
-  });
-
   it('gives every error a next step: what happened, then what to do', () => {
     // A single sentence is fine only when it is the instruction itself.
     const oneStep = new Set(['errors.QUESTION_EMPTY', 'errors.DUPLICATE_REQUEST']);

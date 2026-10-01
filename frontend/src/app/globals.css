@@ -185,7 +185,7 @@ html[data-desktop]
 
   /*
    * Layout. Spacing itself is Tailwind's 4 px scale (`--spacing: 0.25rem` on a 16 px root):
-   * use scale steps (p-3 = 12 px), never arbitrary pixel values. See brain/plans/02-design-system.md.
+   * use scale steps (p-3 = 12 px), never arbitrary pixel values.
    */
   --spacing-sidebar: 264px;
   --spacing-panel: 440px;

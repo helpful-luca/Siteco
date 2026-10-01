@@ -13,7 +13,7 @@ import { useChatSettings } from '../chat-settings';
 import { alternateModel } from '../format';
 import type { RunError } from '../stream/stream-reducer';
 
-/** Claude is busy or slow: the same question may go through with another model (annex 10, H25). */
+/** Claude is busy or slow: the same question may go through with another model. */
 const OTHER_MODEL = new Set(['LLM_OVERLOADED', 'LLM_UNAVAILABLE', 'LLM_TIMEOUT']);
 /** The chosen model cannot answer: the picker is the fix. */
 const CHOOSE_MODEL = new Set(['MODEL_UNAVAILABLE', 'LLM_FORBIDDEN']);
@@ -33,7 +33,7 @@ type Props = {
 };
 
 /**
- * A failed answer (annex 10, 3.3). Without text it is a card that takes the answer's place;
+ * A failed answer. Without text it is a card that takes the answer's place;
  * after partial text it is one line below it. It offers the step that helps: try again, another
  * model, the model picker or a new chat, and always the error id when there is one.
  */

@@ -11,7 +11,7 @@ import { modelLabel, priceLevel } from '../format';
 type Props = {
   value: string | null;
   onChange: (model: string) => void;
-  /** The other column's model in the comparison mode: not selectable here (annex 10, F9). */
+  /** The other column's model in the comparison mode: not selectable here. */
   exclude?: string | null;
   /** The second picker of a comparison; errors open only the first one. */
   second?: boolean;

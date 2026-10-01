@@ -6,7 +6,7 @@ import type { AnswerStyle, Effort } from '@/shared/api/types';
 import { useConfig } from '@/shared/api/use-config';
 import { useStoredPreferences } from '@/shared/preferences/preferences';
 
-/** How the next answer is written, from the settings (annex 11, 4.2). */
+/** How the next answer is written, from the settings. */
 export type AnswerOptions = { effort: Effort | null; style: AnswerStyle };
 
 export type ChatSettings = {
@@ -15,7 +15,7 @@ export type ChatSettings = {
   setModel: (model: string) => void;
   /** Answer mode and length for a model; no effort for models without it (Haiku). */
   answerOptions: (model: string) => AnswerOptions;
-  /** Unsent text per chat ('new' for a chat that does not exist yet), kept in memory (annex 10, E23). */
+  /** Unsent text per chat ('new' for a chat that does not exist yet), kept in memory. */
   draft: (chatId: string) => string;
   setDraft: (chatId: string, text: string) => void;
   /** The model picker in the chat header, opened from an error that asks for another model. */
@@ -23,7 +23,7 @@ export type ChatSettings = {
   setPickerOpen: (open: boolean) => void;
   /** Comparison mode: the next question goes to `model` and `compareModel` side by side. */
   compare: boolean;
-  /** Turning it on starts from the pair in the settings (annex 11, 8.6). */
+  /** Turning it on starts from the pair in the settings. */
   setCompare: (on: boolean) => void;
   /** Null when fewer than two models can answer: then there is nothing to compare. */
   compareModel: string | null;
@@ -41,8 +41,8 @@ export function ChatSettingsProvider({ children }: { children: ReactNode }) {
   const [pickedSecond, setPickedSecond] = useState<string | null>(null);
   const drafts = useRef(new Map<string, string>());
 
-  // The default model from the settings. A model can become unavailable at runtime (annex 10,
-  // B15): then the backend's default, else the first one that still answers.
+  // The default model from the settings. A model can become unavailable at runtime:
+  // then the backend's default, else the first one that still answers.
   const available = config?.models.filter((m) => m.available).map((m) => m.id) ?? [];
   const preferred = [preferences?.default_model, config?.default_model].find((m) => m && available.includes(m));
   const fallback = preferred ?? available[0] ?? null;

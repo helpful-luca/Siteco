@@ -15,7 +15,7 @@ type Props = {
 
 /**
  * A wait with visible seconds. Screen readers hear it twice only: when it starts (with the
- * seconds at that moment) and when it is over, never every tick (annex 11, 6.3).
+ * seconds at that moment) and when it is over, never every tick.
  */
 export function Countdown({ until, format, done, onEnd }: Props) {
   const seconds = useCountdown(until);

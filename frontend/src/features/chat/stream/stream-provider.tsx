@@ -57,7 +57,7 @@ export type StreamActions = {
    */
   ask: (input: AskInput) => Promise<boolean>;
   /**
-   * Two models, one question (annex 11, 8.6): lane a first; once it is confirmed, lane b joins
+   * Two models, one question: lane a first; once it is confirmed, lane b joins
    * the same question. Resolves and rejects like `ask` for the comparison as a whole; a refusal of
    * lane b alone shows in its column.
    */
@@ -87,8 +87,8 @@ function refusal(error: unknown): RunError {
 const StreamContext = createContext<StreamActions | null>(null);
 
 /**
- * Owns every running answer above the routes, so answers keep streaming while you switch chats
- * (annex 11, 8.2). Deltas are collected and rendered once per animation frame (8.3).
+ * Owns every running answer above the routes, so answers keep streaming while you switch chats.
+ * Deltas are collected and rendered once per animation frame.
  */
 export function StreamProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient();
@@ -266,7 +266,7 @@ export function StreamProvider({ children }: { children: ReactNode }) {
   );
 
   /**
-   * Stop = mark locally, tell the server, then abort the fetch (annex 11, 3.4). The order matters:
+   * Stop = mark locally, tell the server, then abort the fetch. The order matters:
    * a closed stream reaches the server first otherwise and the answer is saved as interrupted.
    */
   const stop = useCallback(

@@ -5,7 +5,7 @@ import { isInProgress, useAttachments, useDocuments, useUploads } from '@/featur
 export type ComposerBlock = 'noDocuments' | 'processing' | null;
 
 /**
- * Why the composer cannot send right now (annex 10, E1, E2): no documents at all, or none ready
+ * Why the composer cannot send right now: no documents at all, or none ready
  * yet. A chat counts its own attachments too. Uploads in flight (into the library or this chat)
  * count as "processing". Unknown (still loading) never blocks.
  */

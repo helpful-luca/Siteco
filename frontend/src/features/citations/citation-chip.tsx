@@ -15,8 +15,8 @@ type Props = {
 
 /**
  * Numbered source reference in the answer text. A real button: hover and keyboard focus show the
- * cited sentence, a click opens the source (annex 11, 8.4). A deleted source keeps file and page
- * but no text (master spec 10b, 4); a click opens the panel that says it was deleted.
+ * cited sentence, a click opens the source. A deleted source keeps file and page
+ * but no text; a click opens the panel that says it was deleted.
  */
 export function CitationChip({ n, source, citedText, active = false, onOpen }: Props) {
   const t = useTranslations('chat.sources');

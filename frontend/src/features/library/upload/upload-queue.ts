@@ -5,7 +5,7 @@
  */
 import { preCheck, type UploadError } from './pre-check';
 
-export const MAX_PARALLEL = 3;
+const MAX_PARALLEL = 3;
 
 export type UploadState = 'waiting' | 'uploading' | 'failed';
 

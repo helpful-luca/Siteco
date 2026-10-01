@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui';
 
 type Props = { sources: SourceOut[]; onOpen: (source: SourceOut) => void };
 
-/** Without an API key: the passages that match the question, each one openable (master spec 6.10). */
+/** Without an API key: the passages that match the question, each one openable. */
 export function SourcesOnlyCard({ sources, onOpen }: Props) {
   const t = useTranslations('chat.sources');
   const text = useCodeText();

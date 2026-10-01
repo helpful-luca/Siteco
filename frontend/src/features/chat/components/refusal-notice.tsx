@@ -15,7 +15,7 @@ const WITH_ID = new Set(['UNKNOWN_ERROR', 'INTERNAL_ERROR']);
 type Props = { id: string; refusal: Refusal; onDismiss: () => void; onWaitEnd: () => void };
 
 /**
- * Why the question was not sent, right above the composer (annex 10, 3.3): a pause counts down
+ * Why the question was not sent, right above the composer: a pause counts down
  * and then says so; other refusals offer the one step that helps.
  */
 export function RefusalNotice({ id, refusal, onDismiss, onWaitEnd }: Props) {

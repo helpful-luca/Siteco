@@ -3,7 +3,6 @@ import {
   checkRequestGuard,
   exceedsBodyLimit,
   forwardRequestHeaders,
-  isMcpPath,
   isSafePath,
   pickHeaders,
 } from "@/shared/api/proxy-rules";
@@ -25,19 +24,18 @@ describe("isSafePath", () => {
 describe("checkRequestGuard", () => {
   it("answers only requests addressed to this machine, for every method (DNS rebinding)", () => {
     const rebound = "evil.example:3000";
-    expect(checkRequestGuard("GET", headers({}), rebound, ["documents"])).toBe("FORBIDDEN_ORIGIN");
+    expect(checkRequestGuard("GET", headers({}), rebound)).toBe("FORBIDDEN_ORIGIN");
     expect(
       checkRequestGuard(
         "POST",
         headers({ "x-requested-with": "docchat", origin: "http://evil.example:3000" }),
         rebound,
-        ["chats"],
       ),
     ).toBe("FORBIDDEN_ORIGIN");
     for (const local of ["localhost:3000", "127.0.0.1:3000", "[::1]:3000", "localhost"]) {
-      expect(checkRequestGuard("GET", headers({}), local, ["documents"])).toBe("ok");
+      expect(checkRequestGuard("GET", headers({}), local)).toBe("ok");
     }
-    expect(checkRequestGuard("GET", headers({}), "", ["documents"])).toBe("FORBIDDEN_ORIGIN");
+    expect(checkRequestGuard("GET", headers({}), "")).toBe("FORBIDDEN_ORIGIN");
   });
 
   const headers = (init: Record<string, string>) => new Headers(init);
@@ -93,98 +91,18 @@ describe("checkRequestGuard", () => {
     ).toBe("ok"));
 });
 
-describe("checkRequestGuard for the MCP endpoint", () => {
-  const headers = (init: Record<string, string>) => new Headers(init);
-  const mcp = ["mcp"];
-
-  it("recognises only /api/mcp", () => {
-    expect(isMcpPath(mcp)).toBe(true);
-    expect(isMcpPath(["mcp", "x"])).toBe(false);
-    expect(isMcpPath(["documents"])).toBe(false);
-  });
-  it("allows a client without Origin and without X-Requested-With on localhost", () => {
-    for (const host of [
-      "localhost:3000",
-      "127.0.0.1:3000",
-      "[::1]:3000",
-      "localhost",
-    ]) {
-      expect(checkRequestGuard("POST", headers({}), host, mcp)).toBe("ok");
-    }
-  });
-  it("allows the app origin", () =>
-    expect(
-      checkRequestGuard(
-        "POST",
-        headers({ origin: "http://localhost:3000" }),
-        "localhost:3000",
-        mcp,
-      ),
-    ).toBe("ok"));
-  it("rejects a foreign or malformed Origin", () => {
-    expect(
-      checkRequestGuard(
-        "POST",
-        headers({ origin: "https://evil.example" }),
-        "localhost:3000",
-        mcp,
-      ),
-    ).toBe("FORBIDDEN_ORIGIN");
-    expect(
-      checkRequestGuard(
-        "POST",
-        headers({ origin: "null" }),
-        "localhost:3000",
-        mcp,
-      ),
-    ).toBe("FORBIDDEN_ORIGIN");
-  });
-  it("rejects a non-local Host (DNS rebinding, remote access)", () => {
-    for (const host of [
-      "evil.example:3000",
-      "192.168.1.5:3000",
-      "localhost.evil.example",
-      "",
-    ]) {
-      expect(checkRequestGuard("POST", headers({}), host, mcp)).toBe(
-        "FORBIDDEN_ORIGIN",
-      );
-    }
-  });
-  it("rejects a foreign Origin even when the Host is the attacker own", () =>
-    expect(
-      checkRequestGuard(
-        "POST",
-        headers({ origin: "http://evil.example:3000" }),
-        "evil.example:3000",
-        mcp,
-      ),
-    ).toBe("FORBIDDEN_ORIGIN"));
-  it("keeps the CSRF guard for every other path", () => {
-    expect(
-      checkRequestGuard("POST", headers({}), "localhost:3000", ["chats"]),
-    ).toBe("FORBIDDEN_ORIGIN");
-    expect(checkRequestGuard("POST", headers({}), "localhost:3000")).toBe(
-      "FORBIDDEN_ORIGIN",
-    );
-  });
-});
-
 describe("forwardRequestHeaders", () => {
-  it("forwards Authorization and the MCP headers to /api/mcp only", () => {
-    const incoming = new Headers({
-      authorization: "Bearer t",
-      "mcp-protocol-version": "2025-06-18",
-      "content-type": "application/json",
-      cookie: "a=b",
-    });
-    const mcp = forwardRequestHeaders(incoming, ["mcp"]);
-    expect(mcp.get("authorization")).toBe("Bearer t");
-    expect(mcp.get("mcp-protocol-version")).toBe("2025-06-18");
-    expect(mcp.get("cookie")).toBeNull();
-    const other = forwardRequestHeaders(incoming, ["chats"]);
-    expect(other.get("authorization")).toBeNull();
-    expect(other.get("content-type")).toBe("application/json");
+  it("drops credentials and cookies before the request reaches the backend", () => {
+    const out = forwardRequestHeaders(
+      new Headers({
+        authorization: "Bearer t",
+        cookie: "a=b",
+        "content-type": "application/json",
+      }),
+    );
+    expect(out.get("authorization")).toBeNull();
+    expect(out.get("cookie")).toBeNull();
+    expect(out.get("content-type")).toBe("application/json");
   });
 });
 

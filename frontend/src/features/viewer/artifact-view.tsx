@@ -21,7 +21,7 @@ export type Artifact = {
   chatTitle: string | null;
 };
 
-/** A wide reading view of an answer, table or code block with copy and exports (annex 11, 8.4). */
+/** A wide reading view of an answer, table or code block with copy and exports. */
 export function ArtifactView({ artifact }: { artifact: Artifact }) {
   const t = useTranslations('viewer.artifact');
   const locale = useLocale();

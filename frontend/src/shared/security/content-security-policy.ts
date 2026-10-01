@@ -1,6 +1,5 @@
 /**
- * Static Content Security Policy for production builds. Nonce-based script hardening is phase 13;
- * this one already blocks foreign origins, plugins, framing and `eval`.
+ * Static Content Security Policy for production builds. It blocks foreign origins, plugins, framing and `eval`.
  * - `script-src 'unsafe-inline'`: the App Router streams its payload in inline scripts, and the
  *   theme and desktop scripts run before first paint. `'wasm-unsafe-eval'` lets PDF.js compile its
  *   image decoders (WebAssembly only, not JavaScript eval).

@@ -1,5 +1,5 @@
 /**
- * Citation markers in the answer text (annex 11, 8.4). The backend reports where a chip goes as a
+ * Citation markers in the answer text. The backend reports where a chip goes as a
  * `char_offset`; we insert a sentinel there, parse the markdown once and a remark plugin turns the
  * sentinels into chips. Sentinels use characters a model does not write: ⟦c:N⟧.
  */

@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }));
 const STORED: PreferencesBody = {
   locale: 'de',
   theme: 'dark',
-  name: 'Luca',
+  name: 'Lena',
   default_model: 'claude-sonnet-5-5',
   effort: 'low',
   style: 'concise',
@@ -42,7 +42,7 @@ function Greeting() {
 
 type Save = ReturnType<typeof useSavePreferences>;
 
-function setup(name = 'Luca'): Save {
+function setup(name = 'Lena'): Save {
   const saver: { current: Save | null } = { current: null };
   function Saver() {
     const save = useSavePreferences();
@@ -68,7 +68,7 @@ describe('preferences', () => {
   it('renders the server values before the backend answered (no flash)', () => {
     respond = () => new Promise(() => {});
     setup();
-    expect(screen.getByText('Hallo Luca')).toBeInTheDocument();
+    expect(screen.getByText('Hallo Lena')).toBeInTheDocument();
   });
 
   it('mirrors the backend into cookies and applies the theme', async () => {
@@ -84,7 +84,7 @@ describe('preferences', () => {
 
   it('switches the language: PUT, cookie, router refresh', async () => {
     const save = setup();
-    await screen.findByText('Hallo Luca');
+    await screen.findByText('Hallo Lena');
     respond = async (_url, init) => Response.json(JSON.parse(String(init?.body)));
     await act(() => save({ locale: 'en' }));
     const put = vi.mocked(fetch).mock.calls.find(([, init]) => init?.method === 'PUT');
@@ -96,13 +96,13 @@ describe('preferences', () => {
 
   it('rolls back a change the backend refuses', async () => {
     const save = setup();
-    await screen.findByText('Hallo Luca');
+    await screen.findByText('Hallo Lena');
     respond = async () =>
       Response.json({ error: { code: 'VALIDATION_ERROR', retryable: false, request_id: 'r', params: {} } }, { status: 422 });
     await act(async () => {
       await expect(save({ name: 'x' })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
     });
-    expect(screen.getByText('Hallo Luca')).toBeInTheDocument();
+    expect(screen.getByText('Hallo Lena')).toBeInTheDocument();
   });
 
   it('leaves language and theme alone before the setup ran', async () => {

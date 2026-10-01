@@ -3,8 +3,8 @@ import { connection } from '@/shared/api/connection';
 import { clientError, isAbortError, isConnectionError, normalizeError } from '@/shared/api/errors';
 import { isStreamEventType, type StreamEvent } from './events';
 
-/** 45 s without a single byte (pings arrive every 15 s) means the connection is dead (S5). */
-export const WATCHDOG_MS = 45_000;
+/** 45 s without a single byte (pings arrive every 15 s) means the connection is dead. */
+const WATCHDOG_MS = 45_000;
 
 export type StreamEnd = 'terminal' | 'aborted' | 'interrupted';
 
@@ -17,10 +17,10 @@ type Options = {
 };
 
 /**
- * POSTs a question and reads the answer stream (annex 11, 8.3). Refusals before the stream are
- * JSON and throw an ApiError (S1, S2). Afterwards it reports how the stream ended: with its
- * terminal event, by our own abort, or cut off (S4) including the watchdog (S5). Unknown events
- * and invalid JSON are skipped (S15).
+ * POSTs a question and reads the answer stream. Refusals before the stream are
+ * JSON and throw an ApiError. Afterwards it reports how the stream ended: with its
+ * terminal event, by our own abort, or cut off including the watchdog. Unknown events
+ * and invalid JSON are skipped.
  */
 export async function readStream({ url, body, signal, onEvent, watchdogMs = WATCHDOG_MS }: Options): Promise<StreamEnd> {
   let res: Response;

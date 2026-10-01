@@ -19,7 +19,7 @@ export type SourceRef = {
   citations?: CitationOut[];
 };
 
-export const sourcePanelId = (messageKey: string, sourceId: string) => `source:${messageKey}:${sourceId}`;
+const sourcePanelId = (messageKey: string, sourceId: string) => `source:${messageKey}:${sourceId}`;
 
 /**
  * The entry point for citation clicks: opens the source in the right panel, the PDF on the cited

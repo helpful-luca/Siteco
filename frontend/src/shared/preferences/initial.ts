@@ -1,7 +1,7 @@
 import type { PreferencesBody } from '@/shared/api/types';
 import { type Locale, parseName, parseOnboarded, resolveLocale, resolveTheme, type Theme } from './cookies';
 
-/** The preferences the server renders the first HTML with, so nothing flashes (annex 11, 5.1). */
+/** The preferences the server renders the first HTML with, so nothing flashes. */
 export type InitialPreferences = {
   locale: Locale;
   theme: Theme;

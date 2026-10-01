@@ -2,13 +2,13 @@ import { expect, type APIRequestContext, type Page, test } from '@playwright/tes
 import { makePdf } from './pdf';
 
 export const SENTENCE = 'Die Leuchte Mira hat die Schutzart IP66.';
-export const PDF_NAME = 'e2e-mira.pdf';
+const PDF_NAME = 'e2e-mira.pdf';
 const CSRF = { 'X-Requested-With': 'docchat' };
 
 export type Mode = 'fake' | 'nokey';
 
 /** The stack's answer mode, from the readiness probe (`llm`: ok with the fake model, missing_key without). */
-export async function stackMode(request: APIRequestContext): Promise<Mode | 'other'> {
+async function stackMode(request: APIRequestContext): Promise<Mode | 'other'> {
   const body = await (await request.get('/api/health/ready')).json();
   return body.checks?.llm === 'ok' ? 'fake' : body.checks?.llm === 'missing_key' ? 'nokey' : 'other';
 }
@@ -35,7 +35,7 @@ export async function resetStack(request: APIRequestContext) {
   for (const { id } of chats) await request.delete(`/api/chats/${id}`, { headers: CSRF });
 }
 
-export function pdfFile(name = PDF_NAME) {
+function pdfFile(name = PDF_NAME) {
   return { name, mimeType: 'application/pdf', buffer: makePdf([SENTENCE, 'Sie ist schlagfest nach IK08.']) };
 }
 

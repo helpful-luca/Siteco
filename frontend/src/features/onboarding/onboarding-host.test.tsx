@@ -111,14 +111,14 @@ describe('OnboardingHost', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Weiter' }));
     await userEvent.click(await screen.findByRole('radio', { name: /Dunkel/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Weiter' }));
-    await userEvent.type(await screen.findByLabelText('Dein Name'), 'Luca{Enter}');
+    await userEvent.type(await screen.findByLabelText('Dein Name'), 'Lena{Enter}');
     await waitFor(() => expect(puts).toHaveLength(1));
-    expect(puts[0]).toMatchObject({ onboarded: true, theme: 'dark', name: 'Luca', locale: 'de' });
+    expect(puts[0]).toMatchObject({ onboarded: true, theme: 'dark', name: 'Lena', locale: 'de' });
   });
 
   it('runs again on request from the settings', async () => {
-    stored = { ...STORED, onboarded: true, name: 'Luca' };
-    setup({ onboarded: true, name: 'Luca' });
+    stored = { ...STORED, onboarded: true, name: 'Lena' };
+    setup({ onboarded: true, name: 'Lena' });
     await userEvent.click(screen.getByRole('button', { name: 'rerun' }));
     expect(await screen.findByRole('heading', { name: 'Willkommen' })).toBeInTheDocument();
   });

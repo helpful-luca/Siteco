@@ -194,7 +194,6 @@
       "week": "Diese Woche",
       "older": "Älter",
       "empty": "Noch keine Chats",
-      "noMatch": "Keine passenden Chats",
       "loadError": "Die Chats ließen sich nicht laden.",
       "retry": "Erneut versuchen",
       "answering": "antwortet",
@@ -218,7 +217,6 @@
     "loading": "Chat wird geladen",
     "loadError": "Der Chat ließ sich nicht laden.",
     "retry": "Erneut versuchen",
-    "you": "Du",
     "jumpToLatest": "Zum Ende springen",
     "status": {
       "retrieving": "Durchsuche Dokumente",

@@ -10,14 +10,14 @@ const FORMULA = /^[=+\-@\t\r]/;
 const NUMBER = /^-?\d+([.,]\d+)?$/;
 
 function cell(value: string, separator: string): string {
-  // Spreadsheets run cells starting with = + - @ as formulas (annex 10, M9).
+  // Spreadsheets run cells starting with = + - @ as formulas.
   let text = FORMULA.test(value) && !NUMBER.test(value) ? `'${value}` : value;
   if (text.includes(separator) || /["\r\n]/.test(text)) text = `"${text.replace(/"/g, '""')}"`;
   return text;
 }
 
 /**
- * The first table of a markdown snippet as CSV, built from the syntax tree (annex 11, 8.4), so
+ * The first table of a markdown snippet as CSV, built from the syntax tree, so
  * emphasis, links and citation markers become plain text. A BOM lets spreadsheets detect UTF-8.
  */
 export function tableToCsv(markdown: string, separator: ',' | ';'): string {

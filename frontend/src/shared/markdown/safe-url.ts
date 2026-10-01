@@ -1,4 +1,4 @@
-/** Links in answers may only lead to web pages or mail (master spec 10.4). Everything else is dropped. */
+/** Links in answers may only lead to web pages or mail. Everything else is dropped. */
 const ALLOWED = new Set(['http:', 'https:', 'mailto:']);
 
 export function safeUrl(url: string): string | null {

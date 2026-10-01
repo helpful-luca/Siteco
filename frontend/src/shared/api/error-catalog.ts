@@ -1,9 +1,8 @@
 /**
  * Where each error code shows up in the UI. Typed over every code of the contract plus the
- * client's own codes, so a new backend code does not compile until it has a place. The same
- * table generates `docs/errors.md` (see error-catalog.test.ts).
+ * client's own codes, so a new backend code does not compile until it has a place.
  */
-import type { AnyErrorCode, ClientErrorCode } from './errors';
+import type { AnyErrorCode } from './errors';
 
 export type ErrorSurface =
   | 'composer' // a note above the composer, the question stays in the field
@@ -89,15 +88,6 @@ export const ERROR_SURFACES: Record<AnyErrorCode, readonly ErrorSurface[]> = {
   NETWORK_ERROR: ['banner', 'startup', 'composer', 'library'],
   STREAM_INTERRUPTED: ['answer', 'composer'],
   UNKNOWN_ERROR: ['composer', 'answer', 'library', 'page'],
-};
-
-/** The codes that never come from the backend: made by the Next.js proxy or by the browser. */
-export const CLIENT_ERROR_SPECS: Record<ClientErrorCode, { status: number | null; retryable: boolean; origin: 'proxy' | 'browser' }> = {
-  BACKEND_UNAVAILABLE: { status: 503, retryable: true, origin: 'proxy' },
-  FORBIDDEN_ORIGIN: { status: 403, retryable: false, origin: 'proxy' },
-  NETWORK_ERROR: { status: null, retryable: true, origin: 'browser' },
-  STREAM_INTERRUPTED: { status: null, retryable: true, origin: 'browser' },
-  UNKNOWN_ERROR: { status: null, retryable: true, origin: 'browser' },
 };
 
 /** Codes that mean `/api/config` changed: the key was rejected, a model is gone, the budget. */

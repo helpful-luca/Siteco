@@ -74,7 +74,7 @@ const CONFIG: ConfigOut = {
 const PREFS: PreferencesBody = {
   locale: 'de',
   theme: 'system',
-  name: 'Luca',
+  name: 'Lena',
   default_model: 'claude-sonnet-5-5',
   effort: 'low',
   style: 'concise',
@@ -183,7 +183,7 @@ function setup(section: Section | null) {
           initial={{
             locale: 'de',
             theme: 'system',
-            name: 'Luca',
+            name: 'Lena',
             onboarded: true,
             mirrored: true,
           }}
@@ -228,7 +228,7 @@ describe('SettingsView', () => {
   it('saves a cleaned name when the field is left', async () => {
     setup('general');
     const field = await screen.findByLabelText('Dein Name');
-    await waitFor(() => expect(field).toHaveValue('Luca'));
+    await waitFor(() => expect(field).toHaveValue('Lena'));
     await userEvent.clear(field);
     await userEvent.type(field, '  Anna  {Enter}');
     await waitFor(() => expect(prefs.name).toBe('Anna'));

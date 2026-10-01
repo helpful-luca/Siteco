@@ -26,7 +26,7 @@ afterEach(() => {
 
 describe('root layout: first HTML without a flash', () => {
   it('has language and dark class from the cookie mirror, no theme script', async () => {
-    cookieJar = { locale: 'en', theme: 'dark', name: 'Luca', onboarded: '1' };
+    cookieJar = { locale: 'en', theme: 'dark', name: 'Lena', onboarded: '1' };
     const html = await renderLayout();
     expect(html).toMatch(/<html lang="en" class="font-inter dark"/);
     expect(html).not.toContain('prefers-color-scheme');
@@ -44,7 +44,7 @@ describe('root layout: first HTML without a flash', () => {
       Response.json({
         locale: 'en',
         theme: 'light',
-        name: 'Luca',
+        name: 'Lena',
         default_model: 'claude-sonnet-5-5',
         effort: 'low',
         style: 'concise',

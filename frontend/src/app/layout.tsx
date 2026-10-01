@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Language, theme, name and setup state are in the first HTML: no flash (annex 11, 5.1).
+  // Language, theme, name and setup state are in the first HTML: no flash.
   const preferences = await getInitialPreferences();
   const { locale, theme } = preferences;
   return (

@@ -14,7 +14,7 @@ type Props = {
   onDismiss?: () => void;
 };
 
-/** A calm note right above the composer: preconditions and refusals before the stream (annex 10, 3.3). */
+/** A calm note right above the composer: preconditions and refusals before the stream. */
 export function ComposerNotice({ id, tone, children, action, onDismiss }: Props) {
   const t = useTranslations('chat.composer');
   return (

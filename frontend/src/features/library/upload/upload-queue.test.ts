@@ -67,7 +67,7 @@ describe('upload queue', () => {
   });
 });
 
-describe('pause for our own upload limit (annex 11, 6.3)', () => {
+describe('pause for our own upload limit', () => {
   const limited = (retryAt: number) => ({
     code: 'RATE_LIMITED',
     params: { seconds: 20, scope: 'upload' },

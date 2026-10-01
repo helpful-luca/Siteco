@@ -2,7 +2,7 @@
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
 /**
- * A download name from a chat title (annex 10, M8): no path or reserved characters, at most 80
+ * A download name from a chat title: no path or reserved characters, at most 80
  * characters, no trailing dots or spaces and no name Windows reserves.
  */
 export function downloadName(title: string | null | undefined, fallback: string, extension: string): string {

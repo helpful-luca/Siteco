@@ -16,8 +16,8 @@ import { AnswerNotices } from './answer-notices';
 import { SourcesOnlyCard } from './sources-only-card';
 import { StatusLine } from './status-line';
 
-/** Answers longer than this get an "open in panel" action (annex 11, 8.4). */
-export const ARTIFACT_MIN_CHARS = 1500;
+/** Answers longer than this get an "open in panel" action. */
+const ARTIFACT_MIN_CHARS = 1500;
 const LEADING_NOTICES = new Set(['SOURCES_PARTIAL', 'SUMMARY_PARTIAL']);
 
 type Props = {

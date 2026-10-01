@@ -34,7 +34,7 @@ export function useStoredPreferences() {
     queryKey: PREFERENCES_KEY,
     queryFn: fetchPreferences,
     staleTime: 30_000,
-    refetchOnWindowFocus: true, // changed in the other window (annex 10, B17)
+    refetchOnWindowFocus: true, // changed in the other window
   });
 }
 
@@ -48,7 +48,7 @@ export function usePreferences() {
 /**
  * Writes the render-critical values as cookies so the next server render matches, applies the
  * theme at once and re-renders the server components in a new language. Streams live above the
- * routes and survive the refresh (annex 11, 5.1). Before the setup ran, language and theme stay
+ * routes and survive the refresh. Before the setup ran, language and theme stay
  * with what the browser (or the running setup) chose.
  */
 function mirrorPreferences(prefs: PreferencesBody, refresh: () => void): void {
@@ -73,7 +73,7 @@ export function PreferencesMirror() {
 }
 
 /**
- * Saves a change: shown at once, sent as the whole object (annex 11, 3.2), rolled back when
+ * Saves a change: shown at once, sent as the whole object, rolled back when
  * the backend refuses it. Resolves with the saved preferences.
  */
 export function useSavePreferences() {

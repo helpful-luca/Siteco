@@ -38,7 +38,7 @@ export function useDeleteDocument() {
       try {
         await fetchJson<unknown>(`/api/documents/${id}`, { method: 'DELETE' });
       } catch (error) {
-        // Already gone (double click, other tab): the goal is reached (annex 10, D11).
+        // Already gone (double click, other tab): the goal is reached.
         if (!(error instanceof ApiError && error.code === 'NOT_FOUND')) throw error;
       }
     },

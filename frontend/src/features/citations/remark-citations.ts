@@ -53,7 +53,7 @@ function split(value: string): RootContent[] {
 }
 
 /**
- * Turns ⟦c:N⟧ sentinels into citation nodes (annex 11, 8.4). In code they are removed; inside
+ * Turns ⟦c:N⟧ sentinels into citation nodes. In code they are removed; inside
  * link text the chip moves behind the link, so no button ends up inside an anchor.
  */
 export function remarkCitations() {

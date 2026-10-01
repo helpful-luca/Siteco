@@ -4,8 +4,8 @@ import { useCallback, useState } from 'react';
 import type { ApiError } from '@/shared/api/errors';
 import { deadlineIn } from '@/shared/lib/use-countdown';
 
-/** Refusals that only ask for a moment: the composer waits with a countdown (annex 11, 6.3). */
-export const WAIT_CODES: ReadonlySet<string> = new Set(['RATE_LIMITED', 'CONCURRENCY_LIMIT']);
+/** Refusals that only ask for a moment: the composer waits with a countdown. */
+const WAIT_CODES: ReadonlySet<string> = new Set(['RATE_LIMITED', 'CONCURRENCY_LIMIT']);
 
 export type Refusal = {
   error: ApiError;

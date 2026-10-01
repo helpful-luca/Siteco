@@ -15,8 +15,8 @@ export const COOKIE_ONBOARDED = 'onboarded';
 export const NAME_MAX_CODE_POINTS = 40;
 // Longest cookie value we read for the name: 40 code points, percent-encoded, with some room.
 const NAME_COOKIE_MAX = 512;
-// C0 and C1 controls, zero width space, bidi marks, overrides and isolates, the BOM (annex 10,
-// B10). Zero width (non-)joiners stay: emoji sequences and some scripts need them.
+// C0 and C1 controls, zero width space, bidi marks, overrides and isolates, the BOM.
+// Zero width (non-)joiners stay: emoji sequences and some scripts need them.
 const INVISIBLE = /[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2060-\u2064\u2066-\u206f\ufeff]/g;
 
 const isLocale = (value: unknown): value is Locale => LOCALES.includes(value as Locale);
@@ -52,7 +52,7 @@ export function sanitizeName(raw: string): string {
   return result.trimEnd();
 }
 
-/** Allowlist parsers for the cookie mirror (annex 10, B4): anything odd reads as empty. */
+/** Allowlist parsers for the cookie mirror: anything odd reads as empty. */
 export function parseName(cookie?: string): string {
   if (!cookie || cookie.length > NAME_COOKIE_MAX) return '';
   try {

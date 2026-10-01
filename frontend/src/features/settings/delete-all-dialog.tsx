@@ -14,7 +14,7 @@ type Props = {
 
 /**
  * The strongest confirmation in the app: it names what disappears, says it is final, and Cancel
- * comes first and holds the focus (annex 10, B18). Resetting the settings is a separate choice.
+ * comes first and holds the focus. Resetting the settings is a separate choice.
  */
 export function DeleteAllDialog({ open, counts, busy, onConfirm, onClose }: Props) {
   const t = useTranslations('settings.deleteDialog');

@@ -17,7 +17,7 @@ export type StatusView = {
 
 // `deleting` counts too: polling shows the row leaving once the delete is done.
 const IN_PROGRESS: readonly DocumentStatus[] = ['scanning', 'queued', 'parsing', 'embedding', 'deleting'];
-export const POLL_MS = 1000;
+const POLL_MS = 1000;
 
 export function isInProgress(status: DocumentStatus): boolean {
   return IN_PROGRESS.includes(status);
@@ -46,7 +46,7 @@ export function statusView(document: DocumentOut): StatusView {
         : { tone: 'neutral', stage: 'queued', key: 'queued', values: {}, progress: null };
     case 'parsing':
     case 'embedding': {
-      // Scanned pages take seconds each: the OCR stage gets its own label (master spec 6.8).
+      // Scanned pages take seconds each: the OCR stage gets its own label.
       const recognizing = document.notices.some((n) => n.code === 'OCR_RUNNING');
       const stage = document.status === 'parsing' && recognizing ? 'recognizing' : document.status;
       return { tone: 'working', stage, key: stage, values: { percent }, progress: document.progress };

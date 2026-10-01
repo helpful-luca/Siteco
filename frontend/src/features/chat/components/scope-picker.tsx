@@ -9,7 +9,7 @@ export type ScopeValue = { scope: 'all' } | { scope: 'selected'; documentIds: st
 
 type Props = { value: ScopeValue; onChange: (value: ScopeValue) => void; disabled?: boolean };
 
-/** Which documents a chat asks: all ready ones, or a selection (master spec 6.2). */
+/** Which documents a chat asks: all ready ones, or a selection. */
 export function ScopePicker({ value, onChange, disabled = false }: Props) {
   const t = useTranslations('chat.scope');
   const { data } = useDocuments();

@@ -29,7 +29,7 @@ function keepable(answer: Answer | null): answer is Answer {
 }
 
 /**
- * Two models, one question (master spec 6.4): two columns with model, time to first text, total
+ * Two models, one question: two columns with model, time to first text, total
  * time, tokens and cost, each with its own stop and "keep this answer". Wider than the reading
  * column when there is room; below 672 px of width the columns become tabs.
  */

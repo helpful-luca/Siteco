@@ -55,8 +55,8 @@ describe('OnboardingFlow', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Weiter' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Weiter' }));
     const field = await screen.findByLabelText('Dein Name');
-    await userEvent.type(field, '  Luca  {Enter}');
-    expect(onFinish).toHaveBeenCalledWith({ locale: 'de', theme: 'system', name: 'Luca' });
+    await userEvent.type(field, '  Lena  {Enter}');
+    expect(onFinish).toHaveBeenCalledWith({ locale: 'de', theme: 'system', name: 'Lena' });
   });
 
   it('can be skipped from any step and reports the choices so far', async () => {
@@ -76,7 +76,7 @@ describe('OnboardingFlow', () => {
 
 describe('sanitizeName', () => {
   it('trims, removes control characters and caps at 40 characters', () => {
-    expect(sanitizeName('  Luca\u0000\u200b ')).toBe('Luca');
+    expect(sanitizeName('  Lena\u0000\u200b ')).toBe('Lena');
     expect(sanitizeName('x'.repeat(60))).toHaveLength(40);
   });
 });

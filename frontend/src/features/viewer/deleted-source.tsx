@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 /**
  * A cited source whose document was deleted. Deleting removes the cited text from every answer
- * as well (master spec 10b, 4): the panel says so and shows nothing of the document, also when
+ * as well: the panel says so and shows nothing of the document, also when
  * this window still holds an older copy of the answer.
  */
 export function DeletedSource() {

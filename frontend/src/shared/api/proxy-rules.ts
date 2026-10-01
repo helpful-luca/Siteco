@@ -3,19 +3,12 @@
 const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-export const FORWARD_REQUEST_HEADERS = [
+const FORWARD_REQUEST_HEADERS = [
   "content-type",
   "content-length",
   "accept",
   "range",
   "x-file-name",
-] as const;
-
-/** Only for `/api/mcp`: MCP clients authenticate with a bearer token and name the protocol version. */
-const FORWARD_MCP_REQUEST_HEADERS = [
-  "authorization",
-  "mcp-protocol-version",
-  "mcp-session-id",
 ] as const;
 
 export const FORWARD_RESPONSE_HEADERS = [
@@ -26,7 +19,6 @@ export const FORWARD_RESPONSE_HEADERS = [
   "accept-ranges",
   "retry-after",
   "allow",
-  "www-authenticate",
   "x-request-id",
   "cache-control",
   "content-security-policy",
@@ -43,19 +35,8 @@ export function isSafePath(segments: string[]): boolean {
 
 const LOCAL_HOSTNAME = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 
-/** `/api/mcp`: the endpoint for MCP clients (Claude Desktop, Claude Code), not for browsers. */
-export function isMcpPath(segments: string[]): boolean {
-  return segments.length === 1 && segments[0] === "mcp";
-}
-
-export function forwardRequestHeaders(
-  source: Headers,
-  path: string[],
-): Headers {
-  const names = isMcpPath(path)
-    ? [...FORWARD_REQUEST_HEADERS, ...FORWARD_MCP_REQUEST_HEADERS]
-    : FORWARD_REQUEST_HEADERS;
-  return pickHeaders(source, names);
+export function forwardRequestHeaders(source: Headers): Headers {
+  return pickHeaders(source, FORWARD_REQUEST_HEADERS);
 }
 
 /**
@@ -70,34 +51,10 @@ export function checkRequestGuard(
   method: string,
   headers: Headers,
   host: string,
-  path: string[] = [],
 ): "ok" | "FORBIDDEN_ORIGIN" {
   if (!LOCAL_HOSTNAME.test(host)) return "FORBIDDEN_ORIGIN";
-  if (isMcpPath(path)) return checkMcpGuard(headers, host);
   if (!MUTATING_METHODS.has(method.toUpperCase())) return "ok";
   if (headers.get("x-requested-with") !== "docchat") return "FORBIDDEN_ORIGIN";
-  const origin = headers.get("origin");
-  if (origin === null) return "ok";
-  try {
-    return new URL(origin).host === host ? "ok" : "FORBIDDEN_ORIGIN";
-  } catch {
-    return "FORBIDDEN_ORIGIN";
-  }
-}
-
-/**
- * MCP clients are not browsers: they POST without X-Requested-With and usually without Origin,
- * so the CSRF header cannot be required. The same two threats stay covered another way:
- * - A web page in the browser (cross-site POST, or DNS rebinding) always sends an Origin, which
- *   must then be this app's own origin; a rebinding page also arrives with a foreign Host.
- * - The Host is a loopback name (checked for every request in checkRequestGuard), so the
- *   endpoint answers only for requests addressed to this machine. MCP_TOKEN (checked by the
- *   backend) is the optional second factor.
- */
-function checkMcpGuard(
-  headers: Headers,
-  host: string,
-): "ok" | "FORBIDDEN_ORIGIN" {
   const origin = headers.get("origin");
   if (origin === null) return "ok";
   try {
@@ -119,8 +76,8 @@ export function pickHeaders(
   return picked;
 }
 
-/** JSON bodies are small; the raw upload (`POST /api/documents`) has its own limit (annex 10, P5). */
-export const MAX_JSON_BODY_BYTES = 64 * 1024;
+/** JSON bodies are small; the raw upload (`POST /api/documents`) has its own limit. */
+const MAX_JSON_BODY_BYTES = 64 * 1024;
 
 export function exceedsBodyLimit(
   method: string,

@@ -1,15 +1,14 @@
 /**
- * Checks a file before it is uploaded, to spare a round trip. The backend checks everything again
- * (annex 10, C1 to C4).
+ * Checks a file before it is uploaded, to spare a round trip. The backend checks everything again.
  */
-export const ACCEPTED_EXTENSIONS = ['.pdf', '.txt', '.md', '.markdown', '.html', '.htm'] as const;
+const ACCEPTED_EXTENSIONS = ['.pdf', '.txt', '.md', '.markdown', '.html', '.htm'] as const;
 export const ACCEPT_ATTRIBUTE = [...ACCEPTED_EXTENSIONS, 'application/pdf', 'text/plain', 'text/markdown', 'text/html'].join(',');
 
 export type UploadError = {
   code: string;
   params: Record<string, string | number>;
   retryable: boolean;
-  /** For our own rate limit: epoch ms from which trying again makes sense (annex 11, 6.3). */
+  /** For our own rate limit: epoch ms from which trying again makes sense. */
   retryAt?: number | null;
   requestId?: string | null;
 };

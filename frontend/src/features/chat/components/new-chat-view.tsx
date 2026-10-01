@@ -38,9 +38,9 @@ function useGreeting() {
 }
 
 /**
- * Start of a new chat: a left-aligned greeting (design plan: no card trio). The chat is created on
+ * Start of a new chat: a left-aligned greeting. The chat is created on
  * the first send; once the server confirms the question the URL becomes /chat/<id> while the
- * answer keeps streaming in the provider (annex 11, 8.1). Attaching a file creates the chat at
+ * answer keeps streaming in the provider. Attaching a file creates the chat at
  * once, so the file has a chat to belong to, and opens it with the draft.
  */
 export function NewChatView() {
@@ -50,7 +50,7 @@ export function NewChatView() {
   const { data: config } = useConfig();
   const uploads = useUploads();
   const settings = useChatSettings();
-  // Only for this greeting; the name never goes to the model (annex 11, 5.4).
+  // Only for this greeting; the name never goes to the model.
   const { name } = usePreferences();
   const greeting = useGreeting();
   const { data: documents } = useDocuments();

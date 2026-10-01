@@ -89,18 +89,18 @@ describe('readStream', () => {
     expect(events.map((e) => e.type)).toEqual(['delta', 'error']);
   });
 
-  it('reports a stream that closes without terminal event as interrupted (S4)', async () => {
+  it('reports a stream that closes without terminal event as interrupted', async () => {
     const { end, events } = await read(['event: delta\ndata: {"text":"Teil"}\n\n']);
     expect(end).toBe('interrupted');
     expect(events).toHaveLength(1);
   });
 
-  it('stops waiting after the watchdog time without bytes (S5)', async () => {
+  it('stops waiting after the watchdog time without bytes', async () => {
     const { end } = await read(['event: delta\ndata: {"text":"Teil"}\n\n'], { close: false, watchdogMs: 20 });
     expect(end).toBe('interrupted');
   });
 
-  it('throws the envelope of a refusal before the stream (S1, S2)', async () => {
+  it('throws the envelope of a refusal before the stream', async () => {
     mockFetch(
       Response.json(
         { error: { code: 'NO_DOCUMENTS', retryable: false, request_id: 'r1', params: {} } },

@@ -8,7 +8,7 @@ import { useChatSettings } from '../chat-settings';
 import { ModelPicker } from './model-picker';
 
 /**
- * Model choice in the chat toolbar: "Vergleichen" and the model picker (annex 11, 8.6). With the
+ * Model choice in the chat toolbar: "Vergleichen" and the model picker. With the
  * comparison on, the next question goes to two models side by side and a second picker appears.
  * The comparison is off without a key or with fewer than two models that answer.
  */

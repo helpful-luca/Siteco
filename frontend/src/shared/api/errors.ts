@@ -87,7 +87,7 @@ export async function normalizeError(res: Response): Promise<ApiError> {
       // Invalid JSON: fall through to the generic error below.
     }
   }
-  // An HTML error page, an empty body or JSON without our envelope (annex 10, A11).
+  // An HTML error page, an empty body or JSON without our envelope.
   return new ApiError('UNKNOWN_ERROR', res.status, res.status >= 500, null, requestId || null, {
     status: res.status,
   });

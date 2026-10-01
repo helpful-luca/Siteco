@@ -6,10 +6,10 @@ import { useEffect, useState } from 'react';
 import { fetchJson } from '@/shared/api/client';
 import { useBackendState } from '@/shared/api/use-connection';
 
-/** Pause before each check while the backend is away (annex 10, A10), then every 10 s. */
-export const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000] as const;
+/** Pause before each check while the backend is away, then every 10 s. */
+const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000] as const;
 /** While all is well, a quiet health check notices an outage even when nothing else is loading. */
-export const HEARTBEAT_MS = 10_000;
+const HEARTBEAT_MS = 10_000;
 
 /**
  * Notices an outage and brings the app back by itself: a quiet health check every 10 s while

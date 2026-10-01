@@ -113,7 +113,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     if (loaded) requestAnimationFrame(() => scrollToEnd(false));
   }, [loaded, scrollToEnd]);
 
-  // One short, polite announcement when an answer ends, instead of every token (annex 10, O7).
+  // One short, polite announcement when an answer ends, instead of every token.
   const outcome = run?.outcome?.kind;
   const announcement =
     outcome === 'done'

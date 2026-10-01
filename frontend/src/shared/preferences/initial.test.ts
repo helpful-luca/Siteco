@@ -5,7 +5,7 @@ import { resolveInitialPreferences } from './initial';
 const STORED: PreferencesBody = {
   locale: 'en',
   theme: 'dark',
-  name: 'Luca',
+  name: 'Lena',
   default_model: 'claude-sonnet-5-5',
   effort: 'low',
   style: 'concise',
@@ -31,7 +31,7 @@ describe('resolveInitialPreferences', () => {
 
   it('uses the backend once when the cookies are missing (new browser, desktop window)', () => {
     const initial = resolveInitialPreferences({}, 'de-DE', STORED);
-    expect(initial).toEqual({ locale: 'en', theme: 'dark', name: 'Luca', onboarded: true, mirrored: false });
+    expect(initial).toEqual({ locale: 'en', theme: 'dark', name: 'Lena', onboarded: true, mirrored: false });
   });
 
   it('keeps the browser language and system theme before the setup ran', () => {

@@ -12,8 +12,8 @@ const Context = createContext<Onboarding | null>(null);
 
 /**
  * Shows the setup over the app on the first start (`onboarded` false) and again on request from
- * the settings. Finishing and skipping both save `onboarded`, so it never nags (annex 10, B1);
- * closing the window halfway saves nothing and the setup comes back (B2).
+ * the settings. Finishing and skipping both save `onboarded`, so it never nags;
+ * closing the window halfway saves nothing and the setup comes back.
  */
 export function OnboardingHost({ children }: { children: ReactNode }) {
   const locale = useLocale() as Locale;

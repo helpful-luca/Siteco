@@ -7,7 +7,7 @@ import { ApiError, fetchJson } from '@/shared/api/client';
 import type { DocumentOut, ImportEnvelopeOut, ImportOut } from '@/shared/api/types';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-export const POLL_MS = 500;
+const POLL_MS = 500;
 
 type Options = {
   chatId: string | null;

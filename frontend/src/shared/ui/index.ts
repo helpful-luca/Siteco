@@ -35,4 +35,3 @@ export { ThemeThumbnail } from './theme-thumbnail';
 export { ToolbarButton } from './toolbar-button';
 export { Tooltip, TooltipProvider } from './tooltip';
 export { Typewriter } from './typewriter';
-export { useReducedMotion } from './use-reduced-motion';

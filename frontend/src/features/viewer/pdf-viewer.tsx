@@ -22,7 +22,7 @@ import type { PageStore } from './page-store';
 import { escapeHtml, matchTextItems } from './text-layer-match';
 import { ViewerToolbar } from './viewer-toolbar';
 
-// The worker is set in this module, next to <Document> (annex 12, 1f): set elsewhere, react-pdf's
+// The worker is set in this module, next to <Document>: set elsewhere, react-pdf's
 // default would overwrite it. Turbopack emits it as a same-origin file (CSP `worker-src 'self'`).
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
 
@@ -37,7 +37,7 @@ const OPTIONS: DocumentProps['options'] = {
   standardFontDataUrl: '/pdfjs/standard_fonts/',
   wasmUrl: '/pdfjs/wasm/',
   enableXfa: false,
-  // pdf.js 6 has no eval path any more; the flag stays so it can never come back (master spec 6.9).
+  // pdf.js 6 has no eval path any more; the flag stays so it can never come back.
   ...{ isEvalSupported: false },
 };
 

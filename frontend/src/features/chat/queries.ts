@@ -23,7 +23,7 @@ export function useChats() {
   return useQuery({
     queryKey: CHATS_KEY,
     queryFn: () => fetchJson<ChatListOut>('/api/chats'),
-    refetchOnWindowFocus: true, // another window may have added or removed chats (annex 10, E11)
+    refetchOnWindowFocus: true, // another window may have added or removed chats
   });
 }
 
@@ -35,7 +35,7 @@ export function useChat(chatId: string) {
   });
 }
 
-/** Polls while an answer is saved as `streaming` that this window does not stream (annex 10, E11). */
+/** Polls while an answer is saved as `streaming` that this window does not stream. */
 export function useMessages(chatId: string, { poll = true }: { poll?: boolean } = {}) {
   return useQuery({
     queryKey: messagesKey(chatId),
@@ -121,7 +121,7 @@ export function useDeleteChat() {
   });
 }
 
-/** "Diese Antwort behalten": the kept answer of a comparison goes into the history (annex 11, 1.3). */
+/** "Diese Antwort behalten": the kept answer of a comparison goes into the history. */
 export function usePreferAnswer() {
   const client = useQueryClient();
   return useMutation({

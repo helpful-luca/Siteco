@@ -1,5 +1,5 @@
 /**
- * Fallback highlight (annex 10, L4): when a page has no precise sentence geometry, the chunk's text
+ * Fallback highlight: when a page has no precise sentence geometry, the chunk's text
  * is looked up in PDF.js's own text layer of that page and those text items are marked.
  * Comparison ignores whitespace and hyphens, which differ between pdfium and PDF.js.
  */

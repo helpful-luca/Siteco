@@ -26,7 +26,7 @@ function groupByDocument(sources: SourceOut[]): Group[] {
 }
 
 /**
- * The sources of one answer, grouped by document (annex 11, 8.4): cited sources first, the other
+ * The sources of one answer, grouped by document: cited sources first, the other
  * retrieved passages behind a disclosure. The full-size targets for the small chips in the text.
  */
 export function SourcesList({ sources, citations, activeSourceId = null, onOpenSource }: Props) {

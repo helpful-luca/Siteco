@@ -32,7 +32,7 @@ export function spanFor(chunk: ChunkOut, sentences: number[]): TextSpan | null {
 
 /**
  * A cited source in the right panel: the PDF on the cited page with the sentence marked, the text
- * file with the span marked, or the stored snapshot when the document is gone (annex 11, 8.5).
+ * file with the span marked, or the stored snapshot when the document is gone.
  */
 export function SourceView({ source, sentences, store }: Props) {
   const [gone, setGone] = useState(source.deleted);

@@ -7,10 +7,9 @@
     "dev": "next dev",
     "prebuild": "node scripts/copy-pdfjs-assets.mjs",
     "build": "next build",
-    "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test:e2e": "playwright test"
   },
   "dependencies": {

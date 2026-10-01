@@ -10,7 +10,7 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * Scrolling of the conversation (annex 11, 8.3): it follows growing content only while you are near
+ * Scrolling of the conversation: it follows growing content only while you are near
  * the end; scrolling up stops that and offers a jump back. A new question is scrolled to the top.
  */
 export function useFollowScroll() {

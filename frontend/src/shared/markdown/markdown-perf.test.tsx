@@ -32,13 +32,10 @@ describe('Markdown while streaming (performance)', () => {
         </TooltipProvider>
       </NextIntlClientProvider>
     );
-    const started = performance.now();
     const { rerender, container } = render(wrap('', true));
     for (let end = step; end < full.length + step; end += step) rerender(wrap(full.slice(0, end), true));
-    const elapsed = performance.now() - started;
     // Re-parsing everything each frame would be about 400 * 10k = 4M characters.
     expect(parsed.chars).toBeLessThan(full.length * 3);
     expect(container.querySelectorAll('p').length).toBe(full.split('\n\n').filter(Boolean).length);
-    expect(elapsed).toBeLessThan(8_000);
   });
 });

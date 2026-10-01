@@ -2,7 +2,7 @@ import type { Lane, MessageOut } from '@/shared/api/types';
 import { answerFromMessage, answerFromRun, type Answer } from './answer';
 import type { RunState } from './stream/stream-reducer';
 
-/** Both answers of one question in the comparison mode (annex 11, 1.3). */
+/** Both answers of one question in the comparison mode. */
 export type Comparison = { id: string; a: Answer | null; b: Answer | null; preferred: Lane };
 
 export type Turn = {
@@ -114,8 +114,8 @@ export function buildTurns(messages: MessageOut[], runs: ReadonlyArray<RunState 
 }
 
 /**
- * The finished run can go once the backend returns its answer as saved (no flicker, annex 11,
- * 8.2). A regenerated answer keeps its message id, so the cached list already holds the old,
+ * The finished run can go once the backend returns its answer as saved (no flicker).
+ * A regenerated answer keeps its message id, so the cached list already holds the old,
  * finished version: it only counts once the list was loaded after the regeneration began
  * (`loadedAt`, the query's update time; polling pauses while an answer runs).
  */

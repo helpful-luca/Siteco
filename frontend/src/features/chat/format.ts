@@ -1,6 +1,6 @@
 import type { ModelInfo } from '@/shared/api/types';
 
-/** US dollars with enough digits for fractions of a cent (annex 10, F10). */
+/** US dollars with enough digits for fractions of a cent. */
 export function formatCost(usd: number, locale: string): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -44,7 +44,7 @@ export function priceLevel(models: ModelInfo[], id: string): number {
 }
 
 /**
- * Another model to try when Claude is overloaded (annex 10, H25): the default if it is not the
+ * Another model to try when Claude is overloaded: the default if it is not the
  * one that failed, else the first other model that still answers (the list starts with the
  * fastest).
  */

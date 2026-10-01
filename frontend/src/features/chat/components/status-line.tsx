@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import type { Answer } from '../answer';
 
-/** 8 s without the first text: say it takes longer (annex 10, S5). */
+/** 8 s without the first text: say it takes longer. */
 export const SLOW_AFTER_MS = 8_000;
 
 /**

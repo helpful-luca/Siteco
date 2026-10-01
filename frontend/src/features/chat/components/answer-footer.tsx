@@ -17,7 +17,7 @@ type Props = {
   className?: string;
 };
 
-/** Quiet actions under an answer, then a one-line summary that discloses the details (annex 11, 8.4). */
+/** Quiet actions under an answer, then a one-line summary that discloses the details. */
 export function AnswerFooter({ answer, onRegenerate, onOpenArtifact, showDetails = true, className }: Props) {
   const t = useTranslations('chat');
   const locale = useLocale();

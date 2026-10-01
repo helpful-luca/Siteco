@@ -42,7 +42,7 @@ describe('normalizeError', () => {
   });
 });
 
-describe('one error type for every path (annex 11, 5.5)', () => {
+describe('one error type for every path', () => {
   it('keeps the status of an HTML gateway page and makes it retryable', async () => {
     const err = await normalizeError(
       new Response('<html><body>502 Bad Gateway</body></html>', {

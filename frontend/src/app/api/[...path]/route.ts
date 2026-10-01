@@ -21,12 +21,8 @@ async function proxy(
   if (!isSafePath(path))
     return envelopeResponse(422, "VALIDATION_ERROR", requestId);
   if (
-    checkRequestGuard(
-      req.method,
-      req.headers,
-      req.headers.get("host") ?? "",
-      path,
-    ) !== "ok"
+    checkRequestGuard(req.method, req.headers, req.headers.get("host") ?? "") !==
+    "ok"
   ) {
     return envelopeResponse(403, "FORBIDDEN_ORIGIN", requestId);
   }
@@ -34,7 +30,7 @@ async function proxy(
     return envelopeResponse(413, "REQUEST_TOO_LARGE", requestId);
   }
 
-  const headers = forwardRequestHeaders(req.headers, path);
+  const headers = forwardRequestHeaders(req.headers);
   headers.set("x-request-id", requestId);
   for (const [name, value] of Object.entries(internalHeaders()))
     headers.set(name, value);

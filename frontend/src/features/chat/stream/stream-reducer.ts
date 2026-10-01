@@ -14,7 +14,7 @@ export function runKey(chatId: string, lane: Lane = 'a'): RunKey {
   return `${chatId}:${lane}`;
 }
 
-/** Why an answer failed, from an `error` event or from the client itself (S4, S5). */
+/** Why an answer failed, from an `error` event or from the client itself. */
 export type RunError = {
   code: string;
   partial: boolean;
@@ -49,7 +49,7 @@ export type RunState = {
   notices: NoticeOut[];
   text: string;
   citations: CitationOut[];
-  /** Set exactly once; afterwards the run ignores every event (one terminal state, S3). */
+  /** Set exactly once; afterwards the run ignores every event (one terminal state). */
   outcome: RunOutcome | null;
 };
 
@@ -108,7 +108,7 @@ function apply(run: RunState, action: StreamAction): RunState {
     case 'citation':
       return { ...run, citations: [...run.citations, action.data] };
     case 'done': {
-      // A refusal discards the partial text (S9).
+      // A refusal discards the partial text.
       const refused = action.data.status === 'refused';
       return {
         ...run,
@@ -162,7 +162,7 @@ function apply(run: RunState, action: StreamAction): RunState {
   }
 }
 
-/** All running and recently finished answers, keyed by chat and lane (annex 11, 8.2). */
+/** All running and recently finished answers, keyed by chat and lane. */
 export function streamReducer(state: RunsState, action: StreamAction): RunsState {
   if (action.type === 'local/start') {
     const run: RunState = {

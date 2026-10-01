@@ -13,7 +13,7 @@ export function splitExtension(name: string): [stem: string, extension: string] 
 
 /**
  * A file name that truncates inside the stem and keeps the extension visible
- * ("EN_13201_Beleuchtungs….txt", annex 10, C21). Only when it is cut, hovering shows the full name.
+ * ("EN_13201_Beleuchtungs….txt"). Only when it is cut, hovering shows the full name.
  */
 export function FileLabel({ name, className }: { name: string; className?: string }) {
   const [stem, extension] = splitExtension(name);

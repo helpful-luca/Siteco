@@ -45,7 +45,7 @@ function KeySettingsLink({ field, children }: { field: string; children: ReactNo
 export const RECONNECTING_BANNER = 'reconnecting';
 
 /**
- * One calm banner for a state of the whole app (annex 10, 3.3: banner, not toast), the most
+ * One calm banner for a state of the whole app (a banner, not a toast), the most
  * important first: the backend is away, the browser is offline, the key was rejected or is
  * missing, the daily budget is used up, the Claude account hit its credit limit.
  */

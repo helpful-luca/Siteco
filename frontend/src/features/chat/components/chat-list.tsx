@@ -50,7 +50,7 @@ export function ChatList() {
     requestAnimationFrame(() => container.current?.querySelector<HTMLElement>(`[data-chat-row="${id}"]`)?.focus());
 
   const confirmDelete = async (chat: ChatListItemOut) => {
-    // A running answer is stopped first (annex 10, E9); the backend would cancel it too.
+    // A running answer is stopped first; the backend would cancel it too.
     if (isRunning(getRun(chat.id))) await stop(chat.id);
     const index = ordered.findIndex((c) => c.id === chat.id);
     const neighbour = ordered[index + 1] ?? ordered[index - 1];

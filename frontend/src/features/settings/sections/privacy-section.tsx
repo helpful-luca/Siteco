@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { FormGroup, FormText } from '@/shared/ui';
 
-/** Plain-language privacy notice (master spec 10b, 3; Art. 13 GDPR). */
+/** Plain-language privacy notice (Art. 13 GDPR). */
 export function PrivacySection() {
   const t = useTranslations('settings.privacy');
 

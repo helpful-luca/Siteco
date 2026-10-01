@@ -16,7 +16,7 @@ describe('resolveTheme', () => {
 
 describe('sanitizeName', () => {
   it('trims, removes control, zero width and bidi characters', () => {
-    expect(sanitizeName('  Luca\u0000\u200b ')).toBe('Luca');
+    expect(sanitizeName('  Lena\u0000\u200b ')).toBe('Lena');
     expect(sanitizeName('Anna\u202eMaria')).toBe('AnnaMaria');
     expect(sanitizeName('Jean  \t Luc')).toBe('Jean Luc');
   });
@@ -30,7 +30,7 @@ describe('sanitizeName', () => {
   });
 
   it('keeps markup as plain text (React renders it escaped)', () => {
-    expect(sanitizeName('<b>Luca</b>')).toBe('<b>Luca</b>');
+    expect(sanitizeName('<b>Lena</b>')).toBe('<b>Lena</b>');
   });
 });
 

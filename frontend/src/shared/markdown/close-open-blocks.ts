@@ -1,5 +1,5 @@
 /**
- * Makes half streamed markdown render calmly (annex 10, M1): an open code fence is closed, a table
+ * Makes half streamed markdown render calmly: an open code fence is closed, a table
  * appears only once its separator row is complete, a half written row or link waits for the rest.
  * Pure and cheap, it runs on every rendered frame of a streaming answer.
  */

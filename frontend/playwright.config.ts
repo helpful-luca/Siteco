@@ -18,7 +18,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never', outputFolder: `playwright-report/${run}` }]] : 'list',
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://127.0.0.1:3000',
-    // `chrome` renders backdrop blur like Luca's browser; CI uses the bundled Chromium.
+    // E2E_CHANNEL=chrome renders backdrop blur like desktop Chrome; CI uses the bundled Chromium.
     channel: process.env.E2E_CHANNEL || undefined,
     locale: 'en-US',
     trace: process.env.CI ? 'on' : 'retain-on-failure',

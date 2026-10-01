@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { type ReactNode, useLayoutEffect, useRef, type KeyboardEvent } from 'react';
 import { Button, cn, Menu, MenuItem, Tooltip } from '@/shared/ui';
 
-/** The counter appears from 80 % of the limit (annex 10, E5). */
+/** The counter appears from 80 % of the limit. */
 const COUNTER_FROM = 0.8;
 const MAX_HEIGHT_PX = 320;
 
@@ -36,7 +36,7 @@ type Props = {
  * The floating glass composer, the hero of the chat: the question on top, a row below with attach
  * and the document scope on the left, the model and the send button on the right (like Claude and
  * ChatGPT). Enter sends, Shift+Enter makes a new line, Escape stops a running answer; Enter while
- * an IME is composing never sends (annex 10, O6, E24). Clicking the empty glass focuses the field.
+ * an IME is composing never sends. Clicking the empty glass focuses the field.
  */
 export function Composer({
   value,

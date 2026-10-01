@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { ChunkOut, CitationOut } from '@/shared/api/types';
 
-/** (x, y, width, height) in 0..1 of the page as displayed, origin top left (annex 11, 2.3). */
+/** (x, y, width, height) in 0..1 of the page as displayed, origin top left. */
 export type Rect = [number, number, number, number];
 
 export type Highlight = {
