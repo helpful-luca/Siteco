@@ -11,7 +11,7 @@
     "retry": "Try again"
   },
   "banner": {
-    "missingKey": "Without an API key the app shows matching passages, but no answers.",
+    "missingKey": "Without an API key we can show you matching passages, but not generate answers.",
     "reconnecting": "The connection to the server was lost.",
     "reconnectingHint": "The app keeps trying automatically. Your input stays here.",
     "retryNow": "Try now",

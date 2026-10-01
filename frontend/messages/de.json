@@ -11,7 +11,7 @@
     "retry": "Erneut versuchen"
   },
   "banner": {
-    "missingKey": "Ohne API-Key zeigt die App passende Stellen, aber keine Antworten.",
+    "missingKey": "Ohne API-Key können wir dir passende Stellen zeigen, aber keine Antworten generieren.",
     "reconnecting": "Die Verbindung zum Server ist unterbrochen.",
     "reconnectingHint": "Die App versucht es automatisch weiter. Deine Eingabe bleibt erhalten.",
     "retryNow": "Jetzt versuchen",
