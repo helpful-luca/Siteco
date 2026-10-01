@@ -75,6 +75,12 @@ describe('AnswerError', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('0 Sekunden');
   });
 
+  it('leads to the key settings when the key needs a workspace id or was rejected', () => {
+    setup({ code: 'LLM_KEY_NEEDS_WORKSPACE' });
+    expect(screen.getByRole('alert')).toHaveTextContent(de.errors.LLM_KEY_NEEDS_WORKSPACE);
+    expect(screen.getByRole('link', { name: de.chat.answer.keySettings })).toHaveAttribute('href', '/settings?section=models');
+  });
+
   it('waits for the countdown of Claude’s own rate limit before trying again', () => {
     vi.useFakeTimers();
     const { onRetry } = setup({ code: 'LLM_RATE_LIMITED', retryAfter: 30, params: { seconds: 30 } });

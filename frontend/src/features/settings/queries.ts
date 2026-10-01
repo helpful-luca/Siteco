@@ -73,11 +73,12 @@ export function useApiKeyChange() {
     void client.invalidateQueries({ queryKey: CONFIG_KEY }); // llm_status, retrieval-only
   };
   const save = useMutation({
-    mutationFn: (key: string) =>
+    // An empty workspace id removes a stored one (keys of a default workspace need none).
+    mutationFn: ({ key, workspaceId }: { key: string; workspaceId: string }) =>
       fetchJson<ApiKeyOut>('/api/settings/api-key', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ key, workspace_id: workspaceId || null }),
       }),
     onSuccess: settle,
   });

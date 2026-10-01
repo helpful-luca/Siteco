@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -103,10 +103,12 @@ const WORKSPACE: WorkspaceOut = {
 
 let prefs: PreferencesBody;
 let calls: { method: string; url: string; body?: unknown }[];
+let llmStatus: ConfigOut['llm_status'] = 'ok';
 
 beforeEach(() => {
   prefs = { ...PREFS };
   calls = [];
+  llmStatus = 'ok';
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
@@ -116,7 +118,7 @@ beforeEach(() => {
         url,
         body: init?.body ? JSON.parse(String(init.body)) : undefined,
       });
-      if (url === '/api/config') return Response.json(CONFIG);
+      if (url === '/api/config') return Response.json({ ...CONFIG, llm_status: llmStatus });
       if (url === '/api/preferences' && method === 'PUT') {
         prefs = JSON.parse(String(init?.body)) as PreferencesBody;
         return Response.json(prefs);
@@ -124,7 +126,13 @@ beforeEach(() => {
       if (url === '/api/preferences') return Response.json(prefs);
       if (url === '/api/workspace') return Response.json(WORKSPACE);
       if (url === '/api/settings/api-key' && method === 'PUT') {
-        const { key } = JSON.parse(String(init?.body)) as { key: string };
+        const { key, workspace_id } = JSON.parse(String(init?.body)) as { key: string; workspace_id?: string | null };
+        if (key.endsWith('Wrks') && !workspace_id) {
+          return Response.json(
+            { error: { code: 'LLM_KEY_NEEDS_WORKSPACE', retryable: false, request_id: 'r', params: {} } },
+            { status: 422 },
+          );
+        }
         if (key.endsWith('Bad1')) {
           return Response.json(
             {
@@ -143,6 +151,7 @@ beforeEach(() => {
           source: 'settings',
           suffix: key.slice(-4),
           status: 'ok',
+          workspace_id: workspace_id ?? null,
         });
       }
       if (url === '/api/settings/api-key') {
@@ -151,6 +160,7 @@ beforeEach(() => {
           source: null,
           suffix: null,
           status: 'missing_key',
+          workspace_id: null,
         });
       }
       if (url.startsWith('/api/workspace') && method === 'DELETE') return new Response(null, { status: 204 });
@@ -269,7 +279,7 @@ describe('SettingsView', () => {
     expect(field).toHaveAttribute('type', 'password');
     await userEvent.type(field, 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxBad1');
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
-    expect(await screen.findByText(/Anthropic akzeptiert diesen Schlüssel nicht/)).toBeInTheDocument();
+    expect(await screen.findByText(/Anthropic akzeptiert diesen API-Key nicht/)).toBeInTheDocument();
     await userEvent.clear(field);
     await userEvent.type(field, 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxGood');
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
@@ -279,6 +289,34 @@ describe('SettingsView', () => {
     expect(field).toHaveValue('');
     expect(screen.getByText('120 Anfragen')).toBeInTheDocument();
     expect(screen.queryByText(/Console|Restguthaben/)).not.toBeInTheDocument();
+  });
+
+  it('shows the missing key banner everywhere except where the key is entered', async () => {
+    llmStatus = 'missing_key';
+    setup('general');
+    expect(await screen.findByText(de.banner.missingKey)).toBeInTheDocument();
+    cleanup();
+    setup('models');
+    await screen.findByLabelText('API-Key');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByText(de.banner.missingKey)).not.toBeInTheDocument();
+  });
+
+  it('asks for the workspace id when Anthropic needs one, and sends it with the key', async () => {
+    setup('models');
+    const key = await screen.findByLabelText('API-Key');
+    const workspace = screen.getByLabelText('Workspace-ID');
+    expect(screen.getByText('Nur nötig, wenn Anthropic danach fragt.')).toBeInTheDocument();
+    await userEvent.type(key, 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxWrks');
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(await screen.findByText(/gehört zu keinem Workspace/)).toBeInTheDocument();
+    expect(workspace).toHaveFocus();
+    await userEvent.type(workspace, 'wrkspc_01ABC');
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByText(/Gespeichert/)).toBeInTheDocument();
+    const puts = calls.filter((c) => c.url === '/api/settings/api-key' && c.method === 'PUT');
+    expect(puts.at(-1)?.body).toEqual({ key: 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxWrks', workspace_id: 'wrkspc_01ABC' });
+    expect(workspace).toHaveValue('wrkspc_01ABC');
   });
 
   it('chooses automatic deletion in the app, without any word about .env', async () => {

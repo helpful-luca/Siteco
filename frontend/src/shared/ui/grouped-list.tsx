@@ -31,7 +31,7 @@ type RowProps = {
   description?: ReactNode;
   /** Control or value on the right. */
   children?: ReactNode;
-  /** Id of the control, so a click on the label focuses it. */
+  /** Id of the control, so a click on the label focuses it; the description gets `<id>-description`. */
   htmlFor?: string;
   /** The control takes the whole line when the row wraps (segmented controls on phones). */
   stretch?: boolean;
@@ -50,10 +50,17 @@ export function FormRow({ label, description, children, htmlFor, stretch = false
         className,
       )}
     >
-      <Label htmlFor={htmlFor} className="min-w-0 flex-1 basis-48">
-        <span className="block text-body">{label}</span>
-        {description && <span className="mt-0.5 block text-footnote text-ink-muted">{description}</span>}
-      </Label>
+      {/* The description is not part of the control's name: the control points to it instead. */}
+      <div className="min-w-0 flex-1 basis-48">
+        <Label htmlFor={htmlFor} className="block text-body">
+          {label}
+        </Label>
+        {description && (
+          <span id={htmlFor && `${htmlFor}-description`} className="mt-0.5 block text-footnote text-ink-muted">
+            {description}
+          </span>
+        )}
+      </div>
       {children !== undefined && (
         <div className={cn('flex max-w-full shrink-0 items-center justify-end gap-2', stretch && 'grow sm:grow-0')}>
           {children}

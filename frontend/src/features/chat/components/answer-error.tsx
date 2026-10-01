@@ -19,6 +19,8 @@ const OTHER_MODEL = new Set(['LLM_OVERLOADED', 'LLM_UNAVAILABLE', 'LLM_TIMEOUT']
 const CHOOSE_MODEL = new Set(['MODEL_UNAVAILABLE', 'LLM_FORBIDDEN']);
 /** Only a fresh chat helps. */
 const NEW_CHAT = new Set(['LLM_CONTEXT_TOO_LARGE', 'LLM_BAD_REQUEST']);
+/** The key is the problem: Settings > Models is the fix (a retry would fail the same way). */
+const KEY_SETTINGS = new Set(['LLM_AUTH', 'LLM_KEY_NEEDS_WORKSPACE']);
 /** Claude asked us to wait: trying again is possible once the countdown is over. */
 const WAIT = new Set(['LLM_RATE_LIMITED']);
 
@@ -47,7 +49,7 @@ export function AnswerError({ error, model, onRetry, onRetryWith }: Props) {
 
   const other = OTHER_MODEL.has(error.code) ? alternateModel(config?.models, model, config?.default_model) : null;
   const otherLabel = config?.models.find((m) => m.id === other)?.label;
-  const canRetry = onRetry && !NEW_CHAT.has(error.code);
+  const canRetry = onRetry && !NEW_CHAT.has(error.code) && !KEY_SETTINGS.has(error.code);
 
   return (
     <div
@@ -88,6 +90,11 @@ export function AnswerError({ error, model, onRetry, onRetryWith }: Props) {
           <Button size="sm" variant="ghost" onClick={() => setPickerOpen(true)}>
             {t('chooseModel')}
           </Button>
+        )}
+        {KEY_SETTINGS.has(error.code) && (
+          <Link href="/settings?section=models" className={buttonStyles({ size: 'sm', variant: 'ghost' })}>
+            {t('keySettings')}
+          </Link>
         )}
         {NEW_CHAT.has(error.code) && (
           <Link href="/chat" className={buttonStyles({ size: 'sm', variant: 'ghost' })}>

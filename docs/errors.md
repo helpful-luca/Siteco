@@ -67,11 +67,11 @@ HTTP errors: the document ends `failed` with the code.
 | `MODEL_NOT_ALLOWED` | 422 | no | backend | composer note | Dieses Modell steht hier nicht zur Wahl. Wähle oben ein anderes. |
 | `COMPARE_SAME_MODEL` | 422 | no | backend | inline in the answer | Beide Spalten nutzen dasselbe Modell. Wähle für den Vergleich zwei unterschiedliche Modelle. |
 | `TOKEN_BUDGET_EXCEEDED` | 429 | yes | backend | global banner, composer note | Das Tagesbudget dieser Demo ist aufgebraucht. Ab 02:00 Uhr kannst du wieder fragen. |
-| `LLM_AUTH` | 503 | no | backend | global banner, inline in the answer | Der Claude API-Schlüssel wird nicht akzeptiert. Prüf ihn unter Einstellungen > Modelle. |
-| `API_KEY_INVALID` | 422 | no | backend | next to the control | Anthropic akzeptiert diesen Schlüssel nicht. Prüf ihn in der Anthropic Console und füg ihn noch einmal ein. |
-| `LLM_KEY_NEEDS_WORKSPACE` | 422 | no | backend | next to the control, global banner, inline in the answer | Dieser API-Schlüssel gehört zu keinem Workspace. Erstell in der Anthropic Console einen Schlüssel in einem Workspace oder trag die Workspace-ID unter Einstellungen > Modelle ein. |
-| `LLM_BILLING` | 503 | no | backend | global banner, inline in the answer | Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Prüfe die Abrechnung in der Claude Console. |
-| `LLM_FORBIDDEN` | 503 | no | backend | inline in the answer | Dieser API-Schlüssel darf das gewählte Modell nicht nutzen. Wähle ein anderes Modell oder prüfe die Freigaben in der Claude Console. |
+| `LLM_AUTH` | 503 | no | backend | global banner, inline in the answer | Der API-Key wird nicht akzeptiert. Prüf ihn unter Einstellungen > Modelle. |
+| `API_KEY_INVALID` | 422 | no | backend | next to the control | Anthropic akzeptiert diesen API-Key nicht. Prüf ihn in der Claude Console und füg ihn noch einmal ein. |
+| `LLM_KEY_NEEDS_WORKSPACE` | 422 | no | backend | next to the control, global banner, inline in the answer | Dieser API-Key gehört zu keinem Workspace. Erstell in der Claude Console einen API-Key in einem Workspace oder trag die Workspace-ID unter Einstellungen > Modelle ein. |
+| `LLM_BILLING` | 503 | no | backend | global banner, inline in the answer | Das Guthaben oder Ausgabenlimit des API-Kontos ist erreicht. Prüf die Abrechnung in der Claude Console. |
+| `LLM_FORBIDDEN` | 503 | no | backend | inline in the answer | Dieser API-Key darf das gewählte Modell nicht nutzen. Wähle ein anderes Modell oder prüf die Freigaben in der Claude Console. |
 | `MODEL_UNAVAILABLE` | 503 | no | backend | inline in the answer, composer note | Claude Sonnet 5.5 ist gerade nicht verfügbar. Wähle ein anderes Modell. |
 | `LLM_RATE_LIMITED` | 503 | yes | backend | inline in the answer | Claude bekommt gerade zu viele Anfragen von diesem Konto. Versuch es in 23 Sekunden erneut. |
 | `LLM_OVERLOADED` | 503 | yes | backend | inline in the answer | Claude ist gerade stark ausgelastet. Versuch es in ein paar Sekunden noch einmal oder nimm ein anderes Modell. |
@@ -79,7 +79,7 @@ HTTP errors: the document ends `failed` with the code.
 | `LLM_TIMEOUT` | 504 | yes | backend | inline in the answer | Claude hat zu lange nicht geantwortet. Versuch es noch einmal. |
 | `LLM_UNREACHABLE` | 502 | yes | backend | inline in the answer | Claude ist gerade nicht erreichbar. Prüfe die Internetverbindung und versuch es erneut. |
 | `LLM_BAD_REQUEST` | 500 | no | backend | inline in the answer | Die Anfrage an Claude war fehlerhaft. Das liegt an der App. Starte einen neuen Chat und versuch es dort. |
-| `LLM_CONTEXT_TOO_LARGE` | 500 | no | backend | inline in the answer | Diese Unterhaltung ist zu lang geworden. Starte einen neuen Chat. |
+| `LLM_CONTEXT_TOO_LARGE` | 500 | no | backend | inline in the answer | Dieser Chat ist zu lang geworden. Starte einen neuen. |
 | `LLM_EMPTY_ANSWER` | 502 | yes | backend | inline in the answer | Es kam keine Antwort zurück. Versuch es noch einmal. |
 | `BACKEND_UNAVAILABLE` | 503 | yes | proxy | global banner, startup screen, composer note | Der Server antwortet gerade nicht. Wir versuchen es automatisch weiter. |
 | `FORBIDDEN_ORIGIN` | 403 | no | proxy | composer note, next to the control | Diese Anfrage kam nicht aus der App und wurde blockiert. Lade die App neu und versuch es noch einmal. |

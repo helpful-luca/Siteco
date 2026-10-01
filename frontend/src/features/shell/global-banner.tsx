@@ -12,13 +12,16 @@ import { codeParams } from '@/shared/i18n/code-params';
 import { useOnline } from '@/shared/lib/use-online';
 import { Button, buttonStyles, cn, Spinner } from '@/shared/ui';
 
-type Banner = { key: string; icon: ReactNode; title: string; hint: string; live?: boolean; action?: ReactNode };
+/** `hint` says what to do; a banner with an action button needs none (the button says it). */
+type Banner = { key: string; icon: ReactNode; title: string; hint?: string; live?: boolean; action?: ReactNode };
 
 const ICON = 'mt-px size-4 shrink-0';
 const KEY_SETTINGS_HREF = '/settings?section=models';
 
 /** The key of the reconnecting banner, for views that show the outage where you act instead. */
 export const RECONNECTING_BANNER = 'reconnecting';
+/** The banners about the Claude key, for the place where the key is entered (it says it there). */
+export const KEY_BANNERS = ['invalidKey', 'missingKey', 'needsWorkspace'] as const;
 
 /**
  * One calm banner for a state of the whole app (annex 10, 3.3: banner, not toast), the most
@@ -58,10 +61,23 @@ export function GlobalBanner({ className, omit = [] }: { className?: string; omi
     </Link>
   );
   if (config?.llm_status === 'invalid_key') {
-    banners.push({ key: 'invalidKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('invalidKey'), hint: t('invalidKeyHint'), live: true, action: keyAction });
+    banners.push({ key: 'invalidKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('invalidKey'), live: true, action: keyAction });
+  }
+  if (config?.llm_status === 'needs_workspace') {
+    banners.push({
+      key: 'needsWorkspace',
+      icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />,
+      title: t('needsWorkspace'),
+      live: true,
+      action: (
+        <Link href={KEY_SETTINGS_HREF} className={buttonStyles({ size: 'sm', variant: 'secondary' })}>
+          {t('workspaceSettings')}
+        </Link>
+      ),
+    });
   }
   if (config?.llm_status === 'missing_key') {
-    banners.push({ key: 'missingKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('missingKey'), hint: t('missingKeyHint'), action: keyAction });
+    banners.push({ key: 'missingKey', icon: <KeyRound aria-hidden className={cn(ICON, 'text-ink-muted')} />, title: t('missingKey'), action: keyAction });
   }
   if (config?.budget?.exceeded) {
     const { time } = codeParams({ reset_time: config.budget.reset_time }, { locale });
@@ -82,7 +98,7 @@ export function GlobalBanner({ className, omit = [] }: { className?: string; omi
       {banner.icon}
       <div className="min-w-0 flex-1 text-footnote">
         <p className="font-medium">{banner.title}</p>
-        <p className="mt-0.5 text-ink-muted">{banner.hint}</p>
+        {banner.hint && <p className="mt-0.5 text-ink-muted">{banner.hint}</p>}
       </div>
       {banner.action && <div className="-my-1 shrink-0 self-center">{banner.action}</div>}
     </div>

@@ -1,8 +1,8 @@
-import type { InputHTMLAttributes } from 'react';
+import type { ComponentProps } from 'react';
 import { cn } from './cn';
 
 /** Single-line text field at toolbar height (32 px, 44 px on touch). */
-export function TextInput({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput({ className, ...rest }: ComponentProps<'input'>) {
   return (
     <input
       className={cn(

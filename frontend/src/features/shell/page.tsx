@@ -8,6 +8,8 @@ type Props = {
   /** Empty states: the content sits slightly above the middle (2 : 3 spacers), like Apple's. */
   center?: boolean;
   className?: string;
+  /** Banners this page shows in its own words (see GlobalBanner `omit`). */
+  omitBanners?: readonly string[];
   children: ReactNode;
 };
 
@@ -15,7 +17,7 @@ type Props = {
  * The page column inside <main>. Banner, title, toolbar and content share one left edge
  * (`px-gutter`), and the first line starts 12 px below the top like the sidebar's first row.
  */
-export function Page({ width = 'page', center = false, className, children }: Props) {
+export function Page({ width = 'page', center = false, className, omitBanners, children }: Props) {
   return (
     <div
       className={cn(
@@ -24,7 +26,7 @@ export function Page({ width = 'page', center = false, className, children }: Pr
         className,
       )}
     >
-      <GlobalBanner className="mb-6" />
+      <GlobalBanner className="mb-6" omit={omitBanners} />
       {center ? (
         <>
           <div aria-hidden className="min-h-6 flex-2" />

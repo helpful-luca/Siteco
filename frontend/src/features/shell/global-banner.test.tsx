@@ -78,8 +78,19 @@ describe('GlobalBanner', () => {
     setup(config({ llm_status: 'invalid_key' }));
     const banner = screen.getByRole('status');
     expect(banner).toHaveTextContent(de.banner.invalidKey);
-    expect(banner).toHaveTextContent('Einstellungen > Modelle');
-    expect(screen.getByRole('link', { name: 'Schlüssel eintragen' })).toHaveAttribute('href', '/settings?section=models');
+    // The button says where to go; no second line repeats it.
+    expect(screen.getByRole('link', { name: 'API-Key eintragen' })).toHaveAttribute('href', '/settings?section=models');
+    expect(banner.querySelectorAll('p')).toHaveLength(1);
+  });
+
+  it('asks for the workspace id when the key needs one', () => {
+    setup(config({ llm_status: 'needs_workspace' }));
+    const banner = screen.getByRole('status');
+    expect(banner).toHaveTextContent(de.banner.needsWorkspace);
+    expect(screen.getByRole('link', { name: 'Workspace-ID eintragen' })).toHaveAttribute(
+      'href',
+      '/settings?section=models',
+    );
   });
 
   it('names the local time when the daily budget resets', () => {
