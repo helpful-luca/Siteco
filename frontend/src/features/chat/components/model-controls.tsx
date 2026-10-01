@@ -37,6 +37,7 @@ export function ModelControls() {
           aria-disabled={!possible || undefined}
           onClick={() => possible && settings.setCompare(!on)}
           className={cn(
+            'shrink-0 justify-center pointer-coarse:w-11',
             on && 'bg-fill-strong text-ink hover:bg-fill-strong hover:text-ink',
             !possible && 'opacity-50 hover:bg-transparent',
           )}

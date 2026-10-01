@@ -81,7 +81,7 @@ export function ChatFrame({
               variant="ghost"
               aria-label={t('jumpToLatest')}
               onClick={onJump}
-              className="glass pointer-events-auto absolute -top-12 left-1/2 -translate-x-1/2"
+              className="glass pointer-events-auto absolute -top-12 left-1/2 -translate-x-1/2 transition-[opacity,scale] duration-200 ease-out-soft starting:scale-90 starting:opacity-0"
             >
               <ArrowDown />
             </Button>
