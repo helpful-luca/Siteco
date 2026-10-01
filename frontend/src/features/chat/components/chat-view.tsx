@@ -78,11 +78,12 @@ export function ChatView({ chatId }: { chatId: string }) {
   const turns = buildTurns(list ?? [], [runA, runB]);
 
   // A finished run leaves once the saved answer is loaded, so nothing flickers.
+  const loadedAt = messages.dataUpdatedAt;
   useEffect(() => {
     for (const run of [runA, runB]) {
-      if (run && list && runIsPersisted(list, run)) streams.clear(chatId, run.lane);
+      if (run && list && runIsPersisted(list, run, loadedAt)) streams.clear(chatId, run.lane);
     }
-  }, [runA, runB, list, streams, chatId]);
+  }, [runA, runB, list, loadedAt, streams, chatId]);
 
   // Leaving the chat drops finished runs; the saved answers load on the next visit.
   useEffect(

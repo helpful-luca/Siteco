@@ -58,6 +58,15 @@ describe('buildTurns', () => {
 });
 
 describe('runIsPersisted', () => {
+  it('waits for a regenerated answer until the list was loaded after the regeneration began', () => {
+    // Same message id as the old answer: the cached list already holds a finished row.
+    const run = liveRun({ regenerateOf: 'a2', startedAt: 1_000, outcome: { kind: 'done', done: DONE } });
+    const rows = [message({ id: 'a2', status: 'complete', content: 'Alte Antwort' })];
+    expect(runIsPersisted(rows, run, 900)).toBe(false); // the old version: keep showing the run
+    expect(runIsPersisted(rows, run)).toBe(false);
+    expect(runIsPersisted(rows, run, 1_200)).toBe(true); // reloaded after it began: the new one
+  });
+
   it('waits for the saved, finished answer', () => {
     const run = liveRun({ outcome: { kind: 'done', done: DONE } });
     expect(runIsPersisted([message({ id: 'a2', status: 'streaming' })], run)).toBe(false);

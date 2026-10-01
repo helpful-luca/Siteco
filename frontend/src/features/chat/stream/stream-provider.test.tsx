@@ -76,10 +76,15 @@ describe('StreamProvider', () => {
     );
   });
 
-  it('stops: marks the run, aborts the request and tells the server', async () => {
+  it('stops: marks the run, tells the server, then aborts the request', async () => {
     let signal: AbortSignal | undefined;
+    let abortedWhenServerHeard: boolean | undefined;
     const { api, fetchMock } = setup(async (url, init) => {
-      if (url.endsWith('/stop')) return Response.json({ stopped: ['a'] }, { status: 202 });
+      if (url.endsWith('/stop')) {
+        // The server must hear "stop" before the stream closes, or it saves "interrupted".
+        abortedWhenServerHeard = signal?.aborted;
+        return Response.json({ stopped: ['a'] }, { status: 202 });
+      }
       signal = init?.signal ?? undefined;
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {
@@ -94,6 +99,7 @@ describe('StreamProvider', () => {
     await act(() => api().stop('c1'));
     expect(api().runs[runKey('c1')].outcome).toEqual({ kind: 'stopped' });
     expect(signal?.aborted).toBe(true);
+    expect(abortedWhenServerHeard).toBe(false);
     const stopCall = fetchMock.mock.calls.find(([url]) => url === '/api/chats/c1/stop');
     expect(JSON.parse(String(stopCall?.[1]?.body))).toEqual({}); // every lane of the chat
   });

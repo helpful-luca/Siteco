@@ -265,16 +265,18 @@ export function StreamProvider({ children }: { children: ReactNode }) {
     [start],
   );
 
-  /** Stop = mark locally, abort the fetch and tell the server (annex 11, 3.4). */
+  /**
+   * Stop = mark locally, tell the server, then abort the fetch (annex 11, 3.4). The order matters:
+   * a closed stream reaches the server first otherwise and the answer is saved as interrupted.
+   */
   const stop = useCallback(
     async (chatId: string, lane?: Lane) => {
-      for (const each of lane ? [lane] : LANES) {
-        const key = runKey(chatId, each);
+      const keys = (lane ? [lane] : LANES).map((each) => runKey(chatId, each));
+      for (const key of keys) {
         const run = store.getState()[key];
         flush(key);
         if (run && !run.meta && !run.outcome) store.dispatch({ type: 'local/clear', key });
         else if (isRunning(run)) store.dispatch({ type: 'local/stopped', key });
-        controllers.current.get(key)?.abort();
       }
       try {
         await fetchJson(`/api/chats/${chatId}/stop`, {
@@ -283,7 +285,9 @@ export function StreamProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(lane ? { lane } : {}),
         });
       } catch {
-        // The abort already ended the answer; a failed stop call changes nothing for the user.
+        // The abort below still ends the answer; a failed stop call changes nothing for the user.
+      } finally {
+        for (const key of keys) controllers.current.get(key)?.abort();
       }
       void refresh(chatId);
     },

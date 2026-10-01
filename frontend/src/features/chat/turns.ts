@@ -113,9 +113,15 @@ export function buildTurns(messages: MessageOut[], runs: ReadonlyArray<RunState 
   return turns;
 }
 
-/** The finished run can go once the backend returns its answer as saved (no flicker, annex 11, 8.2). */
-export function runIsPersisted(messages: MessageOut[], run: RunState): boolean {
+/**
+ * The finished run can go once the backend returns its answer as saved (no flicker, annex 11,
+ * 8.2). A regenerated answer keeps its message id, so the cached list already holds the old,
+ * finished version: it only counts once the list was loaded after the regeneration began
+ * (`loadedAt`, the query's update time; polling pauses while an answer runs).
+ */
+export function runIsPersisted(messages: MessageOut[], run: RunState, loadedAt?: number): boolean {
   const id = run.meta?.assistant_message_id;
   if (!run.outcome || !id) return false;
+  if (run.regenerateOf && (loadedAt === undefined || loadedAt < run.startedAt)) return false;
   return messages.some((m) => m.id === id && m.status !== 'streaming');
 }
