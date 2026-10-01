@@ -204,8 +204,8 @@ describe('SettingsView', () => {
     setup(null);
     const nav = screen.getByRole('navigation', { name: 'Bereiche' });
     const links = within(nav).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual(['Allgemein', 'Darstellung', 'Modelle', 'Daten', 'Datenschutz']);
-    expect(links[3]).toHaveAttribute('href', '/settings?section=data');
+    expect(links.map((l) => l.textContent)).toEqual(['Allgemein', 'Darstellung', 'Modelle', 'Tastenkürzel', 'Daten', 'Datenschutz']);
+    expect(links[3]).toHaveAttribute('href', '/settings?section=shortcuts');
   });
 
   it('marks the open section and offers a way back on narrow screens', () => {
@@ -345,5 +345,23 @@ describe('SettingsView', () => {
     expect(screen.queryByText('Bei Anthropic')).not.toBeInTheDocument();
     expect(screen.queryByText('Virenprüfung')).not.toBeInTheDocument();
     expect(screen.queryByText('Deine Rechte')).not.toBeInTheDocument();
+  });
+
+  it('lists the keyboard shortcuts with Windows keys', () => {
+    setup('shortcuts');
+    expect(screen.getByRole('heading', { name: 'Tastenkürzel' })).toBeInTheDocument();
+    expect(screen.getByText('Befehlspalette öffnen')).toBeInTheDocument();
+    expect(screen.getByText('Frage senden')).toBeInTheDocument();
+    expect(screen.getByText('Umbenennen')).toBeInTheDocument();
+    expect(screen.getAllByText('Ctrl').length).toBeGreaterThan(0);
+    expect(screen.queryByText('⌘')).toBeNull();
+  });
+
+  it('shows Mac symbols on a Mac', () => {
+    const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    setup('shortcuts');
+    expect(screen.getAllByText('⌘').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Ctrl')).toBeNull();
+    platform.mockRestore();
   });
 });

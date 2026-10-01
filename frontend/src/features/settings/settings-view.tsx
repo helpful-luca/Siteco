@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Cpu, HardDrive, Paintbrush, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Cpu, HardDrive, Keyboard, Paintbrush, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -12,11 +12,13 @@ import { DataSection } from './sections/data-section';
 import { GeneralSection } from './sections/general-section';
 import { ModelsSection } from './sections/models-section';
 import { PrivacySection } from './sections/privacy-section';
+import { ShortcutsSection } from './sections/shortcuts-section';
 
 const ICONS: Record<Section, ReactNode> = {
   general: <SlidersHorizontal aria-hidden />,
   appearance: <Paintbrush aria-hidden />,
   models: <Cpu aria-hidden />,
+  shortcuts: <Keyboard aria-hidden />,
   data: <HardDrive aria-hidden />,
   privacy: <ShieldCheck aria-hidden />,
 };
@@ -25,6 +27,7 @@ const CONTENT: Record<Section, () => ReactNode> = {
   general: GeneralSection,
   appearance: AppearanceSection,
   models: ModelsSection,
+  shortcuts: ShortcutsSection,
   data: DataSection,
   privacy: PrivacySection,
 };
