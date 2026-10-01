@@ -16,6 +16,8 @@ export type NoticeOut = Schemas['NoticeOut'];
 export type NoticeCode = Schemas['NoticeCode'];
 export type Limits = Schemas['Limits'];
 export type ApiKeyOut = Schemas['ApiKeyOut'];
+export type ImportOut = Schemas['ImportOut'];
+export type ImportEnvelopeOut = Schemas['ImportEnvelopeOut'];
 
 export type ChatOut = Schemas['ChatOut'];
 export type ChatListItemOut = Schemas['ChatListItemOut'];

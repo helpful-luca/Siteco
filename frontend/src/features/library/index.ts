@@ -1,5 +1,6 @@
 export { AttachmentsButton } from './components/attachments-button';
 export { AttachmentTray } from './components/attachment-tray';
+export { ImportLinkDialog } from './components/import-link-dialog';
 export { LibraryView } from './components/library-view';
 export { useAttachments, useDocuments } from './queries';
 export { isInProgress } from './status';

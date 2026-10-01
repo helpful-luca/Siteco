@@ -21,7 +21,7 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
   const tAnswer = useTranslations('chat.answer');
   const text = useCodeText();
   const formatSize = useFormatSize();
-  const name = item.file.name;
+  const name = item.name;
   const kind = kindOfFileName(name);
   const failed = item.state === 'failed';
   const error = failed ? item.error : null;
@@ -39,7 +39,9 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
             <div className="flex h-(--row-line) items-center">
               <FileName name={name} />
             </div>
-            <p className="text-caption text-ink-muted tabular-nums @3xl:hidden">{formatSize(item.file.size)}</p>
+            {item.total !== null && (
+              <p className="text-caption text-ink-muted tabular-nums @3xl:hidden">{formatSize(item.total)}</p>
+            )}
             <div className="mt-0.5 [--row-line:--spacing(7)] @lg:hidden">
               <UploadStatus item={item} />
             </div>
@@ -75,7 +77,7 @@ export function UploadRow({ item, onRetry, onDismiss }: Props) {
         <EmptyValue label={t('noPages')} />
       </td>
       <td className="hidden px-3 py-2 text-right text-footnote leading-(--row-line) text-ink-muted tabular-nums whitespace-nowrap @3xl:table-cell">
-        {formatSize(item.file.size)}
+        {item.total !== null ? formatSize(item.total) : <EmptyValue label={t('sizeUnknown')} />}
       </td>
       <td className="hidden px-3 py-2 @4xl:table-cell">
         <EmptyValue label={t('notAddedYet')} />

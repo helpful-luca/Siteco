@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { AttachmentsButton, AttachmentTray, useUploads } from '@/features/library';
+import { AttachmentsButton, AttachmentTray, ImportLinkDialog, useUploads } from '@/features/library';
 import { Page } from '@/features/shell';
 import { toApiError } from '@/shared/api/errors';
 import type { Lane } from '@/shared/api/types';
@@ -72,6 +72,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     return () => setDropTarget(null);
   }, [addFiles, setDropTarget, chatId]);
   const attach = () => openPicker({ chatId });
+  const [linkOpen, setLinkOpen] = useState(false);
 
   const list = messages.data?.messages;
   const turns = buildTurns(list ?? [], [runA, runB]);
@@ -271,6 +272,7 @@ export function ChatView({ chatId }: { chatId: string }) {
             onSubmit={submit}
             onStop={() => void streams.stop(chatId)}
             onAttach={attach}
+            onAttachLink={() => setLinkOpen(true)}
             busy={running}
             sending={sending}
             blocked={block !== null || !settings.model || down || waiting}
@@ -332,6 +334,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>
+      <ImportLinkDialog open={linkOpen} onOpenChange={setLinkOpen} onImport={(url) => uploads.addLink(url, chatId)} />
     </ChatFrame>
   );
 }

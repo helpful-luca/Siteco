@@ -95,7 +95,13 @@
     "REQUEST_TOO_LARGE": "Diese Anfrage ist zu groß. Kürze den Text und versuch es erneut.",
     "RATE_LIMITED": "Kurze Pause. {seconds, plural, one {In einer Sekunde} other {In # Sekunden}} kannst du weitermachen.",
     "pageNotFound": "Diese Seite gibt es nicht. Vielleicht hat sich die Adresse geändert.",
-    "API_KEY_INVALID": "Anthropic akzeptiert diesen Schlüssel nicht. Prüf ihn in der Anthropic Console und füg ihn noch einmal ein."
+    "API_KEY_INVALID": "Anthropic akzeptiert diesen Schlüssel nicht. Prüf ihn in der Anthropic Console und füg ihn noch einmal ein.",
+    "URL_INVALID": "Das ist kein gültiger Link. Möglich sind http- und https-Adressen ohne Benutzername und Passwort.",
+    "URL_BLOCKED": "Dieser Link führt in ein lokales oder internes Netz. Aus Sicherheitsgründen lädt die App nur öffentliche Adressen.",
+    "URL_UNREACHABLE": "Hinter dem Link war nichts zu laden. Prüf den Link und versuch es noch einmal.",
+    "URL_TIMEOUT": "Der Server hinter dem Link antwortet zu langsam. Versuch es später noch einmal.",
+    "URL_TOO_LARGE": "Die Datei hinter dem Link ist größer als {max_mb} MB. Lade eine kleinere Datei oder teile sie auf.",
+    "URL_UNSUPPORTED_TYPE": "Hinter dem Link liegt kein PDF, keine Webseite und keine Text- oder Markdown-Datei. Nimm einen Link, der direkt auf ein solches Dokument zeigt."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# Seite ohne Text, vermutlich gescannt. Diese Seite wird nicht durchsucht.} other {# Seiten ohne Text, vermutlich gescannt. Diese Seiten werden nicht durchsucht.}}",
@@ -458,7 +464,9 @@
       "uploadWaiting": "Wartet auf Upload",
       "uploadFailed": "Nicht hochgeladen",
       "recognizing": "Texterkennung, {percent} %",
-      "uploadPaused": "Pausiert"
+      "uploadPaused": "Pausiert",
+      "downloading": "Wird geladen",
+      "downloadingPercent": "Wird geladen, {percent} %"
     },
     "kind": {
       "pdf": "PDF-Dokument",
@@ -513,7 +521,8 @@
       "size": "Größe",
       "added": "Hinzugefügt",
       "gone": "Dieses Dokument gibt es nicht mehr.",
-      "notReady": "Die Vorschau erscheint, sobald das Dokument bereit ist."
+      "notReady": "Die Vorschau erscheint, sobald das Dokument bereit ist.",
+      "source": "Quelle"
     },
     "announce": {
       "scanning": "{name}: wird geprüft",
@@ -544,7 +553,19 @@
       "remove": "Aus diesem Chat entfernen",
       "removeOf": "{name} aus diesem Chat entfernen",
       "footer": "Was nur in diesem Chat liegt, wird mit dem Chat gelöscht."
-    }
+    },
+    "import": {
+      "title": "Von Link importieren",
+      "text": "Ein PDF, eine Webseite oder eine Text-Datei aus dem Internet. Die App lädt sie herunter und prüft sie wie jede andere Datei.",
+      "label": "Link",
+      "placeholder": "https://",
+      "action": "Importieren",
+      "cancel": "Abbrechen",
+      "files": "Dateien auswählen",
+      "link": "Von Link importieren",
+      "invalid": "Gib einen Link ein, der mit http:// oder https:// beginnt."
+    },
+    "sizeUnknown": "Größe noch unbekannt"
   },
   "markdown": {
     "code": "Code",

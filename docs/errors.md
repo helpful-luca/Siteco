@@ -31,6 +31,12 @@ HTTP errors: the document ends `failed` with the code.
 | `STORAGE_QUOTA` | 409 | no | backend | library row | Deine Bibliothek hat ihr Limit von 1024 MB erreicht. Entferne ein Dokument, um Platz zu schaffen. |
 | `STORAGE_FULL` | 507 | no | backend | library row | Auf dem Rechner ist kein Speicherplatz mehr frei. Gib etwas Platz frei oder entferne Dokumente. |
 | `UPLOAD_INCOMPLETE` | 400 | yes | backend | library row | Der Upload wurde unterbrochen. Versuch es noch einmal. |
+| `URL_INVALID` | 422 | no | backend | next to the control, library row | Das ist kein gültiger Link. Möglich sind http- und https-Adressen ohne Benutzername und Passwort. |
+| `URL_BLOCKED` | 422 | no | backend | next to the control, library row | Dieser Link führt in ein lokales oder internes Netz. Aus Sicherheitsgründen lädt die App nur öffentliche Adressen. |
+| `URL_UNREACHABLE` | 502 | yes | backend | library row | Hinter dem Link war nichts zu laden. Prüf den Link und versuch es noch einmal. |
+| `URL_TIMEOUT` | 504 | yes | backend | library row | Der Server hinter dem Link antwortet zu langsam. Versuch es später noch einmal. |
+| `URL_TOO_LARGE` | 413 | no | backend | library row | Die Datei hinter dem Link ist größer als 1024 MB. Lade eine kleinere Datei oder teile sie auf. |
+| `URL_UNSUPPORTED_TYPE` | 415 | no | backend | library row | Hinter dem Link liegt kein PDF, keine Webseite und keine Text- oder Markdown-Datei. Nimm einen Link, der direkt auf ein solches Dokument zeigt. |
 | `DOCUMENT_NOT_READY` | 409 | yes | backend | source panel | Dieses Dokument wird noch verarbeitet. Gleich ist es bereit. |
 | `DOCUMENT_FILE_MISSING` | 410 | no | backend | source panel | Die Originaldatei ist nicht mehr da. Lade das Dokument erneut hoch. |
 | `DELETE_FAILED` | 500 | yes | backend | library row, next to the control | Das Löschen hat nicht ganz geklappt. Versuch es noch einmal, bereits Gelöschtes bleibt gelöscht. |

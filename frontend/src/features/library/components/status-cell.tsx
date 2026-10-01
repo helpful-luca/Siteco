@@ -50,7 +50,7 @@ export function DocumentStatus({ document, announce = true }: { document: Docume
 
 export function UploadStatus({ item }: { item: UploadItem }) {
   const t = useTranslations('library.status');
-  const name = item.file.name;
+  const name = item.name;
   if (item.state === 'failed' && item.error?.code === 'RATE_LIMITED') {
     return (
       <StatusStack badge={<Badge tone="neutral">{t('uploadPaused')}</Badge>}>
@@ -72,8 +72,10 @@ export function UploadStatus({ item }: { item: UploadItem }) {
       </StatusStack>
     );
   }
-  const share = item.file.size ? item.loaded / item.file.size : 0;
-  const label = t('uploading', { percent: Math.round(share * 100) });
+  // A link without Content-Length: the bar moves without a number.
+  const share = item.total ? item.loaded / item.total : null;
+  const label =
+    share === null ? t('downloading') : t(item.url ? 'downloadingPercent' : 'uploading', { percent: Math.round(share * 100) });
   return (
     <StatusStack
       badge={<Badge tone="working">{label}</Badge>}

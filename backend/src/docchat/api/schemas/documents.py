@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from docchat.domain.enums import DocumentKind, DocumentStatus
-from docchat.domain.errors import ErrorCode, NoticeCode
+from docchat.domain.errors import ERROR_SPECS, ErrorCode, NoticeCode
 from docchat.domain.models import Chunk
 from docchat.services.document_service import DocumentView
 from docchat.services.url_import_service import ImportJob, ImportState
@@ -127,6 +127,7 @@ class ImportOut(BaseModel):
     document: DocumentOut | None = Field(description="Once `done`: the new document.")
     error_code: ErrorCode | None = Field(description="Why the import `failed`.")
     error_params: dict[str, int | str]
+    retryable: bool = Field(description="Starting the same import again may work.")
 
     @classmethod
     def from_job(cls, job: ImportJob, document: DocumentView | None) -> "ImportOut":
@@ -139,6 +140,7 @@ class ImportOut(BaseModel):
             document=DocumentOut.from_view(document) if document is not None else None,
             error_code=job.error_code,
             error_params=dict(job.error_params),
+            retryable=job.error_code is not None and ERROR_SPECS[job.error_code].retryable,
         )
 
 

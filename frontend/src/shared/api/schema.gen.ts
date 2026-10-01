@@ -860,6 +860,11 @@ export interface components {
             id: string;
             /** Received Bytes */
             received_bytes: number;
+            /**
+             * Retryable
+             * @description Starting the same import again may work.
+             */
+            retryable: boolean;
             state: components["schemas"]["ImportState"];
             /**
              * Total Bytes

@@ -7,7 +7,8 @@ import { useConfig } from '@/shared/api/use-config';
 import { deadlineIn } from '@/shared/lib/use-countdown';
 import { useAddAttachmentToList, useAddDocumentToList, useAddToLibrary } from '../queries';
 import { ACCEPT_ATTRIBUTE, type UploadError } from './pre-check';
-import { createItems, nextToStart, pausedUntil, uploadReducer, type UploadItem } from './upload-queue';
+import { importLink } from './link-import';
+import { createItems, createLinkItem, nextToStart, pausedUntil, uploadReducer, type UploadItem } from './upload-queue';
 import { xhrUpload } from './xhr-upload';
 
 /** Where files dropped on the window go while a chat is open (else: the library). */
@@ -17,6 +18,8 @@ type Uploads = {
   items: UploadItem[];
   /** `chatId`: into that chat (an attachment); without: into the library. */
   addFiles: (files: readonly File[], chatId?: string | null) => void;
+  /** Import from a link (the backend downloads it), into the chat or the library. */
+  addLink: (url: string, chatId?: string | null) => void;
   /** The file dialog; the chosen files go into the chat, or to `onFiles` when given. */
   openPicker: (target?: { chatId?: string | null; onFiles?: (files: File[]) => void }) => void;
   retry: (id: string) => void;
@@ -85,11 +88,18 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       controllers.current.set(id, controller);
       dispatch({ type: 'start', id });
       const { chatId } = item;
-      xhrUpload(item.file, {
-        signal: controller.signal,
-        chatId,
-        onProgress: (loaded) => dispatch({ type: 'progress', id, loaded }),
-      })
+      const transfer = item.file
+        ? xhrUpload(item.file, {
+            signal: controller.signal,
+            chatId,
+            onProgress: (loaded) => dispatch({ type: 'progress', id, loaded }),
+          })
+        : importLink(item.url ?? '', {
+            signal: controller.signal,
+            chatId,
+            onProgress: (loaded, total) => dispatch({ type: 'progress', id, loaded, total }),
+          });
+      transfer
         .then((document) => {
           if (chatId === null) {
             addToList(document);
@@ -126,6 +136,10 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     [config?.limits.max_upload_mb],
   );
 
+  const addLink = useCallback((url: string, chatId: string | null = null) => {
+    dispatch({ type: 'add', items: [createLinkItem(url, () => crypto.randomUUID(), chatId)] });
+  }, []);
+
   const answer = useCallback(
     (documentId: string, toLibrary: boolean) => {
       setAsking((ids) => ids.filter((other) => other !== documentId));
@@ -143,6 +157,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     () => ({
       items,
       addFiles,
+      addLink,
       openPicker: (target = {}) => {
         pickTarget.current = target;
         input.current?.click();
@@ -155,7 +170,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       dropTarget,
       setDropTarget,
     }),
-    [items, addFiles, dismiss, asking, answer, dropTarget],
+    [items, addFiles, addLink, dismiss, asking, answer, dropTarget],
   );
 
   return (

@@ -20,6 +20,8 @@ export function DocumentDetails({ documentId }: { documentId: string }) {
     [t('pages'), document.page_count === null ? t('noPages') : format.number(document.page_count)],
     [t('size'), formatSize(document.size_bytes)],
     [t('added'), format.dateTime(new Date(document.created_at), { dateStyle: 'long', timeStyle: 'short' })],
+    // Imported from a link: shown as text (the address is data, never followed from here).
+    ...(document.source_url ? ([[t('source'), document.source_url]] as [string, string][]) : []),
   ];
   return (
     <div className="p-6">
@@ -34,7 +36,7 @@ export function DocumentDetails({ documentId }: { documentId: string }) {
         {rows.map(([label, value]) => (
           <div key={label} className="grid grid-cols-[1fr_1.4fr] gap-4 py-2">
             <dt className="text-ink-muted">{label}</dt>
-            <dd>{value}</dd>
+            <dd className="wrap-anywhere">{value}</dd>
           </div>
         ))}
       </dl>

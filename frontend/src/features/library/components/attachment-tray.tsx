@@ -119,7 +119,7 @@ function UploadChip({
 }) {
   const t = useTranslations('library');
   const text = useCodeText();
-  const name = item.file.name;
+  const name = item.name;
   const kind = kindOfFileName(name);
   const failed = item.state === 'failed';
   let detail: ReactNode = null;

@@ -1,9 +1,9 @@
 'use client';
 
-import { ArrowUp, Paperclip, Square } from 'lucide-react';
+import { ArrowUp, FileUp, Link2, Paperclip, Square } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useLayoutEffect, useRef, type KeyboardEvent } from 'react';
-import { Button, cn, Tooltip } from '@/shared/ui';
+import { Button, cn, Menu, MenuItem, Tooltip } from '@/shared/ui';
 
 /** The counter appears from 80 % of the limit (annex 10, E5). */
 const COUNTER_FROM = 0.8;
@@ -14,7 +14,9 @@ type Props = {
   onChange: (value: string) => void;
   onSubmit: (question: string) => void;
   onStop: () => void;
+  /** Files from this computer, or a link the backend downloads (both: into this chat). */
   onAttach: () => void;
+  onAttachLink?: () => void;
   /** An answer is running in this chat: the button stops it, typing a draft still works. */
   busy: boolean;
   /** The question is on its way and not yet confirmed. */
@@ -36,6 +38,7 @@ export function Composer({
   onSubmit,
   onStop,
   onAttach,
+  onAttachLink,
   busy,
   sending,
   blocked,
@@ -44,6 +47,7 @@ export function Composer({
   autoFocus = false,
 }: Props) {
   const t = useTranslations('chat.composer');
+  const tImport = useTranslations('library.import');
   const locale = useLocale();
   const field = useRef<HTMLTextAreaElement>(null);
   const length = value.trim().length;
@@ -81,11 +85,31 @@ export function Composer({
         send();
       }}
     >
-      <Tooltip content={t('attach')}>
-        <Button icon variant="ghost" aria-label={t('attach')} onClick={onAttach}>
-          <Paperclip />
-        </Button>
-      </Tooltip>
+      {onAttachLink ? (
+        <Menu
+          side="top"
+          trigger={
+            <Button icon variant="ghost" aria-label={t('attach')}>
+              <Paperclip />
+            </Button>
+          }
+        >
+          <MenuItem onClick={onAttach}>
+            <FileUp aria-hidden />
+            {tImport('files')}
+          </MenuItem>
+          <MenuItem onClick={onAttachLink}>
+            <Link2 aria-hidden />
+            {tImport('link')}
+          </MenuItem>
+        </Menu>
+      ) : (
+        <Tooltip content={t('attach')}>
+          <Button icon variant="ghost" aria-label={t('attach')} onClick={onAttach}>
+            <Paperclip />
+          </Button>
+        </Tooltip>
+      )}
       <label className="sr-only" htmlFor="composer-field">
         {t('label')}
       </label>

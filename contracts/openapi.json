@@ -1174,6 +1174,11 @@
             "title": "Received Bytes",
             "type": "integer"
           },
+          "retryable": {
+            "description": "Starting the same import again may work.",
+            "title": "Retryable",
+            "type": "boolean"
+          },
           "state": {
             "$ref": "#/components/schemas/ImportState"
           },
@@ -1203,7 +1208,8 @@
           "total_bytes",
           "document",
           "error_code",
-          "error_params"
+          "error_params",
+          "retryable"
         ],
         "title": "ImportOut",
         "type": "object"

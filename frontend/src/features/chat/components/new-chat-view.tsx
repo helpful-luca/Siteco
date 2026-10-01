@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { useUploads } from '@/features/library';
+import { ImportLinkDialog, useUploads } from '@/features/library';
 import { ApiError, toApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
 import { useBackendDown } from '@/shared/api/use-connection';
@@ -75,14 +75,16 @@ export function NewChatView() {
   const scopeBody = () =>
     scope.scope === 'all' ? { scope: 'all' as const } : { scope: 'selected' as const, document_ids: scope.documentIds };
 
-  const { addFiles, setDropTarget, openPicker } = uploads;
-  const attachFiles = async (files: File[]) => {
+  const { addFiles, addLink, setDropTarget, openPicker } = uploads;
+  const [linkOpen, setLinkOpen] = useState(false);
+  /** Creates the chat, hands it what was attached, then opens it with the draft. */
+  const attachTo = async (add: (chatId: string) => void) => {
     if (sendingRef.current) return;
     sendingRef.current = true;
     clearRefusal();
     try {
       const { chat } = await createChat.mutateAsync(scopeBody());
-      addFiles(files, chat.id);
+      add(chat.id);
       void queryClient.invalidateQueries({ queryKey: CHATS_KEY }); // listed before its first question
       settings.setDraft(chat.id, draft);
       setDraft('');
@@ -93,6 +95,7 @@ export function NewChatView() {
       sendingRef.current = false;
     }
   };
+  const attachFiles = (files: File[]) => attachTo((chatId) => addFiles(files, chatId));
   const attachRef = useRef(attachFiles);
   useEffect(() => {
     attachRef.current = attachFiles;
@@ -157,6 +160,7 @@ export function NewChatView() {
             onSubmit={submit}
             onStop={() => undefined}
             onAttach={attach}
+            onAttachLink={() => setLinkOpen(true)}
             busy={false}
             sending={sending}
             blocked={block !== null || !settings.model || down || waiting}
@@ -219,6 +223,11 @@ export function NewChatView() {
         )}
         <div aria-hidden className="min-h-6 flex-3" />
       </div>
+      <ImportLinkDialog
+        open={linkOpen}
+        onOpenChange={setLinkOpen}
+        onImport={(url) => void attachTo((chatId) => addLink(url, chatId))}
+      />
     </ChatFrame>
   );
 }

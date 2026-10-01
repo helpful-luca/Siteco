@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createItems, isBusy, nextToStart, pausedUntil, uploadReducer, type UploadItem } from './upload-queue';
+import { createItems, createLinkItem, isBusy, nextToStart, pausedUntil, uploadReducer, type UploadItem } from './upload-queue';
 
 function file(name: string, size = 100): File {
   return new File([new Uint8Array(size)], name);
@@ -25,11 +25,11 @@ describe('upload queue', () => {
 
   it('starts at most three uploads at a time, oldest first', () => {
     let items = queue('1.pdf', '2.pdf', '3.pdf', '4.pdf', '5.pdf');
-    expect(nextToStart(items).map((i) => i.file.name)).toEqual(['1.pdf', '2.pdf', '3.pdf']);
+    expect(nextToStart(items).map((i) => i.name)).toEqual(['1.pdf', '2.pdf', '3.pdf']);
     for (const item of nextToStart(items)) items = uploadReducer(items, { type: 'start', id: item.id });
     expect(nextToStart(items)).toEqual([]);
     items = uploadReducer(items, { type: 'succeeded', id: items[0].id });
-    expect(nextToStart(items).map((i) => i.file.name)).toEqual(['4.pdf']);
+    expect(nextToStart(items).map((i) => i.name)).toEqual(['4.pdf']);
   });
 
   it('tracks progress and keeps failures with their error', () => {
@@ -81,7 +81,7 @@ describe('pause for our own upload limit (annex 11, 6.3)', () => {
     items = uploadReducer(items, { type: 'failed', id: items[0].id, error: limited(20_000) });
     expect(pausedUntil(items)).toBe(20_000);
     expect(nextToStart(items, 3, 19_999)).toEqual([]);
-    expect(nextToStart(items, 3, 20_000).map((i) => i.file.name)).toEqual(['2.pdf', '3.pdf']);
+    expect(nextToStart(items, 3, 20_000).map((i) => i.name)).toEqual(['2.pdf', '3.pdf']);
   });
 
   it('can be retried like any retryable failure', () => {
@@ -98,5 +98,15 @@ describe('pause for our own upload limit (annex 11, 6.3)', () => {
     items = uploadReducer(items, { type: 'choose', id: items[0].id, toLibrary: true });
     expect(items[0].toLibrary).toBe(true);
     expect(createItems([file('b.pdf')], 1024, makeId)[0]).toMatchObject({ chatId: null, toLibrary: null });
+  });
+
+  it('imports from a link like a file, with the size once the server tells it', () => {
+    let items = [createLinkItem('https://www.siteco.de/kataloge/SIT_KAT.pdf?_=1', () => 'l1', 'c1')];
+    expect(items[0]).toMatchObject({ file: null, url: 'https://www.siteco.de/kataloge/SIT_KAT.pdf?_=1', name: 'SIT_KAT.pdf', total: null, state: 'waiting', chatId: 'c1' });
+    items = uploadReducer(items, { type: 'start', id: 'l1' });
+    items = uploadReducer(items, { type: 'progress', id: 'l1', loaded: 10, total: 100 });
+    expect(items[0]).toMatchObject({ loaded: 10, total: 100 });
+    expect(createLinkItem('https://www.siteco.de/', () => 'l2', null).name).toBe('www.siteco.de');
+    expect(createLinkItem('https://www.siteco.de/de/produkte/', () => 'l3', null).name).toBe('www.siteco.de/de/produkte');
   });
 });

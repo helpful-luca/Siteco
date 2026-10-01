@@ -11,7 +11,13 @@ export type UploadState = 'waiting' | 'uploading' | 'failed';
 
 export type UploadItem = {
   id: string;
-  file: File;
+  /** A file from this computer, or null for an import from a link (`url`). */
+  file: File | null;
+  url: string | null;
+  /** What the row shows: the file name, or the link's last part until the server names it. */
+  name: string;
+  /** Bytes expected: the file's size, or a link's Content-Length once known (else null). */
+  total: number | null;
   state: UploadState;
   loaded: number;
   error: UploadError | null;
@@ -24,7 +30,7 @@ export type UploadItem = {
 export type UploadAction =
   | { type: 'add'; items: UploadItem[] }
   | { type: 'start'; id: string }
-  | { type: 'progress'; id: string; loaded: number }
+  | { type: 'progress'; id: string; loaded: number; total?: number | null }
   | { type: 'succeeded'; id: string }
   | { type: 'failed'; id: string; error: UploadError }
   | { type: 'retry'; id: string }
@@ -39,8 +45,50 @@ export function createItems(
 ): UploadItem[] {
   return files.map((file) => {
     const error = preCheck(file, maxUploadMb);
-    return { id: makeId(), file, state: error ? 'failed' : 'waiting', loaded: 0, error, chatId, toLibrary: null };
+    return {
+      id: makeId(),
+      file,
+      url: null,
+      name: file.name,
+      total: file.size,
+      state: error ? 'failed' : 'waiting',
+      loaded: 0,
+      error,
+      chatId,
+      toLibrary: null,
+    };
   });
+}
+
+/**
+ * The name a link gets in the list until the server answers: a file name when the path ends
+ * in one ("SIT_KAT.pdf"), else host and path ("www.siteco.de/de/produkte").
+ */
+function linkName(url: string): string {
+  try {
+    const { hostname, pathname } = new URL(url);
+    const last = decodeURIComponent(pathname.split('/').filter(Boolean).at(-1) ?? '');
+    if (/\.[a-z0-9]{1,8}$/i.test(last)) return last;
+    return `${hostname}${decodeURIComponent(pathname)}`.replace(/\/+$/, '');
+  } catch {
+    return url;
+  }
+}
+
+/** An import from a link: the backend downloads it, the queue shows it like an upload. */
+export function createLinkItem(url: string, makeId: () => string, chatId: string | null = null): UploadItem {
+  return {
+    id: makeId(),
+    file: null,
+    url,
+    name: linkName(url),
+    total: null,
+    state: 'waiting',
+    loaded: 0,
+    error: null,
+    chatId,
+    toLibrary: null,
+  };
 }
 
 function update(items: UploadItem[], id: string, patch: Partial<UploadItem>): UploadItem[] {
@@ -54,7 +102,10 @@ export function uploadReducer(items: UploadItem[], action: UploadAction): Upload
     case 'start':
       return update(items, action.id, { state: 'uploading', loaded: 0, error: null });
     case 'progress':
-      return update(items, action.id, { loaded: action.loaded });
+      return update(items, action.id, {
+        loaded: action.loaded,
+        ...(action.total !== undefined ? { total: action.total } : {}),
+      });
     case 'failed':
       return update(items, action.id, { state: 'failed', error: action.error });
     case 'retry': {

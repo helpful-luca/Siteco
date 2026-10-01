@@ -95,7 +95,13 @@
     "REQUEST_TOO_LARGE": "This request is too large. Shorten the text and try again.",
     "RATE_LIMITED": "Quick pause. You can continue in {seconds, plural, one {one second} other {# seconds}}.",
     "pageNotFound": "This page doesn't exist. The address may have changed.",
-    "API_KEY_INVALID": "Anthropic doesn't accept this key. Check it in the Anthropic Console and paste it again."
+    "API_KEY_INVALID": "Anthropic doesn't accept this key. Check it in the Anthropic Console and paste it again.",
+    "URL_INVALID": "That isn't a valid link. You can use http and https addresses without a user name or password.",
+    "URL_BLOCKED": "This link points into a local or internal network. For safety, the app only loads public addresses.",
+    "URL_UNREACHABLE": "Nothing could be loaded from the link. Check it and try again.",
+    "URL_TIMEOUT": "The server behind the link is too slow to answer. Try again later.",
+    "URL_TOO_LARGE": "The file behind the link is larger than {max_mb} MB. Use a smaller file or split it.",
+    "URL_UNSUPPORTED_TYPE": "The link doesn't lead to a PDF, a web page or a text or Markdown file. Use a link that points straight to such a document."
   },
   "notices": {
     "PAGES_WITHOUT_TEXT": "{count, plural, one {# page has no text, probably scanned. It won't be searched.} other {# pages have no text, probably scanned. They won't be searched.}}",
@@ -458,7 +464,9 @@
       "uploadWaiting": "Waiting to upload",
       "uploadFailed": "Not uploaded",
       "recognizing": "Recognizing text, {percent} %",
-      "uploadPaused": "Paused"
+      "uploadPaused": "Paused",
+      "downloading": "Downloading",
+      "downloadingPercent": "Downloading, {percent} %"
     },
     "kind": {
       "pdf": "PDF document",
@@ -513,7 +521,8 @@
       "size": "Size",
       "added": "Added",
       "gone": "This document no longer exists.",
-      "notReady": "The preview appears as soon as the document is ready."
+      "notReady": "The preview appears as soon as the document is ready.",
+      "source": "Source"
     },
     "announce": {
       "scanning": "{name}: checking",
@@ -544,7 +553,19 @@
       "remove": "Remove from this chat",
       "removeOf": "Remove {name} from this chat",
       "footer": "Files that are only in this chat are deleted with the chat."
-    }
+    },
+    "import": {
+      "title": "Import from a link",
+      "text": "A PDF, a web page or a text file from the internet. The app downloads it and checks it like any other file.",
+      "label": "Link",
+      "placeholder": "https://",
+      "action": "Import",
+      "cancel": "Cancel",
+      "files": "Choose files",
+      "link": "Import from a link",
+      "invalid": "Enter a link that starts with http:// or https://."
+    },
+    "sizeUnknown": "Size not known yet"
   },
   "markdown": {
     "code": "Code",

@@ -1,6 +1,6 @@
 'use client';
 
-import { Upload } from 'lucide-react';
+import { ChevronDown, FileUp, Link2, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { DocumentOut } from '@/shared/api/types';
@@ -9,7 +9,7 @@ import { ApiError } from '@/shared/api/errors';
 import { useConfig } from '@/shared/api/use-config';
 import { Page, useUI } from '@/features/shell';
 import { useOpenDocument } from '@/features/viewer';
-import { Button, DelayedSpinner, SearchField, SegmentedControl } from '@/shared/ui';
+import { Button, DelayedSpinner, Menu, MenuItem, SearchField, SegmentedControl } from '@/shared/ui';
 import { useDeleteDocument, useDocuments } from '../queries';
 import { matchesFilter, matchesQuery, statusGroup, type StatusFilter } from '../status';
 import { useUploads } from '../upload/upload-provider';
@@ -17,12 +17,14 @@ import { useFormatSize } from '../use-format-size';
 import { DeleteDialog } from './delete-dialog';
 import { DocumentDetails } from './document-details';
 import { DocumentTable } from './document-table';
+import { ImportLinkDialog } from './import-link-dialog';
 import { LibraryEmpty } from './library-empty';
 
 const FILTERS: StatusFilter[] = ['all', 'ready', 'working', 'failed'];
 
 export function LibraryView() {
   const t = useTranslations('library');
+  const tImport = useTranslations('library.import');
   const text = useCodeText();
   const formatSize = useFormatSize();
   const { data, error, isPending, refetch, isFetching } = useDocuments();
@@ -33,6 +35,7 @@ export function LibraryView() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [deleting, setDeleting] = useState<DocumentOut | null>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
 
   const documents = data?.documents ?? [];
   const shownDocuments = documents.filter(
@@ -41,7 +44,7 @@ export function LibraryView() {
   // Uploads into a chat show in that chat, not here.
   const libraryUploads = uploads.items.filter((i) => i.chatId === null);
   const shownUploads = libraryUploads.filter(
-    (i) => matchesQuery(i.file.name, query) && matchesFilter(i.state === 'failed' ? 'failed' : 'working', filter),
+    (i) => matchesQuery(i.name, query) && matchesFilter(i.state === 'failed' ? 'failed' : 'working', filter),
   );
   const empty = documents.length === 0 && libraryUploads.length === 0;
   const totalBytes = documents.reduce((sum, d) => sum + d.size_bytes, 0);
@@ -73,10 +76,25 @@ export function LibraryView() {
           </p>
         </div>
         {!empty && (
-          <Button variant="primary" onClick={() => uploads.openPicker()}>
-            <Upload aria-hidden />
-            {t('upload')}
-          </Button>
+          <Menu
+            align="end"
+            trigger={
+              <Button variant="primary">
+                <Upload aria-hidden />
+                {t('upload')}
+                <ChevronDown aria-hidden className="-mr-1 opacity-80" />
+              </Button>
+            }
+          >
+            <MenuItem onClick={() => uploads.openPicker()}>
+              <FileUp aria-hidden />
+              {tImport('files')}
+            </MenuItem>
+            <MenuItem onClick={() => setLinkOpen(true)}>
+              <Link2 aria-hidden />
+              {tImport('link')}
+            </MenuItem>
+          </Menu>
         )}
       </header>
 
@@ -99,7 +117,9 @@ export function LibraryView() {
         </div>
       ) : empty ? (
         <div className="mt-6">
-          <LibraryEmpty maxUploadMb={config?.limits.max_upload_mb} onChoose={() => uploads.openPicker()} />
+          <LibraryEmpty maxUploadMb={config?.limits.max_upload_mb} onChoose={() => uploads.openPicker()}
+            onLink={() => setLinkOpen(true)}
+          />
         </div>
       ) : (
         <>
@@ -152,6 +172,7 @@ export function LibraryView() {
       )}
 
       <DeleteDialog document={deleting} onConfirm={confirmDelete} onClose={() => setDeleting(null)} />
+      <ImportLinkDialog open={linkOpen} onOpenChange={setLinkOpen} onImport={(url) => uploads.addLink(url)} />
     </Page>
   );
 }
