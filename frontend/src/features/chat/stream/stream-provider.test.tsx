@@ -95,7 +95,7 @@ describe('StreamProvider', () => {
     expect(api().runs[runKey('c1')].outcome).toEqual({ kind: 'stopped' });
     expect(signal?.aborted).toBe(true);
     const stopCall = fetchMock.mock.calls.find(([url]) => url === '/api/chats/c1/stop');
-    expect(JSON.parse(String(stopCall?.[1]?.body))).toEqual({ lane: 'a' });
+    expect(JSON.parse(String(stopCall?.[1]?.body))).toEqual({}); // every lane of the chat
   });
 
   it('rejects a stream cut off before meta, so the question stays in the composer', async () => {
@@ -311,5 +311,82 @@ describe('StreamProvider', () => {
     await waitFor(() => expect(api.current?.getRun('c1')?.outcome?.kind).toBe('done'));
     expect(screen.getByText('Hello: Die Mira hat IP66.')).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledTimes(1); // the stream was never restarted
+  });
+
+  it('compares: lane b joins the question once lane a is confirmed, with the same ids', async () => {
+    const answer = (lane: 'a' | 'b') =>
+      frame('meta', { ...META, lane, assistant_message_id: `${lane}1`, comparison_id: 'cmp' }) + frame('delta', { text: lane }) + frame('done', DONE);
+    const { api, fetchMock } = setup(async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      return new Response(answer(body.comparison.lane), { headers: SSE });
+    });
+    await act(() =>
+      api().compare({
+        chatId: 'c1',
+        question: 'Schutzart?',
+        locale: 'de',
+        lanes: [{ model: 'claude-sonnet-5-5' }, { model: 'claude-haiku-4-5', style: 'detailed' }],
+      }),
+    );
+    await waitFor(() => expect(api().runs[runKey('c1', 'b')]?.outcome?.kind).toBe('done'));
+    const [first, second] = fetchMock.mock.calls.map(([, init]) => JSON.parse(String(init?.body)));
+    expect(first).toMatchObject({ model: 'claude-sonnet-5-5', comparison: { lane: 'a' } });
+    expect(second).toMatchObject({ model: 'claude-haiku-4-5', style: 'detailed', comparison: { lane: 'b' } });
+    expect(second.client_message_id).toBe(first.client_message_id);
+    expect(second.comparison.id).toBe(first.comparison.id);
+    expect(api().runs[runKey('c1', 'a')].text).toBe('a');
+    expect(api().runs[runKey('c1', 'b')].firstTokenAt).not.toBeNull();
+  });
+
+  it('keeps a refusal of lane b in its column and leaves lane a alone', async () => {
+    const { api } = setup(async (_url, init) => {
+      if (JSON.parse(String(init?.body)).comparison.lane === 'b') {
+        return Response.json({ error: { code: 'COMPARE_SAME_MODEL', retryable: false, request_id: 'r2', params: {} } }, { status: 422 });
+      }
+      return new Response(frame('meta', { ...META, comparison_id: 'cmp' }) + frame('done', DONE), { headers: SSE });
+    });
+    let confirmed = false;
+    await act(async () => {
+      confirmed = await api().compare({ chatId: 'c1', question: 'x', locale: 'de', lanes: [{ model: 'm1' }, { model: 'm1' }] });
+    });
+    expect(confirmed).toBe(true);
+    await waitFor(() =>
+      expect(api().runs[runKey('c1', 'b')]?.outcome).toMatchObject({ kind: 'error', error: { code: 'COMPARE_SAME_MODEL', requestId: 'r2' } }),
+    );
+    expect(api().runs[runKey('c1', 'b')].comparisonId).toEqual(expect.any(String));
+    await waitFor(() => expect(api().runs[runKey('c1', 'a')]?.outcome?.kind).toBe('done'));
+  });
+
+  it('refuses the whole comparison when lane a is refused', async () => {
+    const { api, fetchMock } = setup(async () =>
+      Response.json({ error: { code: 'RATE_LIMITED', retryable: true, request_id: 'r', params: { seconds: 9 } } }, { status: 429 }),
+    );
+    await expect(
+      api().compare({ chatId: 'c1', question: 'x', locale: 'de', lanes: [{ model: 'm1' }, { model: 'm2' }] }),
+    ).rejects.toMatchObject({ code: 'RATE_LIMITED' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(api().runs).toEqual({});
+  });
+
+  it('stops one lane only', async () => {
+    const { api, fetchMock } = setup(async (url, init) => {
+      if (url.endsWith('/stop')) return Response.json({ stopped: ['b'] }, { status: 202 });
+      const lane = JSON.parse(String(init?.body)).comparison.lane;
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(frame('meta', { ...META, lane, comparison_id: 'cmp' }) + frame('delta', { text: 'Teil' })));
+          init?.signal?.addEventListener('abort', () => controller.error(new DOMException('aborted', 'AbortError')));
+        },
+      });
+      return new Response(stream, { headers: SSE });
+    });
+    await act(() => api().compare({ chatId: 'c1', question: 'x', locale: 'de', lanes: [{ model: 'm1' }, { model: 'm2' }] }));
+    await waitFor(() => expect(api().runs[runKey('c1', 'b')]?.text).toBe('Teil'));
+    await act(() => api().stop('c1', 'b'));
+    expect(api().runs[runKey('c1', 'b')].outcome).toEqual({ kind: 'stopped' });
+    expect(api().runs[runKey('c1', 'a')].outcome).toBeNull();
+    const stopCall = fetchMock.mock.calls.find(([url]) => url === '/api/chats/c1/stop');
+    expect(JSON.parse(String(stopCall?.[1]?.body))).toEqual({ lane: 'b' });
+    await act(() => api().stop('c1'));
   });
 });

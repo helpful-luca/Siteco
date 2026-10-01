@@ -1,8 +1,17 @@
-import type { MessageOut } from '@/shared/api/types';
+import type { Lane, MessageOut } from '@/shared/api/types';
 import { answerFromMessage, answerFromRun, type Answer } from './answer';
 import type { RunState } from './stream/stream-reducer';
 
-export type Turn = { key: string; question: string; answer: Answer | null };
+/** Both answers of one question in the comparison mode (annex 11, 1.3). */
+export type Comparison = { id: string; a: Answer | null; b: Answer | null; preferred: Lane };
+
+export type Turn = {
+  key: string;
+  question: string;
+  /** The single answer, or lane a of a comparison. */
+  answer: Answer | null;
+  comparison: Comparison | null;
+};
 
 // Saved messages and runs are immutable snapshots: their view models are built once, so turns
 // that did not change keep their identity and memoised rows skip rendering.
@@ -19,50 +28,84 @@ function messageAnswer(message: MessageOut): Answer {
   return answer;
 }
 
-function runAnswer(run: RunState): Answer {
+function runAnswer(run: RunState, persisted?: MessageOut): Answer {
   let answer = fromRun.get(run);
   if (!answer) {
     answer = answerFromRun(run);
+    // Keeping an answer is the user's choice, saved with the message; a live run cannot know it.
+    if (persisted) answer = { ...answer, isPreferred: persisted.is_preferred };
     fromRun.set(run, answer);
   }
   return answer;
 }
 
-function turnFor(user: MessageOut, answer: Answer | null): Turn {
+/** `starting`: lane b of a live comparison may not have started yet; its column waits. */
+function comparisonOf(a: Answer | null, b: Answer | null, starting = false): Comparison | null {
+  const id = a?.comparisonId ?? b?.comparisonId;
+  // A saved comparison whose second lane never started reads as one answer.
+  if (!id || (!b && !starting)) return null;
+  return { id, a, b, preferred: b?.isPreferred && !a?.isPreferred ? 'b' : 'a' };
+}
+
+function sameTurn(turn: Turn, a: Answer | null, b: Answer | null): boolean {
+  return turn.answer === a && (turn.comparison?.b ?? null) === b;
+}
+
+function turnFor(user: MessageOut, a: Answer | null, b: Answer | null): Turn {
   const cached = turnOf.get(user);
-  if (cached && cached.answer === answer) return cached;
-  const turn = { key: user.id, question: user.content, answer };
+  if (cached && sameTurn(cached, a, b)) return cached;
+  const turn = { key: user.id, question: user.content, answer: a, comparison: comparisonOf(a, b) };
   turnOf.set(user, turn);
   return turn;
 }
 
 /**
- * Question and answer pairs from the persisted messages, with the live run merged in: a new
- * question is appended, a regenerated answer replaces its old version in place. Rows the run
- * owns are hidden until the persisted version has caught up.
+ * Question and answer pairs from the persisted messages, with the live runs (lanes a and b)
+ * merged in: a new question is appended, a regenerated answer replaces its old version in place.
+ * Rows the runs own are hidden until the persisted version has caught up. A lane refused before
+ * its stream has no message; it joins the turn of its comparison.
  */
-export function buildTurns(messages: MessageOut[], run: RunState | undefined): Turn[] {
-  const live = run?.meta ? run : undefined;
-  const hiddenUser = live && !live.regenerateOf ? live.meta?.user_message_id : undefined;
-  const liveAnswerId = live?.meta?.assistant_message_id;
+export function buildTurns(messages: MessageOut[], runs: ReadonlyArray<RunState | undefined>): Turn[] {
+  const live = runs.filter((run): run is RunState => Boolean(run?.meta));
+  const liveByAnswer = new Map(live.map((run) => [run.meta?.assistant_message_id, run]));
+  const asking = live.filter((run) => !run.regenerateOf);
+  const newQuestion = asking[0]?.meta?.user_message_id;
+  const refused = runs.filter((run): run is RunState => Boolean(run && !run.meta && run.outcome && run.comparisonId));
 
-  const answers = new Map<string, MessageOut>();
+  const answers = new Map<string, Partial<Record<Lane, MessageOut>>>();
   for (const message of messages) {
-    if (message.role === 'assistant' && message.parent_id && (message.lane ?? 'a') === 'a') {
-      answers.set(message.parent_id, message);
-    }
+    if (message.role !== 'assistant' || !message.parent_id) continue;
+    const lanes = answers.get(message.parent_id) ?? {};
+    lanes[message.lane ?? 'a'] = message;
+    answers.set(message.parent_id, lanes);
   }
+  const pick = (persisted: MessageOut | undefined): Answer | null => {
+    if (!persisted) return null;
+    const run = liveByAnswer.get(persisted.id);
+    return run ? runAnswer(run, persisted) : messageAnswer(persisted);
+  };
+  const withRefused = (a: Answer | null, b: Answer | null): Answer | null => {
+    if (b || !a?.comparisonId) return b;
+    const run = refused.find((r) => r.comparisonId === a.comparisonId);
+    return run ? runAnswer(run) : null;
+  };
 
   const turns: Turn[] = [];
   for (const message of messages) {
-    if (message.role !== 'user' || message.id === hiddenUser) continue;
-    const persisted = answers.get(message.id);
-    const answer =
-      live && persisted && persisted.id === liveAnswerId ? runAnswer(live) : persisted ? messageAnswer(persisted) : null;
-    turns.push(turnFor(message, answer));
+    if (message.role !== 'user' || message.id === newQuestion) continue;
+    const lanes = answers.get(message.id) ?? {};
+    const a = pick(lanes.a);
+    turns.push(turnFor(message, a, withRefused(a, pick(lanes.b))));
   }
-  if (live && !live.regenerateOf) {
-    turns.push({ key: live.meta?.user_message_id ?? live.clientMessageId, question: live.question, answer: runAnswer(live) });
+  if (newQuestion) {
+    const lane = (name: Lane) => asking.find((run) => run.lane === name && run.meta?.user_message_id === newQuestion);
+    const runA = lane('a');
+    const runB = lane('b');
+    const a = runA ? runAnswer(runA) : null;
+    const b = withRefused(a, runB ? runAnswer(runB) : null);
+    const first = runA ?? runB;
+    const comparison = comparisonOf(a, b, Boolean(runA?.comparisonId));
+    turns.push({ key: newQuestion, question: first?.question ?? '', answer: a, comparison });
   }
   return turns;
 }

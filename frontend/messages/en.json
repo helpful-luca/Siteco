@@ -391,7 +391,30 @@
       },
       "price": "${input} input, ${output} output per million tokens",
       "noKey": "Without an API key no model answers, you get the passages.",
-      "unavailable": "Not available right now"
+      "unavailable": "Not available right now",
+      "secondLabel": "Second model",
+      "inOtherColumn": "Already in the other column"
+    },
+    "compare": {
+      "toggle": "Compare",
+      "on": "Compare: the next question goes to two models",
+      "off": "Stop comparing",
+      "unavailable": "Comparing needs two models that can answer.",
+      "label": "Comparison of two models",
+      "tabs": "Show the answer of",
+      "laneA": "Model A",
+      "laneB": "Model B",
+      "column": "Answer of {model}",
+      "stop": "Stop",
+      "keep": "Keep this answer",
+      "kept": "Kept",
+      "hint": "Follow-up questions build on the answer of {model}.",
+      "ttft": "First text",
+      "total": "Total",
+      "seconds": "{seconds} s",
+      "tokens": "Tokens",
+      "tokensValue": "{input} in, {output} out",
+      "cost": "Cost"
     }
   },
   "library": {

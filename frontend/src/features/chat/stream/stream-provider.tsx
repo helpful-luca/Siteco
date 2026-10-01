@@ -6,13 +6,13 @@ import type { ReactNode } from 'react';
 import { accountStatus } from '@/shared/api/account-status';
 import { fetchJson } from '@/shared/api/client';
 import { CONFIG_CHANGING_CODES } from '@/shared/api/error-catalog';
-import { ApiError, clientError } from '@/shared/api/errors';
+import { ApiError, clientError, toApiError } from '@/shared/api/errors';
 import type { AnswerStyle, ConfigOut, Effort, Lane } from '@/shared/api/types';
 import { CHATS_KEY, chatKey, messagesKey } from '../queries';
 import type { StreamEvent } from './events';
 import { readStream } from './read-stream';
 import { createRunStore, type RunStore } from './run-store';
-import { isRunning, runKey, type RunState, type StartRun } from './stream-reducer';
+import { isRunning, runKey, type RunError, type RunState, type StartRun } from './stream-reducer';
 
 type Locale = 'de' | 'en';
 
@@ -26,12 +26,28 @@ export type RegenerateInput = {
   question: string;
   model: string;
   locale: Locale;
+  /** The lane of the answer being replaced (`b` in a comparison). */
+  lane?: Lane;
 } & AnswerOptions;
+/** One column of a comparison: its model and how it writes. */
+export type LaneInput = { model: string } & AnswerOptions;
+export type CompareInput = { chatId: string; question: string; locale: Locale; lanes: [LaneInput, LaneInput] };
+/** The second lane again, after it was refused before its stream. */
+export type RetryLaneInput = {
+  chatId: string;
+  question: string;
+  locale: Locale;
+  lane: Lane;
+  clientMessageId: string;
+  comparisonId: string;
+} & LaneInput;
 
 /** Only what is set goes into the request body. */
 function answerFields({ effort, style }: AnswerOptions): AnswerOptions {
   return { ...(effort ? { effort } : {}), ...(style ? { style } : {}) };
 }
+
+const LANES: readonly Lane[] = ['a', 'b'];
 
 /** Stable functions: consumers never re-render because an answer streams. */
 export type StreamActions = {
@@ -40,16 +56,35 @@ export type StreamActions = {
    * before that; rejects with an ApiError when refused or cut off before `meta`.
    */
   ask: (input: AskInput) => Promise<boolean>;
+  /**
+   * Two models, one question (annex 11, 8.6): lane a first; once it is confirmed, lane b joins
+   * the same question. Resolves and rejects like `ask` for the comparison as a whole; a refusal of
+   * lane b alone shows in its column.
+   */
+  compare: (input: CompareInput) => Promise<boolean>;
+  retryLane: (input: RetryLaneInput) => Promise<boolean>;
   regenerate: (input: RegenerateInput) => Promise<boolean>;
-  stop: (chatId: string) => Promise<void>;
-  clear: (chatId: string) => void;
-  /** The current run of a chat, read at call time (for event handlers). */
-  getRun: (chatId: string) => RunState | undefined;
+  /** One lane, or every lane of the chat. */
+  stop: (chatId: string, lane?: Lane) => Promise<void>;
+  /** One lane, or every lane of the chat. */
+  clear: (chatId: string, lane?: Lane) => void;
+  /** The current run of a chat lane, read at call time (for event handlers). */
+  getRun: (chatId: string, lane?: Lane) => RunState | undefined;
   store: RunStore;
 };
 
+function refusal(error: unknown): RunError {
+  const apiError = toApiError(error);
+  return {
+    code: apiError.code,
+    partial: false,
+    requestId: apiError.requestId ?? null,
+    retryAfter: apiError.retryAfter ?? null,
+    params: apiError.params ?? {},
+  };
+}
+
 const StreamContext = createContext<StreamActions | null>(null);
-const LANE: Lane = 'a';
 
 /**
  * Owns every running answer above the routes, so answers keep streaming while you switch chats
@@ -97,15 +132,18 @@ export function StreamProvider({ children }: { children: ReactNode }) {
       await client.invalidateQueries({ queryKey: messagesKey(chatId) });
       // Nobody shows this chat: the saved answer loads on the next visit, the run can go.
       const watched = client.getQueryCache().find({ queryKey: messagesKey(chatId) })?.getObserversCount() ?? 0;
-      const run = store.getState()[runKey(chatId, LANE)];
-      if (watched === 0 && run?.outcome) store.dispatch({ type: 'local/clear', key: runKey(chatId, LANE) });
+      if (watched > 0) return;
+      for (const lane of LANES) {
+        if (store.getState()[runKey(chatId, lane)]?.outcome) store.dispatch({ type: 'local/clear', key: runKey(chatId, lane) });
+      }
     },
     [client, store],
   );
 
   const start = useCallback(
-    (chatId: string, url: string, body: object, run: StartRun) => {
-      const key = runKey(chatId, LANE);
+    (url: string, body: object, run: StartRun, { keepRefusal = false }: { keepRefusal?: boolean } = {}) => {
+      const { chatId } = run;
+      const key = runKey(chatId, run.lane);
       const controller = new AbortController();
       controllers.current.get(key)?.abort();
       controllers.current.set(key, controller);
@@ -119,6 +157,7 @@ export function StreamProvider({ children }: { children: ReactNode }) {
         const onEvent = (event: StreamEvent) => {
           if (!current()) return;
           if (event.type === 'delta') {
+            if (store.getState()[key]?.firstTokenAt === null) store.dispatch({ type: 'local/first-token', key, at: Date.now() });
             pending.current.set(key, (pending.current.get(key) ?? '') + event.data.text);
             frame.current ??= requestAnimationFrame(flushAll);
             return;
@@ -139,6 +178,10 @@ export function StreamProvider({ children }: { children: ReactNode }) {
             if (!current()) return resolve(confirmed);
             flush(key);
             if (!confirmed) {
+              if (keepRefusal && end !== 'aborted') {
+                store.dispatch({ type: 'local/refused', key, error: refusal(clientError('STREAM_INTERRUPTED')) });
+                return resolve(false);
+              }
               // Nothing was saved yet: the question goes back to the composer with a note.
               store.dispatch({ type: 'local/clear', key });
               if (end !== 'aborted') reject(clientError('STREAM_INTERRUPTED'));
@@ -151,8 +194,12 @@ export function StreamProvider({ children }: { children: ReactNode }) {
             }
           })
           .catch((error: unknown) => {
-            if (current()) store.dispatch({ type: 'local/clear', key });
             if (error instanceof ApiError) learn(error.code);
+            if (keepRefusal && current()) {
+              store.dispatch({ type: 'local/refused', key, error: refusal(error) });
+              return resolve(false);
+            }
+            if (current()) store.dispatch({ type: 'local/clear', key });
             reject(error);
           })
           .finally(() => {
@@ -167,40 +214,73 @@ export function StreamProvider({ children }: { children: ReactNode }) {
     ({ chatId, question, model, locale, ...options }: AskInput) => {
       const clientMessageId = crypto.randomUUID();
       return start(
-        chatId,
         `/api/chats/${chatId}/messages`,
         { client_message_id: clientMessageId, content: question, model, locale, ...answerFields(options) },
-        { chatId, lane: LANE, question, clientMessageId, regenerateOf: null, model, startedAt: Date.now() },
+        { chatId, lane: 'a', question, clientMessageId, regenerateOf: null, model, comparisonId: null, startedAt: Date.now() },
       );
     },
     [start],
   );
 
-  const regenerate = useCallback(
-    ({ chatId, assistantId, question, model, locale, ...options }: RegenerateInput) =>
+  const startLane = useCallback(
+    ({ chatId, question, locale, lane, clientMessageId, comparisonId, model, ...options }: RetryLaneInput, keepRefusal: boolean) =>
       start(
-        chatId,
+        `/api/chats/${chatId}/messages`,
+        {
+          client_message_id: clientMessageId,
+          content: question,
+          model,
+          locale,
+          comparison: { id: comparisonId, lane },
+          ...answerFields(options),
+        },
+        { chatId, lane, question, clientMessageId, regenerateOf: null, model, comparisonId, startedAt: Date.now() },
+        { keepRefusal },
+      ),
+    [start],
+  );
+
+  const compare = useCallback(
+    async ({ chatId, question, locale, lanes: [first, second] }: CompareInput) => {
+      const shared = { chatId, question, locale, clientMessageId: crypto.randomUUID(), comparisonId: crypto.randomUUID() };
+      // Lane a carries the checks of the whole comparison (two slots, counts twice), so a
+      // refusal there refuses both; lane b joins only after the question is saved.
+      if (!(await startLane({ ...shared, ...first, lane: 'a' }, false))) return false;
+      void startLane({ ...shared, ...second, lane: 'b' }, true);
+      return true;
+    },
+    [startLane],
+  );
+
+  const retryLane = useCallback((input: RetryLaneInput) => startLane(input, true), [startLane]);
+
+  const regenerate = useCallback(
+    ({ chatId, assistantId, question, model, locale, lane = 'a', ...options }: RegenerateInput) =>
+      start(
         `/api/chats/${chatId}/messages/${assistantId}/regenerate`,
         { model, locale, ...answerFields(options) },
-        { chatId, lane: LANE, question, clientMessageId: assistantId, regenerateOf: assistantId, model, startedAt: Date.now() },
+        // The comparison id arrives with `meta`.
+        { chatId, lane, question, clientMessageId: assistantId, regenerateOf: assistantId, model, comparisonId: null, startedAt: Date.now() },
       ),
     [start],
   );
 
   /** Stop = mark locally, abort the fetch and tell the server (annex 11, 3.4). */
   const stop = useCallback(
-    async (chatId: string) => {
-      const key = runKey(chatId, LANE);
-      const run = store.getState()[key];
-      flush(key);
-      if (run && !run.meta) store.dispatch({ type: 'local/clear', key });
-      else if (isRunning(run)) store.dispatch({ type: 'local/stopped', key });
-      controllers.current.get(key)?.abort();
+    async (chatId: string, lane?: Lane) => {
+      for (const each of lane ? [lane] : LANES) {
+        const key = runKey(chatId, each);
+        const run = store.getState()[key];
+        flush(key);
+        if (run && !run.meta && !run.outcome) store.dispatch({ type: 'local/clear', key });
+        else if (isRunning(run)) store.dispatch({ type: 'local/stopped', key });
+        controllers.current.get(key)?.abort();
+      }
       try {
         await fetchJson(`/api/chats/${chatId}/stop`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lane: LANE }),
+          body: JSON.stringify(lane ? { lane } : {}),
         });
       } catch {
         // The abort already ended the answer; a failed stop call changes nothing for the user.
@@ -210,8 +290,13 @@ export function StreamProvider({ children }: { children: ReactNode }) {
     [flush, refresh, store],
   );
 
-  const clear = useCallback((chatId: string) => store.dispatch({ type: 'local/clear', key: runKey(chatId, LANE) }), [store]);
-  const getRun = useCallback((chatId: string) => store.getState()[runKey(chatId, LANE)], [store]);
+  const clear = useCallback(
+    (chatId: string, lane?: Lane) => {
+      for (const each of lane ? [lane] : LANES) store.dispatch({ type: 'local/clear', key: runKey(chatId, each) });
+    },
+    [store],
+  );
+  const getRun = useCallback((chatId: string, lane: Lane = 'a') => store.getState()[runKey(chatId, lane)], [store]);
 
   useEffect(() => {
     const open = controllers.current;
@@ -222,8 +307,8 @@ export function StreamProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ ask, regenerate, stop, clear, getRun, store }),
-    [ask, regenerate, stop, clear, getRun, store],
+    () => ({ ask, compare, retryLane, regenerate, stop, clear, getRun, store }),
+    [ask, compare, retryLane, regenerate, stop, clear, getRun, store],
   );
   return <StreamContext.Provider value={value}>{children}</StreamContext.Provider>;
 }
@@ -234,16 +319,16 @@ export function useStreamActions(): StreamActions {
   return actions;
 }
 
-/** The answer of this chat that is streaming or has just finished; re-renders only for this chat. */
-export function useRun(chatId: string | null): RunState | undefined {
+/** The answer of this chat lane that is streaming or has just finished; re-renders only for it. */
+export function useRun(chatId: string | null, lane: Lane = 'a'): RunState | undefined {
   const { store } = useStreamActions();
-  const read = () => (chatId ? store.getState()[runKey(chatId, LANE)] : undefined);
+  const read = () => (chatId ? store.getState()[runKey(chatId, lane)] : undefined);
   return useSyncExternalStore(store.subscribe, read, read);
 }
 
-/** Whether an answer is being written in this chat; changes only when that flips. */
+/** Whether an answer is being written in this chat (any lane); changes only when that flips. */
 export function useIsAnswering(chatId: string): boolean {
   const { store } = useStreamActions();
-  const read = () => isRunning(store.getState()[runKey(chatId, LANE)]);
+  const read = () => LANES.some((lane) => isRunning(store.getState()[runKey(chatId, lane)]));
   return useSyncExternalStore(store.subscribe, read, read);
 }

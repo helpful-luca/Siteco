@@ -36,7 +36,11 @@ export type RunState = {
   /** The assistant message a regenerate replaces. */
   regenerateOf: string | null;
   model: string;
+  /** Both lanes of a comparison share it; null for a single answer. */
+  comparisonId: string | null;
   startedAt: number;
+  /** When the first text arrived, for the live time to first token of a comparison column. */
+  firstTokenAt: number | null;
   phase: 'connecting' | 'retrieving' | 'generating' | 'retrying';
   attempt: number;
   meta: AnswerStreamEvents['meta'] | null;
@@ -51,12 +55,15 @@ export type RunState = {
 
 export type StartRun = Pick<
   RunState,
-  'chatId' | 'lane' | 'question' | 'clientMessageId' | 'regenerateOf' | 'model' | 'startedAt'
+  'chatId' | 'lane' | 'question' | 'clientMessageId' | 'regenerateOf' | 'model' | 'comparisonId' | 'startedAt'
 >;
 
 type LocalAction =
   | { type: 'local/start'; key: RunKey; run: StartRun }
   | { type: 'local/stopped'; key: RunKey }
+  | { type: 'local/first-token'; key: RunKey; at: number }
+  /** The second lane of a comparison was refused before its stream: the error shows in its column. */
+  | { type: 'local/refused'; key: RunKey; error: RunError }
   | { type: 'local/interrupted'; key: RunKey }
   | { type: 'local/clear'; key: RunKey };
 
@@ -119,6 +126,10 @@ function apply(run: RunState, action: StreamAction): RunState {
     }
     case 'local/stopped':
       return { ...run, outcome: { kind: 'stopped' } };
+    case 'local/first-token':
+      return run.firstTokenAt === null ? { ...run, firstTokenAt: action.at } : run;
+    case 'local/refused':
+      return { ...run, outcome: { kind: 'error', error: action.error } };
     case 'local/interrupted':
       return {
         ...run,
@@ -146,6 +157,7 @@ export function streamReducer(state: RunsState, action: StreamAction): RunsState
   if (action.type === 'local/start') {
     const run: RunState = {
       ...action.run,
+      firstTokenAt: null,
       phase: 'connecting',
       attempt: 1,
       meta: null,

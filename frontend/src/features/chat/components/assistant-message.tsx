@@ -24,6 +24,8 @@ type Props = {
   chatTitle: string | null;
   /** Only the answer to the latest question can be regenerated, optionally with another model. */
   onRegenerate?: (model?: string) => void;
+  /** In a comparison column: retry only this lane, no other model, details in the column head. */
+  inComparison?: boolean;
 };
 
 function hash(text: string): string {
@@ -33,7 +35,7 @@ function hash(text: string): string {
 }
 
 /** The answer: no bubble, reading width, chips in the text, then sources and details. */
-export function AssistantMessage({ answer, chatTitle, onRegenerate }: Props) {
+export function AssistantMessage({ answer, chatTitle, onRegenerate, inComparison = false }: Props) {
   const t = useTranslations('chat');
   const openSource = useOpenSource();
   const openArtifact = useOpenArtifact();
@@ -130,7 +132,12 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate }: Props) {
 
       {label && <p className="text-caption font-medium text-ink-muted">{label}</p>}
       {answer.error && (
-        <AnswerError error={answer.error} model={answer.model} onRetry={retry} onRetryWith={onRegenerate} />
+        <AnswerError
+          error={answer.error}
+          model={answer.model}
+          onRetry={retry}
+          onRetryWith={inComparison ? undefined : onRegenerate}
+        />
       )}
       {label && !answer.error && !hasFooter && retry && (
         <Button size="sm" variant="ghost" className="-ml-3 w-fit" onClick={retry}>
@@ -150,7 +157,12 @@ export function AssistantMessage({ answer, chatTitle, onRegenerate }: Props) {
               onOpenSource={open}
             />
           )}
-          <AnswerFooter answer={answer} onRegenerate={retry} onOpenArtifact={openWholeAnswer} />
+          <AnswerFooter
+            answer={answer}
+            onRegenerate={retry}
+            onOpenArtifact={openWholeAnswer}
+            showDetails={!inComparison}
+          />
         </div>
       )}
     </article>

@@ -12,10 +12,12 @@ type Props = {
   answer: Answer;
   onRegenerate?: () => void;
   onOpenArtifact?: () => void;
+  /** A comparison column shows model, times and cost in its own header. */
+  showDetails?: boolean;
 };
 
 /** Quiet actions under an answer, then a one-line summary that discloses the details (annex 11, 8.4). */
-export function AnswerFooter({ answer, onRegenerate, onOpenArtifact }: Props) {
+export function AnswerFooter({ answer, onRegenerate, onOpenArtifact, showDetails = true }: Props) {
   const t = useTranslations('chat');
   const locale = useLocale();
   const { data: config } = useConfig();
@@ -62,7 +64,7 @@ export function AnswerFooter({ answer, onRegenerate, onOpenArtifact }: Props) {
             </Button>
           </Tooltip>
         )}
-        {summary && rows.length > 0 && (
+        {showDetails && summary && rows.length > 0 && (
           <button
             type="button"
             aria-expanded={open}

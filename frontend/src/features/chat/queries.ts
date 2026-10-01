@@ -120,3 +120,30 @@ export function useDeleteChat() {
     onSettled: () => client.invalidateQueries({ queryKey: CHATS_KEY }),
   });
 }
+
+/** "Diese Antwort behalten": the kept answer of a comparison goes into the history (annex 11, 1.3). */
+export function usePreferAnswer() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ chatId, assistantId }: { chatId: string; assistantId: string; comparisonId: string }) =>
+      fetchJson<unknown>(`/api/chats/${chatId}/messages/${assistantId}/prefer`, { method: 'POST' }),
+    onMutate: async ({ chatId, assistantId, comparisonId }) => {
+      await client.cancelQueries({ queryKey: messagesKey(chatId) });
+      const previous = client.getQueryData<MessageListOut>(messagesKey(chatId));
+      client.setQueryData<MessageListOut>(messagesKey(chatId), (current) =>
+        current
+          ? {
+              messages: current.messages.map((m) =>
+                m.comparison_id === comparisonId ? { ...m, is_preferred: m.id === assistantId } : m,
+              ),
+            }
+          : current,
+      );
+      return { previous };
+    },
+    onError: (_error, { chatId }, context) => {
+      if (context?.previous) client.setQueryData(messagesKey(chatId), context.previous);
+    },
+    onSettled: (_data, _error, { chatId }) => client.invalidateQueries({ queryKey: messagesKey(chatId) }),
+  });
+}

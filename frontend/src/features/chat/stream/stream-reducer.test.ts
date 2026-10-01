@@ -17,6 +17,7 @@ function start(): RunsState {
         clientMessageId: 'x1',
         regenerateOf: null,
         model: 'claude-sonnet-5-5',
+        comparisonId: null,
         startedAt: 0,
       },
     },
@@ -140,7 +141,7 @@ describe('streamReducer', () => {
     const state = streamReducer(start(), {
       type: 'local/start',
       key: other,
-      run: { chatId: 'c2', lane: 'a', question: 'Q', clientMessageId: 'x2', regenerateOf: null, model: 'm', startedAt: 0 },
+      run: { chatId: 'c2', lane: 'a', question: 'Q', clientMessageId: 'x2', regenerateOf: null, model: 'm', comparisonId: null, startedAt: 0 },
     });
     const next = streamReducer(state, { type: 'delta', key, data: { text: 'A' } });
     expect(next[other]).toBe(state[other]);

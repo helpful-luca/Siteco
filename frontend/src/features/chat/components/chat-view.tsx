@@ -6,11 +6,14 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useUploads } from '@/features/library';
 import { Page } from '@/features/shell';
 import { toApiError } from '@/shared/api/errors';
+import type { Lane } from '@/shared/api/types';
 import { useConfig } from '@/shared/api/use-config';
 import { useBackendDown } from '@/shared/api/use-connection';
 import { Button, buttonStyles, cn, DelayedSpinner } from '@/shared/ui';
 import { useChatSettings } from '../chat-settings';
-import { isNotFound, useChat, useMessages, useUpdateChat } from '../queries';
+import type { Answer } from '../answer';
+import { isNotFound, useChat, useMessages, usePreferAnswer, useUpdateChat } from '../queries';
+import { sendQuestion } from '../send-question';
 import { isRunning } from '../stream/stream-reducer';
 import { useRun, useStreamActions } from '../stream/stream-provider';
 import { buildTurns, runIsPersisted, type Turn } from '../turns';
@@ -22,7 +25,8 @@ import { ChatFrame } from './chat-frame';
 import { ChatHeader } from './chat-header';
 import { Composer } from './composer';
 import { ComposerNotice } from './composer-notice';
-import { ModelPicker } from './model-picker';
+import { CompareTurn } from './compare-turn';
+import { ModelControls } from './model-controls';
 import { OfflineNotice } from './offline-notice';
 import { RefusalNotice } from './refusal-notice';
 import { ScopePicker, type ScopeValue } from './scope-picker';
@@ -36,12 +40,14 @@ export function ChatView({ chatId }: { chatId: string }) {
   const locale = useLocale() as 'de' | 'en';
   const { data: config } = useConfig();
   const chat = useChat(chatId);
-  const run = useRun(chatId);
-  const running = isRunning(run);
+  const runA = useRun(chatId, 'a');
+  const runB = useRun(chatId, 'b');
+  const running = isRunning(runA) || isRunning(runB);
   const messages = useMessages(chatId, { poll: !running });
   const streams = useStreamActions();
   const settings = useChatSettings();
   const updateChat = useUpdateChat();
+  const preferAnswer = usePreferAnswer();
   const uploads = useUploads();
   const { block } = useComposerBlock();
   const down = useBackendDown();
@@ -60,23 +66,28 @@ export function ChatView({ chatId }: { chatId: string }) {
   };
 
   const list = messages.data?.messages;
-  const turns = buildTurns(list ?? [], run);
+  const turns = buildTurns(list ?? [], [runA, runB]);
 
   // A finished run leaves once the saved answer is loaded, so nothing flickers.
   useEffect(() => {
-    if (run && list && runIsPersisted(list, run)) streams.clear(chatId);
-  }, [run, list, streams, chatId]);
+    for (const run of [runA, runB]) {
+      if (run && list && runIsPersisted(list, run)) streams.clear(chatId, run.lane);
+    }
+  }, [runA, runB, list, streams, chatId]);
 
-  // Leaving the chat drops a finished run; the saved answer loads on the next visit.
+  // Leaving the chat drops finished runs; the saved answers load on the next visit.
   useEffect(
     () => () => {
-      if (streams.getRun(chatId)?.outcome) streams.clear(chatId);
+      for (const lane of ['a', 'b'] as const) {
+        if (streams.getRun(chatId, lane)?.outcome) streams.clear(chatId, lane);
+      }
     },
     [streams, chatId],
   );
 
   // A new question (or regenerated answer) moves to the top and its turn fills the view.
-  const liveTurn = run?.meta?.user_message_id ?? null;
+  const run = runA ?? runB;
+  const liveTurn = (runA?.meta ?? runB?.meta)?.user_message_id ?? null;
   if (liveTurn && liveTurn !== pinned) setPinned(liveTurn);
   useEffect(() => {
     if (!liveTurn) return;
@@ -110,8 +121,7 @@ export function ChatView({ chatId }: { chatId: string }) {
     setSending(true);
     clearRefusal();
     try {
-      const model = settings.model;
-      if (await streams.ask({ chatId, question, model, locale, ...settings.answerOptions(model) })) setDraft('');
+      if (await sendQuestion(streams, settings, { chatId, question, locale })) setDraft('');
     } catch (error) {
       const apiError = toApiError(error);
       if (apiError.code !== 'DUPLICATE_REQUEST') refuse(apiError);
@@ -135,6 +145,55 @@ export function ChatView({ chatId }: { chatId: string }) {
       }
     },
     [streams, chatId, model, answerOptions, defaultModel, locale, clearRefusal, refuse],
+  );
+
+  /** One column of a comparison again, with its own model (the other column keeps its answer). */
+  const regenerateLane = useCallback(
+    async (answer: Answer, question: string) => {
+      clearRefusal();
+      const chosen = answer.model ?? '';
+      try {
+        if (answer.messageId) {
+          await streams.regenerate({
+            chatId,
+            assistantId: answer.messageId,
+            question,
+            model: chosen,
+            locale,
+            lane: answer.lane,
+            ...answerOptions(chosen),
+          });
+          return;
+        }
+        // Refused before its stream: the lane joins its question again.
+        const refused = streams.getRun(chatId, answer.lane);
+        if (refused && answer.comparisonId) {
+          await streams.retryLane({
+            chatId,
+            question,
+            locale,
+            lane: answer.lane,
+            clientMessageId: refused.clientMessageId,
+            comparisonId: answer.comparisonId,
+            model: chosen,
+            ...answerOptions(chosen),
+          });
+        }
+      } catch (error) {
+        refuse(toApiError(error));
+      }
+    },
+    [streams, chatId, locale, answerOptions, clearRefusal, refuse],
+  );
+  const stopLane = useCallback((lane: Lane) => void streams.stop(chatId, lane), [streams, chatId]);
+  const { mutate: preferMutate } = preferAnswer;
+  const prefer = useCallback(
+    (answer: Answer) => {
+      if (answer.messageId && answer.comparisonId) {
+        preferMutate({ chatId, assistantId: answer.messageId, comparisonId: answer.comparisonId });
+      }
+    },
+    [preferMutate, chatId],
   );
 
   if (isNotFound(chat.error) || isNotFound(messages.error)) {
@@ -190,7 +249,7 @@ export function ChatView({ chatId }: { chatId: string }) {
       header={
         <ChatHeader title={current ? (current.title ?? t('untitled')) : ''}>
           <ScopePicker value={scope} onChange={changeScope} disabled={!current} />
-          <ModelPicker value={settings.model} onChange={settings.setModel} />
+          <ModelControls />
         </ChatHeader>
       }
       dock={
@@ -231,6 +290,20 @@ export function ChatView({ chatId }: { chatId: string }) {
             const canRegenerate = Boolean(
               isLast && answer?.messageId && !running && answer.status !== 'streaming' && answer.status !== 'sources_only',
             );
+            if (turn.comparison) {
+              return (
+                <CompareRow
+                  key={turn.key}
+                  turn={turn}
+                  minHeight={isLast && turn.key === pinned && viewHeight > 0 ? viewHeight : undefined}
+                  chatTitle={current?.title ?? null}
+                  canRegenerate={isLast && !running}
+                  onRegenerate={regenerateLane}
+                  onStop={stopLane}
+                  onPrefer={prefer}
+                />
+              );
+            }
             return (
               <TurnRow
                 key={turn.key}
@@ -277,6 +350,44 @@ const TurnRow = memo(function TurnRow({ turn, minHeight, chatTitle, canRegenerat
           }
         />
       )}
+    </li>
+  );
+});
+
+type CompareRowProps = {
+  turn: Turn;
+  minHeight: number | undefined;
+  chatTitle: string | null;
+  canRegenerate: boolean;
+  onRegenerate: (answer: Answer, question: string) => void;
+  onStop: (lane: Lane) => void;
+  onPrefer: (answer: Answer) => void;
+};
+
+/** A question with the two answers of a comparison side by side. */
+const CompareRow = memo(function CompareRow({
+  turn,
+  minHeight,
+  chatTitle,
+  canRegenerate,
+  onRegenerate,
+  onStop,
+  onPrefer,
+}: CompareRowProps) {
+  const question = turn.question;
+  const regenerate = useCallback((answer: Answer) => onRegenerate(answer, question), [onRegenerate, question]);
+  if (!turn.comparison) return null;
+  return (
+    <li data-turn={turn.key} className="flex flex-col gap-8" style={minHeight ? { minHeight } : undefined}>
+      <UserMessage text={turn.question} />
+      <CompareTurn
+        comparison={turn.comparison}
+        chatTitle={chatTitle}
+        canRegenerate={canRegenerate}
+        onRegenerate={regenerate}
+        onStop={onStop}
+        onPrefer={onPrefer}
+      />
     </li>
   );
 });

@@ -12,13 +12,14 @@ import { usePreferences } from '@/shared/preferences/preferences';
 import { useChatSettings } from '../chat-settings';
 import { useCreateChat, useDeleteChat } from '../queries';
 import { useStreamActions } from '../stream/stream-provider';
+import { sendQuestion } from '../send-question';
 import { useComposerBlock } from '../use-composer-state';
 import { useRefusal } from '../use-refusal';
 import { ChatFrame } from './chat-frame';
 import { ChatHeader } from './chat-header';
 import { Composer } from './composer';
 import { ComposerNotice } from './composer-notice';
-import { ModelPicker } from './model-picker';
+import { ModelControls } from './model-controls';
 import { OfflineNotice } from './offline-notice';
 import { RefusalNotice } from './refusal-notice';
 import { ScopePicker, type ScopeValue } from './scope-picker';
@@ -79,8 +80,7 @@ export function NewChatView() {
         scope.scope === 'all' ? { scope: 'all' } : { scope: 'selected', document_ids: scope.documentIds },
       );
       chatId = chat.id;
-      const model = settings.model;
-      if (!(await streams.ask({ chatId, question, model, locale, ...settings.answerOptions(model) }))) {
+      if (!(await sendQuestion(streams, settings, { chatId, question, locale }))) {
         throw new ApiError('STREAM_INTERRUPTED', 0);
       }
       setDraft('');
@@ -113,7 +113,7 @@ export function NewChatView() {
       header={
         <ChatHeader title={<span className="sr-only">{t('untitled')}</span>}>
           <ScopePicker value={scope} onChange={setScope} />
-          <ModelPicker value={settings.model} onChange={settings.setModel} />
+          <ModelControls />
         </ChatHeader>
       }
       dock={

@@ -9,7 +9,7 @@ import { useStoredPreferences } from '@/shared/preferences/preferences';
 /** How the next answer is written, from the settings (annex 11, 4.2). */
 export type AnswerOptions = { effort: Effort | null; style: AnswerStyle };
 
-type ChatSettings = {
+export type ChatSettings = {
   /** The model for the next question; defaults to the backend's default until the user picks one. */
   model: string | null;
   setModel: (model: string) => void;
@@ -21,6 +21,13 @@ type ChatSettings = {
   /** The model picker in the chat header, opened from an error that asks for another model. */
   pickerOpen: boolean;
   setPickerOpen: (open: boolean) => void;
+  /** Comparison mode: the next question goes to `model` and `compareModel` side by side. */
+  compare: boolean;
+  /** Turning it on starts from the pair in the settings (annex 11, 8.6). */
+  setCompare: (on: boolean) => void;
+  /** Null when fewer than two models can answer: then there is nothing to compare. */
+  compareModel: string | null;
+  setCompareModel: (model: string) => void;
 };
 
 const Context = createContext<ChatSettings | null>(null);
@@ -30,6 +37,8 @@ export function ChatSettingsProvider({ children }: { children: ReactNode }) {
   const { data: preferences } = useStoredPreferences();
   const [picked, setPicked] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [compareOn, setCompareOn] = useState(false);
+  const [pickedSecond, setPickedSecond] = useState<string | null>(null);
   const drafts = useRef(new Map<string, string>());
 
   // The default model from the settings. A model can become unavailable at runtime (annex 10,
@@ -38,6 +47,26 @@ export function ChatSettingsProvider({ children }: { children: ReactNode }) {
   const preferred = [preferences?.default_model, config?.default_model].find((m) => m && available.includes(m));
   const fallback = preferred ?? available[0] ?? null;
   const model = picked && available.includes(picked) ? picked : fallback;
+
+  // The second model: the user's pick, else the partner from the settings pair, else any other.
+  const pair = preferences?.compare_models ?? [];
+  const second =
+    [pickedSecond, ...[...pair].reverse(), ...available].find((m) => m && m !== model && available.includes(m)) ?? null;
+  const compare = compareOn && second !== null;
+  const pairKey = pair.join(',');
+  const availableKey = available.join(',');
+  const setCompare = useCallback(
+    (on: boolean) => {
+      setCompareOn(on);
+      const [first, partner] = pairKey.split(',');
+      const ids = availableKey.split(',');
+      if (on && first && partner && first !== partner && ids.includes(first) && ids.includes(partner)) {
+        setPicked(first);
+        setPickedSecond(partner);
+      }
+    },
+    [pairKey, availableKey],
+  );
 
   const effort = preferences?.effort ?? null;
   const style = preferences?.style ?? 'concise';
@@ -57,8 +86,20 @@ export function ChatSettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ model, setModel: setPicked, answerOptions, draft, setDraft, pickerOpen, setPickerOpen }),
-    [model, answerOptions, draft, setDraft, pickerOpen],
+    () => ({
+      model,
+      setModel: setPicked,
+      answerOptions,
+      draft,
+      setDraft,
+      pickerOpen,
+      setPickerOpen,
+      compare,
+      setCompare,
+      compareModel: second,
+      setCompareModel: setPickedSecond,
+    }),
+    [model, answerOptions, draft, setDraft, pickerOpen, compare, setCompare, second],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

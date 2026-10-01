@@ -1,5 +1,6 @@
 import type {
   CitationOut,
+  Lane,
   LatencyOut,
   MessageOut,
   MessageStatus,
@@ -29,6 +30,13 @@ export type Answer = {
   usage: UsageOut | null;
   costUsd: number | null;
   latency: LatencyOut | null;
+  /** Live only: milliseconds from the start to the first text, before `done` reports it. */
+  firstTokenMs: number | null;
+  lane: Lane;
+  /** Set for both answers of a comparison. */
+  comparisonId: string | null;
+  /** In a comparison: the answer that goes into the history of later questions. */
+  isPreferred: boolean;
   live: boolean;
 };
 
@@ -57,6 +65,10 @@ export function answerFromMessage(message: MessageOut): Answer {
     usage: message.usage,
     costUsd: message.cost_usd,
     latency: message.latency_ms,
+    firstTokenMs: null,
+    lane: message.lane ?? 'a',
+    comparisonId: message.comparison_id,
+    isPreferred: message.is_preferred,
     live: false,
   };
 }
@@ -72,7 +84,7 @@ function runStatus(run: RunState): MessageStatus {
 export function answerFromRun(run: RunState): Answer {
   const done = run.outcome?.kind === 'done' ? run.outcome.done : null;
   return {
-    key: run.meta?.assistant_message_id ?? run.clientMessageId,
+    key: run.meta?.assistant_message_id ?? `${run.clientMessageId}:${run.lane}`,
     messageId: run.meta?.assistant_message_id ?? null,
     text: run.text,
     citations: run.citations,
@@ -87,6 +99,10 @@ export function answerFromRun(run: RunState): Answer {
     usage: done?.usage ?? null,
     costUsd: done?.cost_usd ?? null,
     latency: done?.latency_ms ?? null,
+    firstTokenMs: run.firstTokenAt === null ? null : run.firstTokenAt - run.startedAt,
+    lane: run.lane,
+    comparisonId: run.meta?.comparison_id ?? run.comparisonId,
+    isPreferred: run.lane === 'a',
     live: true,
   };
 }

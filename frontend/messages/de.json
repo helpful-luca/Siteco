@@ -391,7 +391,30 @@
       },
       "price": "{input} $ Eingabe, {output} $ Ausgabe pro Million Tokens",
       "noKey": "Ohne API-Schlüssel antwortet kein Modell, du bekommst die Fundstellen.",
-      "unavailable": "Gerade nicht verfügbar"
+      "unavailable": "Gerade nicht verfügbar",
+      "secondLabel": "Zweites Modell",
+      "inOtherColumn": "Schon in der anderen Spalte"
+    },
+    "compare": {
+      "toggle": "Vergleichen",
+      "on": "Vergleichen: die nächste Frage geht an zwei Modelle",
+      "off": "Vergleich beenden",
+      "unavailable": "Zum Vergleichen braucht es zwei Modelle, die antworten können.",
+      "label": "Vergleich zweier Modelle",
+      "tabs": "Antwort zeigen von",
+      "laneA": "Modell A",
+      "laneB": "Modell B",
+      "column": "Antwort von {model}",
+      "stop": "Stoppen",
+      "keep": "Diese Antwort behalten",
+      "kept": "Behalten",
+      "hint": "Folgefragen bauen auf der Antwort von {model} auf.",
+      "ttft": "Erster Text",
+      "total": "Gesamt",
+      "seconds": "{seconds} s",
+      "tokens": "Tokens",
+      "tokensValue": "{input} rein, {output} raus",
+      "cost": "Kosten"
     }
   },
   "library": {
