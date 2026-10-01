@@ -47,14 +47,15 @@ export function RightPanel() {
       <MotionConfig reducedMotion="user">
         <AnimatePresence initial={false}>
           {panel && (
-            // The wrapper carries the 12 px gap, so the chat column widens and narrows smoothly.
+            // The wrapper carries the 12 px gap, so the chat column widens and narrows smoothly; the clip
+            // margin keeps the panel shadow visible.
             <motion.div
               key="right-panel"
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 'auto', opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={SLIDE}
-              className="-ml-3 flex shrink-0 justify-end overflow-hidden"
+              className="-ml-3 flex shrink-0 justify-end overflow-clip [overflow-clip-margin:calc(var(--spacing)*6)]"
             >
               <motion.aside
                 ref={column}
