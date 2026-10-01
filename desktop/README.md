@@ -1,6 +1,6 @@
 # Desktop app
 
-An Electron shell for Siteco Document Chat on macOS and Windows 10 and 11. It starts the Docker stack and shows the web app in a native window. It is optional: `docker compose up --build` remains the main way to run the project.
+An Electron shell for Document Chat on macOS and Windows 10 and 11. It starts the Docker stack and shows the web app in a native window. It is optional: `docker compose up --build` remains the main way to run the project.
 
 Needs Node 22.12 or newer and Docker Desktop.
 
@@ -13,7 +13,7 @@ Needs Node 22.12 or newer and Docker Desktop.
 
 On start the app:
 
-1. Checks `http://localhost:3000/api/health/live` (or the configured port). If Siteco Document Chat answers, the window opens at once.
+1. Checks `http://localhost:3000/api/health/live` (or the configured port). If the app answers, the window opens at once.
 2. Otherwise a splash finds the docker CLI by absolute path (an app opened from the Finder or Start menu has no shell PATH) and starts Docker Desktop if the engine is off.
 3. Runs `docker compose --file compose.yaml up --detach --build` in the project folder. The first start builds the images and takes a few minutes; later starts take seconds.
 4. Waits until the app answers, then opens the window.

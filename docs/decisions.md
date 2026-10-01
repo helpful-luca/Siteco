@@ -1,6 +1,6 @@
 # Decisions
 
-The design choices behind Siteco Document Chat, each with the option that was turned down and the reason. The [README](../README.md#the-ten-decisions-that-matter) lists the ten that matter most; this page has the full set, grouped by topic.
+The design choices behind Document Chat, each with the option that was turned down and the reason. The [README](../README.md#key-decisions) lists the ten that matter most; this page has the full set, grouped by topic.
 
 ## Architecture and boundaries
 
