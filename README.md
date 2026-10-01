@@ -45,7 +45,7 @@ Open http://localhost:3000. The first build downloads dependencies, the web font
 | Optional: citation highlighting | Chips open the PDF on the page with line rectangles around the cited sentence; text files highlight the passage; scans use OCR word positions |
 | Optional: multi-model | Model per message, side by side compare with timings and cost, server side fallbacks shown openly |
 | Optional: retrieval evaluation | 32 questions, 7 configurations, numbers below, CI gate |
-| Beyond the brief | German and English UI, settings, onboarding, a catalog of stable error codes, GDPR tools (export, delete, retention), MCP server, desktop app for macOS and Windows |
+| Beyond the brief | German and English UI, command palette (⌘K or Ctrl K) over chats, documents and actions, a collapsible and resizable sidebar with keyboard navigation, a keyboard shortcuts page, settings, onboarding, a catalog of stable error codes, GDPR tools (export, delete, retention), MCP server, desktop app for macOS and Windows |
 
 ## Architecture
 
@@ -102,9 +102,9 @@ It writes `eval/results/generation.json`.
 
 | What | How | Count |
 |---|---|---|
-| Backend: domain, adapters, services, API, integration | pytest with real SQLite and LanceDB, fake embedder and fake LLM, a real uvicorn for streaming and disconnects | 666 |
-| Frontend: reducers, markdown safety, citations, components, i18n | Vitest and Testing Library | 468 |
-| Desktop app | Vitest | 87 |
+| Backend: domain, adapters, services, API, integration | pytest with real SQLite and LanceDB, fake embedder and fake LLM, a real uvicorn for streaming and disconnects | 977 |
+| Frontend: reducers, markdown safety, citations, components, i18n | Vitest and Testing Library | 560 |
+| Desktop app | Vitest | 115 |
 | Browser E2E | Playwright against the Docker stack with the fake model and in no-key mode, traces as CI artifacts | 4 specs, 2 stack modes |
 | Retrieval quality | Eval gate in CI with the real embedding model | 32 questions |
 | Malware, privacy, injection | EICAR against real clamd, forensic erasure check on disk, prompt injection fixture, no third party requests | inside the suites above |
@@ -115,7 +115,7 @@ CI (`.github/workflows/ci.yml`) runs backend, frontend, desktop, eval gate, E2E 
 
 ## Security and privacy
 
-Threat model in short: one user on their own machine, hostile documents, and hostile web pages talking to `localhost`. Measures: the API key only in the backend; no host port for the backend; a mandatory `X-Requested-With` header plus origin check against cross-site requests; upload checks (size, magic bytes, UUID names), a parser process with timeouts, PDF active content detection; ClamAV with quarantine; documents only as `search_result` data with a policy in the system prompt, no tools, no images or raw HTML in answers; a static CSP with `connect-src 'self'`; containers run as non-root with a read-only root filesystem and all capabilities dropped. Details, including the review of the MCP exception: [docs/security.md](docs/security.md).
+Threat model in short: one user on their own machine, hostile documents, and hostile web pages talking to `localhost`. Measures: the API key only in the backend; no host port for the backend; every API request must be addressed to a loopback host (against DNS rebinding), a mandatory `X-Requested-With` header plus origin check against cross-site requests; upload checks (size, magic bytes, UUID names), a parser process with timeouts, PDF active content detection; ClamAV with quarantine; documents only as `search_result` data with a policy in the system prompt, no tools, no images or raw HTML in answers; a static CSP with `connect-src 'self'`; containers run as non-root with a read-only root filesystem and all capabilities dropped. Details, including the review of the MCP exception: [docs/security.md](docs/security.md).
 
 GDPR: privacy by design, not a certificate. Only the question and the top passages leave the machine, never the name; no third parties in the browser (self-hosted font, no analytics); transparency in onboarding and settings; deletion of file, chunks, vectors and cited snippets; export of all chats; optional automatic deletion after 30, 90 or 365 days, chosen in Settings > Data.
 
@@ -170,15 +170,15 @@ What happens on a double-click:
 2. Otherwise a small splash finds the docker CLI, starts Docker Desktop if needed, runs `docker compose up --detach --build` in the project folder and waits for the app. The first start builds the images (a few minutes); later starts take seconds.
 3. If something is missing (Docker not installed or not starting, port taken, compose error), the splash says what to do and offers "Erneut versuchen". "Details" shows the last lines of output.
 
-Quitting leaves the containers running, so the next start is instant. "Dienste beenden" in the app menu runs `docker compose stop` and quits; your data stays in the Docker volumes.
+Quitting leaves the containers running, so the next start is instant. On macOS "Dienste beenden" in the app menu runs `docker compose stop` and quits; your data stays in the Docker volumes. On Windows run `docker compose stop` in the project folder (the frameless window shows no menu).
 
 The project folder is the repository the app was built from. If it moves, the app asks once for the folder (it must contain this project's `compose.yaml`) and remembers it. Settings live in `~/Library/Application Support/Siteco Document Chat/config.json` (`port` changes the port, passed to compose as `APP_PORT`).
 
 The app is built and opened on the same Mac, so it carries no quarantine flag and Gatekeeper opens it without a prompt. It is only ad-hoc signed; handing it to others would need a Developer ID signature and notarization.
 
-The window moves by its top strip (about 52 px across sidebar, chat header and side panel); every control in it stays clickable, and a double click maximizes the window (macOS follows the Dock setting for double clicks on a title bar).
+The window is frameless on macOS and Windows: no title bar, and the app draws its own window buttons (maximize, minimize, close) as three small circles in the top right corner, the same look on both. The window moves by its top strip (across sidebar, chat header and side panel); every control in it stays clickable.
 
-Security: context isolation, sandbox and no Node.js in the page; the page sees only `{ isDesktop, platform, window }`, where `window` holds five window commands (minimize, maximize or restore, close, maximized state, app menu). The main process accepts them only from the app window's main frame on the app origin. Navigation stays on the app origin, popups are denied, http(s) links open in the default browser after validation, permission requests are denied (except clipboard writes for the copy buttons), and requests to any other origin are blocked. Electron fuses are hardened (no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, encrypted cookies, code only from the integrity-checked `app.asar`). Crash reports stay on the Mac; there is no telemetry. Docker is called with `execFile` and fixed argument lists, never through a shell.
+Security: context isolation, sandbox and no Node.js in the page; the page sees only `{ isDesktop, platform, window }`, where `window` holds the window commands behind those buttons (minimize, maximize or restore, close, the maximized state and its changes). The main process accepts them only from the app window's main frame on the app origin. Navigation stays on the app origin, popups are denied, http(s) links open in the default browser after validation, permission requests are denied (except clipboard writes for the copy buttons), and requests to any other origin are blocked. Electron fuses are hardened (no `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`, encrypted cookies, code only from the integrity-checked `app.asar`). Crash reports stay on the Mac; there is no telemetry. Docker is called with `execFile` and fixed argument lists, never through a shell.
 
 ### Windows 10 and 11
 
@@ -186,8 +186,8 @@ Security: context isolation, sandbox and no Node.js in the page; the page sees o
 
 - Needs Windows 10 22H2 (build 19045) or Windows 11, and Docker Desktop with WSL 2. The splash checks this when Docker is missing or does not start and says what to do: update Windows, turn on virtualization (Intel VT-x or AMD-V) in the BIOS or UEFI, or run `wsl --install` as administrator.
 - The app finds `docker.exe` in Docker Desktop's folder under Program Files (also on another drive) or `%LOCALAPPDATA%\Programs`, starts `Docker Desktop.exe` when the engine is off and runs the same `docker compose` command as on a Mac.
-- The window has no Windows title bar: the app draws its own buttons (menu, minimize, maximize or restore, close) in its 32 px title bar, which also moves the window, snaps and maximizes on double click. Windows 11 rounds the corners natively; Windows 10 keeps square corners with the normal shadow, snap and edge resizing.
-- Windows has no app menu bar: settings, view, about, "Dienste beenden" and quit are in the menu button at the left of the title bar (the window buttons are the native ones, with Snap Layouts); the shortcuts (Ctrl+, Ctrl+R, Ctrl+plus and minus) work as usual.
+- The window has no Windows title bar: the app's own buttons sit in the top right corner, the top strip moves the window and snaps it. Windows 11 rounds the corners natively; Windows 10 keeps square corners with the normal shadow, snap and edge resizing. Snap Layouts on hovering the maximize button are not available with drawn buttons.
+- Windows shows no menu: settings are in the sidebar and in the command palette (Ctrl K); the shortcuts (Ctrl+, Ctrl+R, Ctrl+plus and minus) work as usual.
 - Not signed: SmartScreen asks once ("More info", "Run anyway").
 
 Honest limit: the Windows build, its platform logic and the title bar are covered by unit tests and checked in a Chrome simulation of the Windows shell; I could not run the app on a real Windows 10 or 11 machine.

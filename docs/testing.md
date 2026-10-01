@@ -4,13 +4,13 @@ No test calls the real Claude API and none needs a key: `LLM_PROVIDER=fake` and 
 
 | Level | Tool | What it proves | Count |
 |---|---|---|---|
-| Domain and adapters | pytest | Chunking, sentences, citation mapping, prompt, limits; stream mapping from recorded Claude events, error mapping, pdfium on generated PDFs (hyphenation, rotation, encryption, scans), clamd protocol against a fake clamd, telemetry switches | 261 unit |
-| Services | pytest with fakes | Ingestion state machine, queue priority, limits, answer run including stop and disconnect, comparison, retention, workspace export and erasure | 168 |
-| Integration | pytest with real SQLite, LanceDB, pdfium, Tesseract | Repositories, vector store, parser, OCR | 79 |
-| API | pytest, FastAPI, fake LLM, a real uvicorn for streaming | Every endpoint, SSE format, each error path, internal token, MCP, forensic erasure, prompt injection | 155 |
+| Domain and adapters | pytest | Chunking, sentences, citation mapping, prompt, limits; stream mapping from recorded Claude events, error mapping, pdfium on generated PDFs (hyphenation, rotation, encryption, scans), clamd protocol against a fake clamd, telemetry switches | 452 unit |
+| Services | pytest with fakes | Ingestion state machine, queue priority, limits, answer run including stop and disconnect, comparison, retention, workspace export and erasure | 255 |
+| Integration | pytest with real SQLite, LanceDB, pdfium, Tesseract | Repositories, vector store, parser, OCR | 94 |
+| API | pytest, FastAPI, fake LLM, a real uvicorn for streaming | Every endpoint, SSE format, each error path, internal token, MCP, forensic erasure, prompt injection | 180 |
 | Retrieval eval | pytest `-m model` | The default configuration keeps its measured quality (gate in CI) | 32 questions |
-| Frontend | Vitest, Testing Library | Stream reducer, citation sentinels in tables and lists, markdown safety (XSS, images, links, injection echo), components, i18n key parity, error catalog | 468 |
-| Desktop | Vitest | Startup orchestration, window rules, config | 87 |
+| Frontend | Vitest, Testing Library | Stream reducer, citation sentinels in tables and lists, markdown safety (XSS, images, links, injection echo), components, i18n key parity, error catalog | 560 |
+| Desktop | Vitest | Startup orchestration, window rules, config | 115 |
 | Browser E2E | Playwright | See below | 4 specs |
 | Docker | `fresh-clone-test.sh`, CI docker job | Clean clone starts, EICAR rejected, OCR works, chat round trip, backend not exposed | release, CI |
 
