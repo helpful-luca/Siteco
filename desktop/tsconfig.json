@@ -18,5 +18,5 @@
     "checkJs": true,
     "noEmit": true
   },
-  "include": ["src", "tests", "static/*.js", "playwright.config.ts", "vitest.config.ts"]
+  "include": ["src", "tests", "static/*.js", "vitest.config.ts"]
 }
