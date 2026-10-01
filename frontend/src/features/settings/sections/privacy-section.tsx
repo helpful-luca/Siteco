@@ -9,25 +9,16 @@ export function PrivacySection() {
 
   return (
     <div className="flex flex-col gap-8">
-      <FormGroup title={t('local')}>
+      <FormGroup title={t('local')} footer={t('telemetry')}>
         <FormText>{t('localDocuments')}</FormText>
         <FormText>{t('localChats')}</FormText>
         <FormText>{t('localProcessing')}</FormText>
         <FormText>{t('localName')}</FormText>
       </FormGroup>
-      <FormGroup title={t('sent')}>
+      <FormGroup title={t('sent')} footer={t('sentNever')}>
         <FormText>{t('sentQuestion')}</FormText>
         <FormText>{t('sentSmall')}</FormText>
-        <FormText>{t('sentNever')}</FormText>
-      </FormGroup>
-      <FormGroup title={t('anthropic')}>
         <FormText>{t('anthropicText')}</FormText>
-      </FormGroup>
-      <FormGroup title={t('telemetry')}>
-        <FormText>{t('telemetryText')}</FormText>
-      </FormGroup>
-      <FormGroup title={t('scan')}>
-        <FormText>{t('scanOn')}</FormText>
       </FormGroup>
     </div>
   );

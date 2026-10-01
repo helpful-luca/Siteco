@@ -101,16 +101,17 @@ export function DataSection() {
         </FormRow>
       </FormGroup>
 
-      <FormGroup title={t('today')}>
-        <FormRow label={t('cost')} description={t('requests', { count: today.requests })}>
-          <span className="text-body text-ink-muted tabular-nums">{format.cost(today.cost_usd)}</span>
-        </FormRow>
-        {today.budget_usd !== null && (
+      {/* Spending is in Models; here only next to a daily budget set for this installation. */}
+      {today.budget_usd !== null && (
+        <FormGroup title={t('today')}>
+          <FormRow label={t('cost')} description={t('requests', { count: today.requests })}>
+            <span className="text-body text-ink-muted tabular-nums">{format.cost(today.cost_usd)}</span>
+          </FormRow>
           <FormRow label={t('budget')}>
             <span className="text-body text-ink-muted tabular-nums">{format.cost(today.budget_usd)}</span>
           </FormRow>
-        )}
-      </FormGroup>
+        </FormGroup>
+      )}
 
       <div>
         <FormGroup title={t('retention')}>

@@ -10,6 +10,7 @@ export default async function NotFound() {
       <div aria-hidden className="min-h-12 flex-2" />
       <div className="mx-auto flex w-full max-w-reading flex-col items-start">
         <h1 className="text-title-2 font-semibold">{t('pageNotFound')}</h1>
+        <p className="mt-2 text-reading text-ink-muted">{t('pageNotFoundText')}</p>
         <Link href="/chat" className={`${buttonStyles({ variant: 'primary' })} mt-6`}>
           {t('goHome')}
         </Link>

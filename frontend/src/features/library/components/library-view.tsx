@@ -68,7 +68,8 @@ export function LibraryView() {
 
   return (
     <Page>
-      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+      {/* The upload button sits on the title line (the y = 40 axis of the sidebar row). */}
+      <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h1 className="text-title-2 font-semibold">{t('title')}</h1>
           <p className="mt-1 text-footnote text-ink-muted" aria-live="polite">

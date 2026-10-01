@@ -239,9 +239,11 @@ describe('SettingsView', () => {
     await waitFor(() => expect(prefs.style).toBe('detailed'));
   });
 
-  it('shows storage, cost today and retention, and deletes everything after a clear confirmation', async () => {
+  it('shows storage and retention, and deletes everything after a clear confirmation', async () => {
     setup('data');
-    expect(await screen.findByText('4 Anfragen an Claude')).toBeInTheDocument();
+    expect(await screen.findByText('Belegt auf diesem Rechner')).toBeInTheDocument();
+    // Spending lives in Models; Data shows today's cost only next to a daily budget.
+    expect(screen.queryByText('4 Anfragen an Claude')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Löschen …' }));
     const dialog = await screen.findByRole('dialog', {
       name: 'Alle Daten löschen?',
@@ -298,8 +300,12 @@ describe('SettingsView', () => {
     setup('privacy');
     expect(screen.getByText('Geht an Anthropic')).toBeInTheDocument();
     expect(screen.getByText(/Nie gesendet: dein Name/)).toBeInTheDocument();
-    expect(await screen.findByText(/ClamAV prüft jede Datei/)).toBeInTheDocument();
+    expect(await screen.findByText(/Virenprüfung \(ClamAV\) laufen hier/)).toBeInTheDocument();
     expect(screen.getByText(/bis zu 30 Tage/)).toBeInTheDocument();
+    expect(screen.getByText(/Keine Telemetrie/)).toBeInTheDocument();
+    // Two groups, no single-line groups that repeat each other.
+    expect(screen.queryByText('Bei Anthropic')).not.toBeInTheDocument();
+    expect(screen.queryByText('Virenprüfung')).not.toBeInTheDocument();
     expect(screen.queryByText('Deine Rechte')).not.toBeInTheDocument();
   });
 });

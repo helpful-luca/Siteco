@@ -7,7 +7,10 @@ import { Tooltip } from '@/shared/ui';
 import { useCodeText } from '@/shared/i18n/use-code-text';
 import { visibleNotices } from '../status';
 
-/** Second lines under a file name: why it failed (errors stay visible text). */
+/**
+ * Second lines under a file name: why it failed (errors stay visible text). The red "Fehler"
+ * badge is the signal; the explanation reads calmly in the secondary colour.
+ */
 export function RowDetails({ document }: { document: DocumentOut }) {
   const t = useTranslations('library');
   const text = useCodeText();
@@ -15,7 +18,7 @@ export function RowDetails({ document }: { document: DocumentOut }) {
   return (
     <>
       {document.status === 'failed' && document.error_code && (
-        <p role="note" className="mt-1 text-footnote text-danger">
+        <p role="note" className="mt-1 text-footnote text-ink-muted">
           {text.error(document.error_code, document.error_params)}
         </p>
       )}
@@ -39,7 +42,7 @@ export function RowNotices({ document }: { document: DocumentOut }) {
       <button
         type="button"
         aria-label={message}
-        className="grid size-6 shrink-0 place-items-center rounded-full text-ink-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+        className="relative grid size-6 shrink-0 place-items-center rounded-full text-ink-muted outline-none hover:text-ink focus-visible:outline-2 focus-visible:outline-accent pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5"
       >
         <Info aria-hidden className="size-4" />
       </button>
