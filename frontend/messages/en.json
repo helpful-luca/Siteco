@@ -653,7 +653,7 @@
     },
     "models": {
       "default": "Default model",
-      "defaultFooter": "Used for new questions, in a chat you can pick another model per question.",
+      "defaultFooter": "Used for new questions. In a chat you can pick another model per question.",
       "price": "{input} input, {output} output per million tokens",
       "unavailable": "Not available right now",
       "noKey": "Without an API key you only get passages.",
@@ -708,7 +708,7 @@
       "local": "Stays on this computer",
       "localDocuments": "Your documents, their text and the search data.",
       "localChats": "Your chats and every answer.",
-      "localProcessing": "Text recognition and the virus scan (ClamAV) run here, without a cloud.",
+      "localProcessing": "Text recognition and the virus scan (ClamAV) run here, not in a cloud.",
       "localName": "Your name, only for the greeting.",
       "sent": "Goes to Anthropic",
       "sentQuestion": "Your question, the latest messages and matching excerpts.",
