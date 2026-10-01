@@ -240,3 +240,18 @@ One line per decision: what we picked, what we rejected, and why. Numbered in th
 | 159 | Token | Optional `MCP_TOKEN`, bearer, constant-time compare, off by default; the proxy forwards `Authorization` and the MCP headers for this path only | Always on; OAuth | Local single-user app; OAuth is scope creep (research 02, 9b) |
 | 160 | Claude Desktop | Config through the `mcp-remote` bridge | Documenting a URL entry in `claude_desktop_config.json` | The file starts commands; remote URLs are added as connectors, which need a public HTTPS address |
 
+
+## Tests, CI and hardening (work packages J and L)
+
+| # | Topic | Pick | Rejected | Reason |
+|---|---|---|---|---|
+| 161 | Browser E2E | Playwright against the Compose stack in its own project and port, run twice (fake model, then no key); specs skip themselves in the wrong mode | A mocked backend; one spec run with a mode switch inside the test | The tested thing is the real image; the mode is a property of the stack, read from `/api/health/ready` |
+| 162 | E2E data | PDF generated in the test, library and preferences reset through the API before each spec | Committed binary fixtures; clicking through onboarding | No binaries in the repo, and specs start from a known state in milliseconds |
+| 163 | CI actions | Pinned to commit SHAs (tag in a comment), `permissions: contents: read` | Floating major tags | A moved tag cannot change what runs with repository access |
+| 164 | Traces | `trace: on` in CI, one output folder per stack mode, uploaded as an artifact | Only on failure | A passing run is also evidence, and the second run must not wipe the first |
+| 165 | Clamd early answer test | The fake server drains the stream before hanging up | Retrying the test; a sleep | Closing with unread data sends a reset that can destroy the answer; the flake was a test bug, not a scanner bug |
+| 166 | Injection fixture | Backend test on the request to the model, frontend test on the echoed answer | One end to end test only | Each side proves its own half: data stays in `search_result` blocks, the renderer never loads anything |
+| 167 | Container hardening | `cap_drop: ALL`, `no-new-privileges`, `read_only` with tmpfs, `pids_limit` on backend and frontend | Only non-root users | Defence in depth at no cost in behaviour; verified by the fresh clone script on arm64 |
+| 168 | ClamAV container | Drop all capabilities, add back five, writable root filesystem, signatures in a volume | `read_only` for clamd | The image generates its configuration into `/etc/clamav` and drops privileges itself |
+| 169 | `/api/mcp` and CSP review | No change | Tightening further | The loopback Host plus Origin rules cover DNS rebinding and cross-site POST; the CSP exceptions are required by the App Router and PDF.js |
+| 170 | Fresh clone | Two modes: no `.env`, and `FRESH_ENV=fake` with a `.env` | Only one | Both ways a reviewer can start the app must be proven |

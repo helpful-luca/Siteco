@@ -7,7 +7,11 @@ test.describe('chat with the fake model', () => {
     await resetStack(request);
   });
 
-  test('upload, ask, streamed answer with a citation chip, the PDF opens with the highlight', async ({ page }) => {
+  test('upload, ask, streamed answer with a citation chip, the PDF opens with the highlight', async ({ page, baseURL }) => {
+    const foreign: string[] = [];
+    page.on('request', (r) => {
+      if (/^https?:/.test(r.url()) && new URL(r.url()).origin !== new URL(baseURL!).origin) foreign.push(r.url());
+    });
     await uploadAndWaitReady(page);
     await ask(page, 'Welche Schutzart hat die Mira?');
 
@@ -20,6 +24,8 @@ test.describe('chat with the fake model', () => {
     const panel = page.locator('aside[data-right-panel]');
     await expect(panel).toBeVisible();
     await expect(panel.getByTestId('pdf-mark').first()).toBeVisible({ timeout: 30_000 });
+    // GDPR promise: the browser talks to the app only, no CDN, font host or tracker.
+    expect(foreign).toEqual([]);
   });
 
   test('stop during streaming keeps what arrived and marks the answer as stopped', async ({ page }) => {

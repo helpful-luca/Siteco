@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Clones the current commit into a temp dir and proves it starts the way a reviewer would run it:
 # no .env, no brain/, no case brief, only `docker compose up`.
+# Two ways: default (no .env, search-only plus a fake-model restart) and `FRESH_ENV=fake`, where
+# the clone gets a .env with LLM_PROVIDER=fake before the first start (full chat from the start).
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -20,6 +22,8 @@ cd "$WORK/app"
 for forbidden in .env brain siteco-case-ai-document-chat.html; do
   if [ -e "$forbidden" ]; then echo "forbidden file in clone: $forbidden"; exit 1; fi
 done
+
+if [ "${FRESH_ENV:-}" = "fake" ]; then echo 'LLM_PROVIDER=fake' > .env; fi
 
 API="http://127.0.0.1:$PORT/api"
 
@@ -160,14 +164,22 @@ APP_PORT="$PORT" docker compose -p "$PROJECT" up --build -d
 for _ in $(seq 1 90); do
   if body="$(curl -sf "$API/health/ready")"; then
     echo "ready: $body"
-    echo "$body" | grep -q '"llm":"missing_key"' || { echo "expected missing_key without .env"; exit 1; }
+    if [ "${FRESH_ENV:-}" = "fake" ]; then
+      echo "$body" | grep -q '"llm":"ok"' || { echo "expected llm ok with .env fake"; exit 1; }
+    else
+      echo "$body" | grep -q '"llm":"missing_key"' || { echo "expected missing_key without .env"; exit 1; }
+    fi
     wait_for_clamd || { docker compose -p "$PROJECT" logs clamav; exit 1; }
     smoke_malware || { docker compose -p "$PROJECT" logs backend; exit 1; }
     smoke_ingestion || { docker compose -p "$PROJECT" logs backend; exit 1; }
     smoke_ocr || exit 1
     smoke_eval || exit 1
-    chat_round_trip sources_only || { docker compose -p "$PROJECT" logs backend; exit 1; }
-    smoke_fake_chat || { docker compose -p "$PROJECT" logs backend; exit 1; }
+    if [ "${FRESH_ENV:-}" = "fake" ]; then
+      chat_round_trip complete || { docker compose -p "$PROJECT" logs backend; exit 1; }
+    else
+      chat_round_trip sources_only || { docker compose -p "$PROJECT" logs backend; exit 1; }
+      smoke_fake_chat || { docker compose -p "$PROJECT" logs backend; exit 1; }
+    fi
     echo "fresh clone OK"
     exit 0
   fi
