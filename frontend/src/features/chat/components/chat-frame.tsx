@@ -57,6 +57,8 @@ export function ChatFrame({
     <div className="relative flex h-full min-h-0 flex-col">
       {header}
       {/*
+        `relative` keeps absolutely positioned children (screen reader text) inside this scroller;
+        without it they belonged to the frame and made <main> scroll with a visible bar.
         macOS scroll edges: once the list is scrolled, its top edge fades out under the title and
         toolbar; at the bottom it always fades out just above the composer, so no text runs behind
         the glass (where the blur turned it into a bright haze) or shows below the pill.
@@ -65,7 +67,7 @@ export function ChatFrame({
         ref={scrollRef}
         data-scrolled={scrolled || undefined}
         style={{ maskImage: scrollEdgeMask({ scrolled, dockHeight }) }}
-        className="@container no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter"
+        className="@container no-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-gutter"
       >
         <div ref={contentRef} className="mx-auto max-w-reading pt-6" style={{ paddingBottom: dockHeight + BOTTOM_FADE }}>
           {/* An outage is told once, in the composer note where the question waits. */}
