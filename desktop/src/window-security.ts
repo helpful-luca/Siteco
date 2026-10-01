@@ -88,15 +88,13 @@ export function hardenContents(
   openExternal: (url: string) => void,
 ): void {
   const mayNavigate = (url: string) => isAppUrl(url, appOrigin) || isSplashUrl(url);
-  const guard = (event: { preventDefault: () => void }, url: string) => {
-    if (mayNavigate(url)) return;
-    event.preventDefault();
-    const external = externalUrl(url, appOrigin);
-    if (external) openExternal(external);
-  };
-  contents.on('will-navigate', guard);
+  // One handler for every frame: a plain link in the main frame (no target) ends up in the
+  // default browser after validation; subframes never navigate away and never open anything.
   contents.on('will-frame-navigate', (event) => {
-    if (!mayNavigate(event.url)) event.preventDefault();
+    if (mayNavigate(event.url)) return;
+    event.preventDefault();
+    const external = event.isMainFrame ? externalUrl(event.url, appOrigin) : undefined;
+    if (external) openExternal(external);
   });
   contents.on('will-redirect', (event, url) => {
     if (!mayNavigate(url)) event.preventDefault();

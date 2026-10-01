@@ -75,6 +75,10 @@ const de = {
         title: 'Projektordner nicht gefunden',
         body: 'Wähle den Ordner von Siteco Document Chat, in dem compose.yaml liegt.',
       },
+      'project-override': {
+        title: 'Zusätzliche Compose-Datei gefunden',
+        body: 'Im Projektordner liegt eine compose.override-Datei. Die App startet nur die geprüfte compose.yaml. Entferne die Datei und versuche es erneut.',
+      },
       'port-busy': {
         title: 'Port {port} ist belegt',
         body: 'Ein anderes Programm nutzt localhost:{port}. Beende es und versuche es erneut.',
@@ -166,6 +170,10 @@ const en: Messages = {
       'project-missing': {
         title: 'Project folder not found',
         body: 'Choose the Siteco Document Chat folder that contains compose.yaml.',
+      },
+      'project-override': {
+        title: 'Extra compose file found',
+        body: 'The project folder contains a compose.override file. The app only starts the reviewed compose.yaml. Remove the file and try again.',
       },
       'port-busy': {
         title: 'Port {port} is in use',

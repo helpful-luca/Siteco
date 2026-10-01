@@ -48,6 +48,25 @@ test('splash, then the app in a native window', async () => {
     // Window rules: popups are denied.
     expect(await page.evaluate(() => window.open('https://example.com') === null)).toBe(true);
 
+    // A plain external link (no target) stays out of the window and goes to the default browser.
+    await app.evaluate(({ shell }) => {
+      const opened: string[] = [];
+      (globalThis as { opened?: string[] }).opened = opened;
+      shell.openExternal = async (url: string) => void opened.push(url);
+    });
+    const before = page.url();
+    await page.evaluate(() => {
+      const link = document.createElement('a');
+      link.href = 'https://www.siteco.com/';
+      document.body.append(link);
+      link.click();
+      link.remove();
+    });
+    await expect
+      .poll(() => app.evaluate(() => (globalThis as { opened?: string[] }).opened))
+      .toEqual(['https://www.siteco.com/']);
+    expect(page.url()).toBe(before);
+
     // The menu opens the settings in the same window.
     await app.evaluate(({ Menu }) => {
       const appMenu = Menu.getApplicationMenu()?.items[0]?.submenu;

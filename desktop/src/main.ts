@@ -21,7 +21,8 @@ import { dockerRunning, launchDockerApp, waitForDocker } from './docker-engine';
 import { locateDocker, locateDockerApp } from './docker-locator';
 import { MESSAGES, pickLang } from './i18n';
 import { menuTemplate } from './menu';
-import { isProjectDir, resolveProjectDir } from './project-dir';
+import { checkProjectDir, firstProjectDir, resolveProjectDir } from './project-dir';
+import { RetryBudget } from './retry-budget';
 import { probeServer, waitForApp } from './server-probe';
 import { isSplashAction, SPLASH_CHANNELS, type SplashAction } from './splash-ipc';
 import { runStartup, type StartupState } from './startup';
@@ -54,6 +55,8 @@ const SPLASH_FILES = new Map([
   ['/icon.png', 'image/png'],
 ]);
 const APP_WAIT_MS = 180_000;
+/** Failed first loads of the app window in a row before the splash shows the error. */
+const MAX_LOAD_FAILURES = 3;
 
 // Test and development hooks; a packaged app ignores them.
 const DEV = !app.isPackaged && (process.argv.includes('--dev') || process.env.DOCCHAT_DEV === '1');
@@ -81,6 +84,7 @@ let mainWindow: BrowserWindow | undefined;
 let lastState: StartupState = { step: 'checking' };
 let starting = false;
 let quitting = false;
+const loadRetries = new RetryBudget(MAX_LOAD_FAILURES);
 
 function canvasColor(): string {
   return nativeTheme.shouldUseDarkColors ? CANVAS.dark : CANVAS.light;
@@ -184,14 +188,15 @@ async function pickProjectFolder(): Promise<string | undefined> {
 async function onSplashAction(action: SplashAction): Promise<void> {
   switch (action) {
     case 'retry':
+      loadRetries.reset();
       return startApp();
     case 'choose-folder': {
       const dir = await pickProjectFolder();
-      if (dir && (await isProjectDir(dir))) {
-        updateConfig({ projectDir: dir });
-        return startApp();
-      }
-      return;
+      const check = await checkProjectDir(dir);
+      if (check === 'override') setState({ step: 'error', error: 'project-override', details: [] });
+      if (check !== 'ok') return;
+      updateConfig({ projectDir: dir });
+      return startApp();
     }
     case 'download-docker':
       return shell.openExternal(DOCKER_DOWNLOAD_URL);
@@ -219,8 +224,12 @@ function serveSplashFiles(): void {
     const { host, pathname } = new URL(request.url);
     const type = SPLASH_FILES.get(pathname);
     if (host !== 'app' || !type) return new Response('Not found', { status: 404 });
-    const body = await readFile(join(root, pathname.slice(1)));
-    return new Response(body, { headers: { 'Content-Type': type, 'X-Content-Type-Options': 'nosniff' } });
+    try {
+      const body = await readFile(join(root, pathname.slice(1)));
+      return new Response(body, { headers: { 'Content-Type': type, 'X-Content-Type-Options': 'nosniff' } });
+    } catch {
+      return new Response('Not found', { status: 404 });
+    }
   });
 }
 
@@ -257,6 +266,7 @@ function openMainWindow(): void {
   });
   if (bounds.maximized) win.maximize();
   win.once('ready-to-show', () => {
+    loadRetries.reset();
     win.show();
     closeSplash();
   });
@@ -265,11 +275,15 @@ function openMainWindow(): void {
     mainWindow = undefined;
     buildMenu();
   });
-  // The first load failed (the server went away between the check and the load): back to the splash.
+  // The first load failed (the server went away between the check and the load): start over,
+  // a few times at most, then the splash shows the error with "Erneut versuchen".
   win.webContents.on('did-fail-load', (_event, code, _description, url, isMainFrame) => {
     if (!isMainFrame || code === -3 || win.isVisible() || url.startsWith(SPLASH_ORIGIN)) return;
+    mainWindow = undefined;
     win.destroy();
-    void startApp();
+    if (loadRetries.fail() === 'retry') return void startApp();
+    showSplash();
+    setState({ step: 'error', error: 'not-responding', details: [] });
   });
   mainWindow = win;
   buildMenu();
@@ -320,11 +334,11 @@ async function stopServices(): Promise<void> {
   setState({ step: 'stopping' });
   const home = homedir();
   const docker = await locateDocker(home);
-  const projectDir = [config.projectDir, builtInProjectDir()].find((dir) => dir !== undefined);
+  const projectDir = await firstProjectDir([config.projectDir, builtInProjectDir()]);
   const ok =
     docker !== undefined &&
-    (await isProjectDir(projectDir)) &&
-    (await runCompose(docker, 'stop', { projectDir: projectDir!, port })).ok;
+    projectDir !== undefined &&
+    (await runCompose(docker, 'stop', { projectDir, port })).ok;
   if (!ok) {
     await dialog.showMessageBox({
       type: 'warning',

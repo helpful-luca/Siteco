@@ -12,7 +12,7 @@ function deps(overrides: Partial<StartupDeps> = {}): StartupDeps & { states: Sta
     dockerRunning: vi.fn(async () => true),
     launchDocker: vi.fn(async () => true),
     waitForDocker: vi.fn(async () => true),
-    resolveProject: vi.fn(async () => '/Users/test/Siteco'),
+    resolveProject: vi.fn(async () => ({ dir: '/Users/test/Siteco' })),
     composeUp: vi.fn(async () => ({ ok: true, timedOut: false, tail: [] })),
     onState: (state) => states.push(state),
     ...overrides,
@@ -79,10 +79,14 @@ describe('runStartup', () => {
   });
 
   it('reports a missing project folder', async () => {
-    const d = deps({ resolveProject: vi.fn(async () => undefined) });
+    const d = deps({ resolveProject: vi.fn(async () => ({ error: 'project-missing' as const })) });
     expect(await runStartup(d)).toBe(false);
     expect(d.composeUp).not.toHaveBeenCalled();
     expect(d.states.at(-1)).toMatchObject({ step: 'error', error: 'project-missing' });
+
+    const override = deps({ resolveProject: vi.fn(async () => ({ error: 'project-override' as const })) });
+    expect(await runStartup(override)).toBe(false);
+    expect(override.states.at(-1)).toMatchObject({ step: 'error', error: 'project-override' });
   });
 
   it('reports a busy port and a general compose failure with the last lines', async () => {

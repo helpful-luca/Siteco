@@ -33,6 +33,7 @@ describe('messages', () => {
       'docker-missing',
       'docker-not-running',
       'project-missing',
+      'project-override',
       'port-busy',
       'compose-failed',
       'not-responding',

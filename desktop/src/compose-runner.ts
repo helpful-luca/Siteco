@@ -14,12 +14,13 @@ export const COMPOSE_UP_TIMEOUT_MS = 30 * 60_000;
 export const COMPOSE_STOP_TIMEOUT_MS = 2 * 60_000;
 
 /**
- * Fixed argument arrays; nothing in them comes from the user or the environment. `--build`
- * keeps the containers on the code in the project folder; with an unchanged checkout the
- * build cache answers in seconds.
+ * Fixed argument arrays; nothing in them comes from the user or the environment. The explicit
+ * `--file` ignores COMPOSE_FILE (also from .env) and override files. `--build` keeps the
+ * containers on the code in the project folder; with an unchanged checkout the build cache
+ * answers in seconds.
  */
 export function composeArgs(action: ComposeAction): string[] {
-  const base = ['compose', '--ansi', 'never', '--progress', 'plain'];
+  const base = ['compose', '--file', 'compose.yaml', '--ansi', 'never', '--progress', 'plain'];
   return action === 'up' ? [...base, 'up', '--detach', '--build'] : [...base, 'stop'];
 }
 

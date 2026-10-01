@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   allowPermission,
   externalUrl,
+  hardenContents,
   isAllowedRequest,
   isAppUrl,
   isSplashUrl,
@@ -80,5 +81,69 @@ describe('isAllowedRequest', () => {
     expect(isAllowedRequest('ws://evil.com/', APP)).toBe(false);
     expect(isAllowedRequest('blob:https://evil.com/1234', APP)).toBe(false);
     expect(isAllowedRequest('file:///etc/passwd', APP)).toBe(false);
+  });
+});
+
+describe('hardenContents', () => {
+  type Handler = (...args: unknown[]) => void;
+  function fakeContents() {
+    const handlers = new Map<string, Handler>();
+    let openHandler: ((details: { url: string }) => { action: string }) | undefined;
+    return {
+      contents: {
+        on: (name: string, handler: Handler) => handlers.set(name, handler),
+        setWindowOpenHandler: (handler: typeof openHandler) => {
+          openHandler = handler;
+        },
+      },
+      navigate(url: string, isMainFrame: boolean) {
+        let prevented = false;
+        handlers.get('will-frame-navigate')?.({ url, isMainFrame, preventDefault: () => (prevented = true) });
+        return prevented;
+      },
+      handlers,
+      open: (url: string) => openHandler?.({ url }),
+    };
+  }
+
+  async function setup() {
+    const fake = fakeContents();
+    const opened: string[] = [];
+    hardenContents(fake.contents as never, APP, (url) => opened.push(url));
+    return { fake, opened };
+  }
+
+  it('opens a plain external link of the main frame in the browser', async () => {
+    const { fake, opened } = await setup();
+    expect(fake.navigate('https://www.siteco.com/', true)).toBe(true);
+    expect(opened).toEqual(['https://www.siteco.com/']);
+  });
+
+  it('lets the app navigate within its origin', async () => {
+    const { fake, opened } = await setup();
+    expect(fake.navigate('http://localhost:3000/library', true)).toBe(false);
+    expect(fake.navigate(`${SPLASH_ORIGIN}/splash.html?lang=de`, true)).toBe(false);
+    expect(opened).toEqual([]);
+  });
+
+  it('blocks subframes and unsafe schemes without opening anything', async () => {
+    const { fake, opened } = await setup();
+    expect(fake.navigate('https://www.siteco.com/', false)).toBe(true);
+    expect(fake.navigate('file:///etc/passwd', true)).toBe(true);
+    expect(fake.navigate('javascript:alert(1)', true)).toBe(true);
+    expect(opened).toEqual([]);
+  });
+
+  it('handles each navigation once (no second handler on will-navigate)', async () => {
+    const { fake } = await setup();
+    expect(fake.handlers.has('will-navigate')).toBe(false);
+  });
+
+  it('denies popups and hands valid links to the browser', async () => {
+    const { fake, opened } = await setup();
+    expect(fake.open('https://example.com/a')).toEqual({ action: 'deny' });
+    expect(fake.open('file:///etc/passwd')).toEqual({ action: 'deny' });
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(opened).toEqual(['https://example.com/a']);
   });
 });

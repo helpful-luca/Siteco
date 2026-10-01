@@ -9,13 +9,14 @@ import {
 
 describe('composeArgs', () => {
   it('builds fixed argument arrays with plain, colourless output', () => {
-    expect(composeArgs('up')).toEqual(['compose', '--ansi', 'never', '--progress', 'plain', 'up', '--detach', '--build']);
-    expect(composeArgs('stop')).toEqual(['compose', '--ansi', 'never', '--progress', 'plain', 'stop']);
+    const base = ['compose', '--file', 'compose.yaml', '--ansi', 'never', '--progress', 'plain'];
+    expect(composeArgs('up')).toEqual([...base, 'up', '--detach', '--build']);
+    expect(composeArgs('stop')).toEqual([...base, 'stop']);
   });
 
   it('never carries user input', () => {
     for (const action of ['up', 'stop'] as const) {
-      for (const arg of composeArgs(action)) expect(arg).toMatch(/^[a-z-]+$/);
+      for (const arg of composeArgs(action)) expect(arg).toMatch(/^[a-z.-]+$/);
     }
   });
 });

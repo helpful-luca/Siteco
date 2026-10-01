@@ -1,11 +1,13 @@
 import { composeFailure, composePhase, type ComposePhase } from './compose-runner';
 import type { RunResult } from './process-runner';
+import type { ProjectResolution } from './project-dir';
 import type { ProbeResult } from './server-probe';
 
 export type StartupError =
   | 'docker-missing'
   | 'docker-not-running'
   | 'project-missing'
+  | 'project-override'
   | 'port-busy'
   | 'compose-failed'
   | 'not-responding'
@@ -33,7 +35,7 @@ export interface StartupDeps {
   launchDocker: () => Promise<boolean>;
   waitForDocker: (docker: string) => Promise<boolean>;
   /** The compose project folder, asking once with a folder picker when needed. */
-  resolveProject: () => Promise<string | undefined>;
+  resolveProject: () => Promise<ProjectResolution>;
   composeUp: (docker: string, projectDir: string, onLine: (line: string) => void) => Promise<RunResult>;
   onState: (state: StartupState) => void;
 }
@@ -68,8 +70,9 @@ export async function runStartup(deps: StartupDeps): Promise<boolean> {
     if (!(await deps.waitForDocker(docker))) return fail('docker-not-running');
   }
 
-  const projectDir = await deps.resolveProject();
-  if (!projectDir) return fail('project-missing');
+  const project = await deps.resolveProject();
+  if ('error' in project) return fail(project.error);
+  const projectDir = project.dir;
 
   let phase: ComposePhase = 'starting';
   const details: string[] = [];
