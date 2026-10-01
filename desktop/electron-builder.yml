@@ -47,8 +47,8 @@ nsis:
   shortcutName: Siteco Document Chat
   artifactName: Siteco-Document-Chat-Setup-${version}-${arch}.${ext}
   deleteAppDataOnUninstall: false
-# Electron fuses (annex 11, 8.13): no Node mode, no NODE_OPTIONS or inspector flags,
-# encrypted cookies, app code only from the integrity-checked app.asar.
+# Electron fuses: no Node mode, no NODE_OPTIONS or inspector flags, encrypted cookies,
+# app code only from the integrity-checked app.asar.
 electronFuses:
   runAsNode: false
   enableCookieEncryption: true

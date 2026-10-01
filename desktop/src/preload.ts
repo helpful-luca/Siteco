@@ -1,11 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 /*
- * The app window's only bridge. The UI marks <html data-desktop data-platform> before first
- * paint (frontend/src/shared/desktop) and draws its own window buttons in the top right corner.
- * A few window commands, nothing else: no Node APIs, no generic IPC. The main process checks that
- * every call comes from the app window's main frame on the app origin. A sandboxed preload
- * cannot import local modules, so the channel names repeat window-ipc.ts.
+ * The app window's only bridge: the commands behind the page's own window buttons, no Node APIs,
+ * no generic IPC. The main process accepts them only from the app window's main frame on the app
+ * origin. A sandboxed preload cannot import local modules, so the channel names repeat
+ * window-ipc.ts.
  */
 contextBridge.exposeInMainWorld(
   'desktop',

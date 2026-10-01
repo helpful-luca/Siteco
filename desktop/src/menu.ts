@@ -11,10 +11,7 @@ export interface MenuActions {
 
 const separator: MenuItemConstructorOptions = { type: 'separator' };
 
-/**
- * The app's commands outside macOS, which has no menu bar there (frameless window): a hidden
- * menu that only carries the keyboard shortcuts.
- */
+/** The app's commands outside macOS, where the frameless window shows no menu bar. */
 export function popupMenuTemplate(t: Messages, actions: MenuActions): MenuItemConstructorOptions[] {
   const m = t.menu;
   return [
@@ -33,7 +30,7 @@ export function popupMenuTemplate(t: Messages, actions: MenuActions): MenuItemCo
   ];
 }
 
-/** The native menu bar (DE/EN). No Help menu: the app explains itself, the README is on GitHub. */
+/** The native menu bar on macOS; elsewhere a hidden menu that only carries the keyboard shortcuts. */
 export function menuTemplate(
   t: Messages,
   actions: MenuActions,
@@ -41,7 +38,6 @@ export function menuTemplate(
 ): MenuItemConstructorOptions[] {
   const m = t.menu;
   if (platform !== 'darwin') {
-    // Hidden menu bar: only here for the keyboard shortcuts of the popup's items.
     return [{ label: t.appName, submenu: popupMenuTemplate(t, actions) }];
   }
   const appMenu: MenuItemConstructorOptions[] = [

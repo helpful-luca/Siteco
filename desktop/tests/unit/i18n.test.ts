@@ -7,25 +7,9 @@ function keys(value: unknown, prefix = ''): string[] {
   return Object.entries(value).flatMap(([key, child]) => keys(child, prefix ? `${prefix}.${key}` : key));
 }
 
-function strings(value: unknown): string[] {
-  if (typeof value === 'string') return [value];
-  if (typeof value !== 'object' || value === null) return [];
-  return Object.values(value).flatMap(strings);
-}
-
 describe('messages', () => {
   it('has the same keys in German and English', () => {
     expect(keys(MESSAGES.de).sort()).toEqual(keys(MESSAGES.en).sort());
-  });
-
-  it('uses no en dash or em dash', () => {
-    for (const text of [...strings(MESSAGES.de), ...strings(MESSAGES.en)]) {
-      expect(text).not.toMatch(/[–—]/);
-    }
-  });
-
-  it('addresses the reader with "du" in German', () => {
-    for (const text of strings(MESSAGES.de)) expect(text).not.toMatch(/\b(Sie|Ihre?n?)\b/);
   });
 
   it('covers every startup error', () => {

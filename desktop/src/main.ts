@@ -59,21 +59,17 @@ const APP_WAIT_MS = 180_000;
 /** Failed first loads of the app window in a row before the splash shows the error. */
 const MAX_LOAD_FAILURES = 3;
 
-// Test and development hooks; a packaged app ignores them.
-const DEV = !app.isPackaged && (process.argv.includes('--dev') || process.env.DOCCHAT_DEV === '1');
-if (!app.isPackaged && process.env.DOCCHAT_USER_DATA) app.setPath('userData', process.env.DOCCHAT_USER_DATA);
-/** Shows the splash even when the app already answers (smoke test, screenshots). */
-const ALWAYS_SPLASH = !app.isPackaged && process.env.DOCCHAT_SPLASH === '1';
+/** `npm run dev`: next dev and the backend run outside Docker; a packaged app ignores the flag. */
+const DEV = !app.isPackaged && process.argv.includes('--dev');
 
-// Crash dumps stay on this Mac; nothing is uploaded (team brief: no telemetry).
+// Crash dumps stay on this machine; nothing is uploaded.
 crashReporter.start({ uploadToServer: false });
 
 protocol.registerSchemesAsPrivileged([{ scheme: SPLASH_SCHEME, privileges: { standard: true, secure: true } }]);
 
 const configFile = join(app.getPath('userData'), 'config.json');
 let config: AppConfig = loadConfig(configFile);
-const devPort = Number(process.env.DOCCHAT_PORT);
-const port = !app.isPackaged && Number.isInteger(devPort) && devPort > 0 ? devPort : config.port;
+const port = config.port;
 const APP_URL = appUrl(port);
 const APP_ORIGIN = new URL(APP_URL).origin;
 
@@ -335,7 +331,7 @@ function openMainWindow(): void {
     buildMenu();
   });
   // The first load failed (the server went away between the check and the load): start over,
-  // a few times at most, then the splash shows the error with "Erneut versuchen".
+  // a few times at most, then the splash shows the error with "Try again".
   win.webContents.on('did-fail-load', (_event, code, _description, url, isMainFrame) => {
     if (!isMainFrame || code === -3 || win.isVisible() || url.startsWith(SPLASH_ORIGIN)) return;
     mainWindow = undefined;
@@ -357,7 +353,7 @@ async function startApp(): Promise<void> {
   starting = true;
   try {
     // Already running (the usual case after the first start): no splash at all.
-    if (!ALWAYS_SPLASH && (await probeServer(APP_URL, { timeoutMs: 800 })) === 'ours') return openMainWindow();
+    if ((await probeServer(APP_URL, { timeoutMs: 800 })) === 'ours') return openMainWindow();
     showSplash();
     const home = homedir();
     const ok = await runStartup({
@@ -385,7 +381,7 @@ async function startApp(): Promise<void> {
   }
 }
 
-/** "Dienste beenden": `docker compose stop` in the project folder, then quit. Data stays in the volumes. */
+/** "Stop services": `docker compose stop` in the project folder, then quit. Data stays in the volumes. */
 async function stopServices(): Promise<void> {
   if (quitting) return;
   quitting = true;

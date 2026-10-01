@@ -1,10 +1,6 @@
 import { isAppUrl } from './window-security';
 
-/**
- * The app window's channels: the page's own window buttons (frameless window on macOS and
- * Windows). Shared by the main process and (repeated, a sandboxed preload cannot import)
- * preload.ts.
- */
+/** Channels for the page's own window buttons. preload.ts repeats the names (it cannot import). */
 export const WINDOW_CHANNELS = {
   minimize: 'window:minimize',
   toggleMaximize: 'window:toggle-maximize',

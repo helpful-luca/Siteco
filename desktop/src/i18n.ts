@@ -1,4 +1,4 @@
-/** DE/EN copy for the menu, dialogs and splash. German uses "du", sentence case, no dashes. */
+/** German and English copy for the menu, dialogs and splash. */
 export type Lang = 'de' | 'en';
 
 export function pickLang(preferred: readonly string[]): Lang {
@@ -80,7 +80,7 @@ const de = {
       },
       'project-override': {
         title: 'Zusätzliche Compose-Datei gefunden',
-        body: 'Im Projektordner liegt eine compose.override-Datei. Die App startet nur die geprüfte compose.yaml. Entferne die Datei und versuch es erneut.',
+        body: 'Im Projektordner liegt eine compose.override-Datei. Die App startet nur die compose.yaml des Projekts. Entferne die Datei und versuch es erneut.',
       },
       'port-busy': {
         title: 'Port {port} ist belegt',
@@ -191,7 +191,7 @@ const en: Messages = {
       },
       'project-override': {
         title: 'Extra compose file found',
-        body: 'The project folder contains a compose.override file. The app only starts the reviewed compose.yaml. Remove the file and try again.',
+        body: 'The project folder contains a compose.override file. The app only starts the project’s own compose.yaml. Remove the file and try again.',
       },
       'port-busy': {
         title: 'Port {port} is in use',
@@ -226,5 +226,3 @@ const en: Messages = {
 };
 
 export const MESSAGES: Record<Lang, Messages> = { de, en };
-
-export type SplashMessages = Messages['splash'];

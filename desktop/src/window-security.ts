@@ -1,8 +1,8 @@
 import type { Session, WebContents } from 'electron';
 
 /**
- * Every navigation, popup, permission and network rule in one place (annex 11, 8.13).
- * The pure functions are unit tested; `hardenSession` and `hardenContents` wire them up.
+ * Every navigation, popup, permission and network rule in one place. The pure functions are
+ * unit tested; `hardenSession` and `hardenContents` wire them up.
  */
 
 /** The splash page is served from the app bundle under its own privileged scheme, not file://. */

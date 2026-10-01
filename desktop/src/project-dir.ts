@@ -4,7 +4,7 @@ import { isOurComposeFile } from './compose-runner';
 
 export const COMPOSE_FILE = 'compose.yaml';
 const MAX_COMPOSE_BYTES = 256 * 1024;
-/** Files compose would merge into ours; the app only runs the reviewed compose.yaml. */
+/** Files compose would merge into ours; the app only runs the project's own compose.yaml. */
 const OVERRIDE_FILES = [
   'compose.override.yaml',
   'compose.override.yml',
