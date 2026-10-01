@@ -9,3 +9,6 @@ of ours imports this package before anything imports onnxruntime.
 import os
 
 os.environ["ORT_DISABLE_TELEMETRY"] = "1"
+# Lance warns on every hybrid search that it still projects the score columns we never read
+# (a deprecation notice from its Rust logger). Real errors still show; an explicit setting wins.
+os.environ.setdefault("LANCEDB_LOG", "error")

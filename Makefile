@@ -1,4 +1,4 @@
-.PHONY: up down dev-api dev-web test lint api-types fresh-clone
+.PHONY: up down dev-api dev-web test lint api-types fresh-clone eval eval-gate eval-generation
 
 up:
 	docker compose up --build
@@ -27,3 +27,15 @@ api-types:
 
 fresh-clone:
 	./scripts/fresh-clone-test.sh
+
+# Retrieval eval with the real pipeline in a temp dir; writes eval/results/latest.json.
+eval:
+	cd backend && EMBEDDING_CACHE_DIR=$${EMBEDDING_CACHE_DIR:-.models} uv run python -m docchat.cli.run_eval
+
+# The CI gate: the default configuration must keep its measured quality.
+eval-gate:
+	cd backend && EMBEDDING_CACHE_DIR=$${EMBEDDING_CACHE_DIR:-.models} uv run pytest tests/eval -m model
+
+# Answers by Haiku, Sonnet and Opus judged by Claude (costs money, needs ANTHROPIC_API_KEY).
+eval-generation:
+	cd backend && RUN_LIVE=1 EMBEDDING_CACHE_DIR=$${EMBEDDING_CACHE_DIR:-.models} uv run python -m docchat.cli.run_generation_eval

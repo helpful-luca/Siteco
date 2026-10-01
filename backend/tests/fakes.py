@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from docchat.domain.chunking import section_from_text
+from docchat.domain.enums import SearchMode
 from docchat.domain.errors import IngestionError
 from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk
@@ -168,7 +169,13 @@ class FakeVectorStore:
         return sum(1 for chunk, _ in self.rows.values() if chunk.document_id == document_id)
 
     def search(
-        self, text: str, vector: Sequence[float], document_ids: Collection[str], limit: int
+        self,
+        text: str,
+        vector: Sequence[float],
+        document_ids: Collection[str],
+        limit: int,
+        *,
+        mode: SearchMode = SearchMode.HYBRID,
     ) -> list[Chunk]:
         """Ranks by shared words, then document order: enough to test what surrounds it."""
         self.searches.append((text, tuple(document_ids), limit))

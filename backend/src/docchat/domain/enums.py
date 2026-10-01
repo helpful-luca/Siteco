@@ -99,6 +99,14 @@ class SourcesMode(StrEnum):
     RETRIEVAL_ONLY = "retrieval_only"
 
 
+class SearchMode(StrEnum):
+    """How chunks are ranked. Answers always use hybrid; the eval compares all three."""
+
+    HYBRID = "hybrid"  # vector and BM25, fused by reciprocal rank
+    DENSE = "dense"  # vector only
+    BM25 = "bm25"  # full text only
+
+
 class RunPhase(StrEnum):
     RETRIEVING = "retrieving"
     GENERATING = "generating"

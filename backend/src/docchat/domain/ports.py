@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Protocol
 
 from docchat.domain.chat_models import Chat, ChatSummary, Message
-from docchat.domain.enums import DocumentKind, DocumentStatus, Lane
+from docchat.domain.enums import DocumentKind, DocumentStatus, Lane, SearchMode
 from docchat.domain.errors import ErrorCode
 from docchat.domain.llm import LLMEvent, LLMRequest
 from docchat.domain.malware import ScanVerdict
@@ -219,11 +219,17 @@ class VectorStore(Protocol):
     def count(self, document_id: str) -> int: ...
 
     def search(
-        self, text: str, vector: Sequence[float], document_ids: Collection[str], limit: int
+        self,
+        text: str,
+        vector: Sequence[float],
+        document_ids: Collection[str],
+        limit: int,
+        *,
+        mode: SearchMode = SearchMode.HYBRID,
     ) -> list[Chunk]:
         """Hybrid search (vector plus full text, fused by rank) within the given documents,
         best first. The filter is applied before ranking, so `limit` results come back
-        whenever the documents have that many chunks."""
+        whenever the documents have that many chunks (BM25 only returns text matches)."""
         ...
 
     def chunks_of(self, document_ids: Collection[str]) -> list[Chunk]:

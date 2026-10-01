@@ -1,0 +1,468 @@
+{
+  "version": 1,
+  "description": "Retrieval and answer evaluation set for the document chat: Commission Regulation (EU) 2019/2020 in German and English plus three fictional luminaire datasheets. Relevance is labelled per PDF page (1-based).",
+  "documents": [
+    {
+      "id": "eu-2019-2020-de",
+      "file": "documents/eu-2019-2020-de.pdf",
+      "sha256": "a3b9fa129200f46f062d1f99d46b63249337475c90ce7104bb761472226e5a6a",
+      "language": "de",
+      "fictional": false,
+      "title": "Verordnung (EU) 2019/2020 (DE)"
+    },
+    {
+      "id": "eu-2019-2020-en",
+      "file": "documents/eu-2019-2020-en.pdf",
+      "sha256": "9686587e823f371ba8524f5d34ee1701c33eced4d81941376c44d75de61d620d",
+      "language": "en",
+      "fictional": false,
+      "title": "Regulation (EU) 2019/2020 (EN)"
+    },
+    {
+      "id": "nordlicht-viaro",
+      "file": "documents/nordlicht-viaro.pdf",
+      "sha256": "78f2ee80579c9ec229bfbaf0c2ccef26a080000d8b3b69ba51975fa9a54f4599",
+      "language": "de",
+      "fictional": true,
+      "title": "Viaro LED-Straßenleuchte (fiktives Datenblatt)"
+    },
+    {
+      "id": "nordlicht-arenis",
+      "file": "documents/nordlicht-arenis.pdf",
+      "sha256": "f474cfd2ac1dc595e3c216b26b9ea75c57c3182ab3825ce702addf586fbffe3a",
+      "language": "en",
+      "fictional": true,
+      "title": "Arenis LED floodlight (fictional datasheet)"
+    },
+    {
+      "id": "nordlicht-galerion",
+      "file": "documents/nordlicht-galerion.pdf",
+      "sha256": "aa7f79f3a349937ed7bf320a4d6febe90412dbf1c3c472dde7bd98cc54902836",
+      "language": "de",
+      "fictional": true,
+      "title": "Galerion LED-Tunnelleuchte (fiktives Datenblatt)"
+    }
+  ],
+  "questions": [
+    {
+      "id": "fact-01",
+      "category": "factual",
+      "language": "de",
+      "question": "Ab welchem Datum gelten die Ökodesign-Anforderungen der Verordnung 2019/2020?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [8, 16, 18, 19, 20]},
+        {"document": "eu-2019-2020-en", "pages": [8, 16, 18, 19, 20]}
+      ],
+      "keywords": ["September 2021"],
+      "scope": null,
+      "previous": null,
+      "note": "Article 11; Annex II repeats the date for each block of requirements."
+    },
+    {
+      "id": "fact-02",
+      "category": "factual",
+      "language": "en",
+      "question": "How long does the endurance test for LED light sources run and how many switching cycles does it include?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [31]},
+        {"document": "eu-2019-2020-en", "pages": [31]}
+      ],
+      "keywords": ["1 200", "3 600"],
+      "scope": null,
+      "previous": null,
+      "note": "Annex V: 1 200 cycles, 3 000 h on, 3 600 h total."
+    },
+    {
+      "id": "fact-03",
+      "category": "factual",
+      "language": "de",
+      "question": "Welchen Lichtstrom muss ein Produkt haben, damit es nach der Verordnung als Lichtquelle gilt?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [4]},
+        {"document": "eu-2019-2020-en", "pages": [4]}
+      ],
+      "keywords": ["82 000"],
+      "scope": null,
+      "previous": null,
+      "note": "Article 2(1)(c): between 60 and 82 000 lm."
+    },
+    {
+      "id": "fact-04",
+      "category": "factual",
+      "language": "en",
+      "question": "What efficiency does the best available separate control gear reach according to the benchmarks?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [32]},
+        {"document": "eu-2019-2020-en", "pages": [32]}
+      ],
+      "keywords": ["95 %"],
+      "scope": null,
+      "previous": null,
+      "note": "Annex VI benchmarks."
+    },
+    {
+      "id": "fact-05",
+      "category": "factual",
+      "language": "de",
+      "question": "Wie lange gibt der Hersteller Garantie auf die Viaro?",
+      "relevant": [
+        {"document": "nordlicht-viaro", "pages": [3]}
+      ],
+      "keywords": ["10 Jahre"],
+      "scope": null,
+      "previous": null,
+      "note": "Viaro warranty; Galerion has 7 years, so the product name must decide."
+    },
+    {
+      "id": "fact-06",
+      "category": "factual",
+      "language": "en",
+      "question": "In which ambient temperature range can the Arenis floodlight be operated?",
+      "relevant": [
+        {"document": "nordlicht-arenis", "pages": [2]}
+      ],
+      "keywords": ["-30 °C", "+45 °C"],
+      "scope": null,
+      "previous": null,
+      "note": "Arenis operating temperature; the other datasheets list different ranges."
+    },
+    {
+      "id": "fact-07",
+      "category": "factual",
+      "language": "de",
+      "question": "Aus welchem Material besteht das Gehäuse der Galerion Tunnelleuchte?",
+      "relevant": [
+        {"document": "nordlicht-galerion", "pages": [1, 2]}
+      ],
+      "keywords": ["Edelstahl", "1.4404"],
+      "scope": null,
+      "previous": null,
+      "note": "Stainless steel 1.4404; page 1 names the material, page 2 the grade."
+    },
+    {
+      "id": "fact-08",
+      "category": "factual",
+      "language": "en",
+      "question": "By when does the Commission have to present its review of Regulation 2019/2020 to the Consultation Forum?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [7]},
+        {"document": "eu-2019-2020-en", "pages": [7]}
+      ],
+      "keywords": ["2024"],
+      "scope": null,
+      "previous": null,
+      "note": "Article 9: no later than 25 December 2024."
+    },
+    {
+      "id": "fact-09",
+      "category": "factual",
+      "language": "de",
+      "question": "Wie weit darf der bei der Marktüberwachung gemessene Nutzlichtstrom unter dem angegebenen Wert liegen?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [29]},
+        {"document": "eu-2019-2020-en", "pages": [29]}
+      ],
+      "keywords": ["10 %"],
+      "scope": null,
+      "previous": null,
+      "note": "Annex IV Table 6: declared value minus 10 %."
+    },
+    {
+      "id": "code-01",
+      "category": "exact_code",
+      "language": "de",
+      "question": "Welchen Grenzwert hat die Standby-Leistung Psb einer Lichtquelle?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [17]},
+        {"document": "eu-2019-2020-en", "pages": [17]}
+      ],
+      "keywords": ["Psb", "0,5 W"],
+      "scope": null,
+      "previous": null,
+      "note": "Annex II 1(a), last sentence on the page."
+    },
+    {
+      "id": "code-02",
+      "category": "exact_code",
+      "language": "en",
+      "question": "What is the Pst LM limit for flicker of LED mains light sources?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [19]},
+        {"document": "eu-2019-2020-en", "pages": [19]}
+      ],
+      "keywords": ["Pst LM", "1,0"],
+      "scope": null,
+      "previous": null,
+      "note": "Annex II Table 4."
+    },
+    {
+      "id": "code-03",
+      "category": "exact_code",
+      "language": "en",
+      "question": "Does Regulation 2019/2020 apply to light sources approved for potentially explosive atmospheres under Directive 2014/34/EU?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [23]},
+        {"document": "eu-2019-2020-en", "pages": [23]}
+      ],
+      "keywords": ["2014/34/EU"],
+      "scope": null,
+      "previous": null,
+      "note": "Annex III point 1(a): exempt."
+    },
+    {
+      "id": "code-04",
+      "category": "exact_code",
+      "language": "de",
+      "question": "Welche Artikelnummer hat die Viaro mit 4000 K und 8 400 lm?",
+      "relevant": [
+        {"document": "nordlicht-viaro", "pages": [1]}
+      ],
+      "keywords": ["NL-4012-4KB10"],
+      "scope": null,
+      "previous": null,
+      "note": "Variant list; neighbouring numbers differ in one character."
+    },
+    {
+      "id": "code-05",
+      "category": "exact_code",
+      "language": "en",
+      "question": "What luminous flux and system power does NL-7230-5KA45 have?",
+      "relevant": [
+        {"document": "nordlicht-arenis", "pages": [1]}
+      ],
+      "keywords": ["38 000 lm", "290 W"],
+      "scope": null,
+      "previous": null,
+      "note": "Arenis variant list."
+    },
+    {
+      "id": "code-06",
+      "category": "exact_code",
+      "language": "de",
+      "question": "Was für eine Leuchte ist die NL-5520-4KG30 und welchen Lichtstrom hat sie?",
+      "relevant": [
+        {"document": "nordlicht-galerion", "pages": [1]}
+      ],
+      "keywords": ["Gegenstrahl", "24 000 lm"],
+      "scope": null,
+      "previous": null,
+      "note": "Galerion counter-beam variant."
+    },
+    {
+      "id": "code-07",
+      "category": "exact_code",
+      "language": "de",
+      "question": "Für welche Beleuchtungsklassen nach EN 13201-2 ist die Viaro geeignet?",
+      "relevant": [
+        {"document": "nordlicht-viaro", "pages": [1]}
+      ],
+      "keywords": ["EN 13201-2", "M3"],
+      "scope": null,
+      "previous": null,
+      "note": "EN 13201-2 also appears in the Galerion datasheet, without classes."
+    },
+    {
+      "id": "code-08",
+      "category": "exact_code",
+      "language": "en",
+      "question": "What SVM limit applies to the stroboscopic effect of LED mains light sources?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [19]},
+        {"document": "eu-2019-2020-en", "pages": [19]}
+      ],
+      "keywords": ["SVM", "0,4"],
+      "scope": null,
+      "previous": null,
+      "note": "Annex II Table 4."
+    },
+    {
+      "id": "xl-01",
+      "category": "cross_lingual",
+      "language": "de",
+      "question": "Wie läuft die Dauerprüfung für LED-Lichtquellen ab, wie lange ist die Lichtquelle pro Schaltzyklus ein- und ausgeschaltet?",
+      "relevant": [
+        {"document": "eu-2019-2020-en", "pages": [31]}
+      ],
+      "keywords": ["150 minutes", "30 minutes"],
+      "scope": ["eu-2019-2020-en"],
+      "previous": null,
+      "note": "German question, search limited to the English regulation (Annex V)."
+    },
+    {
+      "id": "xl-02",
+      "category": "cross_lingual",
+      "language": "de",
+      "question": "Welchen Farbwiedergabeindex müssen Lichtquellen mindestens erreichen, und gilt das auch für Außenbeleuchtung?",
+      "relevant": [
+        {"document": "eu-2019-2020-en", "pages": [19]}
+      ],
+      "keywords": ["CRI ≥ 80", "outdoor applications"],
+      "scope": ["eu-2019-2020-en"],
+      "previous": null,
+      "note": "German question, English regulation only (Annex II Table 4)."
+    },
+    {
+      "id": "xl-03",
+      "category": "cross_lingual",
+      "language": "en",
+      "question": "Which older lighting regulations does Regulation 2019/2020 repeal, and from which date?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [8]}
+      ],
+      "keywords": ["1194/2012", "September 2021"],
+      "scope": ["eu-2019-2020-de"],
+      "previous": null,
+      "note": "English question, German regulation only (Article 10)."
+    },
+    {
+      "id": "xl-04",
+      "category": "cross_lingual",
+      "language": "de",
+      "question": "Welche Schlagfestigkeit nach IK-Code hat der Arenis Fluter?",
+      "relevant": [
+        {"document": "nordlicht-arenis", "pages": [2]}
+      ],
+      "keywords": ["IK10"],
+      "scope": null,
+      "previous": null,
+      "note": "German question on the English-only datasheet; Viaro is IK08, Galerion IK09."
+    },
+    {
+      "id": "xl-05",
+      "category": "cross_lingual",
+      "language": "en",
+      "question": "What surge protection does the Viaro street luminaire have?",
+      "relevant": [
+        {"document": "nordlicht-viaro", "pages": [2]}
+      ],
+      "keywords": ["10 kV"],
+      "scope": null,
+      "previous": null,
+      "note": "English question on a German-only datasheet."
+    },
+    {
+      "id": "xl-06",
+      "category": "cross_lingual",
+      "language": "en",
+      "question": "Can the Galerion tunnel luminaire be cleaned with a high-pressure washer?",
+      "relevant": [
+        {"document": "nordlicht-galerion", "pages": [2]}
+      ],
+      "keywords": ["IP69", "100 bar"],
+      "scope": null,
+      "previous": null,
+      "note": "English question on a German-only datasheet."
+    },
+    {
+      "id": "fu-01",
+      "category": "follow_up",
+      "language": "de",
+      "question": "Und wie schwer ist sie?",
+      "relevant": [
+        {"document": "nordlicht-viaro", "pages": [2]}
+      ],
+      "keywords": ["7,4 kg"],
+      "scope": null,
+      "previous": "Welche Schutzart hat die Viaro Straßenleuchte?",
+      "note": "Product only known from the previous question."
+    },
+    {
+      "id": "fu-02",
+      "category": "follow_up",
+      "language": "en",
+      "question": "And which variant gives the most light?",
+      "relevant": [
+        {"document": "nordlicht-arenis", "pages": [1]}
+      ],
+      "keywords": ["NL-7230-5KA45", "38 000 lm"],
+      "scope": null,
+      "previous": "Which beam options are available for the Arenis floodlight?",
+      "note": "Product only known from the previous question."
+    },
+    {
+      "id": "fu-03",
+      "category": "follow_up",
+      "language": "de",
+      "question": "Und wie viele Jahre Garantie gibt es darauf?",
+      "relevant": [
+        {"document": "nordlicht-galerion", "pages": [2]}
+      ],
+      "keywords": ["7 Jahre"],
+      "scope": null,
+      "previous": "Welchen Lichtstromerhalt gibt das Datenblatt der Galerion an?",
+      "note": "Product only known from the previous question; Viaro has 10 years."
+    },
+    {
+      "id": "fu-04",
+      "category": "follow_up",
+      "language": "de",
+      "question": "Gilt das auch für separate Betriebsgeräte?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [18]},
+        {"document": "eu-2019-2020-en", "pages": [18]}
+      ],
+      "keywords": ["Psb", "0,5 W"],
+      "scope": null,
+      "previous": "Welcher Grenzwert gilt nach der Verordnung 2019/2020 für die Standby-Leistung einer Lichtquelle?",
+      "note": "Topic (standby limit) only known from the previous question."
+    },
+    {
+      "id": "fu-05",
+      "category": "follow_up",
+      "language": "en",
+      "question": "And what about control gears for LED light sources?",
+      "relevant": [
+        {"document": "eu-2019-2020-de", "pages": [18]},
+        {"document": "eu-2019-2020-en", "pages": [18]}
+      ],
+      "keywords": ["0,81"],
+      "scope": null,
+      "previous": "What minimum efficiency does the regulation require for separate control gears for HID light sources above 405 W?",
+      "note": "Table 3: formula Pcg^0,81/(1,09 x Pcg^0,81 + 2,10)."
+    },
+    {
+      "id": "na-01",
+      "category": "unanswerable",
+      "language": "de",
+      "question": "Was kostet die Viaro NL-4012-4KB10 im Einkauf?",
+      "relevant": [],
+      "keywords": [],
+      "scope": null,
+      "previous": null,
+      "note": "No prices in any document."
+    },
+    {
+      "id": "na-02",
+      "category": "unanswerable",
+      "language": "en",
+      "question": "What is the luminous flux of the 600 W variant of the Arenis floodlight?",
+      "relevant": [],
+      "keywords": [],
+      "scope": null,
+      "previous": null,
+      "note": "Arenis stops at 290 W; there is no 600 W variant."
+    },
+    {
+      "id": "na-03",
+      "category": "unanswerable",
+      "language": "de",
+      "question": "Welche Bußgelder sieht die Verordnung 2019/2020 bei Verstößen gegen die Ökodesign-Anforderungen vor?",
+      "relevant": [],
+      "keywords": [],
+      "scope": null,
+      "previous": null,
+      "note": "The regulation sets no penalties; those are national law."
+    },
+    {
+      "id": "na-04",
+      "category": "unanswerable",
+      "language": "en",
+      "question": "What is the delivery time for the Galerion tunnel luminaire?",
+      "relevant": [],
+      "keywords": [],
+      "scope": null,
+      "previous": null,
+      "note": "No delivery times in any document."
+    }
+  ]
+}
