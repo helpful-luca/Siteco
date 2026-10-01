@@ -93,14 +93,19 @@ export function GlobalBanner({ className, omit = [] }: { className?: string; omi
     <div
       role={banner.live ? 'status' : 'note'}
       data-banner={banner.key}
-      className={cn('flex items-start gap-3 rounded-card bg-fill px-4 py-3 ring-1 ring-inset ring-hairline', className)}
+      className={cn('@container rounded-card bg-fill px-4 py-3 ring-1 ring-inset ring-hairline', className)}
     >
-      {banner.icon}
-      <div className="min-w-0 flex-1 text-footnote">
-        <p className="font-medium">{banner.title}</p>
-        {banner.hint && <p className="mt-0.5 text-ink-muted">{banner.hint}</p>}
+      {/* The action sits on the right when there is room, below the text (on its edge) when not. */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 @lg:grid-cols-[auto_minmax(0,1fr)_auto]">
+        {banner.icon}
+        <div className="text-footnote">
+          <p className="font-medium">{banner.title}</p>
+          {banner.hint && <p className="mt-0.5 text-ink-muted">{banner.hint}</p>}
+        </div>
+        {banner.action && (
+          <div className="col-start-2 @lg:col-start-3 @lg:row-start-1 @lg:-my-1 @lg:self-center">{banner.action}</div>
+        )}
       </div>
-      {banner.action && <div className="-my-1 shrink-0 self-center">{banner.action}</div>}
     </div>
   );
 }

@@ -495,7 +495,7 @@
     },
     "empty": {
       "title": "Deine Bibliothek ist noch leer",
-      "text": "Zieh PDFs, Text-, Markdown- oder HTML-Dateien hierher oder wähle sie aus.",
+      "text": "Zieh PDFs, Text-, Markdown- oder HTML‑Dateien hierher oder wähle sie aus.",
       "choose": "Dateien auswählen",
       "hint": "Bis {limit} pro Datei. Jede Datei wird vor dem Speichern auf Schadsoftware geprüft.",
       "hintNoLimit": "Jede Datei wird vor dem Speichern auf Schadsoftware geprüft."
