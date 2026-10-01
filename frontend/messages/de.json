@@ -645,7 +645,7 @@
       "name": "Begrüßung",
       "nameLabel": "Dein Name",
       "namePlaceholder": "Name",
-      "nameFooter": "Dein Name, nur für die Begrüßung. Er bleibt auf diesem Rechner.",
+      "nameFooter": "Dein Name für die Begrüßung, er bleibt auf diesem Rechner.",
       "saved": "Gespeichert"
     },
     "appearance": {
@@ -707,16 +707,16 @@
     },
     "privacy": {
       "local": "Bleibt auf diesem Rechner",
-      "localDocuments": "Deine Dokumente, ihr Text und die Suchdaten.",
-      "localChats": "Deine Chats und alle Antworten.",
-      "localProcessing": "Texterkennung und Virenprüfung (ClamAV) laufen hier, ohne Cloud.",
-      "localName": "Dein Name, nur für die Begrüßung.",
+      "localDocuments": "Deine Dokumente und ihr Suchindex.",
+      "localChats": "Deine Chats mit allen Antworten.",
+      "localProcessing": "Texterkennung und Virenprüfung laufen lokal, ohne Cloud.",
+      "localName": "Dein Name für die Begrüßung.",
       "sent": "Geht an Anthropic",
-      "sentQuestion": "Deine Frage, die letzten Nachrichten und passende Ausschnitte.",
-      "sentSmall": "Bei kleiner Auswahl das ganze Dokument.",
-      "sentNever": "Nie gesendet: dein Name und die Dateien selbst.",
-      "anthropicText": "Anthropic speichert API-Anfragen bis zu 30 Tage.",
-      "telemetry": "Keine Telemetrie: keine Nutzungsdaten an fremde Server."
+      "sentQuestion": "Deine Frage, die letzten Nachrichten und die passenden Textstellen.",
+      "sentSmall": "Bei einer kleinen Auswahl der ganze Text der Dokumente.",
+      "sentNever": "Dein Name und die Dateien selbst werden nie gesendet.",
+      "anthropicText": "Anthropic speichert API-Anfragen bis zu 30 Tage und nutzt sie nicht zum Training.",
+      "telemetry": "Die App sendet keine Nutzungsdaten an Dritte."
     },
     "apiKey": {
       "title": "Anthropic",

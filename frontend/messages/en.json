@@ -645,7 +645,7 @@
       "name": "Greeting",
       "nameLabel": "Your name",
       "namePlaceholder": "Name",
-      "nameFooter": "Your name, only for the greeting. It stays on this computer.",
+      "nameFooter": "Your name for the greeting, stored only on this computer.",
       "saved": "Saved"
     },
     "appearance": {
@@ -707,16 +707,16 @@
     },
     "privacy": {
       "local": "Stays on this computer",
-      "localDocuments": "Your documents, their text and the search data.",
-      "localChats": "Your chats and every answer.",
-      "localProcessing": "Text recognition and the virus scan (ClamAV) run here, not in a cloud.",
-      "localName": "Your name, only for the greeting.",
+      "localDocuments": "Your documents and their search index.",
+      "localChats": "Your chats with every answer.",
+      "localProcessing": "Text recognition and the virus scan run locally, without a cloud.",
+      "localName": "Your name for the greeting.",
       "sent": "Goes to Anthropic",
-      "sentQuestion": "Your question, the latest messages and matching excerpts.",
-      "sentSmall": "With a small selection, the whole document.",
-      "sentNever": "Never sent: your name and the files themselves.",
-      "anthropicText": "Anthropic keeps API requests for up to 30 days.",
-      "telemetry": "No telemetry: no usage data goes to third-party servers."
+      "sentQuestion": "Your question, the latest messages and the matching passages.",
+      "sentSmall": "For a small selection, the full text of the documents.",
+      "sentNever": "Your name and the files themselves are never sent.",
+      "anthropicText": "Anthropic keeps API requests for up to 30 days and doesn't use them for training.",
+      "telemetry": "The app sends no usage data to third parties."
     },
     "apiKey": {
       "title": "Anthropic",

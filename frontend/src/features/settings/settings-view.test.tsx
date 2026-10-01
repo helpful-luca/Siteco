@@ -337,10 +337,10 @@ describe('SettingsView', () => {
   it('explains privacy in plain words, with the scan status', async () => {
     setup('privacy');
     expect(screen.getByText('Geht an Anthropic')).toBeInTheDocument();
-    expect(screen.getByText(/Nie gesendet: dein Name/)).toBeInTheDocument();
-    expect(await screen.findByText(/Virenprüfung \(ClamAV\) laufen hier/)).toBeInTheDocument();
+    expect(screen.getByText(/Dein Name und die Dateien selbst werden nie gesendet/)).toBeInTheDocument();
+    expect(await screen.findByText(/Virenprüfung laufen lokal/)).toBeInTheDocument();
     expect(screen.getByText(/bis zu 30 Tage/)).toBeInTheDocument();
-    expect(screen.getByText(/Keine Telemetrie/)).toBeInTheDocument();
+    expect(screen.getByText(/keine Nutzungsdaten/)).toBeInTheDocument();
     // Two groups, no single-line groups that repeat each other.
     expect(screen.queryByText('Bei Anthropic')).not.toBeInTheDocument();
     expect(screen.queryByText('Virenprüfung')).not.toBeInTheDocument();
