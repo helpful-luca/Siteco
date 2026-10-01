@@ -5,9 +5,11 @@ names, ids or languages in it. Everything that changes per turn goes into the la
 The user's name is never part of any prompt.
 """
 
+import re
 from collections.abc import Sequence
 
-from docchat.domain.enums import AnswerStyle, Locale
+from docchat.domain.enums import AnswerStyle, DocumentKind, Locale
+from docchat.domain.llm import DocumentFacts
 
 SYSTEM_PROMPT = """\
 You are the document assistant of a local desktop app. People upload their own documents \
@@ -26,6 +28,10 @@ knowledge about products, values, specifications, prices, dates or legal require
 clearly which part is missing.
 - If two results contradict each other, show both values with their sources instead of \
 choosing one.
+- <documents> in the user's turn lists every document in the chat's scope with its type and \
+page count. Use it for questions about the documents themselves (how many pages, which \
+documents there are). It is not a search result, is not cited and is never mentioned: \
+state such facts plainly ("Der Katalog hat 280 Seiten.").
 - If <turn_context> has page_request, the user asks what is on those PDF pages. Describe \
 the results whose title ends with exactly those page numbers; if there are none, say that \
 the page is not in the documents.
@@ -52,6 +58,10 @@ Language
 another language. If the question has no clear language (only codes, numbers or a \
 product name), use ui_language from <turn_context>.
 - Quoted document text stays in its original language.
+- In German, address the user as "du" (dich, dein), never as "Sie".
+- Speak of what you were given as the user's documents ("in deinen Dokumenten", "im \
+Katalog", "your documents"), never as search results, excerpts or context. The user sees \
+documents, not the retrieval behind them.
 
 Format
 - Write Markdown. Use a table to compare two or more items, bullet lists for \
@@ -82,3 +92,34 @@ def turn_context(
     if documents_first:
         settings += "; sources: documents_first"
     return f"<turn_context>{settings}</turn_context>"
+
+
+MAX_LISTED_DOCUMENTS = 50
+_NAME_LIMIT = 120
+_KIND_LABELS = {
+    DocumentKind.PDF: "PDF",
+    DocumentKind.TXT: "text file",
+    DocumentKind.MD: "Markdown file",
+    DocumentKind.HTML: "web page",
+}
+_UNSAFE_IN_NAME = re.compile(r"[\x00-\x1f\x7f<>]+")
+
+
+def _safe_name(name: str) -> str:
+    """One line, no tags: a file name is untrusted text inside the prompt."""
+    cleaned = " ".join(_UNSAFE_IN_NAME.sub(" ", name).split())
+    return cleaned if len(cleaned) <= _NAME_LIMIT else cleaned[: _NAME_LIMIT - 3] + "..."
+
+
+def documents_overview(documents: Sequence[DocumentFacts]) -> str:
+    """The documents in scope with type and page count, for the last user turn; empty without."""
+    if not documents:
+        return ""
+    lines = []
+    for document in documents[:MAX_LISTED_DOCUMENTS]:
+        label = _KIND_LABELS.get(document.kind, document.kind.value)
+        pages = f", {document.pages} pages" if document.pages else ""
+        lines.append(f"- {_safe_name(document.name)}: {label}{pages}")
+    if len(documents) > MAX_LISTED_DOCUMENTS:
+        lines.append(f"- and {len(documents) - MAX_LISTED_DOCUMENTS} more documents")
+    return "<documents>\n" + "\n".join(lines) + "\n</documents>"

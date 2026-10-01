@@ -4,16 +4,16 @@ Layout (annex 11, 4.2), with two prompt cache breakpoints:
     system:   static system prompt                              <- breakpoint 1
     messages: user/assistant history as plain text
               last assistant answer                             <- breakpoint 2
-              user: [search_result x k] [turn_context] [question]
+              user: [search_result x k] [turn_context] [documents] [question]
 
 Full-context mode (`documents_first`): the documents are static per scope, so they come first
 and a follow-up question reads them from the cache (three breakpoints, the limit is four):
     system:   static system prompt                              <- breakpoint 1
     messages: user: [search_result x n]                         <- breakpoint 2 (last document)
-                    [first question]  (or [turn_context] [question] without history)
+                    [first question]  (or [turn_context] [documents] [question] without history)
               assistant, user, ... history as plain text
               last assistant answer                             <- breakpoint 3
-              user: [turn_context] [question]
+              user: [turn_context] [documents] [question]
 
 Never sent: temperature, top_p, top_k, `thinking: disabled` (all 400 on these models).
 """
@@ -22,7 +22,7 @@ from typing import Any, Literal
 
 from docchat.domain.llm import LLMRequest, SearchResult
 from docchat.domain.model_profiles import ModelProfile, resolve_effort
-from docchat.domain.prompt import SYSTEM_PROMPT, turn_context
+from docchat.domain.prompt import SYSTEM_PROMPT, documents_overview, turn_context
 
 # `fallbacks: "default"` (scalar form) needs exactly this beta; the array form uses another.
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -74,8 +74,10 @@ def _messages(request: LLMRequest) -> list[dict[str, Any]]:
     current: list[dict[str, Any]] = []
     if not first or not request.history:
         current += _documents(request)
+    overview = documents_overview(request.documents)
     current += [
         {"type": "text", "text": context},
+        *([{"type": "text", "text": overview}] if overview else []),
         {"type": "text", "text": request.question},
     ]
     messages.append({"role": "user", "content": current})

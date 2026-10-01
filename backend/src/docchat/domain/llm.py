@@ -7,7 +7,7 @@ into one answer text plus citations with character offsets.
 
 from dataclasses import dataclass
 
-from docchat.domain.enums import AnswerStyle, Effort, Locale
+from docchat.domain.enums import AnswerStyle, DocumentKind, Effort, Locale
 from docchat.domain.errors import ErrorCode
 from docchat.domain.history import HistoryTurn
 from docchat.domain.usage import ModelUsage
@@ -20,6 +20,15 @@ class SearchResult:
     source: str  # the chunk id; comes back unchanged in every citation
     title: str
     sentences: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class DocumentFacts:
+    """What the model may know about a document in scope beyond its excerpts: name, type, pages."""
+
+    name: str
+    kind: DocumentKind
+    pages: int | None
 
 
 @dataclass(frozen=True)
@@ -37,6 +46,8 @@ class LLMRequest:
     # Full-context mode: the documents open the conversation (cached, same bytes every turn),
     # history and question follow, so follow-up questions read the documents from the cache.
     documents_first: bool = False
+    # Every document in the chat's scope, for questions about the documents themselves.
+    documents: tuple[DocumentFacts, ...] = ()
 
 
 @dataclass(frozen=True)

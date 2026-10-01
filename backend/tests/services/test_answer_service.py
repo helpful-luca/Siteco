@@ -824,3 +824,14 @@ async def test_context_too_large_before_the_first_delta_retries_with_search(
     saved = answer_of(h, events)
     assert NoticeCode.CONTEXT_REDUCED not in [n.code for n in saved.notices]
     assert saved.sources_mode is SourcesMode.RETRIEVAL
+
+
+async def test_the_model_gets_name_type_and_pages_of_every_document_in_scope(
+    h: ChatHarness,
+) -> None:
+    h.add_document(MIRA)
+    h.add_document(("Luna A.",), filename="Luna.pdf")
+    await h.ask(h.new_chat())
+    assert h.llm is not None
+    names = sorted(d.name for d in h.llm.requests[0].documents)
+    assert names == ["Datenblatt Mira.pdf", "Luna.pdf"]

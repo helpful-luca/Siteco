@@ -3,9 +3,9 @@ from typing import Any
 import pytest
 
 from docchat.adapters.anthropic.request_builder import FALLBACK_BETA, build_request
-from docchat.domain.enums import AnswerStyle, Effort, Locale
+from docchat.domain.enums import AnswerStyle, DocumentKind, Effort, Locale
 from docchat.domain.history import HistoryTurn
-from docchat.domain.llm import LLMRequest, SearchResult
+from docchat.domain.llm import DocumentFacts, LLMRequest, SearchResult
 from docchat.domain.model_profiles import MODEL_PROFILES
 from docchat.domain.prompt import SYSTEM_PROMPT
 
@@ -173,3 +173,15 @@ def test_retrieval_layout_is_unchanged_without_documents_first() -> None:
     assert kinds == ["search_result", "text", "text"]
     assert "cache_control" not in body["messages"][-1]["content"][0]
     assert "documents_first" not in str(body["messages"])
+
+
+def test_the_documents_in_scope_go_into_the_current_turn_only() -> None:
+    facts = (DocumentFacts("Katalog.pdf", DocumentKind.PDF, 280),)
+    body = build("claude-sonnet-5-5", documents=facts)
+    texts = [b["text"] for b in body["messages"][-1]["content"] if b["type"] == "text"]
+    assert any(t.startswith("<documents>") and "Katalog.pdf: PDF, 280 pages" in t for t in texts)
+    assert texts[-1] == "Welche Schutzart?"  # the question stays last
+    earlier = str(body["messages"][:-1])
+    assert "<documents>" not in earlier
+    without = build("claude-sonnet-5-5")
+    assert "<documents>" not in str(without["messages"])

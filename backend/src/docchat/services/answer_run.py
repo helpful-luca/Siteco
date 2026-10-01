@@ -29,6 +29,7 @@ from docchat.domain.history import HistoryTurn
 from docchat.domain.llm import (
     CitationDelta,
     Completed,
+    DocumentFacts,
     LLMError,
     LLMRequest,
     ModelResolved,
@@ -290,6 +291,9 @@ class AnswerRun:
             allow_fallbacks=spec.allow_fallbacks,
             requested_pages=retrieved.requested_pages,
             documents_first=retrieved.mode is SourcesMode.FULL_CONTEXT,
+            documents=tuple(
+                DocumentFacts(d.filename, d.kind, d.page_count) for d in spec.plan.documents
+            ),
         )
 
     async def _generate(
