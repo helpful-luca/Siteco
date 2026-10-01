@@ -9,7 +9,7 @@ from fastapi import APIRouter, Header, Query, Request, Response
 from fastapi.responses import FileResponse, PlainTextResponse
 from starlette.requests import ClientDisconnect
 
-from docchat.api.dependencies import DocumentServiceDep, UploadServiceDep
+from docchat.api.dependencies import ContainerDep, DocumentServiceDep, UploadServiceDep
 from docchat.api.range_header import check_range
 from docchat.api.schemas.common import ErrorEnvelope
 from docchat.api.schemas.documents import (
@@ -17,9 +17,13 @@ from docchat.api.schemas.documents import (
     DocumentEnvelopeOut,
     DocumentListOut,
     DocumentOut,
+    ImportEnvelopeOut,
+    ImportOut,
+    ImportUrlIn,
 )
 from docchat.domain.enums import DocumentKind
 from docchat.domain.errors import AppError, ErrorCode
+from docchat.services.url_import_service import ImportJob
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -102,6 +106,44 @@ async def upload_document(
         chat_id=None if chat_id is None else str(chat_id),
     )
     return DocumentEnvelopeOut(document=DocumentOut.from_view(documents.view(document)))
+
+
+def _import_out(job: ImportJob, container: ContainerDep) -> ImportEnvelopeOut:
+    view = container.documents.view(job.document) if job.document is not None else None
+    return ImportEnvelopeOut(job=ImportOut.from_job(job, view))
+
+
+@router.post(
+    "/import-url",
+    status_code=202,
+    response_model=ImportEnvelopeOut,
+    responses=_errors(429),
+)
+async def import_url(body: ImportUrlIn, container: ContainerDep) -> ImportEnvelopeOut:
+    """Downloads a PDF, HTML page, text or Markdown file from a link in the background and
+    feeds it to the upload path (checks, malware scan, ingestion). Poll the job. Refused at
+    once: URL_INVALID, URL_BLOCKED (local, private or internal addresses), RATE_LIMITED.
+    Later, in the job: URL_UNREACHABLE, URL_TIMEOUT, URL_TOO_LARGE, URL_UNSUPPORTED_TYPE and
+    the upload errors."""
+    job = container.url_imports.start(
+        body.url,
+        library=body.library,
+        chat_id=None if body.chat_id is None else str(body.chat_id),
+    )
+    return _import_out(job, container)
+
+
+@router.get("/imports/{job_id}", response_model=ImportEnvelopeOut, responses=_errors(404))
+def get_import(job_id: UUID, container: ContainerDep) -> ImportEnvelopeOut:
+    """Progress (`received_bytes` of `total_bytes`), then the document or the error."""
+    return _import_out(container.url_imports.get(str(job_id)), container)
+
+
+@router.delete("/imports/{job_id}", status_code=204, responses=_errors(404))
+async def cancel_import(job_id: UUID, container: ContainerDep) -> Response:
+    """Stops a running download; a document already handed over stays."""
+    container.url_imports.cancel(str(job_id))
+    return Response(status_code=204)
 
 
 @router.get("", response_model=DocumentListOut)

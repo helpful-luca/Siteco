@@ -636,6 +636,18 @@
             "title": "Size Bytes",
             "type": "integer"
           },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The link it was imported from. Render as text.",
+            "title": "Source Url"
+          },
           "status": {
             "$ref": "#/components/schemas/DocumentStatus"
           }
@@ -755,6 +767,12 @@
           "STORAGE_QUOTA",
           "STORAGE_FULL",
           "UPLOAD_INCOMPLETE",
+          "URL_INVALID",
+          "URL_BLOCKED",
+          "URL_UNREACHABLE",
+          "URL_TIMEOUT",
+          "URL_TOO_LARGE",
+          "URL_UNSUPPORTED_TYPE",
           "DOCUMENT_NOT_READY",
           "DOCUMENT_FILE_MISSING",
           "DELETE_FAILED",
@@ -1034,6 +1052,30 @@
             "retryable": false,
             "status": 413
           },
+          "URL_BLOCKED": {
+            "retryable": false,
+            "status": 422
+          },
+          "URL_INVALID": {
+            "retryable": false,
+            "status": 422
+          },
+          "URL_TIMEOUT": {
+            "retryable": true,
+            "status": 504
+          },
+          "URL_TOO_LARGE": {
+            "retryable": false,
+            "status": 413
+          },
+          "URL_UNREACHABLE": {
+            "retryable": true,
+            "status": 502
+          },
+          "URL_UNSUPPORTED_TYPE": {
+            "retryable": false,
+            "status": 415
+          },
           "VALIDATION_ERROR": {
             "retryable": false,
             "status": 422
@@ -1072,6 +1114,142 @@
           "retrieval_only"
         ],
         "title": "Features",
+        "type": "object"
+      },
+      "ImportEnvelopeOut": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/ImportOut"
+          }
+        },
+        "required": [
+          "job"
+        ],
+        "title": "ImportEnvelopeOut",
+        "type": "object"
+      },
+      "ImportOut": {
+        "properties": {
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Once `done`: the new document."
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the import `failed`."
+          },
+          "error_params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Error Params",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "received_bytes": {
+            "title": "Received Bytes",
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ImportState"
+          },
+          "total_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "From Content-Length; null when unknown.",
+            "title": "Total Bytes"
+          },
+          "url": {
+            "description": "The normalized link. Render as text.",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "state",
+          "received_bytes",
+          "total_bytes",
+          "document",
+          "error_code",
+          "error_params"
+        ],
+        "title": "ImportOut",
+        "type": "object"
+      },
+      "ImportState": {
+        "enum": [
+          "downloading",
+          "done",
+          "failed"
+        ],
+        "title": "ImportState",
+        "type": "string"
+      },
+      "ImportUrlIn": {
+        "additionalProperties": false,
+        "properties": {
+          "chat_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Import into this chat.",
+            "title": "Chat Id"
+          },
+          "library": {
+            "default": true,
+            "description": "Also into the library. Without `chat_id` always true.",
+            "title": "Library",
+            "type": "boolean"
+          },
+          "url": {
+            "description": "http or https; no credentials.",
+            "maxLength": 4096,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "ImportUrlIn",
         "type": "object"
       },
       "KeySource": {
@@ -3340,6 +3518,157 @@
           }
         },
         "summary": "Upload Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/documents/import-url": {
+      "post": {
+        "description": "Downloads a PDF, HTML page, text or Markdown file from a link in the background and\nfeeds it to the upload path (checks, malware scan, ingestion). Poll the job. Refused at\nonce: URL_INVALID, URL_BLOCKED (local, private or internal addresses), RATE_LIMITED.\nLater, in the job: URL_UNREACHABLE, URL_TIMEOUT, URL_TOO_LARGE, URL_UNSUPPORTED_TYPE and\nthe upload errors.",
+        "operationId": "import_url_api_documents_import_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportUrlIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Import Url",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/documents/imports/{job_id}": {
+      "delete": {
+        "description": "Stops a running download; a document already handed over stays.",
+        "operationId": "cancel_import_api_documents_imports__job_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Cancel Import",
+        "tags": [
+          "documents"
+        ]
+      },
+      "get": {
+        "description": "Progress (`received_bytes` of `total_bytes`), then the document or the error.",
+        "operationId": "get_import_api_documents_imports__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportEnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Get Import",
         "tags": [
           "documents"
         ]

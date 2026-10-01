@@ -1,5 +1,7 @@
 """Shared test helpers for building the app with test doubles."""
 
+from collections.abc import Callable
+
 from fastapi import FastAPI
 
 from docchat.adapters.system_clock import SystemClock
@@ -18,6 +20,7 @@ def make_app(
     llm: LLMClient | None = None,
     clock: SystemClock | None = None,
     key_validator: KeyValidator | None = None,
+    url_is_public: Callable[[str], bool] | None = None,
 ) -> FastAPI:
     container = build_container(
         settings,
@@ -26,5 +29,6 @@ def make_app(
         llm=llm,
         clock=clock,
         key_validator=key_validator or FakeKeyValidator(),  # never a call to Anthropic
+        url_is_public=url_is_public,
     )
     return create_app(settings, container)

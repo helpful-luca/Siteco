@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     max_storage_mb: int = 20 * 1024
     min_free_disk_mb: int = 512
 
+    # Import from a link: the whole download, and the wait for each step (connect, next bytes).
+    url_import_timeout_s: int = Field(default=900, ge=10)
+    url_connect_timeout_s: float = 10
+    url_read_timeout_s: float = 30
+
     # Ingestion pipeline
     parse_batch_pages: int = 50
     parse_timeout_s: int = 60

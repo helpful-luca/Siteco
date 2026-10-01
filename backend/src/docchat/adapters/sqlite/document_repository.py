@@ -50,6 +50,7 @@ def _row_to_document(row: sqlite3.Row) -> Document:
         notices=notices,
         ready_at=_parse_ts(row["ready_at"]),
         in_library=bool(row["in_library"]),
+        source_url=row["source_url"],
     )
 
 
@@ -75,7 +76,7 @@ class SqliteDocumentRepository:
                     conn.execute(
                         "INSERT INTO documents (id, filename, kind, size_bytes, sha256,"
                         " page_count, status, progress, notices, created_at, updated_at,"
-                        " in_library) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        " in_library, source_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (
                             document.id,
                             document.filename,
@@ -89,6 +90,7 @@ class SqliteDocumentRepository:
                             _ts(document.created_at),
                             _ts(document.updated_at),
                             int(document.in_library),
+                            document.source_url,
                         ),
                     )
                     if attach_to is not None:

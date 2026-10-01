@@ -225,6 +225,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/documents/import-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Url
+         * @description Downloads a PDF, HTML page, text or Markdown file from a link in the background and
+         *     feeds it to the upload path (checks, malware scan, ingestion). Poll the job. Refused at
+         *     once: URL_INVALID, URL_BLOCKED (local, private or internal addresses), RATE_LIMITED.
+         *     Later, in the job: URL_UNREACHABLE, URL_TIMEOUT, URL_TOO_LARGE, URL_UNSUPPORTED_TYPE and
+         *     the upload errors.
+         */
+        post: operations["import_url_api_documents_import_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/imports/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Import
+         * @description Progress (`received_bytes` of `total_bytes`), then the document or the error.
+         */
+        get: operations["get_import_api_documents_imports__job_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Cancel Import
+         * @description Stops a running download; a document already handed over stays.
+         */
+        delete: operations["cancel_import_api_documents_imports__job_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/documents/{document_id}": {
         parameters: {
             query?: never;
@@ -731,6 +779,11 @@ export interface components {
             ready_at: string | null;
             /** Size Bytes */
             size_bytes: number;
+            /**
+             * Source Url
+             * @description The link it was imported from. Render as text.
+             */
+            source_url?: string | null;
             status: components["schemas"]["DocumentStatus"];
         };
         /**
@@ -774,7 +827,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "API_KEY_INVALID" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
+        ErrorCode: "VALIDATION_ERROR" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "UNAUTHORIZED_CLIENT" | "SERVICE_STARTING" | "INTERNAL_ERROR" | "REQUEST_TOO_LARGE" | "RATE_LIMITED" | "UPLOAD_TOO_LARGE" | "UNSUPPORTED_TYPE" | "FILE_CONTENT_MISMATCH" | "EMPTY_FILE" | "DUPLICATE_DOCUMENT" | "STORAGE_QUOTA" | "STORAGE_FULL" | "UPLOAD_INCOMPLETE" | "URL_INVALID" | "URL_BLOCKED" | "URL_UNREACHABLE" | "URL_TIMEOUT" | "URL_TOO_LARGE" | "URL_UNSUPPORTED_TYPE" | "DOCUMENT_NOT_READY" | "DOCUMENT_FILE_MISSING" | "DELETE_FAILED" | "RANGE_NOT_SATISFIABLE" | "PDF_ENCRYPTED" | "PDF_CORRUPT" | "PDF_NO_TEXT" | "PDF_TOO_MANY_PAGES" | "TEXT_ENCODING_UNSUPPORTED" | "DOCUMENT_EMPTY" | "DOCUMENT_TOO_LONG" | "PROCESSING_TIMEOUT" | "PROCESSING_FAILED" | "PROCESSING_INTERRUPTED" | "MALWARE_DETECTED" | "MALWARE_SCAN_FAILED" | "CHAT_NOT_FOUND" | "CHAT_BUSY" | "CHAT_LIMIT" | "MESSAGE_LIMIT" | "MESSAGE_NOT_LATEST" | "DUPLICATE_REQUEST" | "CONCURRENCY_LIMIT" | "NO_DOCUMENTS" | "DOCUMENTS_NOT_READY" | "QUESTION_EMPTY" | "QUESTION_TOO_LONG" | "MODEL_NOT_ALLOWED" | "COMPARE_SAME_MODEL" | "TOKEN_BUDGET_EXCEEDED" | "LLM_AUTH" | "API_KEY_INVALID" | "LLM_BILLING" | "LLM_FORBIDDEN" | "MODEL_UNAVAILABLE" | "LLM_RATE_LIMITED" | "LLM_OVERLOADED" | "LLM_UNAVAILABLE" | "LLM_TIMEOUT" | "LLM_UNREACHABLE" | "LLM_BAD_REQUEST" | "LLM_CONTEXT_TOO_LARGE" | "LLM_EMPTY_ANSWER";
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
@@ -788,6 +841,60 @@ export interface components {
         Features: {
             /** Retrieval Only */
             retrieval_only: boolean;
+        };
+        /** ImportEnvelopeOut */
+        ImportEnvelopeOut: {
+            job: components["schemas"]["ImportOut"];
+        };
+        /** ImportOut */
+        ImportOut: {
+            /** @description Once `done`: the new document. */
+            document: components["schemas"]["DocumentOut"] | null;
+            /** @description Why the import `failed`. */
+            error_code: components["schemas"]["ErrorCode"] | null;
+            /** Error Params */
+            error_params: {
+                [key: string]: number | string;
+            };
+            /** Id */
+            id: string;
+            /** Received Bytes */
+            received_bytes: number;
+            state: components["schemas"]["ImportState"];
+            /**
+             * Total Bytes
+             * @description From Content-Length; null when unknown.
+             */
+            total_bytes: number | null;
+            /**
+             * Url
+             * @description The normalized link. Render as text.
+             */
+            url: string;
+        };
+        /**
+         * ImportState
+         * @enum {string}
+         */
+        ImportState: "downloading" | "done" | "failed";
+        /** ImportUrlIn */
+        ImportUrlIn: {
+            /**
+             * Chat Id
+             * @description Import into this chat.
+             */
+            chat_id?: string | null;
+            /**
+             * Library
+             * @description Also into the library. Without `chat_id` always true.
+             * @default true
+             */
+            library: boolean;
+            /**
+             * Url
+             * @description http or https; no credentials.
+             */
+            url: string;
         };
         /**
          * KeySource
@@ -1967,6 +2074,126 @@ export interface operations {
             };
             /** @description Insufficient Storage */
             507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    import_url_api_documents_import_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportUrlIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportEnvelopeOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    get_import_api_documents_imports__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportEnvelopeOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cancel_import_api_documents_imports__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

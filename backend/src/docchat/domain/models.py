@@ -39,6 +39,7 @@ class Document:
     ready_at: datetime | None = None
     # False: uploaded into a chat and only searched there (master spec feedback 1).
     in_library: bool = True
+    source_url: str | None = None  # imported from this link
 
 
 @dataclass(frozen=True)

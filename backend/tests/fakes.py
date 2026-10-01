@@ -4,17 +4,19 @@ import asyncio
 import re
 import threading
 import time
-from collections.abc import Callable, Collection, Sequence
+from collections.abc import AsyncIterator, Callable, Collection, Sequence
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from docchat.domain.api_key import KeyCheck
 from docchat.domain.chunking import section_from_text
 from docchat.domain.enums import SearchMode
-from docchat.domain.errors import IngestionError
+from docchat.domain.errors import AppError, ErrorCode, IngestionError
 from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk
 from docchat.domain.parsing import PageBatch, PageBatchFailed, TextSection
+from docchat.domain.url_import import FetchedResponse, ParsedUrl
 
 
 class FakeEmbedder:
@@ -232,3 +234,39 @@ class FakeKeyValidator:
     async def check(self, key: str) -> KeyCheck:
         self.checked.append(key)
         return self.verdicts.get(key, KeyCheck.VALID)
+
+
+class FakeResolver:
+    """DNS from a table; records every lookup. Unknown names do not resolve."""
+
+    def __init__(self, table: dict[str, list[str]]) -> None:
+        self.table = table
+        self.lookups: list[str] = []
+
+    async def resolve(self, host: str, port: int) -> list[str]:
+        self.lookups.append(host)
+        if host not in self.table:
+            raise AppError(ErrorCode.URL_UNREACHABLE)
+        return list(self.table[host])
+
+
+class FakeFetcher:
+    """Answers by URL with (status, headers, body chunks); records (url, address) per request."""
+
+    def __init__(self, routes: dict[str, tuple[int, dict[str, str], list[bytes]]]) -> None:
+        self.routes = routes
+        self.requests: list[tuple[str, str]] = []
+
+    @asynccontextmanager
+    async def open(self, url: ParsedUrl, address: str) -> AsyncIterator[FetchedResponse]:
+        self.requests.append((url.text, address))
+        if url.text not in self.routes:
+            raise AppError(ErrorCode.URL_UNREACHABLE)
+        status, headers, chunks = self.routes[url.text]
+
+        async def body() -> AsyncIterator[bytes]:
+            for chunk in chunks:
+                await asyncio.sleep(0)
+                yield chunk
+
+        yield FetchedResponse(status, {k.lower(): v for k, v in headers.items()}, body())

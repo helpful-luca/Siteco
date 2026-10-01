@@ -5,15 +5,18 @@ import logging
 import os
 import random
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from docchat.adapters.anthropic.client import AnthropicLLMClient
 from docchat.adapters.anthropic.key_validator import AnthropicKeyValidator
 from docchat.adapters.clamd_scanner import ClamdScanner
 from docchat.adapters.directory_size_meter import DirectorySizeMeter
+from docchat.adapters.dns_resolver import SystemHostResolver
 from docchat.adapters.fake_llm import FakeLLMClient
 from docchat.adapters.fastembed_embedder import FastEmbedEmbedder
 from docchat.adapters.file_secret_store import FileSecretStore
+from docchat.adapters.http_url_fetcher import HttpUrlFetcher
 from docchat.adapters.jsonl_chunk_spool import JsonlChunkSpool
 from docchat.adapters.lancedb_vector_store import LanceVectorStore
 from docchat.adapters.local_file_storage import LocalFileStorage
@@ -34,6 +37,7 @@ from docchat.core.config import Settings
 from docchat.domain.enums import ComponentStatus, LlmStatus
 from docchat.domain.ports import (
     Embedder,
+    HostResolver,
     KeyValidator,
     LLMClient,
     MalwareScanner,
@@ -41,6 +45,7 @@ from docchat.domain.ports import (
     PdfParser,
     VectorStore,
 )
+from docchat.domain.url_import import address_is_public
 from docchat.services.answer_run import RunDeps, RunTimings
 from docchat.services.answer_service import AnswerLimits, AnswerService
 from docchat.services.api_key_service import ApiKeyService
@@ -62,6 +67,7 @@ from docchat.services.retrieval_service import RetrievalService, RetrievalSettin
 from docchat.services.run_registry import RunRegistry
 from docchat.services.swappable_llm import SwappableLLM
 from docchat.services.upload_service import UploadLimits, UploadService
+from docchat.services.url_import_service import UrlImportService
 from docchat.services.workspace_export import WorkspaceExport
 from docchat.services.workspace_service import WorkspaceParts, WorkspaceService
 
@@ -82,6 +88,7 @@ class Container:
     scans: MalwareScanWorker
     documents: DocumentService
     uploads: UploadService
+    url_imports: UrlImportService
     chats: ChatService
     answers: AnswerService
     llm_health: LlmHealth
@@ -144,6 +151,7 @@ class Container:
     async def stop(self) -> None:
         """Stop background work started in start()."""
         await self.retention.stop()
+        await self.url_imports.stop()
         await self.erasure.stop()
         await self.scans.stop()
         await self.worker.stop()
@@ -215,6 +223,8 @@ def build_container(
     llm: LLMClient | None = None,
     clock: SystemClock | None = None,
     key_validator: KeyValidator | None = None,
+    url_resolver: HostResolver | None = None,
+    url_is_public: Callable[[str], bool] | None = None,
 ) -> Container:
     database = Database(settings.database_path)
     repository = SqliteDocumentRepository(database)
@@ -311,6 +321,19 @@ def build_container(
     chat_service = ChatService(
         chats, repository, runs, clock, erasure, documents, max_chats=settings.max_chats
     )
+    upload_rate = RateLimit(LimitScope.UPLOAD, settings.rate_upload_per_min, clock)
+    uploads = UploadService(
+        repository,
+        storage,
+        scans,
+        clock,
+        UploadLimits(
+            max_bytes=settings.max_upload_mb * _MB,
+            max_storage_bytes=settings.max_storage_mb * _MB,
+            min_free_bytes=settings.min_free_disk_mb * _MB,
+        ),
+        upload_rate,
+    )
     preferences = PreferencesService(
         SqlitePreferencesStore(database),
         clock,
@@ -328,17 +351,18 @@ def build_container(
         worker=worker,
         scans=scans,
         documents=documents,
-        uploads=UploadService(
-            repository,
-            storage,
-            scans,
-            clock,
-            UploadLimits(
-                max_bytes=settings.max_upload_mb * _MB,
-                max_storage_bytes=settings.max_storage_mb * _MB,
-                min_free_bytes=settings.min_free_disk_mb * _MB,
+        uploads=uploads,
+        url_imports=UrlImportService(
+            uploads,
+            url_resolver or SystemHostResolver(),
+            HttpUrlFetcher(
+                connect_timeout_s=settings.url_connect_timeout_s,
+                read_timeout_s=settings.url_read_timeout_s,
             ),
-            RateLimit(LimitScope.UPLOAD, settings.rate_upload_per_min, clock),
+            max_bytes=settings.max_upload_mb * _MB,
+            total_timeout_s=settings.url_import_timeout_s,
+            rate=upload_rate,  # an import counts as an upload
+            is_public=url_is_public or address_is_public,
         ),
         chats=chat_service,
         answers=AnswerService(

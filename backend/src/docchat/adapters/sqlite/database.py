@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 # Version 6 documents: the kind may be `html`. SQLite cannot change a CHECK constraint, so the
 # table is rebuilt (create, copy, drop, rename) with foreign keys off for the migration.
@@ -69,6 +69,7 @@ _MIGRATIONS: dict[int, str | Callable[[sqlite3.Connection], None]] = {
     ");\n"
     "CREATE INDEX ix_chat_attachments_document ON chat_attachments(document_id);",
     6: _documents_accept_html,
+    7: "ALTER TABLE documents ADD COLUMN source_url TEXT;",
 }
 
 

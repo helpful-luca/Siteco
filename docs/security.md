@@ -14,6 +14,25 @@ Proportionate to a local single user app, and honest about what is out of scope.
 | A compromised container | Non-root users, `cap_drop: ALL`, `no-new-privileges`, read-only root filesystem with small tmpfs mounts, pid and memory limits |
 | Telemetry | None. ONNX Runtime (`ORT_DISABLE_TELEMETRY`, `disable_telemetry_events()`), Hugging Face, Next.js and Electron are switched off; a test guards ONNX |
 
+## Import from a link (SSRF)
+
+The backend downloads a URL the user typed, so a hostile link (or a hostile page that redirects) could try to make it reach into this machine, the home or office network, the other containers or a cloud metadata service. Measures, in `domain/url_import.py`, `services/url_import_service.py` and the HTTP adapter:
+
+| Threat | Measure |
+|---|---|
+| Other schemes (`file:`, `ftp:`, `gopher:`) | Only `http` and `https` |
+| Credentials in the link, or sent along | `user:pass@` is refused; no cookies, no `Authorization`, no `.netrc` or proxy from the environment (`trust_env` off), a fresh client per request |
+| Loopback, private networks, link-local and cloud metadata (169.254.169.254, fd00:ec2::254), CGNAT (100.64.0.0/10, Alibaba's 100.100.100.200), multicast, unspecified, reserved and documentation ranges | Every address must be global unicast (`ipaddress` plus explicit IPv6 ranges); IPv4-mapped, IPv4-compatible, NAT64, 6to4 and Teredo forms are judged by, or refused for, the address they wrap |
+| Local and Docker names (`localhost`, `backend`, `frontend`, `clamav`, `*.internal`, `*.local`, single labels) | Refused by name before any DNS lookup |
+| A name with one public and one private answer | Refused: every answer must be public |
+| DNS rebinding (public at check time, private at connect time) | The name is resolved once per hop and the connection goes to that vetted IP; Host header and TLS server name (SNI and certificate check) carry the original name |
+| Redirects into the network | Not followed by the HTTP client; at most 5 hops, each one parsed and vetted like the first |
+| Huge or endless responses | `Content-Length` above the upload limit is refused at once; the body is counted while streaming and cut off at the limit; connect, read and total timeouts |
+| Wrong content | Content type PDF, HTML, plain text or Markdown, then the upload's magic and markup checks on the bytes; the malware scan and the HTML text extraction apply as for uploads |
+| Abuse as a crawler | One request per import, a descriptive User-Agent, the upload rate limit |
+
+The link is stored with the document (shown in its details); it is never logged.
+
 ## Containers
 
 `compose.yaml`: backend and frontend run with `read_only: true`, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `mem_limit`. Writable: the `/data` volume (backend), and tmpfs for `/tmp` and the Next.js cache. The ClamAV image starts as root, generates its configuration from environment variables into `/etc/clamav` and drops to the clamav user itself, so its root filesystem stays writable and it keeps five capabilities (CHOWN, FOWNER, DAC_OVERRIDE, SETUID, SETGID); signatures live in a volume. Only the web port is published, on `127.0.0.1`.

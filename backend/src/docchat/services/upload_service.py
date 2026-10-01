@@ -118,40 +118,56 @@ class UploadService:
             raise AppError(ErrorCode.UNSUPPORTED_TYPE)
         return filename, kind
 
-    async def _check_space(self, declared: int) -> None:
+    async def _check_space(self, declared: int | None) -> None:
+        """`declared` None: the size is unknown until the end (a download without
+        Content-Length); the byte count while streaming and the check after it hold."""
         limits = self._limits
         if declared == 0:
             raise AppError(ErrorCode.EMPTY_FILE)
-        if declared > limits.max_bytes:
+        if declared is not None and declared > limits.max_bytes:
             raise AppError(ErrorCode.UPLOAD_TOO_LARGE, params={"max_mb": limits.max_bytes // _MB})
+        await self._check_quota(declared or 0)
+        free = await asyncio.to_thread(self._storage.free_bytes)
+        if free - (declared or 0) < limits.min_free_bytes:
+            raise AppError(ErrorCode.STORAGE_FULL)
+
+    async def _check_quota(self, size: int) -> None:
+        limits = self._limits
         used = await asyncio.to_thread(self._repository.total_size_bytes)
-        if used + declared > limits.max_storage_bytes:
+        if used + size > limits.max_storage_bytes:
             raise AppError(
                 ErrorCode.STORAGE_QUOTA, params={"max_mb": limits.max_storage_bytes // _MB}
             )
-        free = await asyncio.to_thread(self._storage.free_bytes)
-        if free - declared < limits.min_free_bytes:
-            raise AppError(ErrorCode.STORAGE_FULL)
 
     async def accept(
         self,
         file_name: str,
-        declared_size: int,
+        declared_size: int | None,
         body: AsyncIterator[bytes],
         *,
         chat_id: str | None = None,
+        in_library: bool | None = None,
+        source_url: str | None = None,
+        rate_counted: bool = False,
     ) -> Document:
+        """`in_library` defaults to "not uploaded into a chat"; a link import can ask for both
+        (`chat_id` and `in_library`). `rate_counted`: the caller already took the slot."""
+        to_library = chat_id is None if in_library is None else in_library or chat_id is None
         filename, kind = self._check_name(file_name)
         await self._check_space(declared_size)
-        if self._rate is not None:  # after the cheap checks: a refused file never counts
-            self._rate.acquire()
+        if self._rate is not None and not rate_counted:
+            self._rate.acquire()  # after the cheap checks: a refused file never counts
         sink = await asyncio.to_thread(self._storage.new_upload)
         try:
             receiver = _Receiver(sink, kind, self._limits.max_bytes)
             async for data in body:
                 if data:
                     await asyncio.to_thread(receiver.write, data)
-            if receiver.size != declared_size:
+            if declared_size is None:
+                if receiver.size == 0:
+                    raise AppError(ErrorCode.EMPTY_FILE)
+                await self._check_quota(receiver.size)
+            elif receiver.size != declared_size:
                 raise AppError(ErrorCode.UPLOAD_INCOMPLETE)
             receiver.finish()
             existing = await asyncio.to_thread(
@@ -159,9 +175,11 @@ class UploadService:
             )
             if existing is not None and existing.status is DocumentStatus.FAILED:
                 retried = await self._retry(existing, sink)
-                return await self._place(retried, chat_id)
+                return await self._place(retried, chat_id, to_library)
             if existing is None:
-                document = self._new_document(filename, kind, receiver, in_library=chat_id is None)
+                document = self._new_document(
+                    filename, kind, receiver, in_library=to_library, source_url=source_url
+                )
                 await asyncio.to_thread(self._storage.quarantine, sink, document.id, kind)
         except BaseException:
             await asyncio.to_thread(sink.discard)
@@ -170,7 +188,7 @@ class UploadService:
             await asyncio.to_thread(sink.discard)
             if chat_id is None and existing.in_library:
                 raise AppError(ErrorCode.DUPLICATE_DOCUMENT, params={"existing_id": existing.id})
-            return await self._place(existing, chat_id)
+            return await self._place(existing, chat_id, to_library)
         try:
             await asyncio.to_thread(self._repository.insert, document, attach_to=chat_id)
         except BaseException:
@@ -183,13 +201,14 @@ class UploadService:
         )
         return document
 
-    async def _place(self, document: Document, chat_id: str | None) -> Document:
-        """An existing document where this upload wanted it: in the chat, or in the library."""
+    async def _place(self, document: Document, chat_id: str | None, to_library: bool) -> Document:
+        """An existing document where this upload wanted it: chat, library, or both."""
         now = self._clock.now()
-        if chat_id is not None:
-            if not await asyncio.to_thread(self._repository.attach, chat_id, document.id, now):
-                raise AppError(ErrorCode.CHAT_NOT_FOUND)
-        elif not document.in_library:
+        if chat_id is not None and not await asyncio.to_thread(
+            self._repository.attach, chat_id, document.id, now
+        ):
+            raise AppError(ErrorCode.CHAT_NOT_FOUND)
+        if to_library and not document.in_library:
             await asyncio.to_thread(self._repository.add_to_library, document.id, now)
         placed = await asyncio.to_thread(self._repository.get, document.id)
         if placed is None:  # deleted a moment ago
@@ -197,7 +216,13 @@ class UploadService:
         return placed
 
     def _new_document(
-        self, filename: str, kind: DocumentKind, receiver: _Receiver, *, in_library: bool
+        self,
+        filename: str,
+        kind: DocumentKind,
+        receiver: _Receiver,
+        *,
+        in_library: bool,
+        source_url: str | None,
     ) -> Document:
         now = self._clock.now()
         return Document(
@@ -210,6 +235,7 @@ class UploadService:
             created_at=now,
             updated_at=now,
             in_library=in_library,
+            source_url=source_url,
         )
 
     async def _retry(self, failed: Document, sink: UploadSink) -> Document:

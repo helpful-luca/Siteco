@@ -1,12 +1,14 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from docchat.domain.enums import DocumentKind, DocumentStatus
 from docchat.domain.errors import ErrorCode, NoticeCode
 from docchat.domain.models import Chunk
 from docchat.services.document_service import DocumentView
+from docchat.services.url_import_service import ImportJob, ImportState
 
 
 class NoticeOut(BaseModel):
@@ -34,6 +36,9 @@ class DocumentOut(BaseModel):
     in_library: bool = Field(
         description="False: uploaded into a chat, listed and searched only there."
     )
+    source_url: str | None = Field(
+        default=None, description="The link it was imported from. Render as text."
+    )
 
     @classmethod
     def from_view(cls, view: DocumentView) -> "DocumentOut":
@@ -54,6 +59,7 @@ class DocumentOut(BaseModel):
             created_at=d.created_at,
             ready_at=d.ready_at,
             in_library=d.in_library,
+            source_url=d.source_url,
         )
 
 
@@ -100,3 +106,41 @@ class ChunkOut(BaseModel):
                 for s in chunk.sentences
             ],
         )
+
+
+class ImportUrlIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    url: str = Field(max_length=4096, description="http or https; no credentials.")
+    library: bool = Field(
+        default=True, description="Also into the library. Without `chat_id` always true."
+    )
+    chat_id: UUID | None = Field(default=None, description="Import into this chat.")
+
+
+class ImportOut(BaseModel):
+    id: str
+    url: str = Field(description="The normalized link. Render as text.")
+    state: ImportState
+    received_bytes: int
+    total_bytes: int | None = Field(description="From Content-Length; null when unknown.")
+    document: DocumentOut | None = Field(description="Once `done`: the new document.")
+    error_code: ErrorCode | None = Field(description="Why the import `failed`.")
+    error_params: dict[str, int | str]
+
+    @classmethod
+    def from_job(cls, job: ImportJob, document: DocumentView | None) -> "ImportOut":
+        return cls(
+            id=job.id,
+            url=job.url,
+            state=job.state,
+            received_bytes=job.received,
+            total_bytes=job.total,
+            document=DocumentOut.from_view(document) if document is not None else None,
+            error_code=job.error_code,
+            error_params=dict(job.error_params),
+        )
+
+
+class ImportEnvelopeOut(BaseModel):
+    job: ImportOut

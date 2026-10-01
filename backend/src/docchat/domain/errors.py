@@ -24,12 +24,18 @@ class ErrorCode(StrEnum):
     STORAGE_QUOTA = "STORAGE_QUOTA"
     STORAGE_FULL = "STORAGE_FULL"
     UPLOAD_INCOMPLETE = "UPLOAD_INCOMPLETE"
+    # Import from a link (the download runs in the backend, then the upload checks apply)
+    URL_INVALID = "URL_INVALID"
+    URL_BLOCKED = "URL_BLOCKED"
+    URL_UNREACHABLE = "URL_UNREACHABLE"
+    URL_TIMEOUT = "URL_TIMEOUT"
+    URL_TOO_LARGE = "URL_TOO_LARGE"
+    URL_UNSUPPORTED_TYPE = "URL_UNSUPPORTED_TYPE"
     # Library
     DOCUMENT_NOT_READY = "DOCUMENT_NOT_READY"
     DOCUMENT_FILE_MISSING = "DOCUMENT_FILE_MISSING"
     DELETE_FAILED = "DELETE_FAILED"
     RANGE_NOT_SATISFIABLE = "RANGE_NOT_SATISFIABLE"
-    # Quality page: no results file (or one that does not fit the schema)
     # Ingestion (never an HTTP response: stored as documents.error_code with status `failed`)
     PDF_ENCRYPTED = "PDF_ENCRYPTED"
     PDF_CORRUPT = "PDF_CORRUPT"
@@ -106,6 +112,12 @@ class ErrorSpec:
 ERROR_SPECS: dict[ErrorCode, ErrorSpec] = {
     ErrorCode.VALIDATION_ERROR: ErrorSpec(422, False),
     ErrorCode.NOT_FOUND: ErrorSpec(404, False),
+    ErrorCode.URL_INVALID: ErrorSpec(422, False),
+    ErrorCode.URL_BLOCKED: ErrorSpec(422, False),
+    ErrorCode.URL_UNREACHABLE: ErrorSpec(502, True),
+    ErrorCode.URL_TIMEOUT: ErrorSpec(504, True),
+    ErrorCode.URL_TOO_LARGE: ErrorSpec(413, False),
+    ErrorCode.URL_UNSUPPORTED_TYPE: ErrorSpec(415, False),
     ErrorCode.METHOD_NOT_ALLOWED: ErrorSpec(405, False),
     ErrorCode.UNAUTHORIZED_CLIENT: ErrorSpec(401, False),
     ErrorCode.SERVICE_STARTING: ErrorSpec(503, True),

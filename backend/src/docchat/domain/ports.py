@@ -5,6 +5,7 @@ their own worker process are async.
 """
 
 from collections.abc import AsyncIterator, Collection, Mapping, Sequence
+from contextlib import AbstractAsyncContextManager
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
@@ -18,6 +19,7 @@ from docchat.domain.malware import ScanVerdict
 from docchat.domain.models import Chunk, Document, Notice
 from docchat.domain.parsing import PageBatch, TextContent, TextSection
 from docchat.domain.preferences import Preferences
+from docchat.domain.url_import import FetchedResponse, ParsedUrl
 from docchat.domain.usage import UsageDay
 
 
@@ -419,6 +421,21 @@ class LLMClient(Protocol):
     Raises LLMError; thinking blocks never leave the adapter."""
 
     def stream(self, request: LLMRequest) -> AsyncIterator[LLMEvent]: ...
+
+
+class HostResolver(Protocol):
+    async def resolve(self, host: str, port: int) -> list[str]:
+        """Every address of the name (IPv4 and IPv6). URL_UNREACHABLE when it has none,
+        URL_TIMEOUT when DNS does not answer."""
+        ...
+
+
+class UrlFetcher(Protocol):
+    def open(self, url: ParsedUrl, address: str) -> AbstractAsyncContextManager[FetchedResponse]:
+        """One GET to `address` (already vetted) for `url`, with `url`'s host in the Host
+        header and for TLS. Never follows redirects, never sends cookies. URL_UNREACHABLE or
+        URL_TIMEOUT when the server cannot be reached; while reading the body as well."""
+        ...
 
 
 class SecretStore(Protocol):
